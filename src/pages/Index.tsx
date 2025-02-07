@@ -11,14 +11,15 @@ const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [isConverting, setIsConverting] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [pdfUrls, setPdfUrls] = useState<string[]>([]);
   const { toast } = useToast();
 
   const handleFileSelect = (content: string) => {
     setZplContent(content);
+    setPdfUrls([]); // Limpa os URLs anteriores
   };
 
   const splitZPLIntoBlocks = (zpl: string): string[] => {
-    // Divide o conteúdo ZPL em etiquetas individuais
     const labels = zpl.split('^XZ').filter(label => label.trim().includes('^XA'));
     const completeLabels = labels.map(label => `${label.trim()}^XZ`);
     return completeLabels;
@@ -30,10 +31,12 @@ const Index = () => {
     try {
       setIsConverting(true);
       setProgress(0);
+      setPdfUrls([]); // Limpa os URLs anteriores
 
       const labels = splitZPLIntoBlocks(zplContent);
       const pdfs: Blob[] = [];
       const LABELS_PER_REQUEST = 14;
+      const newPdfUrls: string[] = [];
 
       for (let i = 0; i < labels.length; i += LABELS_PER_REQUEST) {
         try {
@@ -56,6 +59,10 @@ const Index = () => {
           const blob = await response.blob();
           pdfs.push(blob);
 
+          // Cria URL para o bloco atual
+          const blockUrl = window.URL.createObjectURL(blob);
+          newPdfUrls.push(blockUrl);
+
           // Atualiza o progresso
           setProgress(((i + blockLabels.length) / labels.length) * 100);
 
@@ -72,6 +79,8 @@ const Index = () => {
           });
         }
       }
+
+      setPdfUrls(newPdfUrls);
 
       if (pdfs.length > 0) {
         // Cria um novo Blob combinando todos os PDFs
@@ -137,7 +146,7 @@ const Index = () => {
                 size="lg"
                 onClick={convertToPDF}
                 disabled={isConverting}
-                className="min-w-[200px]"
+                className="min-w-[200px] mb-6"
               >
                 {isConverting ? (
                   <>
@@ -147,10 +156,29 @@ const Index = () => {
                 ) : (
                   <>
                     <Download className="mr-2 h-4 w-4" />
-                    Baixar PDF
+                    Baixar PDF Completo
                   </>
                 )}
               </Button>
+
+              {pdfUrls.length > 0 && (
+                <div className="mt-6">
+                  <h2 className="text-xl font-semibold mb-4">PDFs por Bloco</h2>
+                  <div className="grid gap-2">
+                    {pdfUrls.map((url, index) => (
+                      <a
+                        key={index}
+                        href={url}
+                        download={`etiquetas_bloco_${index + 1}.pdf`}
+                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Baixar Bloco {index + 1}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
