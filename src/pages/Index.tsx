@@ -4,7 +4,6 @@ import { FileUpload } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
 import { useToast } from '@/components/ui/use-toast';
 import { ConversionProgress } from '@/components/ConversionProgress';
-import { PDFBlocksList } from '@/components/PDFBlocksList';
 import { splitZPLIntoBlocks, delay, mergePDFs } from '@/utils/pdfUtils';
 
 const Index = () => {
@@ -133,7 +132,6 @@ const Index = () => {
               progress={progress}
               onConvert={convertToPDF}
             />
-            <PDFBlocksList pdfUrls={pdfUrls} />
           </>
         )}
       </div>
