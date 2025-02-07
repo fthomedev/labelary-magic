@@ -56,7 +56,7 @@ const Index = () => {
           setProgress(((i + blockLabels.length) / labels.length) * 100);
 
           if (i + LABELS_PER_REQUEST < labels.length) {
-            await delay(10000);
+            await delay(3000); // Reduzido de 10000 para 3000 (3 segundos)
           }
         } catch (error) {
           console.error(`Erro no bloco ${i / LABELS_PER_REQUEST + 1}:`, error);
