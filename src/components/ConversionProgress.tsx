@@ -1,7 +1,7 @@
 
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, Play } from 'lucide-react';
 
 interface ConversionProgressProps {
   isConverting: boolean;
@@ -31,6 +31,11 @@ export const ConversionProgress = ({ isConverting, progress, onConvert }: Conver
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Convertendo...
+          </>
+        ) : progress === 0 ? (
+          <>
+            <Play className="mr-2 h-4 w-4" />
+            Processar
           </>
         ) : (
           <>
