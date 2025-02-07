@@ -15,6 +15,15 @@ export const translations = {
     blockError: "Failed to process block",
     blockErrorMessage: "Failed to process block {{block}}. Trying to continue with next blocks...",
     mergePdfError: "Could not merge PDFs. Please try again.",
+    dragAndDrop: "Drag and drop your ZPL file here",
+    dropHere: "Drop the file here...",
+    or: "or",
+    clickToSelect: "click to select",
+    selectFile: "Select file",
+    fileUploaded: "File uploaded successfully",
+    fileProcessed: "{{fileName}} was processed.",
+    readError: "Could not read file",
+    readErrorMessage: "Could not read the file."
   },
   "pt-BR": {
     title: "Conversor ZPL para PDF",
@@ -31,5 +40,14 @@ export const translations = {
     blockError: "Falha no bloco",
     blockErrorMessage: "Falha ao processar o bloco {{block}}. Tentando continuar com os próximos blocos...",
     mergePdfError: "Não foi possível consolidar os PDFs. Por favor, tente novamente.",
+    dragAndDrop: "Arraste e solte seu arquivo ZPL aqui",
+    dropHere: "Solte o arquivo aqui...",
+    or: "ou",
+    clickToSelect: "clique para selecionar",
+    selectFile: "Selecionar arquivo",
+    fileUploaded: "Arquivo carregado com sucesso",
+    fileProcessed: "{{fileName}} foi processado.",
+    readError: "Erro de leitura",
+    readErrorMessage: "Não foi possível ler o arquivo."
   },
 };
