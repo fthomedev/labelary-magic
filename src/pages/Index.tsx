@@ -82,8 +82,8 @@ const Index = () => {
 
       setPdfUrls(newPdfUrls);
 
+      // Criar um único PDF combinado
       if (pdfs.length > 0) {
-        // Cria um novo Blob combinando todos os PDFs
         const finalPdf = new Blob(pdfs, { type: 'application/pdf' });
         const url = window.URL.createObjectURL(finalPdf);
         const a = document.createElement('a');
