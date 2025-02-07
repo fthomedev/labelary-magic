@@ -17,7 +17,6 @@ export const mergePDFs = async (pdfBlobs: Blob[]): Promise<Blob> => {
     await merger.add(arrayBuffer);
   }
 
-  const mergedPdf = await merger.save();
-  const mergedArrayBuffer = await mergedPdf.arrayBuffer();
-  return new Blob([mergedArrayBuffer], { type: 'application/pdf' });
+  const mergedUint8Array = await merger.save('Uint8Array');
+  return new Blob([mergedUint8Array], { type: 'application/pdf' });
 };
