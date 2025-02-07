@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 
 interface ZPLPreviewProps {
@@ -7,6 +8,8 @@ interface ZPLPreviewProps {
 }
 
 export function ZPLPreview({ content }: ZPLPreviewProps) {
+  const { t } = useTranslation();
+  
   const countLabels = (zplContent: string): number => {
     const regex = /~DGR:DEMO\.GRF/g;
     const matches = zplContent.match(regex);
@@ -20,7 +23,7 @@ export function ZPLPreview({ content }: ZPLPreviewProps) {
       <div className="p-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium">
-            Total de etiquetas:
+            {t('totalLabels')}:
           </h3>
           <span className="text-lg font-bold">
             {totalLabels}

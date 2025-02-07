@@ -1,4 +1,5 @@
 
+import { useTranslation } from 'react-i18next';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2, Play } from 'lucide-react';
@@ -10,13 +11,15 @@ interface ConversionProgressProps {
 }
 
 export const ConversionProgress = ({ isConverting, progress, onConvert }: ConversionProgressProps) => {
+  const { t } = useTranslation();
+  
   return (
     <div className="mt-6 text-center">
       {isConverting && (
         <div className="mb-4">
           <Progress value={progress} className="mb-2" />
           <p className="text-sm text-muted-foreground">
-            Processando... {Math.round(progress)}%
+            {t('processing')} {Math.round(progress)}%
           </p>
         </div>
       )}
@@ -30,17 +33,17 @@ export const ConversionProgress = ({ isConverting, progress, onConvert }: Conver
         {isConverting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Convertendo...
+            {t('converting')}
           </>
         ) : progress === 0 ? (
           <>
             <Play className="mr-2 h-4 w-4" />
-            Processar
+            {t('process')}
           </>
         ) : (
           <>
             <Download className="mr-2 h-4 w-4" />
-            Baixar PDF Completo
+            {t('downloadComplete')}
           </>
         )}
       </Button>

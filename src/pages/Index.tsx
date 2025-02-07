@@ -1,9 +1,11 @@
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
 import { useToast } from '@/components/ui/use-toast';
 import { ConversionProgress } from '@/components/ConversionProgress';
+import { LanguageSelector } from '@/components/LanguageSelector';
 import { splitZPLIntoBlocks, delay, mergePDFs } from '@/utils/pdfUtils';
 
 const Index = () => {
@@ -12,6 +14,7 @@ const Index = () => {
   const [progress, setProgress] = useState(0);
   const [pdfUrls, setPdfUrls] = useState<string[]>([]);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleFileSelect = (content: string) => {
     setZplContent(content);
@@ -56,14 +59,14 @@ const Index = () => {
           setProgress(((i + blockLabels.length) / labels.length) * 100);
 
           if (i + LABELS_PER_REQUEST < labels.length) {
-            await delay(3000); // Reduzido de 10000 para 3000 (3 segundos)
+            await delay(3000);
           }
         } catch (error) {
-          console.error(`Erro no bloco ${i / LABELS_PER_REQUEST + 1}:`, error);
+          console.error(`${t('blockError')} ${i / LABELS_PER_REQUEST + 1}:`, error);
           toast({
             variant: "destructive",
-            title: "Erro",
-            description: `Falha ao processar o bloco ${i / LABELS_PER_REQUEST + 1}. Tentando continuar com os próximos blocos...`,
+            title: t('error'),
+            description: t('blockErrorMessage', { block: i / LABELS_PER_REQUEST + 1 }),
           });
         }
       }
@@ -83,15 +86,15 @@ const Index = () => {
           document.body.removeChild(a);
 
           toast({
-            title: "Sucesso!",
-            description: "PDF consolidado gerado com sucesso.",
+            title: t('success'),
+            description: t('successMessage'),
           });
         } catch (error) {
           console.error('Erro ao mesclar PDFs:', error);
           toast({
             variant: "destructive",
-            title: "Erro",
-            description: "Não foi possível consolidar os PDFs. Por favor, tente novamente.",
+            title: t('error'),
+            description: t('mergePdfError'),
           });
         }
       } else {
@@ -101,8 +104,8 @@ const Index = () => {
       console.error('Erro na conversão:', error);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível converter o arquivo. Por favor, tente novamente.",
+        title: t('error'),
+        description: t('errorMessage'),
       });
     } finally {
       setIsConverting(false);
@@ -113,12 +116,15 @@ const Index = () => {
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-secondary/20">
       <div className="max-w-4xl mx-auto">
+        <div className="flex justify-end mb-4">
+          <LanguageSelector />
+        </div>
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold tracking-tight mb-4">
-            Conversor ZPL para PDF
+            {t('title')}
           </h1>
           <p className="text-lg text-muted-foreground">
-            Transforme seus arquivos ZPL em PDF com facilidade
+            {t('subtitle')}
           </p>
         </div>
 
