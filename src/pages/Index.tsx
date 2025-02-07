@@ -36,8 +36,8 @@ const Index = () => {
       await merger.add(arrayBuffer);
     }
 
-    const mergedPdf = await merger.saveAsBlob();
-    return mergedPdf;
+    const mergedArrayBuffer = await merger.save('Uint8Array');
+    return new Blob([mergedArrayBuffer], { type: 'application/pdf' });
   };
 
   const convertToPDF = async () => {
