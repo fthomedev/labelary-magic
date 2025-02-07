@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { FileUpload } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
@@ -19,18 +20,8 @@ const Index = () => {
   const splitZPLIntoBlocks = (zpl: string): string[] => {
     // Divide o conteúdo ZPL em etiquetas individuais
     const labels = zpl.split('^XZ').filter(label => label.trim().includes('^XA'));
-    const blocks: string[] = [];
-    const LABELS_PER_BLOCK = 14;
-
-    // Agrupa as etiquetas em blocos de 14
-    for (let i = 0; i < labels.length; i += LABELS_PER_BLOCK) {
-      const block = labels.slice(i, i + LABELS_PER_BLOCK)
-        .map(label => `${label.trim()}^XZ`)
-        .join('');
-      if (block) blocks.push(block);
-    }
-
-    return blocks;
+    const completeLabels = labels.map(label => `${label.trim()}^XZ`);
+    return completeLabels;
   };
 
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -40,18 +31,22 @@ const Index = () => {
       setIsConverting(true);
       setProgress(0);
 
-      const blocks = splitZPLIntoBlocks(zplContent);
+      const labels = splitZPLIntoBlocks(zplContent);
       const pdfs: Blob[] = [];
+      const LABELS_PER_REQUEST = 14;
 
-      for (let i = 0; i < blocks.length; i++) {
+      for (let i = 0; i < labels.length; i += LABELS_PER_REQUEST) {
         try {
+          const blockLabels = labels.slice(i, i + LABELS_PER_REQUEST);
+          const blockZPL = blockLabels.join('');
+
           const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
             method: 'POST',
             headers: {
               'Accept': 'application/pdf',
               'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: blocks[i],
+            body: blockZPL,
           });
 
           if (!response.ok) {
@@ -62,18 +57,18 @@ const Index = () => {
           pdfs.push(blob);
 
           // Atualiza o progresso
-          setProgress(((i + 1) / blocks.length) * 100);
+          setProgress(((i + blockLabels.length) / labels.length) * 100);
 
-          // Aguarda 10 segundos entre as requisições
-          if (i < blocks.length - 1) {
+          // Aguarda 10 segundos entre as requisições se não for o último bloco
+          if (i + LABELS_PER_REQUEST < labels.length) {
             await delay(10000);
           }
         } catch (error) {
-          console.error(`Erro no bloco ${i + 1}:`, error);
+          console.error(`Erro no bloco ${i / LABELS_PER_REQUEST + 1}:`, error);
           toast({
             variant: "destructive",
             title: "Erro",
-            description: `Falha ao processar o bloco ${i + 1}. Tentando continuar com os próximos blocos...`,
+            description: `Falha ao processar o bloco ${i / LABELS_PER_REQUEST + 1}. Tentando continuar com os próximos blocos...`,
           });
         }
       }
