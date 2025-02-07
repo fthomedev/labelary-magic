@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { FileUpload } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
@@ -18,16 +17,17 @@ const Index = () => {
   const convertToPDF = async () => {
     try {
       setIsConverting(true);
-      const response = await fetch('http://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
+      const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
         method: 'POST',
         headers: {
           'Accept': 'application/pdf',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: zplContent,
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao converter ZPL');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const blob = await response.blob();
@@ -45,10 +45,11 @@ const Index = () => {
         description: "PDF gerado com sucesso.",
       });
     } catch (error) {
+      console.error('Erro na conversão:', error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível converter o arquivo.",
+        description: "Não foi possível converter o arquivo. Por favor, tente novamente.",
       });
     } finally {
       setIsConverting(false);
