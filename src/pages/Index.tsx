@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Progress } from '@/components/ui/progress';
+import PDFMerger from 'pdf-merger-js';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -16,7 +17,7 @@ const Index = () => {
 
   const handleFileSelect = (content: string) => {
     setZplContent(content);
-    setPdfUrls([]); // Limpa os URLs anteriores
+    setPdfUrls([]);
   };
 
   const splitZPLIntoBlocks = (zpl: string): string[] => {
@@ -27,11 +28,23 @@ const Index = () => {
 
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+  const mergePDFs = async (pdfBlobs: Blob[]): Promise<Blob> => {
+    const merger = new PDFMerger();
+
+    for (const blob of pdfBlobs) {
+      const arrayBuffer = await blob.arrayBuffer();
+      await merger.add(arrayBuffer);
+    }
+
+    const mergedPdf = await merger.saveAsBlob();
+    return mergedPdf;
+  };
+
   const convertToPDF = async () => {
     try {
       setIsConverting(true);
       setProgress(0);
-      setPdfUrls([]); // Limpa os URLs anteriores
+      setPdfUrls([]);
 
       const labels = splitZPLIntoBlocks(zplContent);
       const pdfs: Blob[] = [];
@@ -59,14 +72,11 @@ const Index = () => {
           const blob = await response.blob();
           pdfs.push(blob);
 
-          // Cria URL para o bloco atual
           const blockUrl = window.URL.createObjectURL(blob);
           newPdfUrls.push(blockUrl);
 
-          // Atualiza o progresso
           setProgress(((i + blockLabels.length) / labels.length) * 100);
 
-          // Aguarda 10 segundos entre as requisições se não for o último bloco
           if (i + LABELS_PER_REQUEST < labels.length) {
             await delay(10000);
           }
@@ -82,22 +92,30 @@ const Index = () => {
 
       setPdfUrls(newPdfUrls);
 
-      // Criar um único PDF combinado
       if (pdfs.length > 0) {
-        const finalPdf = new Blob(pdfs, { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(finalPdf);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'etiquetas.pdf';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        try {
+          const mergedPdf = await mergePDFs(pdfs);
+          const url = window.URL.createObjectURL(mergedPdf);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'etiquetas.pdf';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
 
-        toast({
-          title: "Sucesso!",
-          description: "PDF gerado com sucesso.",
-        });
+          toast({
+            title: "Sucesso!",
+            description: "PDF consolidado gerado com sucesso.",
+          });
+        } catch (error) {
+          console.error('Erro ao mesclar PDFs:', error);
+          toast({
+            variant: "destructive",
+            title: "Erro",
+            description: "Não foi possível consolidar os PDFs. Por favor, tente novamente.",
+          });
+        }
       } else {
         throw new Error("Nenhum PDF foi gerado com sucesso.");
       }
