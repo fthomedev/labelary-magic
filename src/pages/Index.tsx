@@ -6,6 +6,7 @@ import { ZPLPreview } from '@/components/ZPLPreview';
 import { useToast } from '@/components/ui/use-toast';
 import { ConversionProgress } from '@/components/ConversionProgress';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { LogoutButton } from '@/components/LogoutButton';
 import { splitZPLIntoBlocks, delay, mergePDFs } from '@/utils/pdfUtils';
 
 const Index = () => {
@@ -116,7 +117,8 @@ const Index = () => {
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-secondary/20">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between mb-4">
+          <LogoutButton />
           <LanguageSelector />
         </div>
         <div className="text-center mb-12">
