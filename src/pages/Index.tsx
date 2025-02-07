@@ -2,11 +2,10 @@
 import { useState } from 'react';
 import { FileUpload } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
-import { Button } from '@/components/ui/button';
-import { Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { Progress } from '@/components/ui/progress';
-import PDFMerger from 'pdf-merger-js';
+import { ConversionProgress } from '@/components/ConversionProgress';
+import { PDFBlocksList } from '@/components/PDFBlocksList';
+import { splitZPLIntoBlocks, delay, mergePDFs } from '@/utils/pdfUtils';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -18,26 +17,6 @@ const Index = () => {
   const handleFileSelect = (content: string) => {
     setZplContent(content);
     setPdfUrls([]);
-  };
-
-  const splitZPLIntoBlocks = (zpl: string): string[] => {
-    const labels = zpl.split('^XZ').filter(label => label.trim().includes('^XA'));
-    const completeLabels = labels.map(label => `${label.trim()}^XZ`);
-    return completeLabels;
-  };
-
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-  const mergePDFs = async (pdfBlobs: Blob[]): Promise<Blob> => {
-    const merger = new PDFMerger();
-
-    for (const blob of pdfBlobs) {
-      const arrayBuffer = await blob.arrayBuffer();
-      await merger.add(arrayBuffer);
-    }
-
-    const mergedArrayBuffer = await merger.save('Uint8Array');
-    return new Blob([mergedArrayBuffer], { type: 'application/pdf' });
   };
 
   const convertToPDF = async () => {
@@ -149,55 +128,12 @@ const Index = () => {
         {zplContent && (
           <>
             <ZPLPreview content={zplContent} />
-            
-            <div className="mt-6 text-center">
-              {isConverting && (
-                <div className="mb-4">
-                  <Progress value={progress} className="mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    Processando... {Math.round(progress)}%
-                  </p>
-                </div>
-              )}
-              
-              <Button
-                size="lg"
-                onClick={convertToPDF}
-                disabled={isConverting}
-                className="min-w-[200px] mb-6"
-              >
-                {isConverting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Convertendo...
-                  </>
-                ) : (
-                  <>
-                    <Download className="mr-2 h-4 w-4" />
-                    Baixar PDF Completo
-                  </>
-                )}
-              </Button>
-
-              {pdfUrls.length > 0 && (
-                <div className="mt-6">
-                  <h2 className="text-xl font-semibold mb-4">PDFs por Bloco</h2>
-                  <div className="grid gap-2">
-                    {pdfUrls.map((url, index) => (
-                      <a
-                        key={index}
-                        href={url}
-                        download={`etiquetas_bloco_${index + 1}.pdf`}
-                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors"
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Baixar Bloco {index + 1}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <ConversionProgress 
+              isConverting={isConverting}
+              progress={progress}
+              onConvert={convertToPDF}
+            />
+            <PDFBlocksList pdfUrls={pdfUrls} />
           </>
         )}
       </div>
