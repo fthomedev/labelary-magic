@@ -1,22 +1,31 @@
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ZPLPreviewProps {
   content: string;
 }
 
 export function ZPLPreview({ content }: ZPLPreviewProps) {
+  const countLabels = (zplContent: string): number => {
+    const regex = /~DGR:DEMO\.GRF/g;
+    const matches = zplContent.match(regex);
+    return matches ? matches.length : 0;
+  };
+
+  const totalLabels = countLabels(content);
+
   return (
     <Card className="w-full max-w-2xl mx-auto mt-6">
       <div className="p-4">
-        <h3 className="text-sm font-medium text-muted-foreground mb-2">
-          Conteúdo ZPL
-        </h3>
-        <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-          <pre className="text-sm font-mono">{content}</pre>
-        </ScrollArea>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium">
+            Total de etiquetas:
+          </h3>
+          <span className="text-lg font-bold">
+            {totalLabels}
+          </span>
+        </div>
       </div>
     </Card>
   );
