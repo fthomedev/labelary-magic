@@ -18,8 +18,28 @@ export const AuthForm = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
 
+  const validatePassword = (password: string) => {
+    if (password.length < 6) {
+      return t("passwordTooShort");
+    }
+    return null;
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isSignUp || !isResetPassword) {
+      const passwordError = validatePassword(password);
+      if (passwordError) {
+        toast({
+          variant: "destructive",
+          title: t("error"),
+          description: passwordError,
+        });
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
@@ -143,6 +163,7 @@ export const AuthForm = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            minLength={6}
           />
         </div>
         <Button type="submit" className="w-full" disabled={isLoading}>
