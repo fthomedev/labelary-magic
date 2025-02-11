@@ -6,7 +6,7 @@ import { ZPLPreview } from '@/components/ZPLPreview';
 import { useToast } from '@/components/ui/use-toast';
 import { ConversionProgress } from '@/components/ConversionProgress';
 import { LanguageSelector } from '@/components/LanguageSelector';
-import { LogoutButton } from '@/components/LogoutButton';
+import { UserMenu } from '@/components/UserMenu';
 import { splitZPLIntoBlocks, delay, mergePDFs } from '@/utils/pdfUtils';
 
 const Index = () => {
@@ -119,7 +119,7 @@ const Index = () => {
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-end items-center gap-4 mb-4">
           <LanguageSelector />
-          <LogoutButton />
+          <UserMenu />
         </div>
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold tracking-tight mb-4">
