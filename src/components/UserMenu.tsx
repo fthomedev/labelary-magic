@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Menu, User, Trash2 } from "lucide-react";
+import { Menu, User, Trash2, LogOut } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -24,12 +24,14 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const UserMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [userData, setUserData] = useState<{
     name: string | null;
     email: string | null;
@@ -51,7 +53,6 @@ export const UserMenu = () => {
 
   const handleDeleteAccount = async () => {
     try {
-      // Chamando a função RPC sem parâmetros
       const { data, error: deleteError } = await supabase.rpc('delete_user');
       if (deleteError) throw deleteError;
       
@@ -95,6 +96,7 @@ export const UserMenu = () => {
         <Button
           variant="ghost"
           size="icon"
+          className="relative"
           onClick={() => {
             loadUserData();
           }}
@@ -102,35 +104,42 @@ export const UserMenu = () => {
           <Menu className="h-5 w-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>{t("userMenu")}</SheetTitle>
+      <SheetContent side={isMobile ? "bottom" : "right"} className="w-full sm:max-w-md">
+        <SheetHeader className="space-y-2.5">
+          <SheetTitle className="text-xl font-semibold">
+            {t("userMenu")}
+          </SheetTitle>
         </SheetHeader>
-        <div className="mt-6 space-y-6">
+        <div className="mt-8 space-y-8">
           <div className="space-y-4">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <User className="h-5 w-5" />
+            <div className="flex items-center gap-4 rounded-lg bg-muted/50 p-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                <User className="h-5 w-5 text-primary" />
+              </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-sm font-medium">
                   {userData?.name || t("unnamed")}
                 </p>
-                <p className="text-sm">{userData?.email}</p>
+                <p className="text-sm text-muted-foreground">
+                  {userData?.email}
+                </p>
               </div>
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <Button
               variant="outline"
-              className="w-full justify-start"
+              className="w-full justify-start gap-2 text-base font-normal"
               onClick={handleLogout}
             >
+              <LogOut className="h-4 w-4" />
               {t("logout")}
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
                   variant="destructive"
-                  className="w-full justify-start gap-2"
+                  className="w-full justify-start gap-2 text-base font-normal"
                 >
                   <Trash2 className="h-4 w-4" />
                   {t("deleteAccount")}
@@ -138,13 +147,17 @@ export const UserMenu = () => {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>{t("deleteAccountConfirm")}</AlertDialogTitle>
-                  <AlertDialogDescription>
+                  <AlertDialogTitle className="text-lg">
+                    {t("deleteAccountConfirm")}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-base">
                     {t("deleteAccountWarning")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                <AlertDialogFooter className="gap-2 sm:gap-0">
+                  <AlertDialogCancel className="mt-0">
+                    {t("cancel")}
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={handleDeleteAccount}
