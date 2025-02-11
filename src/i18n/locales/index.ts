@@ -1,4 +1,3 @@
-
 export const translations = {
   en: {
     title: "ZPL to PDF Converter",
@@ -23,7 +22,25 @@ export const translations = {
     fileUploaded: "File uploaded successfully",
     fileProcessed: "{{fileName}} was processed.",
     readError: "Could not read file",
-    readErrorMessage: "Could not read the file."
+    readErrorMessage: "Could not read the file.",
+    // Auth translations
+    email: "Email",
+    password: "Password",
+    name: "Name",
+    login: "Login",
+    signUp: "Sign Up",
+    loading: "Loading...",
+    sending: "Sending...",
+    sendResetLink: "Send Reset Link",
+    backToLogin: "Back to Login",
+    needAccount: "Need an account? Sign up",
+    alreadyHaveAccount: "Already have an account? Log in",
+    forgotPassword: "Forgot password?",
+    error: "Error",
+    passwordTooShort: "Password should be at least 6 characters",
+    resetPasswordEmailSent: "Reset Password Email Sent",
+    checkYourEmail: "Check your email for the reset link",
+    signUpSuccess: "Sign Up Success",
   },
   "pt-BR": {
     title: "Conversor ZPL para PDF",
@@ -48,6 +65,24 @@ export const translations = {
     fileUploaded: "Arquivo carregado com sucesso",
     fileProcessed: "{{fileName}} foi processado.",
     readError: "Erro de leitura",
-    readErrorMessage: "Não foi possível ler o arquivo."
+    readErrorMessage: "Não foi possível ler o arquivo.",
+    // Auth translations
+    email: "Email",
+    password: "Senha",
+    name: "Nome",
+    login: "Entrar",
+    signUp: "Cadastrar",
+    loading: "Carregando...",
+    sending: "Enviando...",
+    sendResetLink: "Enviar Link de Redefinição",
+    backToLogin: "Voltar para Login",
+    needAccount: "Precisa de uma conta? Cadastre-se",
+    alreadyHaveAccount: "Já tem uma conta? Entre",
+    forgotPassword: "Esqueceu a senha?",
+    error: "Erro",
+    passwordTooShort: "A senha deve ter pelo menos 6 caracteres",
+    resetPasswordEmailSent: "Email de Redefinição Enviado",
+    checkYourEmail: "Verifique seu email para o link de redefinição",
+    signUpSuccess: "Cadastro Realizado com Sucesso",
   },
 };
