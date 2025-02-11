@@ -30,11 +30,11 @@ const Auth = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8 relative">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
       <div className="absolute top-4 right-4 z-10">
         <LanguageSelector />
       </div>
-      <div className="w-full max-w-lg mx-auto">
+      <div className="flex justify-center w-full">
         <AuthForm />
       </div>
     </div>

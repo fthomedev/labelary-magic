@@ -87,7 +87,7 @@ export const AuthForm = () => {
 
   if (isResetPassword) {
     return (
-      <Card className="w-full max-w-sm mx-auto p-6">
+      <Card className="w-full max-w-sm p-6">
         <form onSubmit={handleAuth} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">{t("email")}</Label>
@@ -116,7 +116,7 @@ export const AuthForm = () => {
   }
 
   return (
-    <Card className="w-full max-w-sm mx-auto p-6">
+    <Card className="w-full max-w-sm p-6">
       <form onSubmit={handleAuth} className="space-y-4">
         {isSignUp && (
           <div className="space-y-2">
@@ -154,11 +154,11 @@ export const AuthForm = () => {
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? t("loading") : isSignUp ? t("signUp") : t("login")}
         </Button>
-        <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:justify-between">
+        <div className="flex items-center justify-between pt-2">
           <Button
             type="button"
             variant="ghost"
-            className="text-sm"
+            className="text-sm px-0 hover:bg-transparent"
             onClick={() => setIsSignUp(!isSignUp)}
           >
             {isSignUp ? t("alreadyHaveAccount") : t("needAccount")}
@@ -167,7 +167,7 @@ export const AuthForm = () => {
             <Button
               type="button"
               variant="ghost"
-              className="text-sm"
+              className="text-sm px-0 hover:bg-transparent"
               onClick={() => setIsResetPassword(true)}
             >
               {t("forgotPassword")}
