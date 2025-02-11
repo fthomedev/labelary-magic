@@ -51,7 +51,7 @@ export const UserMenu = () => {
 
   const handleDeleteAccount = async () => {
     try {
-      const { error } = await supabase.rpc('delete_user');
+      const { error } = await supabase.rpc('delete_user', {});
       if (error) throw error;
       await supabase.auth.signOut();
       navigate("/auth");
@@ -144,7 +144,7 @@ export const UserMenu = () => {
                 <AlertDialogFooter>
                   <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                   <AlertDialogAction
-                    variant="destructive"
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={handleDeleteAccount}
                   >
                     {t("confirm")}
