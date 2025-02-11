@@ -21,7 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -51,7 +51,8 @@ export const UserMenu = () => {
 
   const handleDeleteAccount = async () => {
     try {
-      const { error: deleteError } = await supabase.rpc('delete_user');
+      // Corrigindo a chamada da função RPC adicionando um objeto vazio como parâmetro
+      const { error: deleteError } = await supabase.rpc('delete_user', {});
       if (deleteError) throw deleteError;
       
       await supabase.auth.signOut();
