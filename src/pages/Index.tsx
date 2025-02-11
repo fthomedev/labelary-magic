@@ -117,9 +117,9 @@ const Index = () => {
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-secondary/20">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between mb-4">
-          <LogoutButton />
+        <div className="flex justify-end items-center gap-4 mb-4">
           <LanguageSelector />
+          <LogoutButton />
         </div>
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold tracking-tight mb-4">
