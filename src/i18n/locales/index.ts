@@ -1,3 +1,4 @@
+
 export const translations = {
   en: {
     title: "ZPL to PDF Converter",
@@ -36,7 +37,6 @@ export const translations = {
     needAccount: "Need an account? Sign up",
     alreadyHaveAccount: "Already have an account? Log in",
     forgotPassword: "Forgot password?",
-    error: "Error",
     passwordTooShort: "Password should be at least 6 characters",
     resetPasswordEmailSent: "Reset Password Email Sent",
     checkYourEmail: "Check your email for the reset link",
@@ -79,7 +79,6 @@ export const translations = {
     needAccount: "Precisa de uma conta? Cadastre-se",
     alreadyHaveAccount: "Já tem uma conta? Entre",
     forgotPassword: "Esqueceu a senha?",
-    error: "Erro",
     passwordTooShort: "A senha deve ter pelo menos 6 caracteres",
     resetPasswordEmailSent: "Email de Redefinição Enviado",
     checkYourEmail: "Verifique seu email para o link de redefinição",
