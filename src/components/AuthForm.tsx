@@ -154,11 +154,11 @@ export const AuthForm = () => {
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? t("loading") : isSignUp ? t("signUp") : t("login")}
         </Button>
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-col gap-2 pt-2">
           <Button
             type="button"
             variant="ghost"
-            className="text-sm px-0 hover:bg-transparent"
+            className="text-sm px-0 hover:bg-transparent h-auto py-0"
             onClick={() => setIsSignUp(!isSignUp)}
           >
             {isSignUp ? t("alreadyHaveAccount") : t("needAccount")}
@@ -167,7 +167,7 @@ export const AuthForm = () => {
             <Button
               type="button"
               variant="ghost"
-              className="text-sm px-0 hover:bg-transparent"
+              className="text-sm px-0 hover:bg-transparent h-auto py-0"
               onClick={() => setIsResetPassword(true)}
             >
               {t("forgotPassword")}
