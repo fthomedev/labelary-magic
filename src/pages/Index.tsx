@@ -126,31 +126,35 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="flex-1 container max-w-5xl mx-auto px-4 py-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex flex-col gap-4">
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">
-              {t('subtitle')}
-            </p>
-            <FileUpload onFileSelect={handleFileSelect} />
-          </div>
-          
-          {zplContent && (
-            <div className="flex-1 min-h-0">
-              <ZPLPreview content={zplContent} />
+      <main className="flex-1 w-full p-4">
+        <div className="container max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-4">
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  {t('subtitle')}
+                </p>
+                <FileUpload onFileSelect={handleFileSelect} />
+              </div>
+              
+              {zplContent && (
+                <div className="flex-1 min-h-0">
+                  <ZPLPreview content={zplContent} />
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {zplContent && (
-          <div className="flex flex-col">
-            <ConversionProgress 
-              isConverting={isConverting}
-              progress={progress}
-              onConvert={convertToPDF}
-            />
+            {zplContent && (
+              <div className="flex flex-col">
+                <ConversionProgress 
+                  isConverting={isConverting}
+                  progress={progress}
+                  onConvert={convertToPDF}
+                />
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </main>
     </div>
   );
