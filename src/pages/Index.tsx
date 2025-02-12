@@ -115,34 +115,43 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-secondary/20">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-end items-center gap-4 mb-4">
+    <div className="h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
+      <header className="flex justify-between items-center p-4">
+        <h1 className="text-2xl font-bold tracking-tight">
+          {t('title')}
+        </h1>
+        <div className="flex items-center gap-4">
           <LanguageSelector />
           <UserMenu />
         </div>
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold tracking-tight mb-4">
-            {t('title')}
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            {t('subtitle')}
-          </p>
+      </header>
+
+      <main className="flex-1 p-4 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden">
+        <div className="flex flex-col gap-4 h-full">
+          <div className="flex-none">
+            <p className="text-sm text-muted-foreground mb-4">
+              {t('subtitle')}
+            </p>
+            <FileUpload onFileSelect={handleFileSelect} />
+          </div>
+          
+          {zplContent && (
+            <div className="flex-1 min-h-0">
+              <ZPLPreview content={zplContent} />
+            </div>
+          )}
         </div>
 
-        <FileUpload onFileSelect={handleFileSelect} />
-
         {zplContent && (
-          <>
-            <ZPLPreview content={zplContent} />
+          <div className="flex flex-col h-full">
             <ConversionProgress 
               isConverting={isConverting}
               progress={progress}
               onConvert={convertToPDF}
             />
-          </>
+          </div>
         )}
-      </div>
+      </main>
     </div>
   );
 };
