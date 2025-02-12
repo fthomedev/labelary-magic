@@ -53,7 +53,8 @@ export const UserMenu = () => {
 
   const handleDeleteAccount = async () => {
     try {
-      const { data, error: deleteError } = await supabase.rpc('delete_user');
+      // Chamando a função RPC e explicitamente tipando o retorno como void
+      const { error: deleteError } = await supabase.rpc('delete_user') as { data: null, error: null | Error };
       if (deleteError) throw deleteError;
       
       await supabase.auth.signOut();
