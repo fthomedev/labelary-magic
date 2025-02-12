@@ -1,6 +1,7 @@
+
 export const translations = {
   en: {
-    title: "ZPL to PDF Converter",
+    title: "ZPL Magic",
     subtitle: "Transform your ZPL files into PDF with ease",
     totalLabels: "Total labels",
     processing: "Processing...",
@@ -51,7 +52,7 @@ export const translations = {
     accountDeleted: "Your account has been deleted successfully.",
   },
   "pt-BR": {
-    title: "Conversor ZPL para PDF",
+    title: "ZPL Magic",
     subtitle: "Transforme seus arquivos ZPL em PDF com facilidade",
     totalLabels: "Total de etiquetas",
     processing: "Processando...",
