@@ -115,8 +115,8 @@ const Index = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
-      <header className="flex justify-between items-center p-4">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
+      <header className="flex justify-between items-center p-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b">
         <h1 className="text-2xl font-bold tracking-tight">
           {t('title')}
         </h1>
@@ -126,10 +126,10 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="flex-1 p-4 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden">
-        <div className="flex flex-col gap-4 h-full">
-          <div className="flex-none">
-            <p className="text-sm text-muted-foreground mb-4">
+      <main className="flex-1 container mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-6">
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
               {t('subtitle')}
             </p>
             <FileUpload onFileSelect={handleFileSelect} />
@@ -143,7 +143,7 @@ const Index = () => {
         </div>
 
         {zplContent && (
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col">
             <ConversionProgress 
               isConverting={isConverting}
               progress={progress}
