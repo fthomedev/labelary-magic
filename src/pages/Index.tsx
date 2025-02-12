@@ -116,20 +116,20 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
-      <header className="flex justify-between items-center p-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b">
-        <h1 className="text-2xl font-bold tracking-tight">
+      <header className="flex justify-between items-center px-4 py-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b">
+        <h1 className="text-xl font-bold tracking-tight">
           {t('title')}
         </h1>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <LanguageSelector />
           <UserMenu />
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="flex flex-col gap-6">
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
+      <main className="flex-1 container max-w-5xl mx-auto px-4 py-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-4">
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
               {t('subtitle')}
             </p>
             <FileUpload onFileSelect={handleFileSelect} />

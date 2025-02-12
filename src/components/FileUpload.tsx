@@ -49,26 +49,26 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
   });
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-xl mx-auto">
       <div
         {...getRootProps()}
-        className={`file-drop-area ${isDragActive ? 'dragging' : ''}`}
+        className="p-4 border-2 border-dashed border-border rounded-lg hover:border-primary/50 transition-colors"
       >
         <input {...getInputProps()} />
         <div className="text-center">
-          <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
           {isDragActive ? (
-            <p className="text-lg font-medium">{t('dropHere')}</p>
+            <p className="text-sm font-medium">{t('dropHere')}</p>
           ) : (
             <>
-              <p className="text-lg font-medium mb-2">
+              <p className="text-sm font-medium mb-2">
                 {t('dragAndDrop')}
               </p>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-xs text-muted-foreground mb-2">
                 {t('or')} {t('clickToSelect')}
               </p>
-              <Button variant="outline">
-                <FileText className="mr-2 h-4 w-4" />
+              <Button variant="outline" size="sm">
+                <FileText className="mr-2 h-3 w-3" />
                 {t('selectFile')}
               </Button>
             </>
@@ -76,8 +76,8 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
         </div>
       </div>
       {error && (
-        <div className="mt-4 p-4 bg-destructive/10 rounded-lg flex items-center text-destructive">
-          <AlertCircle className="h-4 w-4 mr-2" />
+        <div className="mt-2 p-2 bg-destructive/10 rounded text-xs flex items-center text-destructive">
+          <AlertCircle className="h-3 w-3 mr-1" />
           {error}
         </div>
       )}
