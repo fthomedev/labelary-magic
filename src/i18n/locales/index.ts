@@ -1,4 +1,3 @@
-
 export const translations = {
   en: {
     title: "ZPL to PDF Converter",
@@ -41,6 +40,15 @@ export const translations = {
     resetPasswordEmailSent: "Reset Password Email Sent",
     checkYourEmail: "Check your email for the reset link",
     signUpSuccess: "Sign Up Success",
+    userMenu: "User Menu",
+    unnamed: "Unnamed User",
+    logout: "Sign Out",
+    deleteAccount: "Delete Account",
+    deleteAccountConfirm: "Delete Account?",
+    deleteAccountWarning: "This action cannot be undone. All your data will be permanently deleted.",
+    cancel: "Cancel",
+    confirm: "Yes, delete account",
+    accountDeleted: "Your account has been deleted successfully.",
   },
   "pt-BR": {
     title: "Conversor ZPL para PDF",
@@ -83,5 +91,14 @@ export const translations = {
     resetPasswordEmailSent: "Email de Redefinição Enviado",
     checkYourEmail: "Verifique seu email para o link de redefinição",
     signUpSuccess: "Cadastro Realizado com Sucesso",
+    userMenu: "Menu do Usuário",
+    unnamed: "Usuário sem nome",
+    logout: "Sair",
+    deleteAccount: "Excluir Conta",
+    deleteAccountConfirm: "Excluir Conta?",
+    deleteAccountWarning: "Esta ação não pode ser desfeita. Todos os seus dados serão permanentemente excluídos.",
+    cancel: "Cancelar",
+    confirm: "Sim, excluir conta",
+    accountDeleted: "Sua conta foi excluída com sucesso.",
   },
 };
