@@ -115,42 +115,55 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20">
-      <header className="flex justify-between items-center px-4 py-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b">
-        <h1 className="text-xl font-bold tracking-tight">
-          {t('title')}
-        </h1>
-        <div className="flex items-center gap-2">
-          <LanguageSelector />
-          <UserMenu />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow-sm">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 justify-between items-center">
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              {t('title')}
+            </h1>
+            <div className="flex items-center gap-4">
+              <LanguageSelector />
+              <UserMenu />
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 w-full p-4">
-        <div className="container max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-4">
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">
-                  {t('subtitle')}
-                </p>
-                <FileUpload onFileSelect={handleFileSelect} />
+      <main className="py-10">
+        <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <div className="px-4 sm:px-0">
+            <h2 className="text-base font-semibold leading-7 text-gray-900 dark:text-gray-100">
+              {t('subtitle')}
+            </h2>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
+                <div className="p-6">
+                  <FileUpload onFileSelect={handleFileSelect} />
+                </div>
               </div>
               
               {zplContent && (
-                <div className="flex-1 min-h-0">
-                  <ZPLPreview content={zplContent} />
+                <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
+                  <div className="p-6">
+                    <ZPLPreview content={zplContent} />
+                  </div>
                 </div>
               )}
             </div>
 
             {zplContent && (
-              <div className="flex flex-col">
-                <ConversionProgress 
-                  isConverting={isConverting}
-                  progress={progress}
-                  onConvert={convertToPDF}
-                />
+              <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
+                <div className="p-6">
+                  <ConversionProgress 
+                    isConverting={isConverting}
+                    progress={progress}
+                    onConvert={convertToPDF}
+                  />
+                </div>
               </div>
             )}
           </div>
