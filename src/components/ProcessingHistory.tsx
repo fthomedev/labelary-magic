@@ -58,8 +58,8 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
       }
       
       // Use explicit type assertion with unknown intermediate type
-      const { data, error } = await (supabase
-        .from('processing_history' as any) as any)
+      const { data, error } = await supabase
+        .from('processing_history')
         .select('*')
         .eq('user_id', sessionData.session.user.id)
         .order('date', { ascending: false });
@@ -106,8 +106,9 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     if (!recordToDelete) return;
     
     try {
-      const { error } = await (supabase
-        .from('processing_history' as any) as any)
+      // Make sure to properly delete from the database
+      const { error } = await supabase
+        .from('processing_history')
         .delete()
         .eq('id', recordToDelete);
       
@@ -119,7 +120,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           description: t('deleteRecordError'),
         });
       } else {
-        // Remove the deleted record from the local state
+        // Remove the deleted record from the local state only after successful deletion
         setDbRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
         toast({
           title: t('success'),
