@@ -45,7 +45,7 @@ export function ZPLPreview({
   return (
     <div className="rounded-lg bg-gradient-to-r from-cyan-500/10 to-blue-500/10 p-1">
       <div className="rounded-md bg-white dark:bg-gray-800 p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div className="flex items-center space-x-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/10 dark:bg-cyan-900/30">
               {isProcessingComplete ? (
@@ -67,7 +67,7 @@ export function ZPLPreview({
             <Button 
               variant="outline" 
               size="sm" 
-              className="flex items-center gap-2 text-green-600 border-green-200 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/30"
+              className="flex items-center gap-2 text-green-600 border-green-200 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/30 w-full sm:w-auto justify-center"
               onClick={handleDownload}
               disabled={!lastPdfUrl}
             >
@@ -75,7 +75,7 @@ export function ZPLPreview({
               {t('downloadAgain')}
             </Button>
           ) : (
-            <span className="inline-flex items-center rounded-md bg-cyan-50 dark:bg-cyan-900/50 px-4 py-2">
+            <span className="inline-flex items-center rounded-md bg-cyan-50 dark:bg-cyan-900/50 px-4 py-2 w-full sm:w-auto justify-center">
               <span className="text-xl font-semibold text-cyan-700 dark:text-cyan-400">
                 {totalLabels}
               </span>

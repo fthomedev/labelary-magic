@@ -8,6 +8,7 @@ import { ConversionProgress } from '@/components/ConversionProgress';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { UserMenu } from '@/components/UserMenu';
 import { splitZPLIntoBlocks, delay, mergePDFs } from '@/utils/pdfUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -20,6 +21,7 @@ const Index = () => {
   const [lastPdfUrl, setLastPdfUrl] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
 
   const handleFileSelect = (content: string, type: 'file' | 'zip' = 'file', count: number = 1) => {
     setZplContent(content);
@@ -134,10 +136,10 @@ const Index = () => {
       <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white truncate mr-2">
               {t('title')}
             </h1>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               <LanguageSelector />
               <UserMenu />
             </div>
@@ -145,25 +147,25 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="py-10">
-        <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-          <div className="px-4 sm:px-0">
-            <h2 className="text-base font-semibold leading-7 text-gray-900 dark:text-gray-100">
+      <main className="py-6 md:py-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="px-0 sm:px-0">
+            <h2 className="text-sm md:text-base font-semibold leading-7 text-gray-900 dark:text-gray-100">
               {t('subtitle')}
             </h2>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
+          <div className="mt-4 md:mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
+            <div className="space-y-4 md:space-y-6">
               <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
-                <div className="p-6">
+                <div className="p-4 md:p-6">
                   <FileUpload onFileSelect={handleFileSelect} />
                 </div>
               </div>
               
               {zplContent && (
                 <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
-                  <div className="p-6">
+                  <div className="p-4 md:p-6">
                     <ZPLPreview 
                       content={zplContent} 
                       sourceType={sourceType}
@@ -178,7 +180,7 @@ const Index = () => {
 
             {zplContent && (
               <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
-                <div className="p-6">
+                <div className="p-4 md:p-6">
                   <ConversionProgress 
                     isConverting={isConverting}
                     progress={progress}
