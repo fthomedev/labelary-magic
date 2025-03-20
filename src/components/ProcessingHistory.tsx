@@ -36,6 +36,15 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
   const fetchProcessingHistory = async () => {
     try {
       setIsLoading(true);
+      
+      // Check if user is authenticated
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        console.log('No active session found');
+        setIsLoading(false);
+        return;
+      }
+      
       // Use explicit type assertion with unknown intermediate type
       const { data, error } = await (supabase
         .from('processing_history' as any) as any)
@@ -45,6 +54,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
       if (error) {
         console.error('Error fetching processing history:', error);
       } else if (data) {
+        console.log('Processing history data:', data);
         setDbRecords(
           data.map((record: any) => ({
             id: record.id,

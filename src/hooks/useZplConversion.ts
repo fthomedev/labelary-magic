@@ -26,12 +26,16 @@ export const useZplConversion = () => {
     try {
       const user = await supabase.auth.getUser();
       if (user && user.data.user) {
-        // Use a more appropriate type assertion chain
         await (supabase.rpc as any)('insert_processing_history', {
           p_user_id: user.data.user.id,
           p_label_count: labelCount,
           p_pdf_url: pdfUrl
         });
+        
+        // Refresh session to make sure auth is still valid
+        await supabase.auth.refreshSession();
+      } else {
+        console.log('No authenticated user found');
       }
     } catch (error) {
       console.error('Failed to save processing history to database:', error);

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
@@ -9,11 +9,13 @@ import { UserMenu } from '@/components/UserMenu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ProcessingHistory } from '@/components/ProcessingHistory';
 import { useZplConversion } from '@/hooks/useZplConversion';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
   const [fileCount, setFileCount] = useState(1);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   
@@ -24,6 +26,21 @@ const Index = () => {
     lastPdfUrl,
     convertToPDF
   } = useZplConversion();
+
+  useEffect(() => {
+    // Check if user is logged in
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsLoggedIn(!!data.session);
+      
+      // Set up auth state change listener
+      supabase.auth.onAuthStateChange((event, session) => {
+        setIsLoggedIn(!!session);
+      });
+    };
+    
+    checkAuth();
+  }, []);
 
   const handleFileSelect = (content: string, type: 'file' | 'zip' = 'file', count: number = 1) => {
     setZplContent(content);

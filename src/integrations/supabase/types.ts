@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      processing_history: {
+        Row: {
+          date: string
+          id: string
+          label_count: number
+          pdf_url: string
+          user_id: string
+        }
+        Insert: {
+          date?: string
+          id?: string
+          label_count: number
+          pdf_url: string
+          user_id: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          label_count?: number
+          pdf_url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -38,7 +62,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      insert_processing_history: {
+        Args: {
+          p_user_id: string
+          p_label_count: number
+          p_pdf_url: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
