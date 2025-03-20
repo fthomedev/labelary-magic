@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -15,6 +16,8 @@ const Index = () => {
   const [pdfUrls, setPdfUrls] = useState<string[]>([]);
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
   const [fileCount, setFileCount] = useState(1);
+  const [isProcessingComplete, setIsProcessingComplete] = useState(false);
+  const [lastPdfUrl, setLastPdfUrl] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -23,6 +26,8 @@ const Index = () => {
     setPdfUrls([]);
     setSourceType(type);
     setFileCount(count);
+    setIsProcessingComplete(false);
+    setLastPdfUrl(undefined);
   };
 
   const convertToPDF = async () => {
@@ -30,6 +35,7 @@ const Index = () => {
       setIsConverting(true);
       setProgress(0);
       setPdfUrls([]);
+      setIsProcessingComplete(false);
 
       const labels = splitZPLIntoBlocks(zplContent);
       const pdfs: Blob[] = [];
@@ -81,18 +87,24 @@ const Index = () => {
         try {
           const mergedPdf = await mergePDFs(pdfs);
           const url = window.URL.createObjectURL(mergedPdf);
+          
+          // Save the URL for later download
+          setLastPdfUrl(url);
+          
           const a = document.createElement('a');
           a.href = url;
           a.download = 'etiquetas.pdf';
           document.body.appendChild(a);
           a.click();
-          window.URL.revokeObjectURL(url);
           document.body.removeChild(a);
 
           toast({
             title: t('success'),
             description: t('successMessage'),
           });
+          
+          // Mark processing as complete
+          setIsProcessingComplete(true);
         } catch (error) {
           console.error('Erro ao mesclar PDFs:', error);
           toast({
@@ -156,6 +168,8 @@ const Index = () => {
                       content={zplContent} 
                       sourceType={sourceType}
                       fileCount={fileCount}
+                      isProcessingComplete={isProcessingComplete}
+                      lastPdfUrl={lastPdfUrl}
                     />
                   </div>
                 </div>
