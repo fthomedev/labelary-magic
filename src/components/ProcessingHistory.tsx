@@ -141,9 +141,9 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[40%]">{isMobile ? t('date').substring(0, 4) : t('date')}</TableHead>
-                <TableHead className="w-[40%]">{isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}</TableHead>
-                <TableHead className="w-[20%] text-right">{isMobile ? '' : t('actions')}</TableHead>
+                <TableHead className="w-[45%]">{isMobile ? t('date').substring(0, 4) : t('date')}</TableHead>
+                <TableHead className="w-[45%]">{isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}</TableHead>
+                <TableHead className="w-[10%]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

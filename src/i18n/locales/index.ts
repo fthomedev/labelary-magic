@@ -1,3 +1,4 @@
+
 export const translations = {
   en: {
     title: "ZPL Magic",
@@ -59,7 +60,7 @@ export const translations = {
     historyTitle: "Last 30 days",
     date: "Date",
     labelCount: "Label Count",
-    actions: "Actions",
+    actions: "",
     download: "Download",
     noHistory: "No history found",
     loadingHistory: "Loading history...",
@@ -125,7 +126,7 @@ export const translations = {
     historyTitle: "Últimos 30 dias",
     date: "Data",
     labelCount: "Qtd. Etiquetas",
-    actions: "Ações",
+    actions: "",
     download: "Baixar",
     noHistory: "Nenhum histórico encontrado",
     loadingHistory: "Carregando histórico...",
