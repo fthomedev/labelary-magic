@@ -83,6 +83,7 @@ export const translations = {
     processingComplete: "Processamento Concluído",
     labelsProcessed: "{{count}} etiquetas processadas",
     filesProcessedFromZip: "{{count}} arquivos processados do arquivo ZIP",
+    
     // Auth translations
     email: "Email",
     password: "Senha",
@@ -109,5 +110,15 @@ export const translations = {
     cancel: "Cancelar",
     confirm: "Sim, excluir conta",
     accountDeleted: "Sua conta foi excluída com sucesso.",
+    
+    // Processing history translations
+    processingHistory: "Histórico de Processamento",
+    historyTitle: "Últimos 30 dias",
+    date: "Data",
+    labelCount: "Quantidade de Etiquetas",
+    actions: "Ações",
+    download: "Baixar",
+    noHistory: "Nenhum histórico de processamento encontrado",
+    loadingHistory: "Carregando histórico...",
   },
 };
