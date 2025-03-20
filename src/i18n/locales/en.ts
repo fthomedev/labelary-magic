@@ -28,6 +28,15 @@ export default {
   labelCount: "Label Count",
   actions: "Actions",
   download: "Download",
+  delete: "Delete",
   noHistory: "No processing history found",
   loadingHistory: "Loading history...",
+  
+  // Delete record confirmation
+  deleteRecordConfirm: "Delete Record?",
+  deleteRecordWarning: "This action cannot be undone. The record will be permanently deleted.",
+  cancel: "Cancel",
+  confirm: "Delete",
+  deleteRecordSuccess: "Record deleted successfully",
+  deleteRecordError: "There was an error deleting the record. Please try again.",
 };

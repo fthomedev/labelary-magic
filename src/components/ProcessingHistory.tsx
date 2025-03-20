@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, Calendar, Tag, Loader2 } from 'lucide-react';
+import { Download, Calendar, Tag, Loader2, Trash2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -12,9 +12,18 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
+import { useToast } from '@/components/ui/use-toast';
 
 interface ProcessingHistoryProps {
   records?: ProcessingRecord[];
@@ -26,6 +35,9 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
   const isMobile = useIsMobile();
   const [dbRecords, setDbRecords] = useState<ProcessingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(!localOnly);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
+  const { toast } = useToast();
   
   useEffect(() => {
     if (!localOnly) {
@@ -85,6 +97,48 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     document.body.removeChild(a);
   };
 
+  const confirmDelete = (id: string) => {
+    setRecordToDelete(id);
+    setDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!recordToDelete) return;
+    
+    try {
+      const { error } = await (supabase
+        .from('processing_history' as any) as any)
+        .delete()
+        .eq('id', recordToDelete);
+      
+      if (error) {
+        console.error('Error deleting record:', error);
+        toast({
+          variant: "destructive",
+          title: t('error'),
+          description: t('deleteRecordError'),
+        });
+      } else {
+        // Remove the deleted record from the local state
+        setDbRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
+        toast({
+          title: t('success'),
+          description: t('deleteRecordSuccess'),
+        });
+      }
+    } catch (err) {
+      console.error('Failed to delete record:', err);
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: t('deleteRecordError'),
+      });
+    } finally {
+      setDialogOpen(false);
+      setRecordToDelete(null);
+    }
+  };
+
   const formatDate = (date: Date) => {
     try {
       if (isMobile) {
@@ -130,57 +184,86 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
   }
 
   return (
-    <Card className="mt-4 bg-white dark:bg-gray-800 shadow overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium">
-          {t('processingHistory')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[45%]">{isMobile ? t('date').substring(0, 4) : t('date')}</TableHead>
-                <TableHead className="w-[45%]">{isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}</TableHead>
-                <TableHead className="w-[10%]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {records.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell className="py-2">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                      <span>{formatDate(record.date)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-2">
-                    <div className="flex items-center gap-2">
-                      <Tag className="h-4 w-4 text-cyan-500 flex-shrink-0" />
-                      <span>{record.labelCount}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-2">
-                    <div className="flex justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="p-0 h-8 w-8 rounded-full flex items-center justify-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                        onClick={() => handleDownload(record.pdfUrl)}
-                        title={t('download')}
-                      >
-                        <Download className="h-4 w-4" />
-                        <span className="sr-only">{t('download')}</span>
-                      </Button>
-                    </div>
-                  </TableCell>
+    <>
+      <Card className="mt-4 bg-white dark:bg-gray-800 shadow overflow-hidden">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-medium">
+            {t('processingHistory')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[40%]">{isMobile ? t('date').substring(0, 4) : t('date')}</TableHead>
+                  <TableHead className="w-[40%]">{isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}</TableHead>
+                  <TableHead className="w-[20%]"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {records.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="py-2">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                        <span>{formatDate(record.date)}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <div className="flex items-center gap-2">
+                        <Tag className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                        <span>{record.labelCount}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <div className="flex justify-end items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-0 h-8 w-8 rounded-full flex items-center justify-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                          onClick={() => handleDownload(record.pdfUrl)}
+                          title={t('download')}
+                        >
+                          <Download className="h-4 w-4" />
+                          <span className="sr-only">{t('download')}</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-0 h-8 w-8 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                          onClick={() => confirmDelete(record.id)}
+                          title={t('delete')}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">{t('delete')}</span>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('deleteRecordConfirm')}</DialogTitle>
+            <DialogDescription>{t('deleteRecordWarning')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              {t('cancel')}
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              {t('confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
