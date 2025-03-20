@@ -1,0 +1,55 @@
+
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { HistoryTableRow } from './HistoryTableRow';
+import { ProcessingRecord } from '@/hooks/useZplConversion';
+
+interface HistoryTableProps {
+  records: ProcessingRecord[];
+  formatDate: (date: Date) => string;
+  onDownload: (pdfUrl: string) => void;
+  onDeleteClick: (id: string) => void;
+  isMobile: boolean;
+}
+
+export function HistoryTable({ 
+  records, 
+  formatDate, 
+  onDownload, 
+  onDeleteClick,
+  isMobile 
+}: HistoryTableProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[40%]">{isMobile ? t('date').substring(0, 4) : t('date')}</TableHead>
+            <TableHead className="w-[40%]">{isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}</TableHead>
+            <TableHead className="w-[20%]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {records.map((record) => (
+            <HistoryTableRow
+              key={record.id}
+              record={record}
+              formatDate={formatDate}
+              onDownload={onDownload}
+              onDeleteClick={onDeleteClick}
+            />
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}

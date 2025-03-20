@@ -1,29 +1,12 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, Calendar, Tag, Loader2, Trash2 } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { supabase } from '@/integrations/supabase/client';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
-import { useToast } from '@/components/ui/use-toast';
+import { useProcessingHistory } from '@/hooks/useProcessingHistory';
+import { HistoryTable } from './history/HistoryTable';
+import { DeleteConfirmDialog } from './history/DeleteConfirmDialog';
 
 interface ProcessingHistoryProps {
   records?: ProcessingRecord[];
@@ -31,127 +14,18 @@ interface ProcessingHistoryProps {
 }
 
 export function ProcessingHistory({ records: localRecords, localOnly = false }: ProcessingHistoryProps) {
-  const { t, i18n } = useTranslation();
-  const isMobile = useIsMobile();
-  const [dbRecords, setDbRecords] = useState<ProcessingRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(!localOnly);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
-  const { toast } = useToast();
-  
-  useEffect(() => {
-    if (!localOnly) {
-      fetchProcessingHistory();
-    }
-  }, [localOnly]);
-
-  const fetchProcessingHistory = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Check if user is authenticated
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        console.log('No active session found');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Use explicit type assertion with unknown intermediate type
-      const { data, error } = await supabase
-        .from('processing_history')
-        .select('*')
-        .eq('user_id', sessionData.session.user.id)
-        .order('date', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching processing history:', error);
-      } else if (data) {
-        console.log('Processing history data:', data);
-        setDbRecords(
-          data.map((record: any) => ({
-            id: record.id,
-            date: new Date(record.date),
-            labelCount: record.label_count,
-            pdfUrl: record.pdf_url
-          }))
-        );
-      }
-    } catch (err) {
-      console.error('Failed to fetch processing history:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Use local records if provided, otherwise use database records
-  const records = localOnly ? localRecords || [] : dbRecords;
-  
-  const handleDownload = (pdfUrl: string) => {
-    const a = document.createElement('a');
-    a.href = pdfUrl;
-    a.download = 'etiquetas.pdf';
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(pdfUrl);
-    document.body.removeChild(a);
-  };
-
-  const confirmDelete = (id: string) => {
-    setRecordToDelete(id);
-    setDialogOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (!recordToDelete) return;
-    
-    try {
-      // Make sure to properly delete from the database
-      const { error } = await supabase
-        .from('processing_history')
-        .delete()
-        .eq('id', recordToDelete);
-      
-      if (error) {
-        console.error('Error deleting record:', error);
-        toast({
-          variant: "destructive",
-          title: t('error'),
-          description: t('deleteRecordError'),
-        });
-      } else {
-        // Remove the deleted record from the local state only after successful deletion
-        setDbRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
-        toast({
-          title: t('success'),
-          description: t('deleteRecordSuccess'),
-        });
-      }
-    } catch (err) {
-      console.error('Failed to delete record:', err);
-      toast({
-        variant: "destructive",
-        title: t('error'),
-        description: t('deleteRecordError'),
-      });
-    } finally {
-      setDialogOpen(false);
-      setRecordToDelete(null);
-    }
-  };
-
-  const formatDate = (date: Date) => {
-    try {
-      if (isMobile) {
-        return date.toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US');
-      }
-      return date.toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US') + ' ' + 
-             date.toLocaleTimeString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
-    } catch (e) {
-      console.error('Error formatting date:', e);
-      return String(date);
-    }
-  };
+  const { t } = useTranslation();
+  const {
+    isLoading,
+    records,
+    dialogOpen,
+    setDialogOpen,
+    formatDate,
+    handleDownload,
+    confirmDelete,
+    handleDelete,
+    isMobile
+  } = useProcessingHistory(localRecords, localOnly);
 
   if (isLoading) {
     return (
@@ -193,78 +67,21 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[40%]">{isMobile ? t('date').substring(0, 4) : t('date')}</TableHead>
-                  <TableHead className="w-[40%]">{isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}</TableHead>
-                  <TableHead className="w-[20%]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {records.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell className="py-2">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                        <span>{formatDate(record.date)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-2">
-                      <div className="flex items-center gap-2">
-                        <Tag className="h-4 w-4 text-cyan-500 flex-shrink-0" />
-                        <span>{record.labelCount}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-2">
-                      <div className="flex justify-end items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="p-0 h-8 w-8 rounded-full flex items-center justify-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                          onClick={() => handleDownload(record.pdfUrl)}
-                          title={t('download')}
-                        >
-                          <Download className="h-4 w-4" />
-                          <span className="sr-only">{t('download')}</span>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="p-0 h-8 w-8 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                          onClick={() => confirmDelete(record.id)}
-                          title={t('delete')}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">{t('delete')}</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <HistoryTable
+            records={records}
+            formatDate={formatDate}
+            onDownload={handleDownload}
+            onDeleteClick={confirmDelete}
+            isMobile={isMobile}
+          />
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('deleteRecordConfirm')}</DialogTitle>
-            <DialogDescription>{t('deleteRecordWarning')}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              {t('cancel')}
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              {t('confirm')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onConfirm={handleDelete}
+      />
     </>
   );
 }
