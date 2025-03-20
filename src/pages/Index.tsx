@@ -10,6 +10,7 @@ import { splitZPLIntoBlocks, delay, mergePDFs } from '@/utils/pdfUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ProcessingHistory, ProcessingRecord } from '@/components/ProcessingHistory';
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
 
 const MAX_HISTORY_ITEMS = 30;
 
@@ -22,17 +23,13 @@ const Index = () => {
   const [fileCount, setFileCount] = useState(1);
   const [isProcessingComplete, setIsProcessingComplete] = useState(false);
   const [lastPdfUrl, setLastPdfUrl] = useState<string | undefined>(undefined);
-  const [processingHistory, setProcessingHistory] = useState<ProcessingRecord[]>(() => {
-    const savedHistory = localStorage.getItem('processingHistory');
-    return savedHistory ? JSON.parse(savedHistory) : [];
-  });
+  const [processingHistory, setProcessingHistory] = useState<ProcessingRecord[]>([]);
   const { toast } = useToast();
   const { t } = useTranslation();
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    localStorage.setItem('processingHistory', JSON.stringify(processingHistory));
-  }, [processingHistory]);
+  }, []);
 
   const handleFileSelect = (content: string, type: 'file' | 'zip' = 'file', count: number = 1) => {
     setZplContent(content);
@@ -43,7 +40,7 @@ const Index = () => {
     setLastPdfUrl(undefined);
   };
 
-  const addToProcessingHistory = (labelCount: number, pdfUrl: string) => {
+  const addToProcessingHistory = async (labelCount: number, pdfUrl: string) => {
     const newRecord: ProcessingRecord = {
       id: uuidv4(),
       date: new Date(),
@@ -55,6 +52,19 @@ const Index = () => {
       const updatedHistory = [newRecord, ...prevHistory].slice(0, MAX_HISTORY_ITEMS);
       return updatedHistory;
     });
+    
+    try {
+      const user = await supabase.auth.getUser();
+      if (user && user.data.user) {
+        await supabase.from('processing_history').insert({
+          user_id: user.data.user.id,
+          label_count: labelCount,
+          pdf_url: pdfUrl
+        });
+      }
+    } catch (error) {
+      console.error('Failed to save processing history to database:', error);
+    }
   };
 
   const convertToPDF = async () => {
@@ -118,7 +128,7 @@ const Index = () => {
           setLastPdfUrl(url);
           
           const totalLabels = labels.length;
-          addToProcessingHistory(totalLabels, url);
+          await addToProcessingHistory(totalLabels, url);
           
           const a = document.createElement('a');
           a.href = url;
@@ -218,7 +228,7 @@ const Index = () => {
           </div>
           
           <div className="mt-6 md:mt-8">
-            <ProcessingHistory records={processingHistory} />
+            <ProcessingHistory />
           </div>
         </div>
       </main>

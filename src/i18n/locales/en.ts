@@ -23,9 +23,11 @@ export default {
 
   // Processing history translations
   processingHistory: "Processing History",
+  historyTitle: "Last 30 days",
   date: "Date",
   labelCount: "Label Count",
   actions: "Actions",
   download: "Download",
-  noHistory: "No processing history yet",
+  noHistory: "No processing history in the last 30 days",
+  loadingHistory: "Loading history...",
 };

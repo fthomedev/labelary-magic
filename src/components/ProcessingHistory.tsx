@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, Calendar, Tag } from 'lucide-react';
+import { Download, Calendar, Tag, Loader2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ProcessingRecord {
   id: string;
@@ -22,12 +23,51 @@ export interface ProcessingRecord {
 }
 
 interface ProcessingHistoryProps {
-  records: ProcessingRecord[];
+  records?: ProcessingRecord[];
+  localOnly?: boolean;
 }
 
-export function ProcessingHistory({ records }: ProcessingHistoryProps) {
+export function ProcessingHistory({ records: localRecords, localOnly = false }: ProcessingHistoryProps) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+  const [dbRecords, setDbRecords] = useState<ProcessingRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(!localOnly);
+  
+  useEffect(() => {
+    if (!localOnly) {
+      fetchProcessingHistory();
+    }
+  }, [localOnly]);
+
+  const fetchProcessingHistory = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('processing_history')
+        .select('*')
+        .order('date', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching processing history:', error);
+      } else {
+        setDbRecords(
+          data.map(record => ({
+            id: record.id,
+            date: new Date(record.date),
+            labelCount: record.label_count,
+            pdfUrl: record.pdf_url
+          }))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to fetch processing history:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Use local records if provided, otherwise use database records
+  const records = localOnly ? localRecords || [] : dbRecords;
   
   const handleDownload = (pdfUrl: string) => {
     const a = document.createElement('a');
@@ -39,11 +79,36 @@ export function ProcessingHistory({ records }: ProcessingHistoryProps) {
     document.body.removeChild(a);
   };
 
-  if (records.length === 0) {
+  const formatDate = (date: Date) => {
+    if (isMobile) {
+      return new Date(date).toLocaleDateString();
+    }
+    return `${new Date(date).toLocaleDateString()} ${new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  };
+
+  if (isLoading) {
     return (
       <Card className="mt-4 bg-white dark:bg-gray-800 shadow">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">{t('processingHistory')}</CardTitle>
+          <CardTitle className="text-lg font-medium">
+            {t('processingHistory')} - {t('historyTitle')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center py-8 flex flex-col items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
+          <span className="text-gray-500 dark:text-gray-400">{t('loadingHistory')}</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!records || records.length === 0) {
+    return (
+      <Card className="mt-4 bg-white dark:bg-gray-800 shadow">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-medium">
+            {t('processingHistory')} - {t('historyTitle')}
+          </CardTitle>
         </CardHeader>
         <CardContent className="text-center py-8 text-gray-500 dark:text-gray-400">
           {t('noHistory')}
@@ -52,17 +117,12 @@ export function ProcessingHistory({ records }: ProcessingHistoryProps) {
     );
   }
 
-  const formatDate = (date: Date) => {
-    if (isMobile) {
-      return new Date(date).toLocaleDateString();
-    }
-    return `${new Date(date).toLocaleDateString()} ${new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-  };
-
   return (
     <Card className="mt-4 bg-white dark:bg-gray-800 shadow">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium">{t('processingHistory')}</CardTitle>
+        <CardTitle className="text-lg font-medium">
+          {t('processingHistory')} - {t('historyTitle')}
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
