@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
@@ -9,6 +9,10 @@ import { LanguageSelector } from '@/components/LanguageSelector';
 import { UserMenu } from '@/components/UserMenu';
 import { splitZPLIntoBlocks, delay, mergePDFs } from '@/utils/pdfUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ProcessingHistory, ProcessingRecord } from '@/components/ProcessingHistory';
+import { v4 as uuidv4 } from 'uuid';
+
+const MAX_HISTORY_ITEMS = 30;
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -19,9 +23,18 @@ const Index = () => {
   const [fileCount, setFileCount] = useState(1);
   const [isProcessingComplete, setIsProcessingComplete] = useState(false);
   const [lastPdfUrl, setLastPdfUrl] = useState<string | undefined>(undefined);
+  const [processingHistory, setProcessingHistory] = useState<ProcessingRecord[]>(() => {
+    const savedHistory = localStorage.getItem('processingHistory');
+    return savedHistory ? JSON.parse(savedHistory) : [];
+  });
   const { toast } = useToast();
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+
+  // Save processing history to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('processingHistory', JSON.stringify(processingHistory));
+  }, [processingHistory]);
 
   const handleFileSelect = (content: string, type: 'file' | 'zip' = 'file', count: number = 1) => {
     setZplContent(content);
@@ -30,6 +43,20 @@ const Index = () => {
     setFileCount(count);
     setIsProcessingComplete(false);
     setLastPdfUrl(undefined);
+  };
+
+  const addToProcessingHistory = (labelCount: number, pdfUrl: string) => {
+    const newRecord: ProcessingRecord = {
+      id: uuidv4(),
+      date: new Date(),
+      labelCount,
+      pdfUrl,
+    };
+    
+    setProcessingHistory(prevHistory => {
+      const updatedHistory = [newRecord, ...prevHistory].slice(0, MAX_HISTORY_ITEMS);
+      return updatedHistory;
+    });
   };
 
   const convertToPDF = async () => {
@@ -92,6 +119,10 @@ const Index = () => {
           
           // Save the URL for later download
           setLastPdfUrl(url);
+          
+          // Add to processing history
+          const totalLabels = labels.length;
+          addToProcessingHistory(totalLabels, url);
           
           const a = document.createElement('a');
           a.href = url;
@@ -189,6 +220,11 @@ const Index = () => {
                 </div>
               </div>
             )}
+          </div>
+          
+          {/* Processing History */}
+          <div className="mt-8">
+            <ProcessingHistory records={processingHistory} />
           </div>
         </div>
       </main>
