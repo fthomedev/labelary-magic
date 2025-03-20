@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -14,12 +13,16 @@ const Index = () => {
   const [isConverting, setIsConverting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [pdfUrls, setPdfUrls] = useState<string[]>([]);
+  const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
+  const [fileCount, setFileCount] = useState(1);
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  const handleFileSelect = (content: string) => {
+  const handleFileSelect = (content: string, type: 'file' | 'zip' = 'file', count: number = 1) => {
     setZplContent(content);
     setPdfUrls([]);
+    setSourceType(type);
+    setFileCount(count);
   };
 
   const convertToPDF = async () => {
@@ -149,7 +152,11 @@ const Index = () => {
               {zplContent && (
                 <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
                   <div className="p-6">
-                    <ZPLPreview content={zplContent} />
+                    <ZPLPreview 
+                      content={zplContent} 
+                      sourceType={sourceType}
+                      fileCount={fileCount}
+                    />
                   </div>
                 </div>
               )}
