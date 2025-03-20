@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Download, Calendar, Tag, Loader2 } from 'lucide-react';
@@ -14,13 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
-
-export interface ProcessingRecord {
-  id: string;
-  date: Date;
-  labelCount: number;
-  pdfUrl: string;
-}
+import { ProcessingRecord } from '@/hooks/useZplConversion';
 
 interface ProcessingHistoryProps {
   records?: ProcessingRecord[];
