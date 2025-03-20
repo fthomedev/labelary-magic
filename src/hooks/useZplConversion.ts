@@ -31,7 +31,7 @@ export const useZplConversion = () => {
           p_user_id: user.data.user.id,
           p_label_count: labelCount,
           p_pdf_url: pdfUrl
-        }) as any;
+        } as any);
       }
     } catch (error) {
       console.error('Failed to save processing history to database:', error);
