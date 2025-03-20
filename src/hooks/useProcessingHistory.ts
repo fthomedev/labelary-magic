@@ -81,6 +81,8 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     if (!recordToDelete) return;
     
     try {
+      console.log('Attempting to delete record with ID:', recordToDelete);
+      
       // Make sure to properly delete from the database
       const { error } = await supabase
         .from('processing_history')
@@ -95,19 +97,24 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
           description: t('deleteRecordError'),
         });
       } else {
-        // Remove the deleted record from the local state only after successful deletion
+        console.log('Record successfully deleted from database');
+        
+        // Remove the deleted record from the local state immediately
         setDbRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
+        
         toast({
           title: t('success'),
           description: t('deleteRecordSuccess'),
         });
         
         // Fetch updated records to ensure UI is in sync with database
-        // Adding a slight delay to allow the database to process the deletion
+        // Adding a longer delay to allow the database to process the deletion
         if (!localOnly) {
-          setTimeout(async () => {
-            await fetchProcessingHistory();
-          }, 300);
+          console.log('Scheduling refresh of processing history after deletion');
+          setTimeout(() => {
+            console.log('Refreshing processing history after deletion');
+            fetchProcessingHistory();
+          }, 500);
         }
       }
     } catch (err) {
