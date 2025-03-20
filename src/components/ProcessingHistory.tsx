@@ -42,16 +42,17 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
   const fetchProcessingHistory = async () => {
     try {
       setIsLoading(true);
+      // Use the generic query method to work around type issues
       const { data, error } = await supabase
         .from('processing_history')
         .select('*')
-        .order('date', { ascending: false });
+        .order('date', { ascending: false }) as any;
       
       if (error) {
         console.error('Error fetching processing history:', error);
-      } else {
+      } else if (data) {
         setDbRecords(
-          data.map(record => ({
+          data.map((record: any) => ({
             id: record.id,
             date: new Date(record.date),
             labelCount: record.label_count,

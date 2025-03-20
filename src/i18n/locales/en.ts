@@ -28,6 +28,6 @@ export default {
   labelCount: "Label Count",
   actions: "Actions",
   download: "Download",
-  noHistory: "No processing history in the last 30 days",
+  noHistory: "No processing history found",
   loadingHistory: "Loading history...",
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -56,11 +57,12 @@ const Index = () => {
     try {
       const user = await supabase.auth.getUser();
       if (user && user.data.user) {
-        await supabase.from('processing_history').insert({
-          user_id: user.data.user.id,
-          label_count: labelCount,
-          pdf_url: pdfUrl
-        });
+        // Use a generic query to work around type issues
+        await supabase.rpc('insert_processing_history', {
+          p_user_id: user.data.user.id,
+          p_label_count: labelCount,
+          p_pdf_url: pdfUrl
+        }) as any;
       }
     } catch (error) {
       console.error('Failed to save processing history to database:', error);
