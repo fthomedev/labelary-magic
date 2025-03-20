@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Tag, Archive, CheckCircle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { splitZPLIntoBlocks } from '@/utils/pdfUtils';
 
 interface ZPLPreviewProps {
   content: string;
@@ -23,9 +24,7 @@ export function ZPLPreview({
   const { t } = useTranslation();
   
   const countLabels = (zplContent: string): number => {
-    const regex = /~DGR:DEMO\.GRF/g;
-    const matches = zplContent.match(regex);
-    return matches ? matches.length : 0;
+    return splitZPLIntoBlocks(zplContent).length;
   };
 
   const totalLabels = countLabels(content);

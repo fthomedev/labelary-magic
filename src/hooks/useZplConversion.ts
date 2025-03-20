@@ -61,7 +61,11 @@ export const useZplConversion = () => {
       setPdfUrls([]);
       setIsProcessingComplete(false);
 
+      // Use the splitZPLIntoBlocks function to get an accurate count of labels
       const labels = splitZPLIntoBlocks(zplContent);
+      const labelCount = labels.length; // Store the count for later use with history
+      console.log(`Processing ${labelCount} labels`);
+      
       const pdfs: Blob[] = [];
       const LABELS_PER_REQUEST = 14;
       const newPdfUrls: string[] = [];
@@ -114,8 +118,8 @@ export const useZplConversion = () => {
           
           setLastPdfUrl(url);
           
-          const totalLabels = labels.length;
-          await addToProcessingHistory(totalLabels, url);
+          // Use the accurate label count from splitZPLIntoBlocks when saving to history
+          await addToProcessingHistory(labelCount, url);
           
           const a = document.createElement('a');
           a.href = url;
