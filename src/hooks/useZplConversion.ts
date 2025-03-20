@@ -26,12 +26,12 @@ export const useZplConversion = () => {
     try {
       const user = await supabase.auth.getUser();
       if (user && user.data.user) {
-        // Use a generic query to work around type issues
-        await supabase.rpc('insert_processing_history', {
+        // Use a more appropriate type assertion chain
+        await (supabase.rpc as any)('insert_processing_history', {
           p_user_id: user.data.user.id,
           p_label_count: labelCount,
           p_pdf_url: pdfUrl
-        } as any);
+        });
       }
     } catch (error) {
       console.error('Failed to save processing history to database:', error);

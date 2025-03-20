@@ -36,9 +36,9 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
   const fetchProcessingHistory = async () => {
     try {
       setIsLoading(true);
-      // Use type assertion to work around TypeScript errors
+      // Use explicit type assertion with unknown intermediate type
       const { data, error } = await (supabase
-        .from('processing_history') as any)
+        .from('processing_history' as any) as any)
         .select('*')
         .order('date', { ascending: false });
       
