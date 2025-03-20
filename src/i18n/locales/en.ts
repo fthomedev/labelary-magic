@@ -1,3 +1,4 @@
+
 export default {
   title: 'ZPL Converter',
   subtitle: 'Upload your ZPL file to convert it to PDF',
@@ -20,10 +21,11 @@ export default {
   blockErrorMessage: 'There was an error processing block {{block}}.',
   processingComplete: 'Processing Complete',
 
-  // New translations for processing history
+  // Processing history translations
   processingHistory: "Processing History",
   date: "Date",
   labelCount: "Label Count",
   actions: "Actions",
   download: "Download",
+  noHistory: "No processing history yet",
 };

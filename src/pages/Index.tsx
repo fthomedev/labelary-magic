@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -31,7 +30,6 @@ const Index = () => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
 
-  // Save processing history to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('processingHistory', JSON.stringify(processingHistory));
   }, [processingHistory]);
@@ -117,10 +115,8 @@ const Index = () => {
           const mergedPdf = await mergePDFs(pdfs);
           const url = window.URL.createObjectURL(mergedPdf);
           
-          // Save the URL for later download
           setLastPdfUrl(url);
           
-          // Add to processing history
           const totalLabels = labels.length;
           addToProcessingHistory(totalLabels, url);
           
@@ -136,7 +132,6 @@ const Index = () => {
             description: t('successMessage'),
           });
           
-          // Mark processing as complete
           setIsProcessingComplete(true);
         } catch (error) {
           console.error('Erro ao mesclar PDFs:', error);
@@ -222,8 +217,7 @@ const Index = () => {
             )}
           </div>
           
-          {/* Processing History */}
-          <div className="mt-8">
+          <div className="mt-6 md:mt-8">
             <ProcessingHistory records={processingHistory} />
           </div>
         </div>
