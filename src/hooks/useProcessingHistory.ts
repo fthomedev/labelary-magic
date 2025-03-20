@@ -103,8 +103,11 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
         });
         
         // Fetch updated records to ensure UI is in sync with database
+        // Adding a slight delay to allow the database to process the deletion
         if (!localOnly) {
-          await fetchProcessingHistory();
+          setTimeout(async () => {
+            await fetchProcessingHistory();
+          }, 300);
         }
       }
     } catch (err) {
