@@ -7,9 +7,10 @@ import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from 'react-i18next';
 import JSZip from 'jszip';
+import { splitZPLIntoBlocks } from '@/utils/pdfUtils';
 
 interface FileUploadProps {
-  onFileSelect: (content: string) => void;
+  onFileSelect: (content: string, type?: 'file' | 'zip', count?: number) => void;
 }
 
 export function FileUpload({ onFileSelect }: FileUploadProps) {
@@ -47,7 +48,12 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
       }
       
       const allContent = fileContents.join('\n');
-      onFileSelect(allContent);
+      
+      // Count the actual number of labels in the content
+      const labelCount = splitZPLIntoBlocks(allContent).length;
+      console.log(`ZIP file contains ${labelCount} labels across ${fileContents.length} files`);
+      
+      onFileSelect(allContent, 'zip', fileContents.length);
       
       toast({
         title: t('zipProcessed'),
@@ -71,6 +77,10 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
     reader.onload = (e) => {
       const content = e.target?.result as string;
       if (content.includes('^XA') && content.includes('^XZ')) {
+        // Count the actual number of labels in the content
+        const labelCount = splitZPLIntoBlocks(content).length;
+        console.log(`Text file contains ${labelCount} labels`);
+        
         onFileSelect(content);
         toast({
           title: t('fileUploaded'),

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
@@ -22,7 +23,9 @@ export function ZPLPreview({
   const { t } = useTranslation();
   
   const countLabels = (zplContent: string): number => {
-    const labelBlocks = zplContent.split('^XZ').filter(label => label.trim().includes('^XA'));
+    // Count each label exactly once by looking for complete ZPL label blocks
+    // A complete label starts with ^XA and ends with ^XZ
+    const labelBlocks = zplContent.split('^XZ').filter(block => block.trim().includes('^XA'));
     return labelBlocks.length;
   };
 
