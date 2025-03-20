@@ -101,6 +101,11 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
           title: t('success'),
           description: t('deleteRecordSuccess'),
         });
+        
+        // Fetch updated records to ensure UI is in sync with database
+        if (!localOnly) {
+          await fetchProcessingHistory();
+        }
       }
     } catch (err) {
       console.error('Failed to delete record:', err);
