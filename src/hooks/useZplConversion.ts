@@ -27,7 +27,6 @@ export const useZplConversion = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         console.log('Saving processing history for user:', user.id);
-        console.log('Saving label count to history:', labelCount);
         
         // Call the RPC function to insert processing history
         const { error } = await (supabase.rpc as any)('insert_processing_history', {
@@ -62,12 +61,7 @@ export const useZplConversion = () => {
       setPdfUrls([]);
       setIsProcessingComplete(false);
 
-      // Get the exact label count directly from splitZPLIntoBlocks for consistency
       const labels = splitZPLIntoBlocks(zplContent);
-      const actualLabelCount = labels.length;
-      
-      console.log(`Processing ${actualLabelCount} ZPL labels`);
-      
       const pdfs: Blob[] = [];
       const LABELS_PER_REQUEST = 14;
       const newPdfUrls: string[] = [];
@@ -120,9 +114,8 @@ export const useZplConversion = () => {
           
           setLastPdfUrl(url);
           
-          // Save the actual label count to the processing history
-          console.log(`Saving ${actualLabelCount} labels to processing history`);
-          await addToProcessingHistory(actualLabelCount, url);
+          const totalLabels = labels.length;
+          await addToProcessingHistory(totalLabels, url);
           
           const a = document.createElement('a');
           a.href = url;
