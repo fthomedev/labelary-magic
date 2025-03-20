@@ -112,13 +112,13 @@ export const translations = {
     accountDeleted: "Sua conta foi excluída com sucesso.",
     
     // Processing history translations
-    processingHistory: "Histórico de Processamento",
+    processingHistory: "Histórico",
     historyTitle: "Últimos 30 dias",
     date: "Data",
-    labelCount: "Quantidade de Etiquetas",
+    labelCount: "Qtd. Etiquetas",
     actions: "Ações",
     download: "Baixar",
-    noHistory: "Nenhum histórico de processamento encontrado",
+    noHistory: "Nenhum histórico encontrado",
     loadingHistory: "Carregando histórico...",
   },
 };
