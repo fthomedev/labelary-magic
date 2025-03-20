@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
@@ -16,8 +16,10 @@ const Index = () => {
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
   const [fileCount, setFileCount] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [refreshHistory, setRefreshHistory] = useState<number>(0);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+  const processingHistoryRef = useRef<HTMLDivElement>(null);
   
   const {
     isConverting,
@@ -42,14 +44,24 @@ const Index = () => {
     checkAuth();
   }, []);
 
+  // Watch for processing completion to refresh history
+  useEffect(() => {
+    if (isProcessingComplete) {
+      // Refresh history by incrementing the state value
+      setRefreshHistory(prev => prev + 1);
+    }
+  }, [isProcessingComplete]);
+
   const handleFileSelect = (content: string, type: 'file' | 'zip' = 'file', count: number = 1) => {
     setZplContent(content);
     setSourceType(type);
     setFileCount(count);
   };
 
-  const handleConvert = () => {
-    convertToPDF(zplContent);
+  const handleConvert = async () => {
+    await convertToPDF(zplContent);
+    // Force refresh of processing history
+    setRefreshHistory(prev => prev + 1);
   };
 
   return (
@@ -112,8 +124,8 @@ const Index = () => {
             )}
           </div>
           
-          <div className="mt-6 md:mt-8">
-            <ProcessingHistory />
+          <div className="mt-6 md:mt-8" ref={processingHistoryRef}>
+            <ProcessingHistory key={refreshHistory} />
           </div>
         </div>
       </main>

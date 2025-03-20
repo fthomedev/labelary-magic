@@ -49,6 +49,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
       const { data, error } = await (supabase
         .from('processing_history' as any) as any)
         .select('*')
+        .eq('user_id', sessionData.session.user.id)
         .order('date', { ascending: false });
       
       if (error) {
