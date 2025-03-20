@@ -141,9 +141,9 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-2/5">{isMobile ? t('date').substring(0, 4) : t('date')}</TableHead>
-                <TableHead className="w-2/5">{isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}</TableHead>
-                <TableHead className="text-right w-1/5">{isMobile ? '' : t('actions')}</TableHead>
+                <TableHead className="w-[40%]">{isMobile ? t('date').substring(0, 4) : t('date')}</TableHead>
+                <TableHead className="w-[40%]">{isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}</TableHead>
+                <TableHead className="w-[20%] text-right">{isMobile ? '' : t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -161,17 +161,19 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
                       <span>{record.labelCount}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right py-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="p-0 h-8 w-8 rounded-full flex items-center justify-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                      onClick={() => handleDownload(record.pdfUrl)}
-                      title={t('download')}
-                    >
-                      <Download className="h-4 w-4" />
-                      <span className="sr-only">{t('download')}</span>
-                    </Button>
+                  <TableCell className="py-2">
+                    <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-0 h-8 w-8 rounded-full flex items-center justify-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        onClick={() => handleDownload(record.pdfUrl)}
+                        title={t('download')}
+                      >
+                        <Download className="h-4 w-4" />
+                        <span className="sr-only">{t('download')}</span>
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

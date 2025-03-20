@@ -1,4 +1,3 @@
-
 export const translations = {
   en: {
     title: "ZPL Magic",
@@ -54,6 +53,16 @@ export const translations = {
     cancel: "Cancel",
     confirm: "Yes, delete account",
     accountDeleted: "Your account has been deleted successfully.",
+    
+    // Processing history translations
+    processingHistory: "History",
+    historyTitle: "Last 30 days",
+    date: "Date",
+    labelCount: "Label Count",
+    actions: "Actions",
+    download: "Download",
+    noHistory: "No history found",
+    loadingHistory: "Loading history...",
   },
   "pt-BR": {
     title: "ZPL Magic",
