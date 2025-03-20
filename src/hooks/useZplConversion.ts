@@ -114,6 +114,7 @@ export const useZplConversion = () => {
           
           setLastPdfUrl(url);
           
+          // Use the actual label count instead of relying on regex count
           const totalLabels = labels.length;
           await addToProcessingHistory(totalLabels, url);
           
