@@ -22,7 +22,7 @@ export function DeleteConfirmDialog({ open, onOpenChange, onConfirm }: DeleteCon
 
   const handleConfirm = () => {
     onConfirm();
-    // Dialog will be closed by the parent component after confirmation
+    // No need to close dialog here, it will be closed by the parent component
   };
 
   return (

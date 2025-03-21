@@ -82,29 +82,27 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     
     try {
       console.log('Attempting to delete record with ID:', recordToDelete);
-      
-      // First update local state for immediate user feedback
-      setDbRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
+
+      // Close dialog first for better UX
       setDialogOpen(false);
       
-      // Then delete from the database
+      // Delete from the database first to ensure it's removed
       const { error } = await supabase
         .from('processing_history')
         .delete()
         .eq('id', recordToDelete);
       
       if (error) {
-        console.error('Error deleting record:', error);
+        console.error('Error deleting record from database:', error);
         toast({
           variant: "destructive",
           title: t('error'),
           description: t('deleteRecordError'),
         });
-        
-        // Revert UI if database deletion failed
-        fetchProcessingHistory();
       } else {
         console.log('Record successfully deleted from database');
+        // Update local state only after successful database deletion
+        setDbRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
         toast({
           title: t('success'),
           description: t('deleteRecordSuccess'),
@@ -117,12 +115,14 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
         title: t('error'),
         description: t('deleteRecordError'),
       });
-      
-      // Revert UI on any error
-      fetchProcessingHistory();
     } finally {
-      // Clean up state regardless of outcome
+      // Clean up state
       setRecordToDelete(null);
+      
+      // Refresh the records from database to ensure UI is in sync with backend
+      if (!localOnly) {
+        fetchProcessingHistory();
+      }
     }
   };
 
