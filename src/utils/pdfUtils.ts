@@ -2,9 +2,7 @@
 import PDFMerger from 'pdf-merger-js';
 
 export const splitZPLIntoBlocks = (zpl: string): string[] => {
-  // Split by end marker ^XZ and filter for blocks that contain start marker ^XA
   const labels = zpl.split('^XZ').filter(label => label.trim().includes('^XA'));
-  // Add back the end marker to each label
   const completeLabels = labels.map(label => `${label.trim()}^XZ`);
   return completeLabels;
 };

@@ -114,10 +114,8 @@ export const useZplConversion = () => {
           
           setLastPdfUrl(url);
           
-          // Use the actual count of labels from the split ZPL blocks
-          // This is the fix for the double counting issue
-          const actualLabelCount = labels.length;
-          await addToProcessingHistory(actualLabelCount, url);
+          const totalLabels = labels.length;
+          await addToProcessingHistory(totalLabels, url);
           
           const a = document.createElement('a');
           a.href = url;
