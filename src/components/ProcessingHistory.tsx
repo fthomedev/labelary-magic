@@ -6,7 +6,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useProcessingHistory } from '@/hooks/useProcessingHistory';
 import { HistoryTable } from './history/HistoryTable';
-import { DeleteConfirmDialog } from './history/DeleteConfirmDialog';
 
 interface ProcessingHistoryProps {
   records?: ProcessingRecord[];
@@ -18,12 +17,8 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
   const {
     isLoading,
     records,
-    dialogOpen,
-    setDialogOpen,
     formatDate,
     handleDownload,
-    confirmDelete,
-    handleDelete,
     isMobile
   } = useProcessingHistory(localRecords, localOnly);
 
@@ -59,29 +54,20 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
   }
 
   return (
-    <>
-      <Card className="mt-4 bg-white dark:bg-gray-800 shadow overflow-hidden">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">
-            {t('processingHistory')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <HistoryTable
-            records={records}
-            formatDate={formatDate}
-            onDownload={handleDownload}
-            onDeleteClick={confirmDelete}
-            isMobile={isMobile}
-          />
-        </CardContent>
-      </Card>
-
-      <DeleteConfirmDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onConfirm={handleDelete}
-      />
-    </>
+    <Card className="mt-4 bg-white dark:bg-gray-800 shadow overflow-hidden">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-medium">
+          {t('processingHistory')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <HistoryTable
+          records={records}
+          formatDate={formatDate}
+          onDownload={handleDownload}
+          isMobile={isMobile}
+        />
+      </CardContent>
+    </Card>
   );
 }

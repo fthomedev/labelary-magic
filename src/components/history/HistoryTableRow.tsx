@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, Calendar, Tag, Trash2 } from 'lucide-react';
+import { Download, Calendar, Tag } from 'lucide-react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
@@ -10,14 +10,12 @@ interface HistoryTableRowProps {
   record: ProcessingRecord;
   formatDate: (date: Date) => string;
   onDownload: (pdfUrl: string) => void;
-  onDeleteClick: (id: string) => void;
 }
 
 export function HistoryTableRow({ 
   record, 
   formatDate, 
-  onDownload, 
-  onDeleteClick 
+  onDownload
 }: HistoryTableRowProps) {
   const { t } = useTranslation();
 
@@ -46,16 +44,6 @@ export function HistoryTableRow({
           >
             <Download className="h-4 w-4" />
             <span className="sr-only">{t('download')}</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="p-0 h-8 w-8 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-            onClick={() => onDeleteClick(record.id)}
-            title={t('delete')}
-          >
-            <Trash2 className="h-4 w-4" />
-            <span className="sr-only">{t('delete')}</span>
           </Button>
         </div>
       </TableCell>

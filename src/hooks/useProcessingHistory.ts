@@ -11,8 +11,6 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
   const isMobile = useIsMobile();
   const [dbRecords, setDbRecords] = useState<ProcessingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(!localOnly);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -72,60 +70,6 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     document.body.removeChild(a);
   };
 
-  const confirmDelete = (id: string) => {
-    setRecordToDelete(id);
-    setDialogOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (!recordToDelete) return;
-    
-    try {
-      console.log('Attempting to delete record with ID:', recordToDelete);
-
-      // Close dialog first for better UX
-      setDialogOpen(false);
-      
-      // Delete from the database first to ensure it's removed
-      const { error } = await supabase
-        .from('processing_history')
-        .delete()
-        .eq('id', recordToDelete);
-      
-      if (error) {
-        console.error('Error deleting record from database:', error);
-        toast({
-          variant: "destructive",
-          title: t('error'),
-          description: t('deleteRecordError'),
-        });
-      } else {
-        console.log('Record successfully deleted from database');
-        // Update local state only after successful database deletion
-        setDbRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
-        toast({
-          title: t('success'),
-          description: t('deleteRecordSuccess'),
-        });
-      }
-    } catch (err) {
-      console.error('Failed to delete record:', err);
-      toast({
-        variant: "destructive",
-        title: t('error'),
-        description: t('deleteRecordError'),
-      });
-    } finally {
-      // Clean up state
-      setRecordToDelete(null);
-      
-      // Refresh the records from database to ensure UI is in sync with backend
-      if (!localOnly) {
-        fetchProcessingHistory();
-      }
-    }
-  };
-
   const formatDate = (date: Date) => {
     try {
       if (isMobile) {
@@ -149,12 +93,8 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
   return {
     isLoading,
     records,
-    dialogOpen,
-    setDialogOpen,
     formatDate,
     handleDownload,
-    confirmDelete,
-    handleDelete,
     isMobile
   };
 }
