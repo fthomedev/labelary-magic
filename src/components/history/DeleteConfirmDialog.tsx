@@ -20,6 +20,11 @@ interface DeleteConfirmDialogProps {
 export function DeleteConfirmDialog({ open, onOpenChange, onConfirm }: DeleteConfirmDialogProps) {
   const { t } = useTranslation();
 
+  const handleConfirm = () => {
+    onConfirm();
+    // Dialog will be closed by the parent component after confirmation
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -31,7 +36,7 @@ export function DeleteConfirmDialog({ open, onOpenChange, onConfirm }: DeleteCon
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t('cancel')}
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
+          <Button variant="destructive" onClick={handleConfirm}>
             {t('delete')}
           </Button>
         </DialogFooter>

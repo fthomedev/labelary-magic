@@ -83,8 +83,9 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     try {
       console.log('Attempting to delete record with ID:', recordToDelete);
       
-      // First update the local state to provide immediate feedback
+      // First update local state for immediate user feedback
       setDbRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
+      setDialogOpen(false);
       
       // Then delete from the database
       const { error } = await supabase
@@ -94,45 +95,33 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
       
       if (error) {
         console.error('Error deleting record:', error);
-        
-        // If there was an error, revert the local state change by fetching fresh data
-        fetchProcessingHistory();
-        
         toast({
           variant: "destructive",
           title: t('error'),
           description: t('deleteRecordError'),
         });
+        
+        // Revert UI if database deletion failed
+        fetchProcessingHistory();
       } else {
         console.log('Record successfully deleted from database');
-        
         toast({
           title: t('success'),
           description: t('deleteRecordSuccess'),
         });
-        
-        // Force a refresh after successful deletion to ensure consistency
-        if (!localOnly) {
-          console.log('Refresh processing history after deletion');
-          // Give the database some time to process the deletion
-          setTimeout(() => {
-            fetchProcessingHistory();
-          }, 800);
-        }
       }
     } catch (err) {
       console.error('Failed to delete record:', err);
-      
-      // Revert the local state change by fetching fresh data
-      fetchProcessingHistory();
-      
       toast({
         variant: "destructive",
         title: t('error'),
         description: t('deleteRecordError'),
       });
+      
+      // Revert UI on any error
+      fetchProcessingHistory();
     } finally {
-      setDialogOpen(false);
+      // Clean up state regardless of outcome
       setRecordToDelete(null);
     }
   };
