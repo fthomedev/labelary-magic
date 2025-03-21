@@ -129,7 +129,13 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
   const formatDate = (date: Date) => {
     try {
       if (isMobile) {
-        return date.toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US');
+        // More compact date format for mobile view
+        return date.toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
       }
       return date.toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US') + ' ' + 
              date.toLocaleTimeString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
