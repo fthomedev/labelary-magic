@@ -83,7 +83,10 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     try {
       console.log('Attempting to delete record with ID:', recordToDelete);
       
-      // Make sure to properly delete from the database
+      // First update the local state to provide immediate feedback
+      setDbRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
+      
+      // Then delete from the database
       const { error } = await supabase
         .from('processing_history')
         .delete()
@@ -91,6 +94,10 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
       
       if (error) {
         console.error('Error deleting record:', error);
+        
+        // If there was an error, revert the local state change by fetching fresh data
+        fetchProcessingHistory();
+        
         toast({
           variant: "destructive",
           title: t('error'),
@@ -99,26 +106,26 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
       } else {
         console.log('Record successfully deleted from database');
         
-        // Remove the deleted record from the local state immediately
-        setDbRecords(prevRecords => prevRecords.filter(record => record.id !== recordToDelete));
-        
         toast({
           title: t('success'),
           description: t('deleteRecordSuccess'),
         });
         
-        // Fetch updated records to ensure UI is in sync with database
-        // Adding a longer delay to allow the database to process the deletion
+        // Force a refresh after successful deletion to ensure consistency
         if (!localOnly) {
-          console.log('Scheduling refresh of processing history after deletion');
+          console.log('Refresh processing history after deletion');
+          // Give the database some time to process the deletion
           setTimeout(() => {
-            console.log('Refreshing processing history after deletion');
             fetchProcessingHistory();
-          }, 500);
+          }, 800);
         }
       }
     } catch (err) {
       console.error('Failed to delete record:', err);
+      
+      // Revert the local state change by fetching fresh data
+      fetchProcessingHistory();
+      
       toast({
         variant: "destructive",
         title: t('error'),

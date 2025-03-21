@@ -32,7 +32,7 @@ export function DeleteConfirmDialog({ open, onOpenChange, onConfirm }: DeleteCon
             {t('cancel')}
           </Button>
           <Button variant="destructive" onClick={onConfirm}>
-            {t('confirm')}
+            {t('delete')}
           </Button>
         </DialogFooter>
       </DialogContent>
