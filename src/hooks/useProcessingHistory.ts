@@ -79,11 +79,17 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
           month: '2-digit', 
           hour: '2-digit', 
           minute: '2-digit' 
-        });
+        }).replace(',', '');
       }
-      // Remove the comma between date and time
-      return date.toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US') + ' ' + 
-             date.toLocaleTimeString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+      
+      // Format without commas
+      const dateStr = date.toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US').replace(',', '');
+      const timeStr = date.toLocaleTimeString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }).replace(',', '');
+      
+      return dateStr + ' ' + timeStr;
     } catch (e) {
       console.error('Error formatting date:', e);
       return String(date);
