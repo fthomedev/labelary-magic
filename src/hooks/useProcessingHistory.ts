@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
@@ -136,6 +137,7 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
           minute: '2-digit' 
         });
       }
+      // Remove the comma between date and time
       return date.toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US') + ' ' + 
              date.toLocaleTimeString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
     } catch (e) {
