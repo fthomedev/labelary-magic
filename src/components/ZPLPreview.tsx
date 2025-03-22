@@ -89,93 +89,90 @@ export function ZPLPreview({
                     <Printer className="h-6 w-6 text-blue-600 dark:text-blue-400" aria-hidden="true" />
                   )}
                 </div>
-                <div className="flex items-center">
-                  <h3 className="text-base font-medium text-gray-900 dark:text-gray-100 mr-2 font-heading">
-                    {isProcessingComplete ? t('processingComplete') : t('totalLabels')}
-                  </h3>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="inline-flex cursor-help">
-                          <Info className="h-4 w-4 text-blue-500" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs" side="right">
-                        <p className="text-sm">
-                          ZPL (Zebra Programming Language) é uma linguagem utilizada para definir formatação de etiquetas em impressoras térmicas.
-                        </p>
-                        <Button 
-                          variant="link" 
-                          className="p-0 h-auto text-xs text-blue-500 hover:text-blue-700 transition-colors duration-200" 
-                          onClick={downloadSampleZpl}
-                        >
-                          <FileDown className="h-3 w-3 mr-1" />
-                          Baixar arquivo ZPL de exemplo
-                        </Button>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 ml-2">
-                    {isProcessingComplete ? t('labelsProcessed', { count: totalLabels }) : t('processing')}
-                  </p>
-                </div>
+                
+                {/* Repositioned Process button - Now placed here, above the Total Labels text */}
+                {!isProcessingComplete && (
+                  <Button
+                    size="lg"
+                    onClick={onConvert}
+                    disabled={isConverting}
+                    className={`transition-all duration-200 active:scale-95 ${
+                      isConverting 
+                        ? 'bg-gray-100 text-gray-500 dark:bg-gray-700'
+                        : progress === 0
+                        ? 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600'
+                        : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
+                    }`}
+                  >
+                    {isConverting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {t('converting')}
+                      </>
+                    ) : progress === 0 ? (
+                      <>
+                        <Play className="mr-2 h-4 w-4" />
+                        {t('process')}
+                      </>
+                    ) : (
+                      <>
+                        <Download className="mr-2 h-4 w-4" />
+                        {t('downloadComplete')}
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
               
-              <div className="flex items-center gap-3">
-                {isProcessingComplete ? (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex items-center gap-2 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 w-full sm:w-auto justify-center font-medium active:scale-95 transition-transform duration-100"
-                    onClick={handleDownload}
-                    disabled={!lastPdfUrl}
-                    aria-label={t('downloadAgain')}
-                  >
-                    <Download className="h-4 w-4" aria-hidden="true" />
-                    {t('downloadAgain')}
-                  </Button>
-                ) : (
-                  <>
-                    <div 
-                      className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-blue-500/10 to-cyan-500/10 px-5 py-2.5"
-                      aria-label={`${t('totalLabels')}: ${totalLabels}`}
-                    >
-                      <span className="text-xl font-semibold text-blue-700 dark:text-blue-400">
-                        {totalLabels}
-                      </span>
+              <div className="flex items-center">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center">
+                  <div className="flex items-center">
+                    <h3 className="text-base font-medium text-gray-900 dark:text-gray-100 mr-2 font-heading">
+                      {isProcessingComplete ? t('processingComplete') : t('totalLabels')}
+                    </h3>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="inline-flex cursor-help">
+                            <Info className="h-4 w-4 text-blue-500" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs" side="right">
+                          <p className="text-sm">
+                            ZPL (Zebra Programming Language) é uma linguagem utilizada para definir formatação de etiquetas em impressoras térmicas.
+                          </p>
+                          <Button 
+                            variant="link" 
+                            className="p-0 h-auto text-xs text-blue-500 hover:text-blue-700 transition-colors duration-200" 
+                            onClick={downloadSampleZpl}
+                          >
+                            <FileDown className="h-3 w-3 mr-1" />
+                            Baixar arquivo ZPL de exemplo
+                          </Button>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 ml-2">
+                      {isProcessingComplete ? t('labelsProcessed', { count: totalLabels }) : t('processing')}
+                    </p>
+                  </div>
+                  
+                  {isProcessingComplete && (
+                    <div className="mt-2 sm:mt-0 sm:ml-4">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex items-center gap-2 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 w-full sm:w-auto justify-center font-medium active:scale-95 transition-transform duration-100"
+                        onClick={handleDownload}
+                        disabled={!lastPdfUrl}
+                        aria-label={t('downloadAgain')}
+                      >
+                        <Download className="h-4 w-4" aria-hidden="true" />
+                        {t('downloadAgain')}
+                      </Button>
                     </div>
-
-                    <Button
-                      size="lg"
-                      onClick={onConvert}
-                      disabled={isConverting}
-                      className={`transition-all duration-200 active:scale-95 ${
-                        isConverting 
-                          ? 'bg-gray-100 text-gray-500 dark:bg-gray-700'
-                          : progress === 0
-                          ? 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600'
-                          : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
-                      }`}
-                    >
-                      {isConverting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {t('converting')}
-                        </>
-                      ) : progress === 0 ? (
-                        <>
-                          <Play className="mr-2 h-4 w-4" />
-                          {t('process')}
-                        </>
-                      ) : (
-                        <>
-                          <Download className="mr-2 h-4 w-4" />
-                          {t('downloadComplete')}
-                        </>
-                      )}
-                    </Button>
-                  </>
-                )}
+                  )}
+                </div>
               </div>
             </div>
             
