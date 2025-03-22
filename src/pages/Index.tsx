@@ -107,6 +107,9 @@ const Index = () => {
                       fileCount={fileCount}
                       isProcessingComplete={isProcessingComplete}
                       lastPdfUrl={lastPdfUrl}
+                      isConverting={isConverting}
+                      progress={progress}
+                      onConvert={handleConvert}
                     />
                   </div>
                 </div>
@@ -124,18 +127,14 @@ const Index = () => {
             {zplContent && (
               <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
                 <div className="p-4 md:p-6">
-                  <ConversionProgress 
-                    isConverting={isConverting}
-                    progress={progress}
-                    onConvert={handleConvert}
-                  />
+                  <ProcessingHistory key={refreshHistory} />
                 </div>
               </div>
             )}
           </div>
           
           <div className="mt-6 md:mt-8" ref={processingHistoryRef}>
-            <ProcessingHistory key={refreshHistory} />
+            {/* History content moved to right panel */}
           </div>
         </div>
       </main>
