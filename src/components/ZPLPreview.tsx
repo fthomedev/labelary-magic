@@ -90,7 +90,7 @@ export function ZPLPreview({
                   )}
                 </div>
                 <div className="flex items-center">
-                  <h3 className="text-base font-medium text-gray-900 dark:text-gray-100 mr-2">
+                  <h3 className="text-base font-medium text-gray-900 dark:text-gray-100 mr-2 font-heading">
                     {isProcessingComplete ? t('processingComplete') : t('totalLabels')}
                   </h3>
                   <TooltipProvider>
@@ -106,7 +106,7 @@ export function ZPLPreview({
                         </p>
                         <Button 
                           variant="link" 
-                          className="p-0 h-auto text-xs text-blue-500" 
+                          className="p-0 h-auto text-xs text-blue-500 hover:text-blue-700 transition-colors duration-200" 
                           onClick={downloadSampleZpl}
                         >
                           <FileDown className="h-3 w-3 mr-1" />
@@ -126,7 +126,7 @@ export function ZPLPreview({
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="flex items-center gap-2 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 w-full sm:w-auto justify-center font-medium"
+                    className="flex items-center gap-2 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-800 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 w-full sm:w-auto justify-center font-medium active:scale-95 transition-transform duration-100"
                     onClick={handleDownload}
                     disabled={!lastPdfUrl}
                     aria-label={t('downloadAgain')}
@@ -149,7 +149,7 @@ export function ZPLPreview({
                       size="lg"
                       onClick={onConvert}
                       disabled={isConverting}
-                      className={`transition-all duration-200 ${
+                      className={`transition-all duration-200 active:scale-95 ${
                         isConverting 
                           ? 'bg-gray-100 text-gray-500 dark:bg-gray-700'
                           : progress === 0

@@ -143,3 +143,28 @@
 .focus-visible-ring {
   @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
 }
+
+/* Efeitos de hover e click para botões */
+.btn-interactive {
+  @apply transition-all duration-150 hover:shadow-md active:scale-95;
+}
+
+/* Animações para feedback visual */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Espaçamento consistente para seções */
+.section-spacing {
+  @apply my-6 md:my-8;
+}
+
+/* Estilo para cards com hover */
+.interactive-card {
+  @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-1;
+}
