@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
@@ -23,7 +22,7 @@ export function ZPLPreview({
   const { t } = useTranslation();
   
   const countLabels = (zplContent: string): number => {
-    const regex = /\^XA.*?\^XZ/gs;
+    const regex = /(?:^|\n)\s*\^XA[\s\S]*?\^XZ\s*(?:\n|$)/g;
     const matches = zplContent.match(regex);
     return matches ? matches.length : 0;
   };
