@@ -2,9 +2,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
-import { Tag, Archive, CheckCircle, Download, Printer, Play, Loader2 } from 'lucide-react';
+import { Tag, Archive, CheckCircle, Download, Printer, Play, Loader2, Info, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 
 interface ZPLPreviewProps {
   content: string;
@@ -49,6 +51,30 @@ export function ZPLPreview({
     }
   };
 
+  const downloadSampleZpl = () => {
+    // Sample ZPL content with two label formats
+    const sampleZpl = `^XA
+^FO50,50^A0N,50,50^FDSample Label 1^FS
+^FO50,120^BY3^BCN,100,Y,N,N^FD123456789012^FS
+^FO50,250^A0N,30,30^FDTest Product^FS
+^XZ
+^XA
+^FO50,50^A0N,50,50^FDSample Label 2^FS
+^FO50,120^BY3^BCN,100,Y,N,N^FD987654321098^FS
+^FO50,250^A0N,30,30^FDAnother Product^FS
+^XZ`;
+    
+    const blob = new Blob([sampleZpl], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sample.zpl';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
   return (
     <div className="rounded-lg bg-gradient-to-r from-blue-500/10 to-cyan-500/10 p-1.5">
       <Card className="border-0 shadow-sm">
@@ -63,11 +89,33 @@ export function ZPLPreview({
                     <Printer className="h-6 w-6 text-blue-600 dark:text-blue-400" aria-hidden="true" />
                   )}
                 </div>
-                <div>
-                  <h3 className="text-base font-medium text-gray-900 dark:text-gray-100">
+                <div className="flex items-center">
+                  <h3 className="text-base font-medium text-gray-900 dark:text-gray-100 mr-2">
                     {isProcessingComplete ? t('processingComplete') : t('totalLabels')}
                   </h3>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="inline-flex cursor-help">
+                          <Info className="h-4 w-4 text-blue-500" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs" side="right">
+                        <p className="text-sm">
+                          ZPL (Zebra Programming Language) é uma linguagem utilizada para definir formatação de etiquetas em impressoras térmicas.
+                        </p>
+                        <Button 
+                          variant="link" 
+                          className="p-0 h-auto text-xs text-blue-500" 
+                          onClick={downloadSampleZpl}
+                        >
+                          <FileDown className="h-3 w-3 mr-1" />
+                          Baixar arquivo ZPL de exemplo
+                        </Button>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 ml-2">
                     {isProcessingComplete ? t('labelsProcessed', { count: totalLabels }) : t('processing')}
                   </p>
                 </div>
