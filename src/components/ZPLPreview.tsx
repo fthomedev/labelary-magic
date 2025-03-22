@@ -131,17 +131,6 @@ export function ZPLPreview({
               </div>
             </div>
             
-            {isConverting && (
-              <div className="space-y-4">
-                <div className="overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                  <Progress value={progress} className="h-2 w-full bg-gradient-to-r from-cyan-500 to-blue-500" />
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                  {t('processing')} {Math.round(progress)}%
-                </p>
-              </div>
-            )}
-          
             {sourceType === 'zip' && fileCount > 1 && (
               <div 
                 className="flex items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-100 dark:border-blue-800/40"
@@ -155,6 +144,17 @@ export function ZPLPreview({
                     {t('filesProcessedFromZip', { count: fileCount })}
                   </p>
                 </div>
+              </div>
+            )}
+            
+            {isConverting && (
+              <div className="space-y-2 mt-4">
+                <div className="overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                  <Progress value={progress} className="h-2 w-full bg-gradient-to-r from-cyan-500 to-blue-500" />
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                  {t('processing')} {Math.round(progress)}%
+                </p>
               </div>
             )}
           </div>
