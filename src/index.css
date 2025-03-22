@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -62,6 +63,11 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', sans-serif;
   }
+
+  /* Melhor foco visível para acessibilidade */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
 }
 
 .file-drop-area {
@@ -109,4 +115,31 @@
 .app-container {
   max-width: 1200px;
   @apply mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Utilitários de acessibilidade */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Melhorar contraste para texto sobre fundos coloridos */
+.text-on-primary {
+  @apply text-white dark:text-white;
+}
+
+.text-on-secondary {
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+/* Melhorar visibilidade de foco para elementos interativos */
+.focus-visible-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
 }

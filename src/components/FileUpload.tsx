@@ -126,24 +126,33 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
         className={`file-drop-area p-8 flex flex-col items-center justify-center border-2 border-dashed rounded-lg transition-all duration-200 ${
           isDragActive ? 'dragging border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/70 dark:border-gray-600 dark:hover:border-primary/70'
         }`}
+        aria-label={t('dragAndDrop')}
+        role="button"
+        tabIndex={0}
       >
-        <input {...getInputProps()} />
+        <input {...getInputProps()} aria-label={t('selectFile')} />
         <div className="text-center">
           {isProcessing ? (
-            <div className="py-8">
-              <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <div className="py-8" aria-live="polite">
+              <div 
+                className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"
+                aria-hidden="true"
+              ></div>
               <p className="text-base font-medium">{t('processingZip')}</p>
             </div>
           ) : isDragActive ? (
-            <div className="py-10">
-              <ArrowDownCircle className="h-12 w-12 text-primary mx-auto mb-4 animate-bounce" />
+            <div className="py-10" aria-live="polite">
+              <ArrowDownCircle 
+                className="h-12 w-12 text-primary mx-auto mb-4 animate-bounce" 
+                aria-hidden="true"
+              />
               <p className="text-base font-medium text-primary">{t('dropHere')}</p>
             </div>
           ) : (
             <div className="py-6">
               <div className="flex flex-col items-center mb-4">
                 <div className="bg-secondary rounded-full p-4 mb-4">
-                  <Upload className="h-8 w-8 text-primary" />
+                  <Upload className="h-8 w-8 text-primary" aria-hidden="true" />
                 </div>
                 <p className="text-base font-medium mb-2">
                   {t('dragAndDrop')}
@@ -151,8 +160,8 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
                 <p className="text-sm text-muted-foreground mb-3">
                   {t('acceptedFormats')}: .txt, .zip
                 </p>
-                <Button variant="outline" size="sm" className="text-sm">
-                  <FileText className="mr-2 h-4 w-4" />
+                <Button variant="outline" size="sm" className="text-sm hover:bg-primary/10 dark:hover:bg-primary/20">
+                  <FileText className="mr-2 h-4 w-4" aria-hidden="true" />
                   {t('selectFile')}
                 </Button>
               </div>
@@ -161,8 +170,12 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
         </div>
       </div>
       {error && (
-        <div className="mt-2 p-2 bg-destructive/10 rounded text-sm flex items-center text-destructive">
-          <AlertCircle className="h-4 w-4 mr-2" />
+        <div 
+          className="mt-2 p-2 bg-destructive/10 rounded text-sm flex items-center text-destructive"
+          role="alert"
+          aria-live="assertive"
+        >
+          <AlertCircle className="h-4 w-4 mr-2" aria-hidden="true" />
           {error}
         </div>
       )}
