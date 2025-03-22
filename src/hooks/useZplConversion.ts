@@ -62,14 +62,28 @@ export const useZplConversion = () => {
       setIsProcessingComplete(false);
 
       const labels = splitZPLIntoBlocks(zplContent);
+      console.log(`Total labels found: ${labels.length}`);
+      
+      if (labels.length === 0) {
+        throw new Error("Nenhum bloco ZPL válido encontrado no conteúdo.");
+      }
+      
       const pdfs: Blob[] = [];
-      const LABELS_PER_REQUEST = 14;
+      const LABELS_PER_REQUEST = 10; // Reduzindo para evitar problemas de tamanho
       const newPdfUrls: string[] = [];
 
       for (let i = 0; i < labels.length; i += LABELS_PER_REQUEST) {
         try {
           const blockLabels = labels.slice(i, i + LABELS_PER_REQUEST);
           const blockZPL = blockLabels.join('');
+          
+          console.log(`Enviando bloco ${i/LABELS_PER_REQUEST + 1}, com ${blockLabels.length} etiquetas`);
+          console.log(`Tamanho do bloco ZPL: ${blockZPL.length} caracteres`);
+          
+          // Verificar se o ZPL tem um formato válido (começando com ^XA e terminando com ^XZ)
+          if (!blockZPL.startsWith('^XA') || !blockZPL.endsWith('^XZ')) {
+            console.warn('Bloco ZPL com formato incorreto:', blockZPL.substring(0, 100) + '...');
+          }
 
           const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
             method: 'POST',
@@ -81,10 +95,19 @@ export const useZplConversion = () => {
           });
 
           if (!response.ok) {
+            console.error(`Erro na API: ${response.status} ${response.statusText}`);
+            const errorText = await response.text();
+            console.error(`Detalhes do erro: ${errorText}`);
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
           const blob = await response.blob();
+          console.log(`PDF recebido: ${blob.size} bytes`);
+          
+          if (blob.size < 1000) {
+            console.warn('PDF muito pequeno, possível erro no conteúdo ZPL');
+          }
+          
           pdfs.push(blob);
 
           const blockUrl = window.URL.createObjectURL(blob);
@@ -110,6 +133,8 @@ export const useZplConversion = () => {
       if (pdfs.length > 0) {
         try {
           const mergedPdf = await mergePDFs(pdfs);
+          console.log(`PDF final gerado: ${mergedPdf.size} bytes`);
+          
           const url = window.URL.createObjectURL(mergedPdf);
           
           setLastPdfUrl(url);
@@ -150,7 +175,7 @@ export const useZplConversion = () => {
       });
     } finally {
       setIsConverting(false);
-      setProgress(0);
+      setProgress(100);
     }
   };
 

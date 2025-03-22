@@ -10,6 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { ProcessingHistory } from '@/components/ProcessingHistory';
 import { useZplConversion } from '@/hooks/useZplConversion';
 import { supabase } from '@/integrations/supabase/client';
+import { PDFBlocksList } from '@/components/PDFBlocksList';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -26,6 +27,7 @@ const Index = () => {
     progress,
     isProcessingComplete,
     lastPdfUrl,
+    pdfUrls,
     convertToPDF
   } = useZplConversion();
 
@@ -106,6 +108,14 @@ const Index = () => {
                       isProcessingComplete={isProcessingComplete}
                       lastPdfUrl={lastPdfUrl}
                     />
+                  </div>
+                </div>
+              )}
+              
+              {pdfUrls.length > 0 && (
+                <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
+                  <div className="p-4 md:p-6">
+                    <PDFBlocksList pdfUrls={pdfUrls} />
                   </div>
                 </div>
               )}
