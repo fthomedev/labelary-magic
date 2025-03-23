@@ -64,16 +64,27 @@ export const useZplConversion = () => {
       if (user) {
         console.log('Saving processing history for user:', user.id);
         
-        const { error } = await (supabase.rpc as any)('insert_processing_history', {
+        // First, try the updated function with pdf_path parameter
+        const { error: updatedError } = await supabase.rpc('insert_processing_history', {
           p_user_id: user.id,
           p_label_count: labelCount,
           p_pdf_url: pdfUrl,
-          p_pdf_path: pdfPath || null
-        });
+          p_pdf_path: pdfPath
+        }).catch(() => ({ error: true }));
         
-        if (error) {
-          console.error('Error saving processing history:', error);
-          return;
+        // If there's an error, try the original function without pdf_path
+        if (updatedError) {
+          console.log('Trying original function signature without pdf_path');
+          const { error } = await supabase.rpc('insert_processing_history', {
+            p_user_id: user.id,
+            p_label_count: labelCount,
+            p_pdf_url: pdfUrl
+          });
+          
+          if (error) {
+            console.error('Error saving processing history:', error);
+            return;
+          }
         }
         
         console.log('Processing history saved successfully');
