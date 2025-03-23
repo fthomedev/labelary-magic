@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -63,6 +64,10 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			fontFamily: {
+				sans: ['Inter', 'sans-serif'],
+				heading: ['Poppins', 'sans-serif'],
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
@@ -84,12 +89,24 @@ export default {
 					to: {
 						height: '0'
 					}
-				}
+				},
+				shimmer: {
+					'0%': {
+						backgroundPosition: '-1000px 0',
+					},
+					'100%': {
+						backgroundPosition: '1000px 0',
+					},
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				shimmer: 'shimmer 2s infinite linear',
+			},
+			boxShadow: {
+				'hover': '0 8px 30px rgba(0, 0, 0, 0.12)',
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

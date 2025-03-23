@@ -17,10 +17,13 @@ export const ConversionProgress = ({ isConverting, progress, onConvert }: Conver
     <div className="space-y-6">
       {isConverting && (
         <div className="space-y-4">
-          <div className="overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-            <Progress value={progress} className="h-2 w-full bg-gradient-to-r from-cyan-500 to-blue-500" />
+          <div className="overflow-hidden rounded-full bg-secondary">
+            <Progress 
+              value={progress} 
+              className="h-2.5 w-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-300" 
+            />
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+          <p className="text-sm text-muted-foreground text-center">
             {t('processing')} {Math.round(progress)}%
           </p>
         </div>
@@ -31,27 +34,27 @@ export const ConversionProgress = ({ isConverting, progress, onConvert }: Conver
           size="lg"
           onClick={onConvert}
           disabled={isConverting}
-          className={`min-w-[200px] transition-all duration-200 ${
+          className={`min-w-[200px] text-base font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect ${
             isConverting 
               ? 'bg-gray-100 text-gray-500 dark:bg-gray-700'
               : progress === 0
-              ? 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600'
-              : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
+              ? 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600'
+              : 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600'
           }`}
         >
           {isConverting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               {t('converting')}
             </>
           ) : progress === 0 ? (
             <>
-              <Play className="mr-2 h-4 w-4" />
+              <Play className="mr-2 h-5 w-5" />
               {t('process')}
             </>
           ) : (
             <>
-              <Download className="mr-2 h-4 w-4" />
+              <Download className="mr-2 h-5 w-5" />
               {t('downloadComplete')}
             </>
           )}

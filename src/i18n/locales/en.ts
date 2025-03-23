@@ -1,7 +1,7 @@
 
 export default {
   title: 'ZPL Converter',
-  subtitle: 'Upload your ZPL file to convert it to PDF',
+  subtitle: 'Upload your ZPL file and convert it to PDF instantly',
   upload: 'Upload ZPL File',
   dragAndDrop: 'or drag and drop',
   selectFile: 'Select a file',
@@ -20,6 +20,19 @@ export default {
   blockError: 'Error in block',
   blockErrorMessage: 'There was an error processing block {{block}}.',
   processingComplete: 'Processing Complete',
+  acceptedFormats: 'Accepted formats',
+  zipProcessed: 'ZIP Processed',
+  zipFilesExtracted: '{{count}} files extracted successfully',
+  noZplFilesInZip: 'No ZPL files found in the ZIP',
+  noValidZplContent: 'No valid ZPL content found',
+  zipProcessingError: 'Error processing ZIP file',
+  fileUploaded: 'File Uploaded',
+  fileProcessed: '{{fileName}} processed successfully',
+  readError: 'File Read Error',
+  readErrorMessage: 'There was an error reading the file',
+  processingZip: 'Processing ZIP file...',
+  dropHere: 'Drop file here...',
+  downloadComplete: 'Download PDF',
 
   // Processing history translations
   processingHistory: "Processing History",

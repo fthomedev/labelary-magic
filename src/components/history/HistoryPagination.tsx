@@ -59,6 +59,7 @@ export function HistoryPagination({
           <PaginationLink 
             isActive={i === currentPage}
             onClick={() => onPageChange(i)}
+            className={i === currentPage ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'hover:bg-accent hover:text-accent-foreground'}
           >
             {i}
           </PaginationLink>
@@ -75,7 +76,7 @@ export function HistoryPagination({
         <PaginationItem>
           <PaginationPrevious
             onClick={handlePreviousPage}
-            className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+            className={`${currentPage === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-accent hover:text-accent-foreground'} transition-colors`}
             aria-disabled={currentPage === 1}
           />
         </PaginationItem>
@@ -85,7 +86,7 @@ export function HistoryPagination({
         <PaginationItem>
           <PaginationNext 
             onClick={handleNextPage}
-            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+            className={`${currentPage === totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-accent hover:text-accent-foreground'} transition-colors`}
             aria-disabled={currentPage === totalPages}
           />
         </PaginationItem>

@@ -30,9 +30,13 @@ export function HistoryTable({
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead className="w-[40%]">{isMobile ? t('date').substring(0, 4) : t('date')}</TableHead>
-            <TableHead className="w-[40%]">{isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}</TableHead>
+          <TableRow className="bg-muted/50 hover:bg-muted/50">
+            <TableHead className="w-[40%] font-medium text-foreground">
+              {isMobile ? t('date').substring(0, 4) : t('date')}
+            </TableHead>
+            <TableHead className="w-[40%] font-medium text-foreground">
+              {isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}
+            </TableHead>
             <TableHead className="w-[20%]"></TableHead>
           </TableRow>
         </TableHeader>
