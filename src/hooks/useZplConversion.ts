@@ -65,7 +65,7 @@ export const useZplConversion = () => {
             description: errorMessage,
           });
         },
-        getTranslation: (key, options) => t(key, options)
+        getTranslation: (key, options) => String(t(key, options)) // Convert translation result to string
       });
       
       setPdfUrls(result.pdfUrls);
@@ -75,7 +75,7 @@ export const useZplConversion = () => {
       toast({
         variant: "destructive",
         title: t('error'),
-        description: error instanceof Error ? error.message : t('errorMessage'),
+        description: error instanceof Error ? error.message : String(t('errorMessage')), // Convert to string
       });
     } finally {
       setIsConverting(false);
