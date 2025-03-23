@@ -24,14 +24,19 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({ lastPdfUrl }) =>
 
   const handleDownload = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent default navigation behavior
+    e.stopPropagation(); // Stop event propagation
     
     if (lastPdfUrl) {
-      const a = document.createElement('a');
-      a.href = lastPdfUrl;
-      a.download = 'etiquetas.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      try {
+        const a = document.createElement('a');
+        a.href = lastPdfUrl;
+        a.download = 'etiquetas.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } catch (error) {
+        console.error('Error downloading PDF:', error);
+      }
     }
   };
 

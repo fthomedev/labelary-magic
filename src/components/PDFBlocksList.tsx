@@ -16,11 +16,14 @@ export const PDFBlocksList = ({ pdfUrls }: PDFBlocksListProps) => {
 
   const handleView = (url: string, e: React.MouseEvent) => {
     e.preventDefault(); // Prevent default navigation behavior
-    window.open(url, '_blank');
+    e.stopPropagation(); // Stop event propagation
+    
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const handleDownload = (url: string, index: number, e: React.MouseEvent) => {
     e.preventDefault(); // Prevent default navigation behavior
+    e.stopPropagation(); // Stop event propagation
     
     const a = document.createElement('a');
     a.href = url;
@@ -32,6 +35,8 @@ export const PDFBlocksList = ({ pdfUrls }: PDFBlocksListProps) => {
 
   const toggleExpand = (index: number, e: React.MouseEvent) => {
     e.preventDefault(); // Prevent default navigation behavior
+    e.stopPropagation(); // Stop event propagation
+    
     setExpandedIndex(expandedIndex === index ? null : index);
   };
 
@@ -74,6 +79,7 @@ export const PDFBlocksList = ({ pdfUrls }: PDFBlocksListProps) => {
                   title={`PDF Block ${index + 1}`} 
                   className="w-full h-full"
                   style={{ border: 'none' }}
+                  sandbox="allow-same-origin"
                 />
               </div>
             )}

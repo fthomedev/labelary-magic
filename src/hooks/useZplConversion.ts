@@ -52,6 +52,62 @@ export const useZplConversion = () => {
     }
   };
 
+  const fetchZPLWithRetry = async (zplContent: string, retryCount = 0, maxRetries = 3): Promise<Blob> => {
+    try {
+      console.log(`Attempting ZPL conversion, attempt ${retryCount + 1}/${maxRetries + 1}`);
+      
+      const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/pdf',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: zplContent,
+      });
+
+      if (response.status === 429) {
+        // Rate limit hit, wait longer and retry
+        console.log('Rate limit hit, waiting before retry...');
+        if (retryCount < maxRetries) {
+          const waitTime = Math.pow(2, retryCount) * 1500; // Exponential backoff
+          await delay(waitTime);
+          return fetchZPLWithRetry(zplContent, retryCount + 1, maxRetries);
+        } else {
+          throw new Error(t('rateLimitExceeded'));
+        }
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API Error: ${response.status} ${response.statusText}, ${errorText}`);
+        throw new Error(`${t('apiError')}: ${response.status} ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      
+      // Validate blob size to ensure it's not an empty or invalid PDF
+      if (blob.size < 500) { // Increased minimum size check
+        console.warn(`Suspiciously small PDF received (${blob.size} bytes), may be invalid`);
+        if (retryCount < maxRetries) {
+          await delay(2000);
+          return fetchZPLWithRetry(zplContent, retryCount + 1, maxRetries);
+        } else {
+          throw new Error(t('invalidPdfResponse'));
+        }
+      }
+      
+      return blob;
+    } catch (error) {
+      if (retryCount < maxRetries) {
+        const waitTime = Math.pow(2, retryCount) * 1500;
+        console.log(`Error in fetch, retrying in ${waitTime}ms...`, error);
+        await delay(waitTime);
+        return fetchZPLWithRetry(zplContent, retryCount + 1, maxRetries);
+      }
+      throw error;
+    }
+  };
+
   const convertToPDF = useCallback(async (zplContent: string) => {
     if (!zplContent || zplContent.trim() === '') {
       toast({
@@ -79,78 +135,64 @@ export const useZplConversion = () => {
       
       const pdfs: Blob[] = [];
       const newPdfUrls: string[] = [];
-      // Reducing to avoid payload size issues and API rate limits
-      const LABELS_PER_REQUEST = 1; // Reduced from 3 to 1 for more reliable processing
+      
+      // Process strictly one label at a time to avoid API rate limits and improve reliability
+      const LABELS_PER_REQUEST = 1;
       
       for (let i = 0; i < labels.length; i += LABELS_PER_REQUEST) {
         try {
           const blockLabels = labels.slice(i, i + LABELS_PER_REQUEST);
           const blockZPL = blockLabels.join('\n');
           
-          console.log(`Sending block ${Math.floor(i/LABELS_PER_REQUEST) + 1}, with ${blockLabels.length} labels`);
-          console.log(`ZPL block size: ${blockZPL.length} characters`);
+          console.log(`Processing label ${i + 1}/${labels.length}, ZPL size: ${blockZPL.length} chars`);
           
-          // Check if ZPL has valid format (starts with ^XA and ends with ^XZ)
-          const validFormat = blockLabels.every(label => label.trim().startsWith('^XA') && label.trim().endsWith('^XZ'));
+          // Validate ZPL format
+          const validFormat = blockLabels.every(label => 
+            label.trim().startsWith('^XA') && 
+            label.trim().endsWith('^XZ') &&
+            label.length > 10
+          );
+          
           if (!validFormat) {
-            console.warn('ZPL block with incorrect format detected');
-            continue; // Skip this block if it's invalid
-          }
-
-          const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
-            method: 'POST',
-            headers: {
-              'Accept': 'application/pdf',
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: blockZPL,
-          });
-
-          if (!response.ok) {
-            console.error(`API Error: ${response.status} ${response.statusText}`);
-            const errorText = await response.text();
-            console.error(`Error details: ${errorText}`);
-            
-            // Even if this block fails, continue with other blocks
-            toast({
-              variant: "destructive",
-              title: t('warning'),
-              description: t('blockErrorSkipped', { block: Math.floor(i / LABELS_PER_REQUEST) + 1 }),
-            });
-            
-            // Update progress even for failed blocks
-            setProgress(((i + blockLabels.length) / labels.length) * 100);
+            console.warn('Invalid ZPL block detected and skipped');
             continue;
           }
 
-          const blob = await response.blob();
-          console.log(`PDF received: ${blob.size} bytes`);
+          // Use the retry function to handle rate limiting and errors
+          const blob = await fetchZPLWithRetry(blockZPL);
+          console.log(`PDF received for label ${i + 1}: ${blob.size} bytes`);
           
-          if (blob.size < 1000) {
-            console.warn('PDF is too small, possible error in ZPL content');
-            continue; // Skip this PDF if it appears invalid
+          // Additional validation for the returned PDF
+          if (blob.size > 500) {
+            pdfs.push(blob);
+            const blockUrl = URL.createObjectURL(blob);
+            newPdfUrls.push(blockUrl);
+          } else {
+            console.warn(`Skipping too small PDF for label ${i + 1} (${blob.size} bytes)`);
           }
-          
-          pdfs.push(blob);
 
-          const blockUrl = URL.createObjectURL(blob);
-          newPdfUrls.push(blockUrl);
+          // Update progress
+          setProgress(((i + 1) / labels.length) * 100);
 
-          setProgress(((i + blockLabels.length) / labels.length) * 100);
-
-          // Add delay between requests to avoid rate limiting
+          // Add significant delay between requests to avoid rate limiting
           if (i + LABELS_PER_REQUEST < labels.length) {
-            await delay(1000); // Increased delay to avoid API rate limits
+            await delay(2000);
           }
         } catch (error) {
-          console.error(`${t('blockError')} ${Math.floor(i / LABELS_PER_REQUEST) + 1}:`, error);
+          console.error(`Error processing label ${i + 1}:`, error);
+          
+          // Show warning but continue with other labels
           toast({
-            variant: "destructive",
+            variant: "warning",
             title: t('warning'),
-            description: t('blockErrorMessage', { block: Math.floor(i / LABELS_PER_REQUEST) + 1 }),
+            description: t('labelError', { label: i + 1 }),
           });
           
-          // Continue with other blocks rather than failing completely
+          // Still update progress
+          setProgress(((i + 1) / labels.length) * 100);
+          
+          // Add extra delay after an error
+          await delay(3000);
         }
       }
 
