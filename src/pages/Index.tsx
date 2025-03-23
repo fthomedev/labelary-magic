@@ -20,7 +20,6 @@ const Index = () => {
   const [refreshHistory, setRefreshHistory] = useState<number>(0);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
-  const processingHistoryRef = useRef<HTMLDivElement>(null);
   
   const {
     isConverting,
@@ -124,17 +123,10 @@ const Index = () => {
               )}
             </div>
 
-            {zplContent && (
-              <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
-                <div className="p-4 md:p-6">
-                  <ProcessingHistory key={refreshHistory} />
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="mt-6 md:mt-8" ref={processingHistoryRef}>
-            {/* History content moved to right panel */}
+            <div>
+              {/* Always show processing history */}
+              <ProcessingHistory key={refreshHistory} />
+            </div>
           </div>
         </div>
       </main>
