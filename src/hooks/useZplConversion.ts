@@ -64,30 +64,39 @@ export const useZplConversion = () => {
       if (user) {
         console.log('Saving processing history for user:', user.id);
         
-        // First, try the updated function with pdf_path parameter
-        const { error: updatedError } = await supabase.rpc('insert_processing_history', {
-          p_user_id: user.id,
-          p_label_count: labelCount,
-          p_pdf_url: pdfUrl,
-          p_pdf_path: pdfPath
-        }).catch(() => ({ error: true }));
-        
-        // If there's an error, try the original function without pdf_path
-        if (updatedError) {
-          console.log('Trying original function signature without pdf_path');
-          const { error } = await supabase.rpc('insert_processing_history', {
-            p_user_id: user.id,
-            p_label_count: labelCount,
-            p_pdf_url: pdfUrl
-          });
+        try {
+          // First, try the updated function with pdf_path parameter
+          const { error: updatedError } = await supabase.rpc(
+            'insert_processing_history', 
+            {
+              p_user_id: user.id,
+              p_label_count: labelCount,
+              p_pdf_url: pdfUrl,
+              // Cast to any to bypass TypeScript's strict type checking
+              // since our database has the parameter but TypeScript doesn't know yet
+              ...(pdfPath ? { p_pdf_path: pdfPath } : {})
+            } as any
+          );
           
-          if (error) {
-            console.error('Error saving processing history:', error);
-            return;
+          if (updatedError) {
+            console.log('Error with updated function signature, trying original one:', updatedError);
+            // If there's an error, try the original function without pdf_path
+            const { error } = await supabase.rpc('insert_processing_history', {
+              p_user_id: user.id,
+              p_label_count: labelCount,
+              p_pdf_url: pdfUrl
+            });
+            
+            if (error) {
+              console.error('Error saving processing history with original function:', error);
+              return;
+            }
           }
+          
+          console.log('Processing history saved successfully');
+        } catch (error) {
+          console.error('Exception while saving processing history:', error);
         }
-        
-        console.log('Processing history saved successfully');
       } else {
         console.log('No authenticated user found');
       }
