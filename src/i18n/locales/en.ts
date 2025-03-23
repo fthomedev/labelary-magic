@@ -47,7 +47,7 @@ export default {
   pagination: "Page {{current}} of {{total}}",
   previous: "Previous",
   next: "Next",
-  totalRecords: "Total Records",
+  totalRecords: "Total: {{count}} records",
   
   // Delete record confirmation
   deleteRecordConfirm: "Delete Record?",

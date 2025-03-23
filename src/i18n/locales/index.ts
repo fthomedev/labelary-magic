@@ -64,6 +64,7 @@ export const translations = {
     download: "Download",
     noHistory: "No history found",
     loadingHistory: "Loading history...",
+    totalRecords: "Total: {{count}} records",
   },
   "pt-BR": {
     title: "ZPL Magic",
@@ -130,5 +131,6 @@ export const translations = {
     download: "Baixar",
     noHistory: "Nenhum histórico encontrado",
     loadingHistory: "Carregando histórico...",
+    totalRecords: "Total: {{count}} registros",
   },
 };

@@ -68,9 +68,9 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
             <History className="h-5 w-5 text-primary" />
             <span>{t('processingHistory')}</span>
           </div>
-          {!localOnly && (
+          {!localOnly && totalRecords > 0 && (
             <span className="text-sm font-normal text-muted-foreground">
-              {t('totalRecords')}: {totalRecords}
+              {t('totalRecords', { count: totalRecords })}
             </span>
           )}
         </CardTitle>
