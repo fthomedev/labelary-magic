@@ -22,7 +22,9 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({ lastPdfUrl }) =>
     }
   }, [lastPdfUrl]);
 
-  const handleDownload = () => {
+  const handleDownload = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default navigation behavior
+    
     if (lastPdfUrl) {
       const a = document.createElement('a');
       a.href = lastPdfUrl;

@@ -1,7 +1,11 @@
-
 import PDFMerger from 'pdf-merger-js';
 
 export const splitZPLIntoBlocks = (zpl: string): string[] => {
+  if (!zpl || zpl.trim() === '') {
+    console.warn('Empty ZPL content provided');
+    return [];
+  }
+
   // First, normalize newlines and replace any Windows-style \r\n with just \n
   const normalizedZpl = zpl.replace(/\r\n/g, '\n');
   
@@ -12,10 +16,23 @@ export const splitZPLIntoBlocks = (zpl: string): string[] => {
   console.log(`Found ${matches.length} ZPL blocks in content`);
   
   // Ensure each block is properly formatted and cleaned
-  return matches.map(block => {
-    // Remove extra whitespace and ensure proper format
-    return block.trim();
-  }).filter(block => block.length > 10); // Filter out too short blocks
+  const validBlocks = matches
+    .map(block => block.trim())
+    .filter(block => {
+      // Only keep blocks that have proper ZPL format and sufficient content
+      const isValid = block.startsWith('^XA') && 
+                      block.endsWith('^XZ') && 
+                      block.length > 10;
+      
+      if (!isValid) {
+        console.warn('Invalid ZPL block detected and filtered out:', block.substring(0, 50) + '...');
+      }
+      
+      return isValid;
+    });
+  
+  console.log(`After validation, ${validBlocks.length} valid ZPL blocks remain`);
+  return validBlocks;
 };
 
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -34,10 +51,18 @@ export const mergePDFs = async (pdfBlobs: Blob[]): Promise<Blob> => {
     console.log(`Starting to merge ${pdfBlobs.length} PDFs`);
     
     // Filter out any empty or invalid PDFs
-    const validPdfBlobs = pdfBlobs.filter(blob => blob.size > 100);
+    const validPdfBlobs = pdfBlobs.filter(blob => {
+      const isValid = blob && blob.size > 100;
+      if (!isValid) {
+        console.warn(`Filtering out invalid PDF blob of size ${blob?.size || 'undefined'}`);
+      }
+      return isValid;
+    });
+    
+    console.log(`After filtering, ${validPdfBlobs.length} valid PDFs remain for merging`);
     
     if (validPdfBlobs.length === 0) {
-      throw new Error("No valid PDFs to merge");
+      throw new Error("No valid PDFs to merge after filtering");
     }
     
     if (validPdfBlobs.length === 1) {
@@ -77,7 +102,7 @@ export const mergePDFs = async (pdfBlobs: Blob[]): Promise<Blob> => {
     console.error('Error in mergePDFs function:', error);
     
     // If merging fails, return the first valid PDF as fallback
-    const validPdf = pdfBlobs.find(blob => blob.size > 100);
+    const validPdf = pdfBlobs.find(blob => blob && blob.size > 100);
     if (validPdf) {
       console.log('Returning the first valid PDF as fallback');
       return validPdf;

@@ -53,7 +53,14 @@ export const useZplConversion = () => {
   };
 
   const convertToPDF = useCallback(async (zplContent: string) => {
-    if (!zplContent) return;
+    if (!zplContent || zplContent.trim() === '') {
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: t('noZplContent'),
+      });
+      return;
+    }
     
     try {
       setIsConverting(true);
@@ -67,14 +74,14 @@ export const useZplConversion = () => {
       console.log(`Total labels found: ${labels.length}`);
       
       if (labels.length === 0) {
-        throw new Error("Nenhum bloco ZPL válido encontrado no conteúdo.");
+        throw new Error(t('noValidZplBlocks'));
       }
       
       const pdfs: Blob[] = [];
       const newPdfUrls: string[] = [];
       // Reducing to avoid payload size issues and API rate limits
-      const LABELS_PER_REQUEST = 3; 
-
+      const LABELS_PER_REQUEST = 1; // Reduced from 3 to 1 for more reliable processing
+      
       for (let i = 0; i < labels.length; i += LABELS_PER_REQUEST) {
         try {
           const blockLabels = labels.slice(i, i + LABELS_PER_REQUEST);
@@ -87,6 +94,7 @@ export const useZplConversion = () => {
           const validFormat = blockLabels.every(label => label.trim().startsWith('^XA') && label.trim().endsWith('^XZ'));
           if (!validFormat) {
             console.warn('ZPL block with incorrect format detected');
+            continue; // Skip this block if it's invalid
           }
 
           const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
@@ -102,7 +110,17 @@ export const useZplConversion = () => {
             console.error(`API Error: ${response.status} ${response.statusText}`);
             const errorText = await response.text();
             console.error(`Error details: ${errorText}`);
-            throw new Error(`HTTP error! status: ${response.status}`);
+            
+            // Even if this block fails, continue with other blocks
+            toast({
+              variant: "destructive",
+              title: t('warning'),
+              description: t('blockErrorSkipped', { block: Math.floor(i / LABELS_PER_REQUEST) + 1 }),
+            });
+            
+            // Update progress even for failed blocks
+            setProgress(((i + blockLabels.length) / labels.length) * 100);
+            continue;
           }
 
           const blob = await response.blob();
@@ -110,6 +128,7 @@ export const useZplConversion = () => {
           
           if (blob.size < 1000) {
             console.warn('PDF is too small, possible error in ZPL content');
+            continue; // Skip this PDF if it appears invalid
           }
           
           pdfs.push(blob);
@@ -121,15 +140,17 @@ export const useZplConversion = () => {
 
           // Add delay between requests to avoid rate limiting
           if (i + LABELS_PER_REQUEST < labels.length) {
-            await delay(800);
+            await delay(1000); // Increased delay to avoid API rate limits
           }
         } catch (error) {
           console.error(`${t('blockError')} ${Math.floor(i / LABELS_PER_REQUEST) + 1}:`, error);
           toast({
             variant: "destructive",
-            title: t('error'),
+            title: t('warning'),
             description: t('blockErrorMessage', { block: Math.floor(i / LABELS_PER_REQUEST) + 1 }),
           });
+          
+          // Continue with other blocks rather than failing completely
         }
       }
 
@@ -142,7 +163,7 @@ export const useZplConversion = () => {
           console.log(`Final PDF generated: ${mergedPdf.size} bytes`);
           
           if (mergedPdf.size < 1000) {
-            throw new Error("PDF gerado está inválido ou vazio.");
+            throw new Error(t('pdfInvalid'));
           }
           
           const finalUrl = URL.createObjectURL(mergedPdf);
@@ -175,7 +196,7 @@ export const useZplConversion = () => {
           });
         }
       } else {
-        throw new Error("Nenhum PDF foi gerado com sucesso.");
+        throw new Error(t('noPdfsGenerated'));
       }
     } catch (error) {
       console.error('Conversion error:', error);

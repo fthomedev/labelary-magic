@@ -14,11 +14,24 @@ export const PDFBlocksList = ({ pdfUrls }: PDFBlocksListProps) => {
   
   if (pdfUrls.length === 0) return null;
 
-  const handleView = (url: string) => {
+  const handleView = (url: string, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default navigation behavior
     window.open(url, '_blank');
   };
 
-  const toggleExpand = (index: number) => {
+  const handleDownload = (url: string, index: number, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default navigation behavior
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `etiquetas_bloco_${index + 1}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const toggleExpand = (index: number, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default navigation behavior
     setExpandedIndex(expandedIndex === index ? null : index);
   };
 
@@ -29,18 +42,17 @@ export const PDFBlocksList = ({ pdfUrls }: PDFBlocksListProps) => {
         {pdfUrls.map((url, index) => (
           <div key={index} className="border rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
             <div className="flex flex-wrap gap-2 p-3">
-              <a
-                href={url}
-                download={`etiquetas_bloco_${index + 1}.pdf`}
+              <Button
                 className="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors"
+                onClick={(e) => handleDownload(url, index, e)}
               >
                 <Download className="mr-2 h-4 w-4" />
                 {t('downloadBlock', { number: index + 1 })}
-              </a>
+              </Button>
               <Button
                 variant="outline"
                 className="inline-flex items-center justify-center"
-                onClick={() => handleView(url)}
+                onClick={(e) => handleView(url, e)}
               >
                 <Eye className="mr-2 h-4 w-4" />
                 {t('preview')}
@@ -48,7 +60,7 @@ export const PDFBlocksList = ({ pdfUrls }: PDFBlocksListProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => toggleExpand(index)}
+                onClick={(e) => toggleExpand(index, e)}
                 aria-label={expandedIndex === index ? "Fechar visualização" : "Abrir visualização"}
               >
                 {expandedIndex === index ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
