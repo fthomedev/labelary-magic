@@ -23,7 +23,7 @@ export function ZPLPreview({
   const { t } = useTranslation();
   
   const countLabels = (zplContent: string): number => {
-    // Count by looking for label start markers in the ZPL content
+    // Count by looking only for "^XA" markers in the ZPL content
     const regex = /\^XA/g;
     const matches = zplContent.match(regex);
     return matches ? matches.length : 0;

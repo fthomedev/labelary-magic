@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
@@ -28,7 +27,6 @@ export const useZplConversion = () => {
       if (user) {
         console.log('Saving processing history for user:', user.id);
         
-        // Call the RPC function to insert processing history
         const { error } = await (supabase.rpc as any)('insert_processing_history', {
           p_user_id: user.id,
           p_label_count: labelCount,
@@ -42,7 +40,6 @@ export const useZplConversion = () => {
         
         console.log('Processing history saved successfully');
         
-        // Force refresh session to ensure auth is still valid
         await supabase.auth.refreshSession();
       } else {
         console.log('No authenticated user found');
@@ -114,10 +111,8 @@ export const useZplConversion = () => {
           
           setLastPdfUrl(url);
           
-          // Use the actual count of labels from the split ZPL blocks
-          // This is the fix for the double counting issue
-          const actualLabelCount = labels.length;
-          await addToProcessingHistory(actualLabelCount, url);
+          const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
+          await addToProcessingHistory(countXAMarkers, url);
           
           const a = document.createElement('a');
           a.href = url;
