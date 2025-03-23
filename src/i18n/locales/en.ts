@@ -20,7 +20,7 @@ export default {
   blockError: 'Error in block',
   blockErrorMessage: 'There was an error processing block {{block}}.',
   processingComplete: 'Processing Complete',
-  acceptedFormats: 'Accepted formats',
+  acceptedFormats: 'Accepted formats: .txt, .zip',
   zipProcessed: 'ZIP Processed',
   zipFilesExtracted: '{{count}} files extracted successfully',
   noZplFilesInZip: 'No ZPL files found in the ZIP',

@@ -1,4 +1,3 @@
-
 export const translations = {
   en: {
     title: "ZPL Magic",
@@ -28,6 +27,8 @@ export const translations = {
     processingComplete: "Processing Complete",
     labelsProcessed: "{{count}} labels processed",
     filesProcessedFromZip: "{{count}} files processed from ZIP archive",
+    acceptedFormats: "Accepted formats: .txt, .zip",
+    
     // Auth translations
     email: "Email",
     password: "Password",
@@ -94,6 +95,7 @@ export const translations = {
     processingComplete: "Processamento Concluído",
     labelsProcessed: "{{count}} etiquetas processadas",
     filesProcessedFromZip: "{{count}} arquivos processados do arquivo ZIP",
+    acceptedFormats: "Formatos aceitos: .txt, .zip",
     
     // Auth translations
     email: "Email",

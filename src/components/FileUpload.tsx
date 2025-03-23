@@ -1,4 +1,3 @@
-
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle, Archive } from 'lucide-react';
@@ -24,7 +23,6 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
       const zip = new JSZip();
       const zipContents = await zip.loadAsync(file);
       
-      // Filter for .txt or .zpl files
       const zplFiles = Object.keys(zipContents.files).filter(
         filename => filename.endsWith('.txt') || filename.endsWith('.zpl')
       );
@@ -33,7 +31,6 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
         throw new Error(t('noZplFilesInZip'));
       }
       
-      // Process all ZPL files and concatenate their content
       const fileContents: string[] = [];
       for (const filename of zplFiles) {
         const content = await zipContents.files[filename].async('text');
@@ -155,7 +152,7 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
                 {t('dragAndDrop')}
               </p>
               <p className="text-sm text-muted-foreground mb-4">
-                {t('acceptedFormats')}: .txt, .zip
+                {t('acceptedFormats')}
               </p>
               <Button 
                 variant="outline" 
