@@ -11,13 +11,16 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
   const isMobile = useIsMobile();
   const [dbRecords, setDbRecords] = useState<ProcessingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(!localOnly);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 10;
   const { toast } = useToast();
   
   useEffect(() => {
     if (!localOnly) {
       fetchProcessingHistory();
     }
-  }, [localOnly]);
+  }, [localOnly, currentPage]);
 
   const fetchProcessingHistory = async () => {
     try {
@@ -31,11 +34,25 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
         return;
       }
       
+      // First get total count for pagination
+      const { count, error: countError } = await supabase
+        .from('processing_history')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', sessionData.session.user.id);
+        
+      if (countError) {
+        console.error('Error counting processing history:', countError);
+      } else if (count !== null) {
+        setTotalRecords(count);
+      }
+      
+      // Then get paginated records
       const { data, error } = await supabase
         .from('processing_history')
         .select('*')
         .eq('user_id', sessionData.session.user.id)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .range((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage - 1);
       
       if (error) {
         console.error('Error fetching processing history:', error);
@@ -59,6 +76,12 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
   
   // Use local records if provided, otherwise use database records
   const records = localOnly ? localRecords || [] : dbRecords;
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  
+  const totalPages = Math.ceil(totalRecords / recordsPerPage);
   
   const handleDownload = (pdfUrl: string) => {
     const a = document.createElement('a');
@@ -101,6 +124,10 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     records,
     formatDate,
     handleDownload,
-    isMobile
+    isMobile,
+    currentPage,
+    totalPages,
+    handlePageChange,
+    totalRecords
   };
 }

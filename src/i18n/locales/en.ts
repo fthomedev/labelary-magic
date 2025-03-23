@@ -31,6 +31,10 @@ export default {
   delete: "Delete",
   noHistory: "No processing history found",
   loadingHistory: "Loading history...",
+  pagination: "Page {{current}} of {{total}}",
+  previous: "Previous",
+  next: "Next",
+  totalRecords: "Total Records",
   
   // Delete record confirmation
   deleteRecordConfirm: "Delete Record?",
