@@ -57,7 +57,8 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
             id: record.id,
             date: new Date(record.date),
             labelCount: record.label_count,
-            pdfUrl: record.pdf_url
+            pdfUrl: record.pdf_url,
+            pdfPath: record.pdf_path
           }))
         );
       }
@@ -90,14 +91,52 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
   
   const totalPages = Math.ceil(totalRecords / recordsPerPage);
   
-  const handleDownload = (pdfUrl: string) => {
-    const a = document.createElement('a');
-    a.href = pdfUrl;
-    a.download = 'etiquetas.pdf';
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(pdfUrl);
-    document.body.removeChild(a);
+  const handleDownload = async (record: ProcessingRecord) => {
+    try {
+      // If we have a storage path, download from Supabase storage
+      if (record.pdfPath) {
+        console.log('Downloading from storage path:', record.pdfPath);
+        
+        // Get the public URL
+        const { data } = supabase.storage
+          .from('pdfs')
+          .getPublicUrl(record.pdfPath);
+          
+        if (!data || !data.publicUrl) {
+          throw new Error('Failed to get public URL for file');
+        }
+        
+        console.log('Public URL:', data.publicUrl);
+        
+        // Create download link
+        const a = document.createElement('a');
+        a.href = data.publicUrl;
+        a.download = 'etiquetas.pdf';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } 
+      // Fallback to blob URL if available (for newly created PDFs)
+      else if (record.pdfUrl) {
+        console.log('Trying to use blob URL (may not work for old records):', record.pdfUrl);
+        const a = document.createElement('a');
+        a.href = record.pdfUrl;
+        a.download = 'etiquetas.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        throw new Error('No PDF URL or path available');
+      }
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: t('downloadError'),
+      });
+    }
   };
 
   const formatDate = (date: Date) => {

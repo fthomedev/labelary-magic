@@ -14,7 +14,7 @@ import { ProcessingRecord } from '@/hooks/useZplConversion';
 interface HistoryTableProps {
   records: ProcessingRecord[];
   formatDate: (date: Date) => string;
-  onDownload: (pdfUrl: string) => void;
+  onDownload: (record: ProcessingRecord) => void;
   isMobile: boolean;
 }
 

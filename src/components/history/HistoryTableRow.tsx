@@ -9,7 +9,7 @@ import { ProcessingRecord } from '@/hooks/useZplConversion';
 interface HistoryTableRowProps {
   record: ProcessingRecord;
   formatDate: (date: Date) => string;
-  onDownload: (pdfUrl: string) => void;
+  onDownload: (record: ProcessingRecord) => void;
 }
 
 export function HistoryTableRow({ 
@@ -39,7 +39,7 @@ export function HistoryTableRow({
             variant="ghost"
             size="sm"
             className="p-0 h-7 w-7 rounded-full flex items-center justify-center text-primary hover:text-primary-foreground hover:bg-primary hover-lift"
-            onClick={() => onDownload(record.pdfUrl)}
+            onClick={() => onDownload(record)}
             title={t('download')}
           >
             <Download className="h-3 w-3" />

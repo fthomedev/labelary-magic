@@ -11,6 +11,7 @@ export interface ProcessingRecord {
   date: Date;
   labelCount: number;
   pdfUrl: string;
+  pdfPath?: string; // Added to store the Supabase storage path
 }
 
 export const useZplConversion = () => {
@@ -19,10 +20,45 @@ export const useZplConversion = () => {
   const [pdfUrls, setPdfUrls] = useState<string[]>([]);
   const [isProcessingComplete, setIsProcessingComplete] = useState(false);
   const [lastPdfUrl, setLastPdfUrl] = useState<string | undefined>(undefined);
+  const [lastPdfPath, setLastPdfPath] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  const addToProcessingHistory = async (labelCount: number, pdfUrl: string) => {
+  // Upload PDF to Supabase Storage
+  const uploadPDFToStorage = async (pdfBlob: Blob): Promise<string> => {
+    try {
+      const fileName = `label-${uuidv4()}.pdf`;
+      const filePath = `${fileName}`;
+      
+      const { data, error } = await supabase.storage
+        .from('pdfs')
+        .upload(filePath, pdfBlob, {
+          contentType: 'application/pdf',
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) {
+        console.error('Error uploading PDF to storage:', error);
+        throw error;
+      }
+      
+      // Get the public URL for the uploaded file
+      const { data: publicUrlData } = supabase.storage
+        .from('pdfs')
+        .getPublicUrl(filePath);
+      
+      console.log('PDF uploaded to storage:', filePath);
+      console.log('Public URL:', publicUrlData.publicUrl);
+      
+      return filePath;
+    } catch (error) {
+      console.error('Failed to upload PDF to storage:', error);
+      throw error;
+    }
+  };
+
+  const addToProcessingHistory = async (labelCount: number, pdfUrl: string, pdfPath?: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -31,7 +67,8 @@ export const useZplConversion = () => {
         const { error } = await (supabase.rpc as any)('insert_processing_history', {
           p_user_id: user.id,
           p_label_count: labelCount,
-          p_pdf_url: pdfUrl
+          p_pdf_url: pdfUrl,
+          p_pdf_path: pdfPath || null
         });
         
         if (error) {
@@ -106,19 +143,33 @@ export const useZplConversion = () => {
       if (pdfs.length > 0) {
         try {
           const mergedPdf = await mergePDFs(pdfs);
-          const url = window.URL.createObjectURL(mergedPdf);
           
-          setLastPdfUrl(url);
+          // Upload merged PDF to Supabase Storage
+          const pdfPath = await uploadPDFToStorage(mergedPdf);
+          
+          // Get the public URL for the uploaded file
+          const { data: publicUrlData } = supabase.storage
+            .from('pdfs')
+            .getPublicUrl(pdfPath);
+            
+          const publicUrl = publicUrlData.publicUrl;
+          
+          // Create a blob URL for immediate download
+          const blobUrl = window.URL.createObjectURL(mergedPdf);
+          setLastPdfUrl(blobUrl);
+          setLastPdfPath(pdfPath);
           
           // Count ^XA markers, divide by 2 and round up
           const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
           const actualLabelCount = Math.ceil(countXAMarkers / 2);
           
-          // Removed session refresh
-          await addToProcessingHistory(actualLabelCount, url);
+          // Save to processing history with both the temporary blob URL (for immediate use)
+          // and the permanent storage path
+          await addToProcessingHistory(actualLabelCount, blobUrl, pdfPath);
           
+          // Download the file
           const a = document.createElement('a');
-          a.href = url;
+          a.href = blobUrl;
           a.download = 'etiquetas.pdf';
           document.body.appendChild(a);
           a.click();
@@ -160,6 +211,7 @@ export const useZplConversion = () => {
     pdfUrls,
     isProcessingComplete,
     lastPdfUrl,
+    lastPdfPath,
     convertToPDF,
   };
 };
