@@ -117,11 +117,9 @@ const Index = () => {
               )}
             </div>
 
-            {zplContent && (
-              <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow" ref={processingHistoryRef}>
-                <ProcessingHistory key={refreshHistory} />
-              </div>
-            )}
+            <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow" ref={processingHistoryRef}>
+              <ProcessingHistory key={refreshHistory} />
+            </div>
           </div>
         </div>
       </main>
