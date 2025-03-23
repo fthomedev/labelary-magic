@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
@@ -47,21 +48,21 @@ export function ZPLPreview({
   return (
     <div className="rounded-xl overflow-hidden gradient-border">
       <Card className="border-0 shadow-none bg-gradient-to-r from-white to-gray-50">
-        <CardContent className="p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+        <CardContent className="p-3">
+          <div className="flex flex-row items-center justify-between gap-3 mb-2">
+            <div className="flex items-center space-x-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                 {isProcessingComplete ? (
-                  <CheckCircle className="h-6 w-6 text-primary" />
+                  <CheckCircle className="h-4 w-4 text-primary" />
                 ) : (
-                  <Tag className="h-6 w-6 text-primary" />
+                  <Tag className="h-4 w-4 text-primary" />
                 )}
               </div>
               <div>
-                <h3 className="text-base font-medium text-foreground font-heading">
+                <h3 className="text-sm font-medium text-foreground font-heading">
                   {isProcessingComplete ? t('processingComplete') : t('totalLabels')}
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {isProcessingComplete ? t('labelsProcessed', { count: totalLabels }) : t('processing')}
                 </p>
               </div>
@@ -70,16 +71,16 @@ export function ZPLPreview({
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="flex items-center gap-2 text-primary border-primary/20 hover:bg-primary/5 hover:border-primary w-full sm:w-auto justify-center hover-lift btn-effect"
+                className="flex items-center gap-1 text-primary border-primary/20 hover:bg-primary/5 hover:border-primary text-xs py-1 px-3 h-auto"
                 onClick={handleDownload}
                 disabled={!lastPdfUrl}
               >
-                <Download className="h-4 w-4" />
+                <Download className="h-3 w-3" />
                 {t('downloadAgain')}
               </Button>
             ) : (
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-4 py-2 w-full sm:w-auto justify-center">
-                <span className="text-xl font-semibold text-primary">
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1">
+                <span className="text-lg font-semibold text-primary">
                   {totalLabels}
                 </span>
               </span>
@@ -87,12 +88,12 @@ export function ZPLPreview({
           </div>
           
           {sourceType === 'zip' && fileCount > 1 && (
-            <div className="flex items-center p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 mr-3">
-                <Archive className="h-5 w-5 text-blue-500" />
+            <div className="flex items-center p-2 bg-blue-50 rounded-lg border border-blue-100 text-xs">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 mr-2">
+                <Archive className="h-3 w-3 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm text-blue-700">
+                <p className="text-xs text-blue-700">
                   {t('filesProcessedFromZip', { count: fileCount })}
                 </p>
               </div>

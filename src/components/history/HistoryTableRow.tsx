@@ -21,28 +21,28 @@ export function HistoryTableRow({
 
   return (
     <TableRow key={record.id} className="hover:bg-accent/30 transition-colors">
-      <TableCell className="py-3">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
+      <TableCell className="py-2 text-xs">
+        <div className="flex items-center gap-1">
+          <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
           <span className="font-medium">{formatDate(record.date)}</span>
         </div>
       </TableCell>
-      <TableCell className="py-3">
-        <div className="flex items-center gap-2">
-          <Tag className="h-4 w-4 text-primary flex-shrink-0" />
+      <TableCell className="py-2 text-xs">
+        <div className="flex items-center gap-1">
+          <Tag className="h-3 w-3 text-primary flex-shrink-0" />
           <span>{record.labelCount}</span>
         </div>
       </TableCell>
-      <TableCell className="py-3">
-        <div className="flex justify-end items-center gap-2">
+      <TableCell className="py-2">
+        <div className="flex justify-end items-center">
           <Button
             variant="ghost"
             size="sm"
-            className="p-0 h-9 w-9 rounded-full flex items-center justify-center text-primary hover:text-primary-foreground hover:bg-primary hover-lift"
+            className="p-0 h-7 w-7 rounded-full flex items-center justify-center text-primary hover:text-primary-foreground hover:bg-primary hover-lift"
             onClick={() => onDownload(record.pdfUrl)}
             title={t('download')}
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-3 w-3" />
             <span className="sr-only">{t('download')}</span>
           </Button>
         </div>

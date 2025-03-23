@@ -1,4 +1,5 @@
 
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -26,7 +27,7 @@
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 142.1 76.2% 36.3%;
-    --radius: 0.75rem;
+    --radius: 0.5rem;
   }
  
   .dark {
@@ -67,7 +68,7 @@
 }
 
 .file-drop-area {
-  @apply border-2 border-dashed rounded-lg p-8 transition-all duration-200 ease-in-out;
+  @apply border-2 border-dashed rounded-lg p-4 transition-all duration-200 ease-in-out;
 }
 
 .file-drop-area.dragging {
@@ -90,7 +91,7 @@
 /* Card with gradient border */
 .gradient-border {
   position: relative;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   background: linear-gradient(to right, #ffffff, #f8f9fa);
   padding: 0.5px;
   overflow: hidden;
@@ -103,8 +104,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  border-radius: 1rem;
-  padding: 2px;
+  border-radius: 0.5rem;
+  padding: 1px;
   background: linear-gradient(to right, #4ade80, #22c55e);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -142,3 +143,18 @@
 .hover-lift:hover {
   transform: translateY(-2px);
 }
+
+/* Compact layout styles */
+.compact-table td, .compact-table th {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.compact-card {
+  margin-bottom: 0.5rem;
+}
+
+.compact-spacing {
+  margin: 0.5rem 0;
+}
+
