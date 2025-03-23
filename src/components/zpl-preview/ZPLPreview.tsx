@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { CheckCircle, Printer } from 'lucide-react';
@@ -31,14 +31,20 @@ export function ZPLPreview({
   onConvert = () => {}
 }: ZPLPreviewProps) {
   const { t } = useTranslation();
+  const [labelCount, setLabelCount] = useState<number>(0);
   
-  const countLabels = (zplContent: string): number => {
-    const regex = /\^XA[\s\S]*?\^XZ/g;
-    const matches = zplContent.match(regex);
-    return matches ? matches.length : 0;
-  };
-
-  const totalLabels = countLabels(content);
+  useEffect(() => {
+    if (content) {
+      // Count number of labels in the ZPL content based on ^XA and ^XZ pairs
+      const countLabels = (zplContent: string): number => {
+        const regex = /\^XA[\s\S]*?\^XZ/g;
+        const matches = zplContent.match(regex);
+        return matches ? matches.length : 0;
+      };
+      
+      setLabelCount(countLabels(content));
+    }
+  }, [content]);
 
   return (
     <div className="rounded-lg bg-gradient-to-r from-blue-500/10 to-cyan-500/10 p-1.5">
@@ -73,7 +79,7 @@ export function ZPLPreview({
                     </h3>
                     <ZPLInfoTooltip />
                     <p className="text-sm text-gray-700 dark:text-gray-300 ml-2">
-                      {isProcessingComplete ? t('labelsProcessed', { count: totalLabels }) : t('processing')}
+                      {isProcessingComplete ? t('labelsProcessed', { count: labelCount }) : `${labelCount}`}
                     </p>
                   </div>
                   

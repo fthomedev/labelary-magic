@@ -60,7 +60,9 @@ export const useZplConversion = () => {
       setProgress(0);
       setPdfUrls([]);
       setIsProcessingComplete(false);
+      setLastPdfUrl(undefined);
 
+      // Split ZPL content into valid ZPL blocks
       const labels = splitZPLIntoBlocks(zplContent);
       console.log(`Total labels found: ${labels.length}`);
       
@@ -69,20 +71,21 @@ export const useZplConversion = () => {
       }
       
       const pdfs: Blob[] = [];
-      const LABELS_PER_REQUEST = 10; // Reduzindo para evitar problemas de tamanho
+      const LABELS_PER_REQUEST = 5; // Reducing to avoid payload size issues
       const newPdfUrls: string[] = [];
 
       for (let i = 0; i < labels.length; i += LABELS_PER_REQUEST) {
         try {
           const blockLabels = labels.slice(i, i + LABELS_PER_REQUEST);
-          const blockZPL = blockLabels.join('');
+          const blockZPL = blockLabels.join('\n');
           
-          console.log(`Enviando bloco ${i/LABELS_PER_REQUEST + 1}, com ${blockLabels.length} etiquetas`);
-          console.log(`Tamanho do bloco ZPL: ${blockZPL.length} caracteres`);
+          console.log(`Sending block ${Math.floor(i/LABELS_PER_REQUEST) + 1}, with ${blockLabels.length} labels`);
+          console.log(`ZPL block size: ${blockZPL.length} characters`);
           
-          // Verificar se o ZPL tem um formato válido (começando com ^XA e terminando com ^XZ)
-          if (!blockZPL.startsWith('^XA') || !blockZPL.endsWith('^XZ')) {
-            console.warn('Bloco ZPL com formato incorreto:', blockZPL.substring(0, 100) + '...');
+          // Check if ZPL has valid format (starts with ^XA and ends with ^XZ)
+          const validFormat = blockLabels.every(label => label.trim().startsWith('^XA') && label.trim().endsWith('^XZ'));
+          if (!validFormat) {
+            console.warn('ZPL block with incorrect format detected');
           }
 
           const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
@@ -95,17 +98,17 @@ export const useZplConversion = () => {
           });
 
           if (!response.ok) {
-            console.error(`Erro na API: ${response.status} ${response.statusText}`);
+            console.error(`API Error: ${response.status} ${response.statusText}`);
             const errorText = await response.text();
-            console.error(`Detalhes do erro: ${errorText}`);
+            console.error(`Error details: ${errorText}`);
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
           const blob = await response.blob();
-          console.log(`PDF recebido: ${blob.size} bytes`);
+          console.log(`PDF received: ${blob.size} bytes`);
           
           if (blob.size < 1000) {
-            console.warn('PDF muito pequeno, possível erro no conteúdo ZPL');
+            console.warn('PDF is too small, possible error in ZPL content');
           }
           
           pdfs.push(blob);
@@ -115,15 +118,16 @@ export const useZplConversion = () => {
 
           setProgress(((i + blockLabels.length) / labels.length) * 100);
 
+          // Add delay between requests to avoid rate limiting
           if (i + LABELS_PER_REQUEST < labels.length) {
-            await delay(3000);
+            await delay(1500);
           }
         } catch (error) {
-          console.error(`${t('blockError')} ${i / LABELS_PER_REQUEST + 1}:`, error);
+          console.error(`${t('blockError')} ${Math.floor(i / LABELS_PER_REQUEST) + 1}:`, error);
           toast({
             variant: "destructive",
             title: t('error'),
-            description: t('blockErrorMessage', { block: i / LABELS_PER_REQUEST + 1 }),
+            description: t('blockErrorMessage', { block: Math.floor(i / LABELS_PER_REQUEST) + 1 }),
           });
         }
       }
@@ -132,8 +136,9 @@ export const useZplConversion = () => {
 
       if (pdfs.length > 0) {
         try {
+          console.log(`Merging ${pdfs.length} PDFs`);
           const mergedPdf = await mergePDFs(pdfs);
-          console.log(`PDF final gerado: ${mergedPdf.size} bytes`);
+          console.log(`Final PDF generated: ${mergedPdf.size} bytes`);
           
           const url = window.URL.createObjectURL(mergedPdf);
           
@@ -156,7 +161,7 @@ export const useZplConversion = () => {
           
           setIsProcessingComplete(true);
         } catch (error) {
-          console.error('Erro ao mesclar PDFs:', error);
+          console.error('Error merging PDFs:', error);
           toast({
             variant: "destructive",
             title: t('error'),
@@ -167,7 +172,7 @@ export const useZplConversion = () => {
         throw new Error("Nenhum PDF foi gerado com sucesso.");
       }
     } catch (error) {
-      console.error('Erro na conversão:', error);
+      console.error('Conversion error:', error);
       toast({
         variant: "destructive",
         title: t('error'),
