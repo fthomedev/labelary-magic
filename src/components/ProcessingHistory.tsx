@@ -30,16 +30,16 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
 
   if (isLoading) {
     return (
-      <Card className="bg-white shadow-md border-border overflow-hidden">
-        <CardHeader className="pb-1 pt-2 border-b">
-          <CardTitle className="text-sm font-medium flex items-center gap-1">
-            <History className="h-3.5 w-3.5 text-primary" />
+      <Card className="mt-4 bg-white shadow-md border-border overflow-hidden">
+        <CardHeader className="pb-1 pt-3 border-b">
+          <CardTitle className="text-base font-medium flex items-center gap-2">
+            <History className="h-4 w-4 text-primary" />
             {t('processingHistory')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-center py-4 flex flex-col items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-primary mb-1" />
-          <span className="text-xs text-muted-foreground">{t('loadingHistory')}</span>
+        <CardContent className="text-center py-6 flex flex-col items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
+          <span className="text-sm text-muted-foreground">{t('loadingHistory')}</span>
         </CardContent>
       </Card>
     );
@@ -47,14 +47,14 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
 
   if (!records || records.length === 0) {
     return (
-      <Card className="bg-white shadow-md border-border overflow-hidden">
-        <CardHeader className="pb-1 pt-2 border-b">
-          <CardTitle className="text-sm font-medium flex items-center gap-1">
-            <History className="h-3.5 w-3.5 text-primary" />
+      <Card className="mt-4 bg-white shadow-md border-border overflow-hidden">
+        <CardHeader className="pb-1 pt-3 border-b">
+          <CardTitle className="text-base font-medium flex items-center gap-2">
+            <History className="h-4 w-4 text-primary" />
             {t('processingHistory')}
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-center py-4 text-xs text-muted-foreground">
+        <CardContent className="text-center py-6 text-sm text-muted-foreground">
           {t('noHistory')}
         </CardContent>
       </Card>
@@ -62,11 +62,11 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
   }
 
   return (
-    <Card className="bg-white shadow-md border-border overflow-hidden">
-      <CardHeader className="pb-1 pt-2 border-b">
-        <CardTitle className="text-sm font-medium flex justify-between items-center">
-          <div className="flex items-center gap-1">
-            <History className="h-3.5 w-3.5 text-primary" />
+    <Card className="mt-4 bg-white shadow-md border-border overflow-hidden">
+      <CardHeader className="pb-1 pt-3 border-b">
+        <CardTitle className="text-base font-medium flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <History className="h-4 w-4 text-primary" />
             <span>{t('processingHistory')}</span>
           </div>
           {!localOnly && totalRecords > 0 && (
@@ -85,7 +85,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
         />
       </CardContent>
       {!localOnly && totalPages > 1 && (
-        <CardFooter className="py-1 px-3 flex justify-center border-t">
+        <CardFooter className="py-2 px-4 flex justify-center border-t">
           <HistoryPagination
             currentPage={currentPage}
             totalPages={totalPages}
