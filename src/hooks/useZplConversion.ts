@@ -40,8 +40,6 @@ export const useZplConversion = () => {
         }
         
         console.log('Processing history saved successfully');
-        
-        await supabase.auth.refreshSession();
       } else {
         console.log('No authenticated user found');
       }
@@ -115,6 +113,8 @@ export const useZplConversion = () => {
           // Count ^XA markers, divide by 2 and round up
           const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
           const actualLabelCount = Math.ceil(countXAMarkers / 2);
+          
+          // Removed session refresh
           await addToProcessingHistory(actualLabelCount, url);
           
           const a = document.createElement('a');

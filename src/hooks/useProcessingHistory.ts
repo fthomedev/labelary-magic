@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
@@ -16,13 +16,7 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
   const recordsPerPage = 10;
   const { toast } = useToast();
   
-  useEffect(() => {
-    if (!localOnly) {
-      fetchProcessingHistory();
-    }
-  }, [localOnly, currentPage]);
-
-  const fetchProcessingHistory = async () => {
+  const fetchProcessingHistory = useCallback(async () => {
     try {
       setIsLoading(true);
       
@@ -72,7 +66,20 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage]);
+  
+  useEffect(() => {
+    if (!localOnly) {
+      fetchProcessingHistory();
+    }
+  }, [localOnly, currentPage, fetchProcessingHistory]);
+  
+  // Add a manual refresh function
+  const refreshData = useCallback(() => {
+    if (!localOnly) {
+      fetchProcessingHistory();
+    }
+  }, [localOnly, fetchProcessingHistory]);
   
   // Use local records if provided, otherwise use database records
   const records = localOnly ? localRecords || [] : dbRecords;
@@ -128,6 +135,7 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     currentPage,
     totalPages,
     handlePageChange,
-    totalRecords
+    totalRecords,
+    refreshData
   };
 }

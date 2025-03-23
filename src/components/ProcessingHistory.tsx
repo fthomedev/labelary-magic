@@ -24,7 +24,8 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     currentPage,
     totalPages,
     handlePageChange,
-    totalRecords
+    totalRecords,
+    refreshData
   } = useProcessingHistory(localRecords, localOnly);
 
   if (isLoading) {

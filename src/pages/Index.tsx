@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -44,14 +43,6 @@ const Index = () => {
     checkAuth();
   }, []);
 
-  // Watch for processing completion to refresh history
-  useEffect(() => {
-    if (isProcessingComplete) {
-      // Refresh history by incrementing the state value
-      setRefreshHistory(prev => prev + 1);
-    }
-  }, [isProcessingComplete]);
-
   const handleFileSelect = (content: string, type: 'file' | 'zip' = 'file', count: number = 1) => {
     setZplContent(content);
     setSourceType(type);
@@ -60,7 +51,9 @@ const Index = () => {
 
   const handleConvert = async () => {
     await convertToPDF(zplContent);
-    // Force refresh of processing history
+  };
+
+  const refreshHistoryManually = () => {
     setRefreshHistory(prev => prev + 1);
   };
 
