@@ -1,7 +1,7 @@
 
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, AlertCircle, Archive, ArrowDownCircle } from 'lucide-react';
+import { Upload, FileText, AlertCircle, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
@@ -120,62 +120,43 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
   });
 
   return (
-    <Card className="w-full overflow-hidden">
+    <Card className="w-full">
       <div
         {...getRootProps()}
-        className={`file-drop-area p-8 flex flex-col items-center justify-center border-2 border-dashed rounded-lg transition-all duration-200 ${
-          isDragActive ? 'dragging border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/70 dark:border-gray-600 dark:hover:border-primary/70'
-        }`}
-        aria-label={t('dragAndDrop')}
-        role="button"
-        tabIndex={0}
+        className="p-4 border-2 border-dashed border-border rounded-lg hover:border-primary/50 transition-colors"
       >
-        <input {...getInputProps()} aria-label={t('selectFile')} />
+        <input {...getInputProps()} />
         <div className="text-center">
           {isProcessing ? (
-            <div className="py-8" aria-live="polite">
-              <div 
-                className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"
-                aria-hidden="true"
-              ></div>
-              <p className="text-base font-medium">{t('processingZip')}</p>
+            <div className="py-6">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-3"></div>
+              <p className="text-sm font-medium">{t('processingZip')}</p>
             </div>
           ) : isDragActive ? (
-            <div className="py-10" aria-live="polite">
-              <ArrowDownCircle 
-                className="h-12 w-12 text-primary mx-auto mb-4 animate-bounce" 
-                aria-hidden="true"
-              />
-              <p className="text-base font-medium text-primary">{t('dropHere')}</p>
-            </div>
+            <p className="text-sm sm:text-base font-medium py-6">{t('dropHere')}</p>
           ) : (
-            <div className="py-6">
-              <div className="flex flex-col items-center mb-4">
-                <div className="bg-secondary rounded-full p-4 mb-4">
-                  <Upload className="h-8 w-8 text-primary" aria-hidden="true" />
-                </div>
-                <p className="text-base font-medium mb-2">
-                  {t('dragAndDrop')}
-                </p>
-                <p className="text-sm text-muted-foreground mb-3">
-                  {t('acceptedFormats')}: .txt, .zip
-                </p>
-                <Button variant="outline" size="sm" className="text-sm hover:bg-primary/10 dark:hover:bg-primary/20">
-                  <FileText className="mr-2 h-4 w-4" aria-hidden="true" />
-                  {t('selectFile')}
-                </Button>
+            <>
+              <div className="flex justify-center space-x-4 mb-4">
+                <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
+                <Archive className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
               </div>
-            </div>
+              <p className="text-sm sm:text-base font-medium mb-2">
+                {t('dragAndDrop')}
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+                {t('acceptedFormats')}: .txt, .zip
+              </p>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                <FileText className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                {t('selectFile')}
+              </Button>
+            </>
           )}
         </div>
       </div>
       {error && (
-        <div 
-          className="mt-2 p-2 bg-destructive/10 rounded text-sm flex items-center text-destructive"
-          role="alert"
-          aria-live="assertive"
-        >
-          <AlertCircle className="h-4 w-4 mr-2" aria-hidden="true" />
+        <div className="mt-2 p-2 bg-destructive/10 rounded text-xs sm:text-sm flex items-center text-destructive">
+          <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
           {error}
         </div>
       )}

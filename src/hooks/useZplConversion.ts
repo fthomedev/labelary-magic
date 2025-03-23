@@ -1,8 +1,10 @@
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
-import { processZPLContent } from '@/utils/labelProcessingService';
+import { v4 as uuidv4 } from 'uuid';
+import { splitZPLIntoBlocks, delay, mergePDFs } from '@/utils/pdfUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ProcessingRecord {
   id: string;
@@ -20,68 +22,139 @@ export const useZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  const convertToPDF = useCallback(async (zplContent: string) => {
-    if (!zplContent || zplContent.trim() === '') {
-      toast({
-        variant: "destructive",
-        title: t('error'),
-        description: t('noZplContent'),
-      });
-      return;
+  const addToProcessingHistory = async (labelCount: number, pdfUrl: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        console.log('Saving processing history for user:', user.id);
+        
+        // Call the RPC function to insert processing history
+        const { error } = await (supabase.rpc as any)('insert_processing_history', {
+          p_user_id: user.id,
+          p_label_count: labelCount,
+          p_pdf_url: pdfUrl
+        });
+        
+        if (error) {
+          console.error('Error saving processing history:', error);
+          return;
+        }
+        
+        console.log('Processing history saved successfully');
+        
+        // Force refresh session to ensure auth is still valid
+        await supabase.auth.refreshSession();
+      } else {
+        console.log('No authenticated user found');
+      }
+    } catch (error) {
+      console.error('Failed to save processing history to database:', error);
     }
+  };
+
+  const convertToPDF = async (zplContent: string) => {
+    if (!zplContent) return;
     
     try {
       setIsConverting(true);
       setProgress(0);
       setPdfUrls([]);
       setIsProcessingComplete(false);
-      setLastPdfUrl(undefined);
 
-      const result = await processZPLContent(zplContent, {
-        onProgress: (progressValue) => {
-          setProgress(progressValue);
-        },
-        onComplete: (finalUrl) => {
-          setLastPdfUrl(finalUrl);
-          setIsProcessingComplete(true);
+      const labels = splitZPLIntoBlocks(zplContent);
+      const pdfs: Blob[] = [];
+      const LABELS_PER_REQUEST = 14;
+      const newPdfUrls: string[] = [];
+
+      for (let i = 0; i < labels.length; i += LABELS_PER_REQUEST) {
+        try {
+          const blockLabels = labels.slice(i, i + LABELS_PER_REQUEST);
+          const blockZPL = blockLabels.join('');
+
+          const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/pdf',
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: blockZPL,
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const blob = await response.blob();
+          pdfs.push(blob);
+
+          const blockUrl = window.URL.createObjectURL(blob);
+          newPdfUrls.push(blockUrl);
+
+          setProgress(((i + blockLabels.length) / labels.length) * 100);
+
+          if (i + LABELS_PER_REQUEST < labels.length) {
+            await delay(3000);
+          }
+        } catch (error) {
+          console.error(`${t('blockError')} ${i / LABELS_PER_REQUEST + 1}:`, error);
+          toast({
+            variant: "destructive",
+            title: t('error'),
+            description: t('blockErrorMessage', { block: i / LABELS_PER_REQUEST + 1 }),
+          });
+        }
+      }
+
+      setPdfUrls(newPdfUrls);
+
+      if (pdfs.length > 0) {
+        try {
+          const mergedPdf = await mergePDFs(pdfs);
+          const url = window.URL.createObjectURL(mergedPdf);
           
+          setLastPdfUrl(url);
+          
+          // Use the actual count of labels from the split ZPL blocks
+          // This is the fix for the double counting issue
+          const actualLabelCount = labels.length;
+          await addToProcessingHistory(actualLabelCount, url);
+          
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'etiquetas.pdf';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+
           toast({
             title: t('success'),
             description: t('successMessage'),
           });
           
-          // Auto-download the PDF
-          const a = document.createElement('a');
-          a.href = finalUrl;
-          a.download = 'etiquetas.pdf';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        },
-        onError: (errorMessage) => {
+          setIsProcessingComplete(true);
+        } catch (error) {
+          console.error('Erro ao mesclar PDFs:', error);
           toast({
             variant: "destructive",
             title: t('error'),
-            description: errorMessage,
+            description: t('mergePdfError'),
           });
-        },
-        getTranslation: (key, options) => String(t(key, options)) // Convert translation result to string
-      });
-      
-      setPdfUrls(result.pdfUrls);
-      
+        }
+      } else {
+        throw new Error("Nenhum PDF foi gerado com sucesso.");
+      }
     } catch (error) {
-      console.error('Conversion error:', error);
+      console.error('Erro na conversão:', error);
       toast({
         variant: "destructive",
         title: t('error'),
-        description: error instanceof Error ? error.message : String(t('errorMessage')), // Convert to string
+        description: t('errorMessage'),
       });
     } finally {
       setIsConverting(false);
-      setProgress(100);
+      setProgress(0);
     }
-  }, [t, toast]);
+  };
 
   return {
     isConverting,

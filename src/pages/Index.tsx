@@ -1,16 +1,15 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
+import { ConversionProgress } from '@/components/ConversionProgress';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { UserMenu } from '@/components/UserMenu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ProcessingHistory } from '@/components/ProcessingHistory';
 import { useZplConversion } from '@/hooks/useZplConversion';
 import { supabase } from '@/integrations/supabase/client';
-import { PDFBlocksList } from '@/components/PDFBlocksList';
-import { useNavigate, useLocation } from 'react-router-dom';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -20,15 +19,13 @@ const Index = () => {
   const [refreshHistory, setRefreshHistory] = useState<number>(0);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const processingHistoryRef = useRef<HTMLDivElement>(null);
   
   const {
     isConverting,
     progress,
     isProcessingComplete,
     lastPdfUrl,
-    pdfUrls,
     convertToPDF
   } = useZplConversion();
 
@@ -69,7 +66,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10">
+      <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">
             <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white truncate mr-2">
@@ -108,27 +105,27 @@ const Index = () => {
                       fileCount={fileCount}
                       isProcessingComplete={isProcessingComplete}
                       lastPdfUrl={lastPdfUrl}
-                      isConverting={isConverting}
-                      progress={progress}
-                      onConvert={handleConvert}
                     />
-                  </div>
-                </div>
-              )}
-              
-              {pdfUrls.length > 0 && (
-                <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
-                  <div className="p-4 md:p-6">
-                    <PDFBlocksList pdfUrls={pdfUrls} />
                   </div>
                 </div>
               )}
             </div>
 
-            <div>
-              {/* Always show processing history */}
-              <ProcessingHistory key={refreshHistory} />
-            </div>
+            {zplContent && (
+              <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
+                <div className="p-4 md:p-6">
+                  <ConversionProgress 
+                    isConverting={isConverting}
+                    progress={progress}
+                    onConvert={handleConvert}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="mt-6 md:mt-8" ref={processingHistoryRef}>
+            <ProcessingHistory key={refreshHistory} />
           </div>
         </div>
       </main>

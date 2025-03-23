@@ -23,13 +23,13 @@ export function HistoryTableRow({
     <TableRow key={record.id}>
       <TableCell className="py-2">
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" aria-hidden="true" />
+          <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
           <span>{formatDate(record.date)}</span>
         </div>
       </TableCell>
       <TableCell className="py-2">
         <div className="flex items-center gap-2">
-          <Tag className="h-4 w-4 text-cyan-500 flex-shrink-0" aria-hidden="true" />
+          <Tag className="h-4 w-4 text-cyan-500 flex-shrink-0" />
           <span>{record.labelCount}</span>
         </div>
       </TableCell>
@@ -38,9 +38,9 @@ export function HistoryTableRow({
           <Button
             variant="ghost"
             size="sm"
-            className="p-0 h-8 w-8 rounded-full flex items-center justify-center text-blue-700 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
+            className="p-0 h-8 w-8 rounded-full flex items-center justify-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
             onClick={() => onDownload(record.pdfUrl)}
-            aria-label={t('download')}
+            title={t('download')}
           >
             <Download className="h-4 w-4" />
             <span className="sr-only">{t('download')}</span>

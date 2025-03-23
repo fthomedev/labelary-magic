@@ -27,24 +27,16 @@ export function DeleteConfirmDialog({ open, onOpenChange, onConfirm }: DeleteCon
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby="delete-confirmation-description">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('deleteRecordConfirm')}</DialogTitle>
-          <DialogDescription id="delete-confirmation-description">{t('deleteRecordWarning')}</DialogDescription>
+          <DialogDescription>{t('deleteRecordWarning')}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)} 
-            className="hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t('cancel')}
           </Button>
-          <Button 
-            variant="destructive" 
-            onClick={handleConfirm}
-            className="bg-destructive text-white hover:bg-destructive/90 focus:ring-2 focus:ring-destructive/50 focus:ring-offset-2"
-          >
+          <Button variant="destructive" onClick={handleConfirm}>
             {t('delete')}
           </Button>
         </DialogFooter>
