@@ -27,17 +27,17 @@ export function HistoryTable({
   const { t } = useTranslation();
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto max-h-[400px]">
       <Table className="compact-table">
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
-            <TableHead className="w-[40%] font-medium text-foreground py-2 text-xs">
+            <TableHead className="w-[45%] font-medium text-foreground py-1 text-xs">
               {isMobile ? t('date').substring(0, 4) : t('date')}
             </TableHead>
-            <TableHead className="w-[40%] font-medium text-foreground py-2 text-xs">
+            <TableHead className="w-[35%] font-medium text-foreground py-1 text-xs">
               {isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}
             </TableHead>
-            <TableHead className="w-[20%] py-2"></TableHead>
+            <TableHead className="w-[20%] py-1"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -90,35 +91,37 @@ const Index = () => {
               </div>
               
               {zplContent && (
-                <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
-                  <div className="p-3">
-                    <ZPLPreview 
-                      content={zplContent} 
-                      sourceType={sourceType}
-                      fileCount={fileCount}
-                      isProcessingComplete={isProcessingComplete}
-                      lastPdfUrl={lastPdfUrl}
-                    />
+                <div className="space-y-3">
+                  <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
+                    <div className="p-3">
+                      <ZPLPreview 
+                        content={zplContent} 
+                        sourceType={sourceType}
+                        fileCount={fileCount}
+                        isProcessingComplete={isProcessingComplete}
+                        lastPdfUrl={lastPdfUrl}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
+                    <div className="p-3">
+                      <ConversionProgress 
+                        isConverting={isConverting}
+                        progress={progress}
+                        onConvert={handleConvert}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             {zplContent && (
-              <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
-                <div className="p-3">
-                  <ConversionProgress 
-                    isConverting={isConverting}
-                    progress={progress}
-                    onConvert={handleConvert}
-                  />
-                </div>
+              <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow" ref={processingHistoryRef}>
+                <ProcessingHistory key={refreshHistory} />
               </div>
             )}
-          </div>
-          
-          <div className="mt-3" ref={processingHistoryRef}>
-            <ProcessingHistory key={refreshHistory} />
           </div>
         </div>
       </main>

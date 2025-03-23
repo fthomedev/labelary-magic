@@ -14,16 +14,16 @@ export const ConversionProgress = ({ isConverting, progress, onConvert }: Conver
   const { t } = useTranslation();
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {isConverting && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="overflow-hidden rounded-full bg-secondary">
             <Progress 
               value={progress} 
-              className="h-2.5 w-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-300" 
+              className="h-2 w-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-300" 
             />
           </div>
-          <p className="text-sm text-muted-foreground text-center">
+          <p className="text-xs text-muted-foreground text-center">
             {t('processing')} {Math.round(progress)}%
           </p>
         </div>
@@ -31,10 +31,10 @@ export const ConversionProgress = ({ isConverting, progress, onConvert }: Conver
       
       <div className="flex justify-center">
         <Button
-          size="lg"
+          size="sm"
           onClick={onConvert}
           disabled={isConverting}
-          className={`min-w-[200px] text-base font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect ${
+          className={`min-w-[180px] text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect ${
             isConverting 
               ? 'bg-gray-100 text-gray-500 dark:bg-gray-700'
               : progress === 0
@@ -44,17 +44,17 @@ export const ConversionProgress = ({ isConverting, progress, onConvert }: Conver
         >
           {isConverting ? (
             <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               {t('converting')}
             </>
           ) : progress === 0 ? (
             <>
-              <Play className="mr-2 h-5 w-5" />
+              <Play className="mr-2 h-4 w-4" />
               {t('process')}
             </>
           ) : (
             <>
-              <Download className="mr-2 h-5 w-5" />
+              <Download className="mr-2 h-4 w-4" />
               {t('downloadComplete')}
             </>
           )}

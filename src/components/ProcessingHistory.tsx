@@ -2,7 +2,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, History } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useProcessingHistory } from '@/hooks/useProcessingHistory';
 import { HistoryTable } from './history/HistoryTable';
@@ -30,7 +30,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
 
   if (isLoading) {
     return (
-      <Card className="mt-4 bg-white shadow-md border-border overflow-hidden">
+      <>
         <CardHeader className="pb-1 pt-3 border-b">
           <CardTitle className="text-base font-medium flex items-center gap-2">
             <History className="h-4 w-4 text-primary" />
@@ -41,13 +41,13 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
           <span className="text-sm text-muted-foreground">{t('loadingHistory')}</span>
         </CardContent>
-      </Card>
+      </>
     );
   }
 
   if (!records || records.length === 0) {
     return (
-      <Card className="mt-4 bg-white shadow-md border-border overflow-hidden">
+      <>
         <CardHeader className="pb-1 pt-3 border-b">
           <CardTitle className="text-base font-medium flex items-center gap-2">
             <History className="h-4 w-4 text-primary" />
@@ -57,12 +57,12 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
         <CardContent className="text-center py-6 text-sm text-muted-foreground">
           {t('noHistory')}
         </CardContent>
-      </Card>
+      </>
     );
   }
 
   return (
-    <Card className="mt-4 bg-white shadow-md border-border overflow-hidden">
+    <>
       <CardHeader className="pb-1 pt-3 border-b">
         <CardTitle className="text-base font-medium flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -93,6 +93,6 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           />
         </CardFooter>
       )}
-    </Card>
+    </>
   );
 }
