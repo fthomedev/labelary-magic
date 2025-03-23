@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
@@ -111,8 +112,10 @@ export const useZplConversion = () => {
           
           setLastPdfUrl(url);
           
+          // Count ^XA markers, divide by 2 and round up
           const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
-          await addToProcessingHistory(countXAMarkers, url);
+          const actualLabelCount = Math.ceil(countXAMarkers / 2);
+          await addToProcessingHistory(actualLabelCount, url);
           
           const a = document.createElement('a');
           a.href = url;

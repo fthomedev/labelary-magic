@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,7 +25,9 @@ export function ZPLPreview({
     // Count by looking only for "^XA" markers in the ZPL content
     const regex = /\^XA/g;
     const matches = zplContent.match(regex);
-    return matches ? matches.length : 0;
+    const xaCount = matches ? matches.length : 0;
+    // Divide by 2 and round up
+    return Math.ceil(xaCount / 2);
   };
 
   const totalLabels = countLabels(content);
