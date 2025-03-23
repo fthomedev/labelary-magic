@@ -2,10 +2,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useProcessingHistory } from '@/hooks/useProcessingHistory';
 import { HistoryTable } from './history/HistoryTable';
+import { HistoryPagination } from './history/HistoryPagination';
 
 interface ProcessingHistoryProps {
   records?: ProcessingRecord[];
@@ -19,7 +20,8 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     records,
     formatDate,
     handleDownload,
-    isMobile
+    isMobile,
+    pagination
   } = useProcessingHistory(localRecords, localOnly);
 
   if (isLoading) {
@@ -68,6 +70,16 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           isMobile={isMobile}
         />
       </CardContent>
+      {!localOnly && pagination.totalPages > 1 && (
+        <CardFooter className="py-2 px-4 border-t">
+          <HistoryPagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={pagination.handlePageChange}
+            isMobile={isMobile}
+          />
+        </CardFooter>
+      )}
     </Card>
   );
 }

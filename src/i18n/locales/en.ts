@@ -32,6 +32,12 @@ export default {
   noHistory: "No processing history found",
   loadingHistory: "Loading history...",
   
+  // Pagination translations
+  page: "Page",
+  of: "of",
+  previous: "Previous",
+  next: "Next",
+  
   // Delete record confirmation
   deleteRecordConfirm: "Delete Record?",
   deleteRecordWarning: "This action cannot be undone. The record will be permanently deleted.",

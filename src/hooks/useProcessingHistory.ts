@@ -13,11 +13,17 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
   const [isLoading, setIsLoading] = useState(!localOnly);
   const { toast } = useToast();
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const recordsPerPage = 10;
+  
   useEffect(() => {
     if (!localOnly) {
       fetchProcessingHistory();
     }
-  }, [localOnly]);
+  }, [localOnly, currentPage]);
 
   const fetchProcessingHistory = async () => {
     try {
@@ -31,11 +37,26 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
         return;
       }
       
+      // First get the total count for pagination
+      const { count, error: countError } = await supabase
+        .from('processing_history')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', sessionData.session.user.id);
+        
+      if (countError) {
+        console.error('Error fetching record count:', countError);
+      } else if (count !== null) {
+        setTotalRecords(count);
+        setTotalPages(Math.ceil(count / recordsPerPage));
+      }
+      
+      // Then fetch the paginated data
       const { data, error } = await supabase
         .from('processing_history')
         .select('*')
         .eq('user_id', sessionData.session.user.id)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .range((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage - 1);
       
       if (error) {
         console.error('Error fetching processing history:', error);
@@ -69,6 +90,10 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     window.URL.revokeObjectURL(pdfUrl);
     document.body.removeChild(a);
   };
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const formatDate = (date: Date) => {
     try {
@@ -101,6 +126,13 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     records,
     formatDate,
     handleDownload,
-    isMobile
+    isMobile,
+    pagination: {
+      currentPage,
+      totalPages,
+      totalRecords,
+      recordsPerPage,
+      handlePageChange
+    }
   };
 }
