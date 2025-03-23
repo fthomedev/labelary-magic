@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -82,13 +83,23 @@ const Index = () => {
           </div>
 
           <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {/* Coluna da esquerda: Histórico + Upload */}
             <div className="space-y-3">
+              {/* Histórico no topo */}
+              <div ref={processingHistoryRef}>
+                <ProcessingHistory key={refreshHistory} />
+              </div>
+              
+              {/* Upload de arquivos */}
               <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
                 <div className="p-3">
                   <FileUpload onFileSelect={handleFileSelect} />
                 </div>
               </div>
-              
+            </div>
+            
+            {/* Coluna da direita: ZPLPreview + Barra de Progresso */}
+            <div className="space-y-3">
               {zplContent && (
                 <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
                   <div className="p-3">
@@ -102,23 +113,19 @@ const Index = () => {
                   </div>
                 </div>
               )}
-            </div>
-
-            {zplContent && (
-              <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
-                <div className="p-3">
-                  <ConversionProgress 
-                    isConverting={isConverting}
-                    progress={progress}
-                    onConvert={handleConvert}
-                  />
+              
+              {zplContent && (
+                <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
+                  <div className="p-3">
+                    <ConversionProgress 
+                      isConverting={isConverting}
+                      progress={progress}
+                      onConvert={handleConvert}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="mt-3" ref={processingHistoryRef}>
-            <ProcessingHistory key={refreshHistory} />
+              )}
+            </div>
           </div>
         </div>
       </main>
