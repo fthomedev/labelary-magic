@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { v4 as uuidv4 } from 'uuid';
@@ -52,7 +52,7 @@ export const useZplConversion = () => {
     }
   };
 
-  const convertToPDF = async (zplContent: string) => {
+  const convertToPDF = useCallback(async (zplContent: string) => {
     if (!zplContent) return;
     
     try {
@@ -71,8 +71,9 @@ export const useZplConversion = () => {
       }
       
       const pdfs: Blob[] = [];
-      const LABELS_PER_REQUEST = 5; // Reducing to avoid payload size issues
       const newPdfUrls: string[] = [];
+      // Reducing to avoid payload size issues and API rate limits
+      const LABELS_PER_REQUEST = 3; 
 
       for (let i = 0; i < labels.length; i += LABELS_PER_REQUEST) {
         try {
@@ -113,14 +114,14 @@ export const useZplConversion = () => {
           
           pdfs.push(blob);
 
-          const blockUrl = window.URL.createObjectURL(blob);
+          const blockUrl = URL.createObjectURL(blob);
           newPdfUrls.push(blockUrl);
 
           setProgress(((i + blockLabels.length) / labels.length) * 100);
 
           // Add delay between requests to avoid rate limiting
           if (i + LABELS_PER_REQUEST < labels.length) {
-            await delay(1500);
+            await delay(800);
           }
         } catch (error) {
           console.error(`${t('blockError')} ${Math.floor(i / LABELS_PER_REQUEST) + 1}:`, error);
@@ -140,19 +141,16 @@ export const useZplConversion = () => {
           const mergedPdf = await mergePDFs(pdfs);
           console.log(`Final PDF generated: ${mergedPdf.size} bytes`);
           
-          const url = window.URL.createObjectURL(mergedPdf);
+          if (mergedPdf.size < 1000) {
+            throw new Error("PDF gerado está inválido ou vazio.");
+          }
           
-          setLastPdfUrl(url);
+          const finalUrl = URL.createObjectURL(mergedPdf);
+          
+          setLastPdfUrl(finalUrl);
           
           const totalLabels = labels.length;
-          await addToProcessingHistory(totalLabels, url);
-          
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'etiquetas.pdf';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+          await addToProcessingHistory(totalLabels, finalUrl);
 
           toast({
             title: t('success'),
@@ -160,6 +158,14 @@ export const useZplConversion = () => {
           });
           
           setIsProcessingComplete(true);
+          
+          // Auto-download the PDF
+          const a = document.createElement('a');
+          a.href = finalUrl;
+          a.download = 'etiquetas.pdf';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
         } catch (error) {
           console.error('Error merging PDFs:', error);
           toast({
@@ -176,13 +182,13 @@ export const useZplConversion = () => {
       toast({
         variant: "destructive",
         title: t('error'),
-        description: t('errorMessage'),
+        description: error instanceof Error ? error.message : t('errorMessage'),
       });
     } finally {
       setIsConverting(false);
       setProgress(100);
     }
-  };
+  }, [t, toast]);
 
   return {
     isConverting,

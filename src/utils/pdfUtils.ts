@@ -9,6 +9,8 @@ export const splitZPLIntoBlocks = (zpl: string): string[] => {
   const regex = /\^XA[\s\S]*?\^XZ/g;
   const matches = normalizedZpl.match(regex) || [];
   
+  console.log(`Found ${matches.length} ZPL blocks in content`);
+  
   // Ensure each block is properly formatted and cleaned
   return matches.map(block => {
     // Remove extra whitespace and ensure proper format
@@ -28,18 +30,59 @@ export const mergePDFs = async (pdfBlobs: Blob[]): Promise<Blob> => {
     return pdfBlobs[0];
   }
   
-  const merger = new PDFMerger();
-
-  for (const blob of pdfBlobs) {
-    try {
-      const arrayBuffer = await blob.arrayBuffer();
-      await merger.add(arrayBuffer);
-    } catch (error) {
-      console.error('Error adding PDF to merger:', error);
-      // Continue with other PDFs rather than failing completely
+  try {
+    console.log(`Starting to merge ${pdfBlobs.length} PDFs`);
+    
+    // Filter out any empty or invalid PDFs
+    const validPdfBlobs = pdfBlobs.filter(blob => blob.size > 100);
+    
+    if (validPdfBlobs.length === 0) {
+      throw new Error("No valid PDFs to merge");
     }
+    
+    if (validPdfBlobs.length === 1) {
+      return validPdfBlobs[0];
+    }
+    
+    const merger = new PDFMerger();
+    
+    // Process each PDF
+    for (let i = 0; i < validPdfBlobs.length; i++) {
+      try {
+        const blob = validPdfBlobs[i];
+        console.log(`Adding PDF ${i+1}/${validPdfBlobs.length} (${blob.size} bytes) to merger`);
+        
+        const arrayBuffer = await blob.arrayBuffer();
+        
+        // Skip empty PDFs
+        if (arrayBuffer.byteLength < 100) {
+          console.warn(`Skipping PDF ${i+1} because it's too small (${arrayBuffer.byteLength} bytes)`);
+          continue;
+        }
+        
+        await merger.add(arrayBuffer);
+        console.log(`Added PDF ${i+1} successfully`);
+      } catch (error) {
+        console.error(`Error adding PDF ${i+1} to merger:`, error);
+        // Continue with other PDFs rather than failing completely
+      }
+    }
+    
+    console.log('Saving merged PDF buffer');
+    const mergedBuffer = await merger.saveAsBuffer();
+    console.log(`Merged PDF buffer created: ${mergedBuffer.byteLength} bytes`);
+    
+    return new Blob([mergedBuffer], { type: 'application/pdf' });
+  } catch (error) {
+    console.error('Error in mergePDFs function:', error);
+    
+    // If merging fails, return the first valid PDF as fallback
+    const validPdf = pdfBlobs.find(blob => blob.size > 100);
+    if (validPdf) {
+      console.log('Returning the first valid PDF as fallback');
+      return validPdf;
+    }
+    
+    throw error;
   }
-
-  const mergedBuffer = await merger.saveAsBuffer();
-  return new Blob([mergedBuffer], { type: 'application/pdf' });
 };

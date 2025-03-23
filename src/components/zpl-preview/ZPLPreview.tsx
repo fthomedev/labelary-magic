@@ -46,6 +46,15 @@ export function ZPLPreview({
     }
   }, [content]);
 
+  // Load embedded PDF iframe if processing is complete
+  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+  
+  useEffect(() => {
+    if (isProcessingComplete && lastPdfUrl && iframeRef.current) {
+      iframeRef.current.src = lastPdfUrl;
+    }
+  }, [isProcessingComplete, lastPdfUrl]);
+
   return (
     <div className="rounded-lg bg-gradient-to-r from-blue-500/10 to-cyan-500/10 p-1.5">
       <Card className="border-0 shadow-sm">
@@ -95,6 +104,17 @@ export function ZPLPreview({
             <ZipFileInfo sourceType={sourceType} fileCount={fileCount} />
             
             <ProgressIndicator progress={progress} isConverting={isConverting} />
+            
+            {isProcessingComplete && lastPdfUrl && (
+              <div className="mt-4 border rounded-lg overflow-hidden h-[400px]">
+                <iframe 
+                  ref={iframeRef}
+                  title="PDF Preview"
+                  className="w-full h-full"
+                  style={{ border: 'none' }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </Card>

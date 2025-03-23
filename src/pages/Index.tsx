@@ -1,9 +1,8 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
-import { ConversionProgress } from '@/components/ConversionProgress';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { UserMenu } from '@/components/UserMenu';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -11,6 +10,7 @@ import { ProcessingHistory } from '@/components/ProcessingHistory';
 import { useZplConversion } from '@/hooks/useZplConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { PDFBlocksList } from '@/components/PDFBlocksList';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -20,6 +20,8 @@ const Index = () => {
   const [refreshHistory, setRefreshHistory] = useState<number>(0);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const {
     isConverting,
@@ -67,7 +69,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow-sm">
+      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">
             <h1 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white truncate mr-2">

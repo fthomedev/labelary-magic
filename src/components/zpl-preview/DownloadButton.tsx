@@ -29,10 +29,11 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({ lastPdfUrl }) =>
       a.download = 'etiquetas.pdf';
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(lastPdfUrl);
       document.body.removeChild(a);
     }
   };
+
+  if (!lastPdfUrl) return null;
 
   return (
     <Button 
@@ -43,7 +44,6 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({ lastPdfUrl }) =>
         isAnimating && "animate-pulse border-green-400 shadow-md shadow-green-300/20 dark:border-green-600 dark:shadow-green-900/30"
       )}
       onClick={handleDownload}
-      disabled={!lastPdfUrl}
       aria-label={t('downloadAgain')}
     >
       <Download className={cn(
