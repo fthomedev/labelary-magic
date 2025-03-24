@@ -1,3 +1,4 @@
+
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle, Archive } from 'lucide-react';
@@ -9,10 +10,9 @@ import JSZip from 'jszip';
 
 interface FileUploadProps {
   onFileSelect: (content: string, type?: 'file' | 'zip', count?: number) => void;
-  onNewFileSelected?: () => void;
 }
 
-export function FileUpload({ onFileSelect, onNewFileSelected }: FileUploadProps) {
+export function FileUpload({ onFileSelect }: FileUploadProps) {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
@@ -105,16 +105,12 @@ export function FileUpload({ onFileSelect, onNewFileSelected }: FileUploadProps)
     
     if (!file) return;
     
-    if (onNewFileSelected) {
-      onNewFileSelected();
-    }
-    
     if (file.name.toLowerCase().endsWith('.zip')) {
       processZipFile(file);
     } else {
       processTextFile(file);
     }
-  }, [onNewFileSelected]);
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

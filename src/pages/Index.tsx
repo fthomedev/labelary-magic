@@ -26,8 +26,7 @@ const Index = () => {
     isProcessingComplete,
     lastPdfUrl,
     convertToPDF,
-    historyRefreshTrigger,
-    resetProcessingState
+    historyRefreshTrigger
   } = useZplConversion();
 
   useEffect(() => {
@@ -83,10 +82,7 @@ const Index = () => {
             <div className="space-y-3">
               <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
                 <div className="p-3">
-                  <FileUpload 
-                    onFileSelect={handleFileSelect} 
-                    onNewFileSelected={resetProcessingState}
-                  />
+                  <FileUpload onFileSelect={handleFileSelect} />
                 </div>
               </div>
               
