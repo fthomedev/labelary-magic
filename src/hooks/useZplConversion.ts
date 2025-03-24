@@ -43,14 +43,7 @@ export const useZplConversion = () => {
         throw error;
       }
       
-      // Get the public URL for the uploaded file
-      const { data: publicUrlData } = supabase.storage
-        .from('pdfs')
-        .getPublicUrl(filePath);
-      
       console.log('PDF uploaded to storage:', filePath);
-      console.log('Public URL:', publicUrlData.publicUrl);
-      
       return filePath;
     } catch (error) {
       console.error('Failed to upload PDF to storage:', error);
@@ -65,30 +58,45 @@ export const useZplConversion = () => {
         console.log('Saving processing history for user:', user.id);
         
         try {
-          // First, try the updated function with pdf_path parameter
-          const { error: updatedError } = await supabase.rpc(
-            'insert_processing_history', 
-            {
-              p_user_id: user.id,
-              p_label_count: labelCount,
-              p_pdf_url: pdfUrl,
-              // Cast to any to bypass TypeScript's strict type checking
-              // since our database has the parameter but TypeScript doesn't know yet
-              ...(pdfPath ? { p_pdf_path: pdfPath } : {})
-            } as any
-          );
-          
-          if (updatedError) {
-            console.log('Error with updated function signature, trying original one:', updatedError);
-            // If there's an error, try the original function without pdf_path
-            const { error } = await supabase.rpc('insert_processing_history', {
-              p_user_id: user.id,
-              p_label_count: labelCount,
-              p_pdf_url: pdfUrl
+          // Check if pdf_path is provided
+          if (pdfPath) {
+            try {
+              // Try to use the function with the pdf_path parameter
+              const { data, error } = await supabase.from('processing_history').insert({
+                user_id: user.id,
+                label_count: labelCount,
+                pdf_url: pdfUrl,
+                pdf_path: pdfPath
+              }).select();
+              
+              if (error) {
+                console.error('Error saving processing history with pdf_path:', error);
+                
+                // Fallback to version without pdf_path
+                const { error: fallbackError } = await supabase.from('processing_history').insert({
+                  user_id: user.id,
+                  label_count: labelCount,
+                  pdf_url: pdfUrl
+                });
+                
+                if (fallbackError) {
+                  console.error('Error with fallback insert:', fallbackError);
+                  return;
+                }
+              }
+            } catch (error) {
+              console.error('Exception with pdf_path insert:', error);
+            }
+          } else {
+            // Just use the version without pdf_path
+            const { error } = await supabase.from('processing_history').insert({
+              user_id: user.id,
+              label_count: labelCount,
+              pdf_url: pdfUrl
             });
             
             if (error) {
-              console.error('Error saving processing history with original function:', error);
+              console.error('Error saving processing history:', error);
               return;
             }
           }
@@ -154,6 +162,7 @@ export const useZplConversion = () => {
             variant: "destructive",
             title: t('blockError'),
             description: t('blockErrorMessage', { block: i / LABELS_PER_REQUEST + 1 }),
+            duration: 4000,
           });
         }
       }
@@ -167,12 +176,19 @@ export const useZplConversion = () => {
           // Upload merged PDF to Supabase Storage
           const pdfPath = await uploadPDFToStorage(mergedPdf);
           
-          // Get the public URL for the uploaded file
-          const { data: publicUrlData } = supabase.storage
-            .from('pdfs')
-            .getPublicUrl(pdfPath);
-            
-          const publicUrl = publicUrlData.publicUrl;
+          // Create a bucket if it doesn't exist
+          const { error: bucketError } = await supabase.storage.getBucket('pdfs');
+          if (bucketError && bucketError.message.includes('The resource was not found')) {
+            await supabase.storage.createBucket('pdfs', {
+              public: true,
+              fileSizeLimit: 10485760 // 10MB
+            });
+          }
+          
+          // Make the bucket public
+          await supabase.storage.updateBucket('pdfs', {
+            public: true
+          });
           
           // Create a blob URL for immediate download
           const blobUrl = window.URL.createObjectURL(mergedPdf);
@@ -203,7 +219,7 @@ export const useZplConversion = () => {
           
           setIsProcessingComplete(true);
         } catch (error) {
-          console.error('Erro ao mesclar PDFs:', error);
+          console.error('Error merging PDFs:', error);
           toast({
             variant: "destructive",
             title: t('error'),
@@ -212,10 +228,10 @@ export const useZplConversion = () => {
           });
         }
       } else {
-        throw new Error("Nenhum PDF foi gerado com sucesso.");
+        throw new Error("No PDFs were generated successfully.");
       }
     } catch (error) {
-      console.error('Erro na conversão:', error);
+      console.error('Conversion error:', error);
       toast({
         variant: "destructive",
         title: t('error'),

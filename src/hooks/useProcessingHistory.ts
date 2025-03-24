@@ -58,7 +58,7 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
             date: new Date(record.date),
             labelCount: record.label_count,
             pdfUrl: record.pdf_url,
-            pdfPath: record.pdf_path
+            pdfPath: record.pdf_path // Make sure to include pdf_path field
           }))
         );
       }
@@ -97,30 +97,20 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
       if (record.pdfPath) {
         console.log('Downloading from storage path:', record.pdfPath);
         
-        // Create a download using the public URL
-        const { data } = supabase.storage
+        // Get direct download URL with proper authorization
+        const { data, error } = await supabase.storage
           .from('pdfs')
-          .getPublicUrl(record.pdfPath);
+          .createSignedUrl(record.pdfPath, 60); // 60 seconds expiration
           
-        if (!data || !data.publicUrl) {
-          throw new Error('Failed to get public URL for file');
+        if (error || !data?.signedUrl) {
+          console.error('Error creating signed URL:', error);
+          throw new Error('Failed to create download URL');
         }
         
-        console.log('Public URL:', data.publicUrl);
+        console.log('Signed URL:', data.signedUrl);
         
-        // Create download link
-        const a = document.createElement('a');
-        a.href = data.publicUrl;
-        a.download = 'etiquetas.pdf';
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        document.body.appendChild(a);
-        a.click();
-        
-        // Small delay before cleanup
-        setTimeout(() => {
-          document.body.removeChild(a);
-        }, 100);
+        // Create download link with the signed URL
+        window.open(data.signedUrl, '_blank');
       } 
       // Fallback to blob URL if available (for newly created PDFs)
       else if (record.pdfUrl && record.pdfUrl.startsWith('blob:')) {
