@@ -1,3 +1,4 @@
+
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle, Archive } from 'lucide-react';
@@ -8,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import JSZip from 'jszip';
 
 interface FileUploadProps {
-  onFileSelect: (content: string) => void;
+  onFileSelect: (content: string, type?: 'file' | 'zip', count?: number) => void;
 }
 
 export function FileUpload({ onFileSelect }: FileUploadProps) {
@@ -44,11 +45,12 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
       }
       
       const allContent = fileContents.join('\n');
-      onFileSelect(allContent);
+      onFileSelect(allContent, 'zip', fileContents.length);
       
       toast({
         title: t('zipProcessed'),
         description: t('zipFilesExtracted', { count: fileContents.length }),
+        duration: 3000,
       });
     } catch (error) {
       console.error('Error processing ZIP file:', error);
@@ -57,6 +59,7 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
         variant: "destructive",
         title: t('error'),
         description: error instanceof Error ? error.message : t('zipProcessingError'),
+        duration: 4000,
       });
     } finally {
       setIsProcessing(false);
@@ -68,10 +71,11 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
     reader.onload = (e) => {
       const content = e.target?.result as string;
       if (content.includes('^XA') && content.includes('^XZ')) {
-        onFileSelect(content);
+        onFileSelect(content, 'file', 1);
         toast({
           title: t('fileUploaded'),
           description: t('fileProcessed', { fileName: file.name }),
+          duration: 3000,
         });
       } else {
         setError(t('noValidZplContent'));
@@ -79,6 +83,7 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
           variant: "destructive",
           title: t('error'),
           description: t('noValidZplContent'),
+          duration: 4000,
         });
       }
     };
@@ -88,6 +93,7 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
         variant: "destructive",
         title: t('error'),
         description: t('readErrorMessage'),
+        duration: 4000,
       });
     };
     reader.readAsText(file);
@@ -104,7 +110,7 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
     } else {
       processTextFile(file);
     }
-  }, [onFileSelect, toast, t]);
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

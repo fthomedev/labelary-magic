@@ -97,7 +97,7 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
       if (record.pdfPath) {
         console.log('Downloading from storage path:', record.pdfPath);
         
-        // Get the public URL
+        // Create a download using the public URL
         const { data } = supabase.storage
           .from('pdfs')
           .getPublicUrl(record.pdfPath);
@@ -113,13 +113,18 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
         a.href = data.publicUrl;
         a.download = 'etiquetas.pdf';
         a.target = '_blank';
+        a.rel = 'noopener noreferrer';
         document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
+        
+        // Small delay before cleanup
+        setTimeout(() => {
+          document.body.removeChild(a);
+        }, 100);
       } 
       // Fallback to blob URL if available (for newly created PDFs)
-      else if (record.pdfUrl) {
-        console.log('Trying to use blob URL (may not work for old records):', record.pdfUrl);
+      else if (record.pdfUrl && record.pdfUrl.startsWith('blob:')) {
+        console.log('Trying to use blob URL:', record.pdfUrl);
         const a = document.createElement('a');
         a.href = record.pdfUrl;
         a.download = 'etiquetas.pdf';
@@ -127,6 +132,8 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
         a.click();
         document.body.removeChild(a);
       } else {
+        // For records that don't have a valid URL or path
+        console.error('No valid PDF URL or path available:', record);
         throw new Error('No PDF URL or path available');
       }
     } catch (error) {
@@ -135,6 +142,7 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
         variant: "destructive",
         title: t('error'),
         description: t('downloadError'),
+        duration: 3000,
       });
     }
   };

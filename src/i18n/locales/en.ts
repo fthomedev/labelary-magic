@@ -33,6 +33,7 @@ export default {
   processingZip: 'Processing ZIP file...',
   dropHere: 'Drop file here...',
   downloadComplete: 'Download PDF',
+  downloadError: 'Error downloading the file',
 
   // Processing history translations
   processingHistory: "Processing History",
