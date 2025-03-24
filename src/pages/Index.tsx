@@ -16,7 +16,6 @@ const Index = () => {
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
   const [fileCount, setFileCount] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [refreshHistory, setRefreshHistory] = useState<number>(0);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
@@ -26,7 +25,8 @@ const Index = () => {
     progress,
     isProcessingComplete,
     lastPdfUrl,
-    convertToPDF
+    convertToPDF,
+    historyRefreshTrigger
   } = useZplConversion();
 
   useEffect(() => {
@@ -52,10 +52,6 @@ const Index = () => {
 
   const handleConvert = async () => {
     await convertToPDF(zplContent);
-  };
-
-  const refreshHistoryManually = () => {
-    setRefreshHistory(prev => prev + 1);
   };
 
   return (
@@ -118,7 +114,7 @@ const Index = () => {
             </div>
 
             <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow" ref={processingHistoryRef}>
-              <ProcessingHistory key={refreshHistory} />
+              <ProcessingHistory key={historyRefreshTrigger} />
             </div>
           </div>
         </div>

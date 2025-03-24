@@ -21,6 +21,7 @@ export const useZplConversion = () => {
   const [isProcessingComplete, setIsProcessingComplete] = useState(false);
   const [lastPdfUrl, setLastPdfUrl] = useState<string | undefined>(undefined);
   const [lastPdfPath, setLastPdfPath] = useState<string | undefined>(undefined);
+  const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -203,6 +204,9 @@ export const useZplConversion = () => {
           // and the permanent storage path
           await addToProcessingHistory(actualLabelCount, blobUrl, pdfPath);
           
+          // Trigger history refresh after successful processing
+          setHistoryRefreshTrigger(prev => prev + 1);
+          
           // Download the file
           const a = document.createElement('a');
           a.href = blobUrl;
@@ -252,5 +256,6 @@ export const useZplConversion = () => {
     lastPdfUrl,
     lastPdfPath,
     convertToPDF,
+    historyRefreshTrigger,
   };
 };

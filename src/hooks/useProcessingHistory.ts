@@ -58,7 +58,7 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
             date: new Date(record.date),
             labelCount: record.label_count,
             pdfUrl: record.pdf_url,
-            pdfPath: record.pdf_path // Make sure to include pdf_path field
+            pdfPath: record.pdf_path
           }))
         );
       }
@@ -110,7 +110,12 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
         console.log('Signed URL:', data.signedUrl);
         
         // Create download link with the signed URL
-        window.open(data.signedUrl, '_blank');
+        const a = document.createElement('a');
+        a.href = data.signedUrl;
+        a.download = 'etiquetas.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       } 
       // Fallback to blob URL if available (for newly created PDFs)
       else if (record.pdfUrl && record.pdfUrl.startsWith('blob:')) {
