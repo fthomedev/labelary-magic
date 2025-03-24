@@ -26,8 +26,7 @@ const Index = () => {
     isProcessingComplete,
     lastPdfUrl,
     convertToPDF,
-    historyRefreshTrigger,
-    resetProcessingState
+    historyRefreshTrigger
   } = useZplConversion();
 
   useEffect(() => {
@@ -53,11 +52,6 @@ const Index = () => {
 
   const handleConvert = async () => {
     await convertToPDF(zplContent);
-  };
-
-  const handleNewFileSelect = () => {
-    // Reset the processing state when a new file is selected
-    resetProcessingState();
   };
 
   return (
@@ -88,7 +82,7 @@ const Index = () => {
             <div className="space-y-3">
               <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
                 <div className="p-3">
-                  <FileUpload onFileSelect={handleFileSelect} onNewFileSelect={handleNewFileSelect} />
+                  <FileUpload onFileSelect={handleFileSelect} />
                 </div>
               </div>
               

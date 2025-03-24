@@ -31,28 +31,30 @@ export const ConversionProgress = ({ isConverting, progress, onConvert }: Conver
       
       <div className="flex justify-center">
         <Button
-          size="lg"
+          size="sm"
           onClick={onConvert}
           disabled={isConverting}
-          className={`w-full py-6 text-base font-medium transition-all duration-300 ${
+          className={`min-w-[180px] text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect ${
             isConverting 
               ? 'bg-gray-100 text-gray-500 dark:bg-gray-700'
-              : 'bg-green-500 hover:bg-green-600 text-white'
+              : progress === 0
+              ? 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600'
+              : 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600'
           }`}
         >
           {isConverting ? (
             <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               {t('converting')}
             </>
           ) : progress === 0 ? (
             <>
-              <Play className="mr-2 h-5 w-5" />
+              <Play className="mr-2 h-4 w-4" />
               {t('process')}
             </>
           ) : (
             <>
-              <Download className="mr-2 h-5 w-5" />
+              <Download className="mr-2 h-4 w-4" />
               {t('downloadComplete')}
             </>
           )}
