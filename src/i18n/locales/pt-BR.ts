@@ -1,3 +1,4 @@
+
 export default {
   title: 'Conversor ZPL para PDF',
   subtitle: 'Faça upload do seu arquivo ZPL para converter em PDF.',
@@ -8,7 +9,7 @@ export default {
   process: 'Processar',
   success: 'Sucesso!',
   successMessage: 'PDF gerado com sucesso!',
-  error: 'Erro!',
+  error: 'Erro',
   errorMessage: 'Ocorreu um erro ao converter o arquivo ZPL para PDF.',
   processing: 'Processando',
   totalLabels: 'Total de Etiquetas',
@@ -16,11 +17,11 @@ export default {
   downloadAgain: 'Baixar novamente',
   filesProcessedFromZip: 'arquivos processados do ZIP',
   blockError: 'Erro no bloco',
-  blockErrorMessage: 'Ocorreu um erro ao processar o bloco',
-  mergePdfError: 'Ocorreu um erro ao mesclar os arquivos PDF.',
-  processingComplete: 'Processamento completo',
+  blockErrorMessage: 'Ocorreu um erro ao processar o bloco {{block}}',
+  mergePdfError: 'Erro ao mesclar os PDFs',
+  processingComplete: 'Processamento concluído',
 
-  // New translations for processing history
+  // Traduções para histórico de processamento
   processingHistory: "Histórico de processamento",
   date: "Data",
   labelCount: "Quantidade de etiquetas",

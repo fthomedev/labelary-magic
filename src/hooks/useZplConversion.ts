@@ -11,7 +11,7 @@ export interface ProcessingRecord {
   date: Date;
   labelCount: number;
   pdfUrl: string;
-  pdfPath?: string; // Added to store the Supabase storage path
+  pdfPath?: string;
 }
 
 export const useZplConversion = () => {
@@ -152,7 +152,7 @@ export const useZplConversion = () => {
           console.error(`${t('blockError')} ${i / LABELS_PER_REQUEST + 1}:`, error);
           toast({
             variant: "destructive",
-            title: t('error'),
+            title: t('blockError'),
             description: t('blockErrorMessage', { block: i / LABELS_PER_REQUEST + 1 }),
           });
         }
@@ -198,6 +198,7 @@ export const useZplConversion = () => {
           toast({
             title: t('success'),
             description: t('successMessage'),
+            duration: 3000,
           });
           
           setIsProcessingComplete(true);
@@ -207,6 +208,7 @@ export const useZplConversion = () => {
             variant: "destructive",
             title: t('error'),
             description: t('mergePdfError'),
+            duration: 5000,
           });
         }
       } else {
@@ -218,6 +220,7 @@ export const useZplConversion = () => {
         variant: "destructive",
         title: t('error'),
         description: t('errorMessage'),
+        duration: 5000,
       });
     } finally {
       setIsConverting(false);

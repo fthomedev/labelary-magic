@@ -7,7 +7,7 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 3000 // Alterado de 1000000 para 3000 (3 segundos)
+const TOAST_REMOVE_DELAY = 3000 // 3 segundos para exibição dos toasts
 
 type ToasterToast = ToastProps & {
   id: string
@@ -188,4 +188,3 @@ function useToast() {
 }
 
 export { useToast, toast }
-
