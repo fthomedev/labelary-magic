@@ -10,9 +10,10 @@ import JSZip from 'jszip';
 
 interface FileUploadProps {
   onFileSelect: (content: string, type?: 'file' | 'zip', count?: number) => void;
+  onNewFileSelect?: () => void; // New prop to reset processing state
 }
 
-export function FileUpload({ onFileSelect }: FileUploadProps) {
+export function FileUpload({ onFileSelect, onNewFileSelect }: FileUploadProps) {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
@@ -21,6 +22,11 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
   const processZipFile = async (file: File) => {
     setIsProcessing(true);
     try {
+      // Reset processing state when a new file is selected
+      if (onNewFileSelect) {
+        onNewFileSelect();
+      }
+      
       const zip = new JSZip();
       const zipContents = await zip.loadAsync(file);
       
@@ -67,6 +73,11 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
   };
 
   const processTextFile = (file: File) => {
+    // Reset processing state when a new file is selected
+    if (onNewFileSelect) {
+      onNewFileSelect();
+    }
+    
     const reader = new FileReader();
     reader.onload = (e) => {
       const content = e.target?.result as string;

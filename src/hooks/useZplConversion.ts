@@ -25,6 +25,15 @@ export const useZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
 
+  // Reset processing state
+  const resetProcessingState = () => {
+    setIsProcessingComplete(false);
+    setProgress(0);
+    setPdfUrls([]);
+    setLastPdfUrl(undefined);
+    setLastPdfPath(undefined);
+  };
+
   // Upload PDF to Supabase Storage
   const uploadPDFToStorage = async (pdfBlob: Blob): Promise<string> => {
     try {
@@ -257,5 +266,6 @@ export const useZplConversion = () => {
     lastPdfPath,
     convertToPDF,
     historyRefreshTrigger,
+    resetProcessingState,
   };
 };
