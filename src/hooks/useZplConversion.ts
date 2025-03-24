@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
@@ -25,7 +24,14 @@ export const useZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  // Upload PDF to Supabase Storage
+  const resetProcessingState = () => {
+    setIsProcessingComplete(false);
+    setLastPdfUrl(undefined);
+    setLastPdfPath(undefined);
+    setPdfUrls([]);
+    setProgress(0);
+  };
+
   const uploadPDFToStorage = async (pdfBlob: Blob): Promise<string> => {
     try {
       const fileName = `label-${uuidv4()}.pdf`;
@@ -59,10 +65,8 @@ export const useZplConversion = () => {
         console.log('Saving processing history for user:', user.id);
         
         try {
-          // Check if pdf_path is provided
           if (pdfPath) {
             try {
-              // Try to use the function with the pdf_path parameter
               const { data, error } = await supabase.from('processing_history').insert({
                 user_id: user.id,
                 label_count: labelCount,
@@ -73,7 +77,6 @@ export const useZplConversion = () => {
               if (error) {
                 console.error('Error saving processing history with pdf_path:', error);
                 
-                // Fallback to version without pdf_path
                 const { error: fallbackError } = await supabase.from('processing_history').insert({
                   user_id: user.id,
                   label_count: labelCount,
@@ -89,7 +92,6 @@ export const useZplConversion = () => {
               console.error('Exception with pdf_path insert:', error);
             }
           } else {
-            // Just use the version without pdf_path
             const { error } = await supabase.from('processing_history').insert({
               user_id: user.id,
               label_count: labelCount,
@@ -174,10 +176,8 @@ export const useZplConversion = () => {
         try {
           const mergedPdf = await mergePDFs(pdfs);
           
-          // Upload merged PDF to Supabase Storage
           const pdfPath = await uploadPDFToStorage(mergedPdf);
           
-          // Create a bucket if it doesn't exist
           const { error: bucketError } = await supabase.storage.getBucket('pdfs');
           if (bucketError && bucketError.message.includes('The resource was not found')) {
             await supabase.storage.createBucket('pdfs', {
@@ -186,28 +186,21 @@ export const useZplConversion = () => {
             });
           }
           
-          // Make the bucket public
           await supabase.storage.updateBucket('pdfs', {
             public: true
           });
           
-          // Create a blob URL for immediate download
           const blobUrl = window.URL.createObjectURL(mergedPdf);
           setLastPdfUrl(blobUrl);
           setLastPdfPath(pdfPath);
           
-          // Count ^XA markers, divide by 2 and round up
           const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
           const actualLabelCount = Math.ceil(countXAMarkers / 2);
           
-          // Save to processing history with both the temporary blob URL (for immediate use)
-          // and the permanent storage path
           await addToProcessingHistory(actualLabelCount, blobUrl, pdfPath);
           
-          // Trigger history refresh after successful processing
           setHistoryRefreshTrigger(prev => prev + 1);
           
-          // Download the file
           const a = document.createElement('a');
           a.href = blobUrl;
           a.download = 'etiquetas.pdf';
@@ -257,5 +250,6 @@ export const useZplConversion = () => {
     lastPdfPath,
     convertToPDF,
     historyRefreshTrigger,
+    resetProcessingState,
   };
 };
