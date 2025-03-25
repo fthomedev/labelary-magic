@@ -7,6 +7,7 @@ import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
 import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
+import { ToastAction } from '@/components/ui/toast';
 
 // Key for localStorage
 const CONVERSION_STATE_KEY = 'zpl_conversion_state';
@@ -69,10 +70,13 @@ export const useZplConversion = () => {
                 title: t('conversionInterrupted'),
                 description: t('resumeConversion'),
                 duration: 5000,
-                action: {
-                  label: t('resume'),
-                  onClick: () => convertToPDF(savedState.zplContent || '')
-                }
+                action: (
+                  <ToastAction 
+                    onClick={() => convertToPDF(savedState.zplContent || '')}
+                  >
+                    {t('resume')}
+                  </ToastAction>
+                )
               });
             }
           }
