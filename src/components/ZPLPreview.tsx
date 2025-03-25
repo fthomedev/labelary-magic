@@ -2,8 +2,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tag, Archive, CheckCircle, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Tag, Archive, CheckCircle } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ZPLPreviewProps {
@@ -37,19 +36,6 @@ export function ZPLPreview({
 
   const totalLabels = countLabels(content);
 
-  const handleDownload = () => {
-    if (onDownload) {
-      onDownload();
-    } else if (lastPdfUrl) {
-      const a = document.createElement('a');
-      a.href = lastPdfUrl;
-      a.download = 'etiquetas.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-  };
-
   return (
     <div className="rounded-xl overflow-hidden gradient-border">
       <Card className="border-0 shadow-none bg-gradient-to-r from-white to-gray-50">
@@ -72,18 +58,6 @@ export function ZPLPreview({
                 </p>
               </div>
             </div>
-            {isProcessingComplete && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className={`flex items-center gap-1 text-primary border-primary/20 hover:bg-primary/5 hover:border-primary text-xs py-1 px-3 h-auto ${isMobile ? 'mt-2 w-full' : ''}`}
-                onClick={handleDownload}
-                disabled={!lastPdfUrl && !onDownload}
-              >
-                <Download className="h-3 w-3" />
-                {t('downloadAgain')}
-              </Button>
-            )}
           </div>
           
           {sourceType === 'zip' && fileCount > 1 && (

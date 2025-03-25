@@ -47,7 +47,9 @@ export const ConversionProgress = ({
           className={`${isMobile ? 'w-full' : 'min-w-[180px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect ${
             isConverting 
               ? 'bg-gray-100 text-gray-500 dark:bg-gray-700'
-              : 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600'
+              : isProcessingComplete
+                ? 'bg-white border border-green-500 text-green-600 hover:bg-green-50'
+                : 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600'
           }`}
         >
           {isConverting ? (
@@ -70,4 +72,4 @@ export const ConversionProgress = ({
       </div>
     </div>
   );
-};
+}
