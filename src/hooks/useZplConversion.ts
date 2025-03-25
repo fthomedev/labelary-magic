@@ -95,6 +95,7 @@ export const useZplConversion = () => {
               duration: 3000,
             });
             
+            // Set processing complete to show the completion UI
             setIsProcessingComplete(true);
           } catch (uploadError) {
             console.error('Error uploading to storage:', uploadError);
@@ -127,7 +128,7 @@ export const useZplConversion = () => {
       });
     } finally {
       setIsConverting(false);
-      setProgress(0);
+      setProgress(100); // Ensure progress is complete even if there was an error
     }
   };
 
