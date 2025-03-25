@@ -1,224 +1,31 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '@/integrations/supabase/client';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
-import { useToast } from '@/components/ui/use-toast';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useHistoryData } from '@/hooks/history/useHistoryData';
+import { useDateFormatter } from '@/hooks/history/useDateFormatter';
+import { useHistoryDownload } from '@/hooks/history/useHistoryDownload';
+import { usePagination } from '@/hooks/history/usePagination';
 
 export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnly = false) {
-  const { t, i18n } = useTranslation();
-  const isMobile = useIsMobile();
-  const [dbRecords, setDbRecords] = useState<ProcessingRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(!localOnly);
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = 10;
-  const { toast } = useToast();
+  const { t } = useTranslation();
+  const { formatDate, isMobile } = useDateFormatter();
+  const { handleDownload } = useHistoryDownload();
   
-  const fetchProcessingHistory = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      
-      // Check if user is authenticated
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        console.log('No active session found');
-        setIsLoading(false);
-        return;
-      }
-      
-      // First get total count for pagination
-      const { count, error: countError } = await supabase
-        .from('processing_history')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', sessionData.session.user.id);
-        
-      if (countError) {
-        console.error('Error counting processing history:', countError);
-      } else if (count !== null) {
-        setTotalRecords(count);
-      }
-      
-      // Then get paginated records
-      const { data, error } = await supabase
-        .from('processing_history')
-        .select('*')
-        .eq('user_id', sessionData.session.user.id)
-        .order('date', { ascending: false })
-        .range((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage - 1);
-      
-      if (error) {
-        console.error('Error fetching processing history:', error);
-      } else if (data) {
-        console.log('Processing history data:', data);
-        setDbRecords(
-          data.map((record: any) => ({
-            id: record.id,
-            date: new Date(record.date),
-            labelCount: record.label_count,
-            pdfUrl: record.pdf_url,
-            pdfPath: record.pdf_path
-          }))
-        );
-      }
-    } catch (err) {
-      console.error('Failed to fetch processing history:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentPage]);
+  const pagination = usePagination(0, 10); // Default values before fetching data
+  const { 
+    currentPage, 
+    handlePageChange, 
+    recordsPerPage,
+    totalPages
+  } = pagination;
   
-  useEffect(() => {
-    if (!localOnly) {
-      fetchProcessingHistory();
-    }
-  }, [localOnly, currentPage, fetchProcessingHistory]);
-  
-  // Add a manual refresh function
-  const refreshData = useCallback(() => {
-    if (!localOnly) {
-      fetchProcessingHistory();
-    }
-  }, [localOnly, fetchProcessingHistory]);
-  
-  // Use local records if provided, otherwise use database records
-  const records = localOnly ? localRecords || [] : dbRecords;
-  
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-  
-  const totalPages = Math.ceil(totalRecords / recordsPerPage);
-  
-  const handleDownload = async (record: ProcessingRecord) => {
-    try {
-      // For records that have a storage path, always use that (more reliable after page refresh)
-      if (record.pdfPath) {
-        console.log('Downloading from storage path:', record.pdfPath);
-        
-        // Get direct download URL with proper authorization
-        const { data, error } = await supabase.storage
-          .from('pdfs')
-          .createSignedUrl(record.pdfPath, 60); // 60 seconds expiration
-          
-        if (error || !data?.signedUrl) {
-          console.error('Error creating signed URL:', error);
-          throw new Error('Failed to create download URL');
-        }
-        
-        console.log('Signed URL created successfully:', data.signedUrl);
-        
-        // Create download link with the signed URL
-        const a = document.createElement('a');
-        a.href = data.signedUrl;
-        a.download = 'etiquetas.pdf';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        toast({
-          title: t('downloadStarted'),
-          description: t('downloadStartedDesc'),
-          duration: 3000,
-        });
-        
-        return;
-      } 
-      
-      // If the pdfUrl is a complete URL (not a blob), use that directly
-      if (record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
-        console.log('Using direct URL from Supabase:', record.pdfUrl);
-        
-        const a = document.createElement('a');
-        a.href = record.pdfUrl;
-        a.download = 'etiquetas.pdf';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        toast({
-          title: t('downloadStarted'),
-          description: t('downloadStartedDesc'),
-          duration: 3000,
-        });
-        
-        return;
-      }
-      
-      // Fallback to blob URL if available (for newly created PDFs)
-      // Note: This will only work during the current session before a page refresh
-      if (record.pdfUrl && record.pdfUrl.startsWith('blob:')) {
-        console.log('Trying to use blob URL:', record.pdfUrl);
-        
-        // Check if the blob URL is still valid
-        try {
-          // This fetch will fail if the blob URL is no longer valid
-          const response = await fetch(record.pdfUrl, { method: 'HEAD' });
-          
-          if (!response.ok) {
-            throw new Error('Blob URL is no longer valid');
-          }
-          
-          const a = document.createElement('a');
-          a.href = record.pdfUrl;
-          a.download = 'etiquetas.pdf';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          
-          toast({
-            title: t('downloadStarted'),
-            description: t('downloadStartedDesc'),
-            duration: 3000,
-          });
-          
-          return;
-        } catch (e) {
-          console.error('Error with blob URL:', e);
-          throw new Error('Blob URL is no longer accessible after page refresh');
-        }
-      }
-      
-      // If we reach here, we don't have a valid way to download the file
-      console.error('No valid PDF URL or path available:', record);
-      throw new Error('No valid PDF URL or path available');
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      toast({
-        variant: "destructive",
-        title: t('error'),
-        description: t('downloadError'),
-        duration: 3000,
-      });
-    }
-  };
-
-  const formatDate = (date: Date) => {
-    try {
-      if (isMobile) {
-        // More compact date format for mobile view
-        return date.toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', { 
-          day: '2-digit', 
-          month: '2-digit', 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        }).replace(',', '');
-      }
-      
-      // Format without commas
-      const dateStr = date.toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US').replace(',', '');
-      const timeStr = date.toLocaleTimeString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      }).replace(',', '');
-      
-      return dateStr + ' ' + timeStr;
-    } catch (e) {
-      console.error('Error formatting date:', e);
-      return String(date);
-    }
-  };
+  const { 
+    isLoading, 
+    records, 
+    totalRecords, 
+    refreshData 
+  } = useHistoryData(localRecords, localOnly, currentPage, recordsPerPage);
 
   return {
     isLoading,
@@ -227,7 +34,7 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     handleDownload,
     isMobile,
     currentPage,
-    totalPages,
+    totalPages: Math.ceil(totalRecords / recordsPerPage),
     handlePageChange,
     totalRecords,
     refreshData
