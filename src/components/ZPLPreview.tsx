@@ -12,6 +12,7 @@ interface ZPLPreviewProps {
   fileCount?: number;
   isProcessingComplete?: boolean;
   lastPdfUrl?: string;
+  onDownload?: () => void;
 }
 
 export function ZPLPreview({ 
@@ -19,7 +20,8 @@ export function ZPLPreview({
   sourceType = 'file', 
   fileCount = 1, 
   isProcessingComplete = false,
-  lastPdfUrl
+  lastPdfUrl,
+  onDownload
 }: ZPLPreviewProps) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -36,13 +38,14 @@ export function ZPLPreview({
   const totalLabels = countLabels(content);
 
   const handleDownload = () => {
-    if (lastPdfUrl) {
+    if (onDownload) {
+      onDownload();
+    } else if (lastPdfUrl) {
       const a = document.createElement('a');
       a.href = lastPdfUrl;
       a.download = 'etiquetas.pdf';
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(lastPdfUrl);
       document.body.removeChild(a);
     }
   };
@@ -69,23 +72,17 @@ export function ZPLPreview({
                 </p>
               </div>
             </div>
-            {isProcessingComplete ? (
+            {isProcessingComplete && (
               <Button 
                 variant="outline" 
                 size="sm" 
                 className={`flex items-center gap-1 text-primary border-primary/20 hover:bg-primary/5 hover:border-primary text-xs py-1 px-3 h-auto ${isMobile ? 'mt-2 w-full' : ''}`}
                 onClick={handleDownload}
-                disabled={!lastPdfUrl}
+                disabled={!lastPdfUrl && !onDownload}
               >
                 <Download className="h-3 w-3" />
                 {t('downloadAgain')}
               </Button>
-            ) : (
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1">
-                <span className="text-lg font-semibold text-primary">
-                  {totalLabels}
-                </span>
-              </span>
             )}
           </div>
           

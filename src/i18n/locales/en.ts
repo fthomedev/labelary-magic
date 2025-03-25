@@ -1,3 +1,4 @@
+
 export default {
   title: 'ZPL to PDF Converter',
   subtitle: 'Upload your ZPL file and convert it to PDF instantly',
@@ -60,5 +61,8 @@ export default {
   // Add these new translations
   downloadUnavailableAfterRefresh: "This download is no longer available after page refresh",
   downloadStarted: "Download Started",
-  downloadStartedDesc: "Your file will download shortly"
+  downloadStartedDesc: "Your file will download shortly",
+  conversionInterrupted: "Conversion Interrupted",
+  resumeConversion: "You have an unfinished conversion. Would you like to resume?",
+  resume: "Resume"
 } as const;

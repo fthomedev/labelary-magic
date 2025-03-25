@@ -9,9 +9,17 @@ interface ConversionProgressProps {
   isConverting: boolean;
   progress: number;
   onConvert: () => void;
+  isProcessingComplete?: boolean;
+  onDownload?: () => void;
 }
 
-export const ConversionProgress = ({ isConverting, progress, onConvert }: ConversionProgressProps) => {
+export const ConversionProgress = ({ 
+  isConverting, 
+  progress, 
+  onConvert,
+  isProcessingComplete = false,
+  onDownload
+}: ConversionProgressProps) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   
@@ -34,13 +42,11 @@ export const ConversionProgress = ({ isConverting, progress, onConvert }: Conver
       <div className="flex justify-center">
         <Button
           size={isMobile ? "sm" : "default"}
-          onClick={onConvert}
+          onClick={isProcessingComplete ? onDownload : onConvert}
           disabled={isConverting}
           className={`${isMobile ? 'w-full' : 'min-w-[180px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect ${
             isConverting 
               ? 'bg-gray-100 text-gray-500 dark:bg-gray-700'
-              : progress === 0
-              ? 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600'
               : 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600'
           }`}
         >
@@ -49,15 +55,15 @@ export const ConversionProgress = ({ isConverting, progress, onConvert }: Conver
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               {t('converting')}
             </>
-          ) : progress === 0 ? (
+          ) : isProcessingComplete ? (
             <>
-              <Play className="mr-2 h-4 w-4" />
-              {t('process')}
+              <Download className="mr-2 h-4 w-4" />
+              {t('downloadAgain')}
             </>
           ) : (
             <>
-              <Download className="mr-2 h-4 w-4" />
-              {t('downloadComplete')}
+              <Play className="mr-2 h-4 w-4" />
+              {t('process')}
             </>
           )}
         </Button>

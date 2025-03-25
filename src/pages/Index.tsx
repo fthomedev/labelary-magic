@@ -54,6 +54,25 @@ const Index = () => {
     await convertToPDF(zplContent);
   };
 
+  const handleDownload = () => {
+    if (lastPdfUrl) {
+      const a = document.createElement('a');
+      a.href = lastPdfUrl;
+      a.download = 'etiquetas.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Show toast notification
+      const { toast } = require('@/hooks/use-toast');
+      toast({
+        title: t('downloadStarted'),
+        description: t('downloadStartedDesc'),
+        duration: 3000,
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 shadow-sm">
@@ -96,6 +115,7 @@ const Index = () => {
                         fileCount={fileCount}
                         isProcessingComplete={isProcessingComplete}
                         lastPdfUrl={lastPdfUrl}
+                        onDownload={handleDownload}
                       />
                     </div>
                   </div>
@@ -106,6 +126,8 @@ const Index = () => {
                         isConverting={isConverting}
                         progress={progress}
                         onConvert={handleConvert}
+                        isProcessingComplete={isProcessingComplete}
+                        onDownload={handleDownload}
                       />
                     </div>
                   </div>
