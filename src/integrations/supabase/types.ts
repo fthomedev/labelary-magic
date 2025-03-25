@@ -14,6 +14,7 @@ export type Database = {
           date: string
           id: string
           label_count: number
+          pdf_path: string | null
           pdf_url: string
           user_id: string
         }
@@ -21,6 +22,7 @@ export type Database = {
           date?: string
           id?: string
           label_count: number
+          pdf_path?: string | null
           pdf_url: string
           user_id: string
         }
@@ -28,6 +30,7 @@ export type Database = {
           date?: string
           id?: string
           label_count?: number
+          pdf_path?: string | null
           pdf_url?: string
           user_id?: string
         }
@@ -67,6 +70,7 @@ export type Database = {
           p_user_id: string
           p_label_count: number
           p_pdf_url: string
+          p_pdf_path?: string
         }
         Returns: undefined
       }
