@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
@@ -50,50 +51,36 @@ export const useZplConversion = () => {
     }
   };
 
-  const addToProcessingHistory = async (labelCount: number, pdfUrl: string, pdfPath?: string) => {
+  const addToProcessingHistory = async (labelCount: number, pdfPath: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         console.log('Saving processing history for user:', user.id);
         
-        if (pdfPath) {
-          const { error } = await supabase.from('processing_history').insert({
-            user_id: user.id,
-            label_count: labelCount,
-            pdf_url: pdfUrl,
-            pdf_path: pdfPath
-          });
+        // Get the public URL for the PDF from Supabase storage
+        const { data: publicUrlData } = await supabase.storage
+          .from('pdfs')
+          .getPublicUrl(pdfPath);
           
-          if (error) {
-            console.error('Error saving processing history with pdf_path:', error);
-            if (error.message.includes('pdf_path')) {
-              const { error: fallbackError } = await supabase.from('processing_history').insert({
-                user_id: user.id,
-                label_count: labelCount,
-                pdf_url: pdfUrl
-              });
-              
-              if (fallbackError) {
-                console.error('Error with fallback insert:', fallbackError);
-              } else {
-                console.log('Processing history saved without pdf_path');
-              }
-            }
-          } else {
-            console.log('Processing history saved with pdf_path successfully');
-          }
+        if (!publicUrlData || !publicUrlData.publicUrl) {
+          console.error('Failed to get public URL for PDF');
+          return;
+        }
+        
+        const pdfUrl = publicUrlData.publicUrl;
+        console.log('Public URL for PDF:', pdfUrl);
+        
+        const { error } = await supabase.from('processing_history').insert({
+          user_id: user.id,
+          label_count: labelCount,
+          pdf_url: pdfUrl,
+          pdf_path: pdfPath
+        });
+        
+        if (error) {
+          console.error('Error saving processing history:', error);
         } else {
-          const { error } = await supabase.from('processing_history').insert({
-            user_id: user.id,
-            label_count: labelCount,
-            pdf_url: pdfUrl
-          });
-          
-          if (error) {
-            console.error('Error saving processing history:', error);
-          } else {
-            console.log('Processing history saved without pdf_path');
-          }
+          console.log('Processing history saved successfully');
         }
       } else {
         console.log('No authenticated user found');
@@ -163,14 +150,7 @@ export const useZplConversion = () => {
         try {
           const mergedPdf = await mergePDFs(pdfs);
           
-          let pdfPath;
-          try {
-            pdfPath = await uploadPDFToStorage(mergedPdf);
-            console.log('Successfully uploaded PDF to storage:', pdfPath);
-          } catch (uploadError) {
-            console.error('Error uploading to storage, continuing without persistent storage:', uploadError);
-          }
-          
+          // Create bucket if it doesn't exist
           try {
             const { error: bucketError } = await supabase.storage.getBucket('pdfs');
             if (bucketError && bucketError.message.includes('The resource was not found')) {
@@ -187,34 +167,50 @@ export const useZplConversion = () => {
             console.error('Error with bucket operations:', bucketError);
           }
           
-          const blobUrl = window.URL.createObjectURL(mergedPdf);
-          setLastPdfUrl(blobUrl);
-          
-          if (pdfPath) {
+          // Upload PDF to storage
+          let pdfPath;
+          try {
+            pdfPath = await uploadPDFToStorage(mergedPdf);
+            console.log('Successfully uploaded PDF to storage:', pdfPath);
             setLastPdfPath(pdfPath);
-          }
-          
-          const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
-          const actualLabelCount = Math.ceil(countXAMarkers / 2);
-          
-          await addToProcessingHistory(actualLabelCount, blobUrl, pdfPath);
-          
-          setHistoryRefreshTrigger(prev => prev + 1);
-          
-          const a = document.createElement('a');
-          a.href = blobUrl;
-          a.download = 'etiquetas.pdf';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+            
+            // Get the temporary blob URL for the current session
+            const blobUrl = window.URL.createObjectURL(mergedPdf);
+            setLastPdfUrl(blobUrl);
+            
+            const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
+            const actualLabelCount = Math.ceil(countXAMarkers / 2);
+            
+            // Only add to history if we have a valid path
+            if (pdfPath) {
+              await addToProcessingHistory(actualLabelCount, pdfPath);
+              setHistoryRefreshTrigger(prev => prev + 1);
+            }
+            
+            // Download the file
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = 'etiquetas.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
 
-          toast({
-            title: t('success'),
-            description: t('successMessage'),
-            duration: 3000,
-          });
-          
-          setIsProcessingComplete(true);
+            toast({
+              title: t('success'),
+              description: t('successMessage'),
+              duration: 3000,
+            });
+            
+            setIsProcessingComplete(true);
+          } catch (uploadError) {
+            console.error('Error uploading to storage:', uploadError);
+            toast({
+              variant: "destructive",
+              title: t('error'),
+              description: t('errorMessage'),
+              duration: 5000,
+            });
+          }
         } catch (error) {
           console.error('Error merging PDFs:', error);
           toast({

@@ -21,6 +21,7 @@ export function HistoryTableRow({
   const { t } = useTranslation();
   const isBlobUrl = record.pdfUrl && record.pdfUrl.startsWith('blob:');
   const hasStoragePath = !!record.pdfPath;
+  const hasValidUrl = !isBlobUrl || record.pdfUrl.startsWith('http');
 
   return (
     <TableRow key={record.id} className="hover:bg-accent/30 transition-colors">
@@ -45,15 +46,15 @@ export function HistoryTableRow({
                   variant="ghost"
                   size="sm"
                   className={`p-0 h-7 w-7 rounded-full flex items-center justify-center ${
-                    hasStoragePath || !isBlobUrl 
+                    hasStoragePath || hasValidUrl 
                       ? "text-primary hover:text-primary-foreground hover:bg-primary hover-lift" 
                       : "text-muted-foreground"
                   }`}
                   onClick={() => onDownload(record)}
-                  disabled={isBlobUrl && !hasStoragePath}
+                  disabled={isBlobUrl && !hasStoragePath && !hasValidUrl}
                   title={t('download')}
                 >
-                  {isBlobUrl && !hasStoragePath ? (
+                  {isBlobUrl && !hasStoragePath && !hasValidUrl ? (
                     <AlertCircle className="h-3 w-3" />
                   ) : (
                     <Download className="h-3 w-3" />
@@ -62,7 +63,7 @@ export function HistoryTableRow({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {isBlobUrl && !hasStoragePath 
+                {isBlobUrl && !hasStoragePath && !hasValidUrl
                   ? t('downloadUnavailableAfterRefresh') 
                   : t('download')}
               </TooltipContent>

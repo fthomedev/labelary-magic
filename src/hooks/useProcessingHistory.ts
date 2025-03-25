@@ -126,6 +126,26 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
         return;
       } 
       
+      // If the pdfUrl is a complete URL (not a blob), use that directly
+      if (record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
+        console.log('Using direct URL from Supabase:', record.pdfUrl);
+        
+        const a = document.createElement('a');
+        a.href = record.pdfUrl;
+        a.download = 'etiquetas.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        toast({
+          title: t('downloadStarted'),
+          description: t('downloadStartedDesc'),
+          duration: 3000,
+        });
+        
+        return;
+      }
+      
       // Fallback to blob URL if available (for newly created PDFs)
       // Note: This will only work during the current session before a page refresh
       if (record.pdfUrl && record.pdfUrl.startsWith('blob:')) {
