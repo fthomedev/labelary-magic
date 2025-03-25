@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2, Play } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ConversionProgressProps {
   isConverting: boolean;
@@ -12,6 +13,7 @@ interface ConversionProgressProps {
 
 export const ConversionProgress = ({ isConverting, progress, onConvert }: ConversionProgressProps) => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   
   return (
     <div className="space-y-4">
@@ -31,10 +33,10 @@ export const ConversionProgress = ({ isConverting, progress, onConvert }: Conver
       
       <div className="flex justify-center">
         <Button
-          size="sm"
+          size={isMobile ? "sm" : "default"}
           onClick={onConvert}
           disabled={isConverting}
-          className={`min-w-[180px] text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect ${
+          className={`${isMobile ? 'w-full' : 'min-w-[180px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect ${
             isConverting 
               ? 'bg-gray-100 text-gray-500 dark:bg-gray-700'
               : progress === 0

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tag, Archive, CheckCircle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ZPLPreviewProps {
   content: string;
@@ -21,6 +22,7 @@ export function ZPLPreview({
   lastPdfUrl
 }: ZPLPreviewProps) {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   
   const countLabels = (zplContent: string): number => {
     // Count by looking only for "^XA" markers in the ZPL content
@@ -49,7 +51,7 @@ export function ZPLPreview({
     <div className="rounded-xl overflow-hidden gradient-border">
       <Card className="border-0 shadow-none bg-gradient-to-r from-white to-gray-50">
         <CardContent className="p-3">
-          <div className="flex flex-row items-center justify-between gap-3 mb-2">
+          <div className={`flex flex-${isMobile ? 'col' : 'row'} items-${isMobile ? 'start' : 'center'} justify-between gap-3 mb-2`}>
             <div className="flex items-center space-x-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                 {isProcessingComplete ? (
@@ -71,7 +73,7 @@ export function ZPLPreview({
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="flex items-center gap-1 text-primary border-primary/20 hover:bg-primary/5 hover:border-primary text-xs py-1 px-3 h-auto"
+                className={`flex items-center gap-1 text-primary border-primary/20 hover:bg-primary/5 hover:border-primary text-xs py-1 px-3 h-auto ${isMobile ? 'mt-2 w-full' : ''}`}
                 onClick={handleDownload}
                 disabled={!lastPdfUrl}
               >
