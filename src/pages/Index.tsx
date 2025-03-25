@@ -26,7 +26,9 @@ const Index = () => {
     isProcessingComplete,
     lastPdfUrl,
     convertToPDF,
-    historyRefreshTrigger
+    historyRefreshTrigger,
+    hasInterruptedConversion,
+    resumeConversion
   } = useZplConversion();
 
   useEffect(() => {
@@ -106,6 +108,8 @@ const Index = () => {
                         isConverting={isConverting}
                         progress={progress}
                         onConvert={handleConvert}
+                        hasInterruptedConversion={hasInterruptedConversion}
+                        onResumeConversion={resumeConversion}
                       />
                     </div>
                   </div>
