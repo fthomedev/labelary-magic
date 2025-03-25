@@ -31,9 +31,4 @@ export default {
   downloadUnavailableAfterRefresh: "Este download não está mais disponível após atualização da página",
   downloadStarted: "Download Iniciado",
   downloadStartedDesc: "Seu arquivo será baixado em breve",
-
-  // Conversion state persistence
-  conversionInterrupted: 'Conversão interrompida',
-  resumeConversion: 'Sua conversão foi interrompida. Deseja continuar?',
-  resume: 'Continuar'
 } as const;

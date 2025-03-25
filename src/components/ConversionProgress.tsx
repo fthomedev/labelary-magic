@@ -9,17 +9,9 @@ interface ConversionProgressProps {
   isConverting: boolean;
   progress: number;
   onConvert: () => void;
-  hasInterruptedConversion?: boolean;
-  onResumeConversion?: () => void;
 }
 
-export const ConversionProgress = ({ 
-  isConverting, 
-  progress, 
-  onConvert,
-  hasInterruptedConversion,
-  onResumeConversion
-}: ConversionProgressProps) => {
+export const ConversionProgress = ({ isConverting, progress, onConvert }: ConversionProgressProps) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   
@@ -42,7 +34,7 @@ export const ConversionProgress = ({
       <div className="flex justify-center">
         <Button
           size={isMobile ? "sm" : "default"}
-          onClick={hasInterruptedConversion && onResumeConversion ? onResumeConversion : onConvert}
+          onClick={onConvert}
           disabled={isConverting}
           className={`${isMobile ? 'w-full' : 'min-w-[180px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect ${
             isConverting 
@@ -56,11 +48,6 @@ export const ConversionProgress = ({
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               {t('converting')}
-            </>
-          ) : hasInterruptedConversion && onResumeConversion ? (
-            <>
-              <Play className="mr-2 h-4 w-4" />
-              {t('resume')}
             </>
           ) : progress === 0 ? (
             <>

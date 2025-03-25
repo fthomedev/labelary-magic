@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { mergePDFs } from '@/utils/pdfUtils';
@@ -6,10 +7,6 @@ import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
 import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
-import { ToastAction } from '@/components/ui/toast';
-
-// Key for localStorage
-const CONVERSION_STATE_KEY = 'zpl_conversion_state';
 
 export interface ProcessingRecord {
   id: string;
@@ -17,14 +14,6 @@ export interface ProcessingRecord {
   labelCount: number;
   pdfUrl: string;
   pdfPath?: string;
-}
-
-interface PersistentState {
-  isConverting: boolean;
-  progress: number;
-  zplContent?: string;
-  isProcessingComplete: boolean;
-  timestamp: number;
 }
 
 export const useZplConversion = () => {
@@ -35,7 +24,6 @@ export const useZplConversion = () => {
   const [lastPdfUrl, setLastPdfUrl] = useState<string | undefined>(undefined);
   const [lastPdfPath, setLastPdfPath] = useState<string | undefined>(undefined);
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
-  const [currentZplContent, setCurrentZplContent] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -43,69 +31,6 @@ export const useZplConversion = () => {
   const { addToProcessingHistory } = useHistoryRecords();
   const { convertZplBlocksToPdfs, parseLabelsFromZpl, countLabelsInZpl } = useZplApiConversion();
   const { ensurePdfBucketExists } = useStorageOperations();
-
-  // Load saved state on component mount
-  useEffect(() => {
-    try {
-      const savedStateJSON = localStorage.getItem(CONVERSION_STATE_KEY);
-      if (savedStateJSON) {
-        const savedState = JSON.parse(savedStateJSON) as PersistentState;
-        
-        // Only restore state if it's less than 30 minutes old
-        const thirtyMinutesInMs = 30 * 60 * 1000;
-        const isStateRecent = (Date.now() - savedState.timestamp) < thirtyMinutesInMs;
-        
-        if (isStateRecent && savedState.isConverting) {
-          setIsConverting(savedState.isConverting);
-          setProgress(savedState.progress);
-          setIsProcessingComplete(savedState.isProcessingComplete);
-          
-          if (savedState.zplContent) {
-            setCurrentZplContent(savedState.zplContent);
-            
-            // If was in the middle of converting, show a toast to resume
-            if (savedState.isConverting && savedState.progress > 0 && savedState.progress < 100) {
-              toast({
-                title: t('conversionInterrupted'),
-                description: t('resumeConversion'),
-                duration: 5000,
-                action: (
-                  <ToastAction onClick={() => convertToPDF(savedState.zplContent || '')}>
-                    {t('resume')}
-                  </ToastAction>
-                )
-              });
-            }
-          }
-        } else {
-          // Clear outdated state
-          localStorage.removeItem(CONVERSION_STATE_KEY);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading saved conversion state:', error);
-      localStorage.removeItem(CONVERSION_STATE_KEY);
-    }
-  }, []);
-
-  // Save state whenever relevant values change
-  useEffect(() => {
-    if (isConverting || progress > 0 || isProcessingComplete) {
-      const stateToSave: PersistentState = {
-        isConverting,
-        progress,
-        zplContent: currentZplContent,
-        isProcessingComplete,
-        timestamp: Date.now()
-      };
-      
-      try {
-        localStorage.setItem(CONVERSION_STATE_KEY, JSON.stringify(stateToSave));
-      } catch (error) {
-        console.error('Error saving conversion state:', error);
-      }
-    }
-  }, [isConverting, progress, currentZplContent, isProcessingComplete]);
 
   const convertToPDF = async (zplContent: string) => {
     if (!zplContent) return;
@@ -115,7 +40,6 @@ export const useZplConversion = () => {
       setProgress(0);
       setPdfUrls([]);
       setIsProcessingComplete(false);
-      setCurrentZplContent(zplContent);
 
       const labels = parseLabelsFromZpl(zplContent);
       const newPdfUrls: string[] = [];
@@ -173,9 +97,6 @@ export const useZplConversion = () => {
             
             // Set processing complete to show the completion UI
             setIsProcessingComplete(true);
-            
-            // Clear the conversion state from localStorage since it's now complete
-            localStorage.removeItem(CONVERSION_STATE_KEY);
           } catch (uploadError) {
             console.error('Error uploading to storage:', uploadError);
             toast({
@@ -220,7 +141,5 @@ export const useZplConversion = () => {
     lastPdfPath,
     convertToPDF,
     historyRefreshTrigger,
-    hasInterruptedConversion: currentZplContent && isConverting && progress > 0 && progress < 100,
-    resumeConversion: () => currentZplContent ? convertToPDF(currentZplContent) : null,
   };
 };
