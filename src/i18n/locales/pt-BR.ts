@@ -1,4 +1,3 @@
-
 export default {
   title: 'Conversor ZPL para PDF',
   subtitle: 'Faça upload do seu arquivo ZPL para converter em PDF.',
@@ -27,4 +26,9 @@ export default {
   labelCount: "Quantidade de etiquetas",
   actions: "Ações",
   download: "Baixar",
-};
+
+  // Add these new translations
+  downloadUnavailableAfterRefresh: "Este download não está mais disponível após atualização da página",
+  downloadStarted: "Download Iniciado",
+  downloadStartedDesc: "Seu arquivo será baixado em breve",
+} as const;

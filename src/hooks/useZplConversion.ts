@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
@@ -25,7 +24,6 @@ export const useZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  // Upload PDF to Supabase Storage
   const uploadPDFToStorage = async (pdfBlob: Blob): Promise<string> => {
     try {
       const fileName = `label-${uuidv4()}.pdf`;
@@ -58,53 +56,44 @@ export const useZplConversion = () => {
       if (user) {
         console.log('Saving processing history for user:', user.id);
         
-        try {
-          // Check if pdf_path is provided
-          if (pdfPath) {
-            try {
-              // Try to use the function with the pdf_path parameter
-              const { data, error } = await supabase.from('processing_history').insert({
+        if (pdfPath) {
+          const { error } = await supabase.from('processing_history').insert({
+            user_id: user.id,
+            label_count: labelCount,
+            pdf_url: pdfUrl,
+            pdf_path: pdfPath
+          });
+          
+          if (error) {
+            console.error('Error saving processing history with pdf_path:', error);
+            if (error.message.includes('pdf_path')) {
+              const { error: fallbackError } = await supabase.from('processing_history').insert({
                 user_id: user.id,
                 label_count: labelCount,
-                pdf_url: pdfUrl,
-                pdf_path: pdfPath
-              }).select();
+                pdf_url: pdfUrl
+              });
               
-              if (error) {
-                console.error('Error saving processing history with pdf_path:', error);
-                
-                // Fallback to version without pdf_path
-                const { error: fallbackError } = await supabase.from('processing_history').insert({
-                  user_id: user.id,
-                  label_count: labelCount,
-                  pdf_url: pdfUrl
-                });
-                
-                if (fallbackError) {
-                  console.error('Error with fallback insert:', fallbackError);
-                  return;
-                }
+              if (fallbackError) {
+                console.error('Error with fallback insert:', fallbackError);
+              } else {
+                console.log('Processing history saved without pdf_path');
               }
-            } catch (error) {
-              console.error('Exception with pdf_path insert:', error);
             }
           } else {
-            // Just use the version without pdf_path
-            const { error } = await supabase.from('processing_history').insert({
-              user_id: user.id,
-              label_count: labelCount,
-              pdf_url: pdfUrl
-            });
-            
-            if (error) {
-              console.error('Error saving processing history:', error);
-              return;
-            }
+            console.log('Processing history saved with pdf_path successfully');
           }
+        } else {
+          const { error } = await supabase.from('processing_history').insert({
+            user_id: user.id,
+            label_count: labelCount,
+            pdf_url: pdfUrl
+          });
           
-          console.log('Processing history saved successfully');
-        } catch (error) {
-          console.error('Exception while saving processing history:', error);
+          if (error) {
+            console.error('Error saving processing history:', error);
+          } else {
+            console.log('Processing history saved without pdf_path');
+          }
         }
       } else {
         console.log('No authenticated user found');
@@ -174,40 +163,44 @@ export const useZplConversion = () => {
         try {
           const mergedPdf = await mergePDFs(pdfs);
           
-          // Upload merged PDF to Supabase Storage
-          const pdfPath = await uploadPDFToStorage(mergedPdf);
-          
-          // Create a bucket if it doesn't exist
-          const { error: bucketError } = await supabase.storage.getBucket('pdfs');
-          if (bucketError && bucketError.message.includes('The resource was not found')) {
-            await supabase.storage.createBucket('pdfs', {
-              public: true,
-              fileSizeLimit: 10485760 // 10MB
-            });
+          let pdfPath;
+          try {
+            pdfPath = await uploadPDFToStorage(mergedPdf);
+            console.log('Successfully uploaded PDF to storage:', pdfPath);
+          } catch (uploadError) {
+            console.error('Error uploading to storage, continuing without persistent storage:', uploadError);
           }
           
-          // Make the bucket public
-          await supabase.storage.updateBucket('pdfs', {
-            public: true
-          });
+          try {
+            const { error: bucketError } = await supabase.storage.getBucket('pdfs');
+            if (bucketError && bucketError.message.includes('The resource was not found')) {
+              await supabase.storage.createBucket('pdfs', {
+                public: true,
+                fileSizeLimit: 10485760 // 10MB
+              });
+              
+              await supabase.storage.updateBucket('pdfs', {
+                public: true
+              });
+            }
+          } catch (bucketError) {
+            console.error('Error with bucket operations:', bucketError);
+          }
           
-          // Create a blob URL for immediate download
           const blobUrl = window.URL.createObjectURL(mergedPdf);
           setLastPdfUrl(blobUrl);
-          setLastPdfPath(pdfPath);
           
-          // Count ^XA markers, divide by 2 and round up
+          if (pdfPath) {
+            setLastPdfPath(pdfPath);
+          }
+          
           const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
           const actualLabelCount = Math.ceil(countXAMarkers / 2);
           
-          // Save to processing history with both the temporary blob URL (for immediate use)
-          // and the permanent storage path
           await addToProcessingHistory(actualLabelCount, blobUrl, pdfPath);
           
-          // Trigger history refresh after successful processing
           setHistoryRefreshTrigger(prev => prev + 1);
           
-          // Download the file
           const a = document.createElement('a');
           a.href = blobUrl;
           a.download = 'etiquetas.pdf';

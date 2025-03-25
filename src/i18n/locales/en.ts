@@ -1,4 +1,3 @@
-
 export default {
   title: 'ZPL to PDF Converter',
   subtitle: 'Upload your ZPL file and convert it to PDF instantly',
@@ -34,7 +33,7 @@ export default {
   dropHere: 'Drop file here...',
   downloadComplete: 'Download PDF',
   downloadError: 'Error downloading the file. Please try again.',
-
+  
   // Processing history translations
   processingHistory: "Processing History",
   historyTitle: "Last 30 days",
@@ -57,4 +56,9 @@ export default {
   confirm: "Delete",
   deleteRecordSuccess: "Record deleted successfully",
   deleteRecordError: "There was an error deleting the record. Please try again.",
-};
+  
+  // Add these new translations
+  downloadUnavailableAfterRefresh: "This download is no longer available after page refresh",
+  downloadStarted: "Download Started",
+  downloadStartedDesc: "Your file will download shortly"
+} as const;
