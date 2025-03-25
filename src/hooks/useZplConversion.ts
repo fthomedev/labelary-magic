@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
@@ -71,9 +70,7 @@ export const useZplConversion = () => {
                 description: t('resumeConversion'),
                 duration: 5000,
                 action: (
-                  <ToastAction 
-                    onClick={() => convertToPDF(savedState.zplContent || '')}
-                  >
+                  <ToastAction onClick={() => convertToPDF(savedState.zplContent || '')}>
                     {t('resume')}
                   </ToastAction>
                 )
