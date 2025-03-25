@@ -51,7 +51,7 @@ export function ZPLPreview({
               </div>
               <div>
                 <h3 className="text-sm font-medium text-foreground font-heading">
-                  {isProcessingComplete ? t('processingComplete') : t('totalLabels')}
+                  {t('totalLabels')}
                 </h3>
                 <p className="text-xs text-muted-foreground">
                   {isProcessingComplete ? t('labelsProcessed', { count: totalLabels }) : t('processing')}

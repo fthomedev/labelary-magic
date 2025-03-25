@@ -26,7 +26,8 @@ const Index = () => {
     isProcessingComplete,
     lastPdfUrl,
     convertToPDF,
-    historyRefreshTrigger
+    historyRefreshTrigger,
+    resetProcessingStatus
   } = useZplConversion();
 
   useEffect(() => {
@@ -48,6 +49,8 @@ const Index = () => {
     setZplContent(content);
     setSourceType(type);
     setFileCount(count);
+    // Reset processing status when a new file is selected
+    resetProcessingStatus();
   };
 
   const handleConvert = async () => {

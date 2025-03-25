@@ -32,6 +32,12 @@ export const useZplConversion = () => {
   const { convertZplBlocksToPdfs, parseLabelsFromZpl, countLabelsInZpl } = useZplApiConversion();
   const { ensurePdfBucketExists } = useStorageOperations();
 
+  // New function to reset processing status
+  const resetProcessingStatus = () => {
+    setIsProcessingComplete(false);
+    setProgress(0);
+  };
+
   const convertToPDF = async (zplContent: string) => {
     if (!zplContent) return;
     
@@ -141,5 +147,6 @@ export const useZplConversion = () => {
     lastPdfPath,
     convertToPDF,
     historyRefreshTrigger,
+    resetProcessingStatus,  // Expose the new function
   };
 };
