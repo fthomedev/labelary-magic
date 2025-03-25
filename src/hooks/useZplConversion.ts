@@ -2,9 +2,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
-import { v4 as uuidv4 } from 'uuid';
-import { splitZPLIntoBlocks, delay, mergePDFs } from '@/utils/pdfUtils';
-import { supabase } from '@/integrations/supabase/client';
+import { mergePDFs } from '@/utils/pdfUtils';
+import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
+import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
+import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
+import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 
 export interface ProcessingRecord {
   id: string;
@@ -25,70 +27,10 @@ export const useZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  const uploadPDFToStorage = async (pdfBlob: Blob): Promise<string> => {
-    try {
-      const fileName = `label-${uuidv4()}.pdf`;
-      const filePath = `${fileName}`;
-      
-      const { data, error } = await supabase.storage
-        .from('pdfs')
-        .upload(filePath, pdfBlob, {
-          contentType: 'application/pdf',
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (error) {
-        console.error('Error uploading PDF to storage:', error);
-        throw error;
-      }
-      
-      console.log('PDF uploaded to storage:', filePath);
-      return filePath;
-    } catch (error) {
-      console.error('Failed to upload PDF to storage:', error);
-      throw error;
-    }
-  };
-
-  const addToProcessingHistory = async (labelCount: number, pdfPath: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        console.log('Saving processing history for user:', user.id);
-        
-        // Get the public URL for the PDF from Supabase storage
-        const { data: publicUrlData } = await supabase.storage
-          .from('pdfs')
-          .getPublicUrl(pdfPath);
-          
-        if (!publicUrlData || !publicUrlData.publicUrl) {
-          console.error('Failed to get public URL for PDF');
-          return;
-        }
-        
-        const pdfUrl = publicUrlData.publicUrl;
-        console.log('Public URL for PDF:', pdfUrl);
-        
-        const { error } = await supabase.from('processing_history').insert({
-          user_id: user.id,
-          label_count: labelCount,
-          pdf_url: pdfUrl,
-          pdf_path: pdfPath
-        });
-        
-        if (error) {
-          console.error('Error saving processing history:', error);
-        } else {
-          console.log('Processing history saved successfully');
-        }
-      } else {
-        console.log('No authenticated user found');
-      }
-    } catch (error) {
-      console.error('Failed to save processing history to database:', error);
-    }
-  };
+  const { uploadPDFToStorage, getPdfPublicUrl } = useUploadPdf();
+  const { addToProcessingHistory } = useHistoryRecords();
+  const { convertZplBlocksToPdfs, parseLabelsFromZpl, countLabelsInZpl } = useZplApiConversion();
+  const { ensurePdfBucketExists } = useStorageOperations();
 
   const convertToPDF = async (zplContent: string) => {
     if (!zplContent) return;
@@ -99,73 +41,26 @@ export const useZplConversion = () => {
       setPdfUrls([]);
       setIsProcessingComplete(false);
 
-      const labels = splitZPLIntoBlocks(zplContent);
-      const pdfs: Blob[] = [];
-      const LABELS_PER_REQUEST = 14;
+      const labels = parseLabelsFromZpl(zplContent);
       const newPdfUrls: string[] = [];
 
-      for (let i = 0; i < labels.length; i += LABELS_PER_REQUEST) {
-        try {
-          const blockLabels = labels.slice(i, i + LABELS_PER_REQUEST);
-          const blockZPL = blockLabels.join('');
+      const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
+        setProgress(progressValue);
+      });
 
-          const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
-            method: 'POST',
-            headers: {
-              'Accept': 'application/pdf',
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: blockZPL,
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const blob = await response.blob();
-          pdfs.push(blob);
-
-          const blockUrl = window.URL.createObjectURL(blob);
-          newPdfUrls.push(blockUrl);
-
-          setProgress(((i + blockLabels.length) / labels.length) * 100);
-
-          if (i + LABELS_PER_REQUEST < labels.length) {
-            await delay(3000);
-          }
-        } catch (error) {
-          console.error(`${t('blockError')} ${i / LABELS_PER_REQUEST + 1}:`, error);
-          toast({
-            variant: "destructive",
-            title: t('blockError'),
-            description: t('blockErrorMessage', { block: i / LABELS_PER_REQUEST + 1 }),
-            duration: 4000,
-          });
-        }
-      }
-
+      // Create temporary blob URLs for the current session
+      pdfs.forEach(blob => {
+        const blockUrl = window.URL.createObjectURL(blob);
+        newPdfUrls.push(blockUrl);
+      });
       setPdfUrls(newPdfUrls);
 
       if (pdfs.length > 0) {
         try {
           const mergedPdf = await mergePDFs(pdfs);
           
-          // Create bucket if it doesn't exist
-          try {
-            const { error: bucketError } = await supabase.storage.getBucket('pdfs');
-            if (bucketError && bucketError.message.includes('The resource was not found')) {
-              await supabase.storage.createBucket('pdfs', {
-                public: true,
-                fileSizeLimit: 10485760 // 10MB
-              });
-              
-              await supabase.storage.updateBucket('pdfs', {
-                public: true
-              });
-            }
-          } catch (bucketError) {
-            console.error('Error with bucket operations:', bucketError);
-          }
+          // Ensure bucket exists
+          await ensurePdfBucketExists();
           
           // Upload PDF to storage
           let pdfPath;
@@ -178,8 +73,7 @@ export const useZplConversion = () => {
             const blobUrl = window.URL.createObjectURL(mergedPdf);
             setLastPdfUrl(blobUrl);
             
-            const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
-            const actualLabelCount = Math.ceil(countXAMarkers / 2);
+            const actualLabelCount = countLabelsInZpl(zplContent);
             
             // Only add to history if we have a valid path
             if (pdfPath) {
