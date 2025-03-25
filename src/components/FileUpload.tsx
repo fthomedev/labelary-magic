@@ -29,7 +29,15 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
       );
       
       if (zplFiles.length === 0) {
-        throw new Error(t('noZplFilesInZip'));
+        const errorMessage = t('noZplFilesInZip');
+        setError(errorMessage);
+        toast({
+          variant: "destructive",
+          title: t('error'),
+          description: errorMessage,
+          duration: 4000,
+        });
+        throw new Error(errorMessage);
       }
       
       const fileContents: string[] = [];
@@ -41,7 +49,15 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
       }
       
       if (fileContents.length === 0) {
-        throw new Error(t('noValidZplContent'));
+        const errorMessage = t('noValidZplContent');
+        setError(errorMessage);
+        toast({
+          variant: "destructive",
+          title: t('error'),
+          description: errorMessage,
+          duration: 4000,
+        });
+        throw new Error(errorMessage);
       }
       
       const allContent = fileContents.join('\n');
@@ -54,13 +70,15 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
       });
     } catch (error) {
       console.error('Error processing ZIP file:', error);
-      setError(error instanceof Error ? error.message : t('zipProcessingError'));
-      toast({
-        variant: "destructive",
-        title: t('error'),
-        description: error instanceof Error ? error.message : t('zipProcessingError'),
-        duration: 4000,
-      });
+      if (!error.message.includes(t('noZplFilesInZip')) && !error.message.includes(t('noValidZplContent'))) {
+        setError(t('zipProcessingError'));
+        toast({
+          variant: "destructive",
+          title: t('error'),
+          description: t('zipProcessingError'),
+          duration: 4000,
+        });
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -78,21 +96,23 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
           duration: 3000,
         });
       } else {
-        setError(t('noValidZplContent'));
+        const errorMessage = t('noValidZplContent');
+        setError(errorMessage);
         toast({
           variant: "destructive",
           title: t('error'),
-          description: t('noValidZplContent'),
+          description: errorMessage,
           duration: 4000,
         });
       }
     };
     reader.onerror = () => {
-      setError(t('readError'));
+      const errorMessage = t('readErrorMessage');
+      setError(errorMessage);
       toast({
         variant: "destructive",
-        title: t('error'),
-        description: t('readErrorMessage'),
+        title: t('readError'),
+        description: errorMessage,
         duration: 4000,
       });
     };
