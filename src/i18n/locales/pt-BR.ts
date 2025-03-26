@@ -1,4 +1,3 @@
-
 export default {
   title: 'Conversor ZPL para PDF',
   subtitle: 'Faça upload do seu arquivo ZPL para converter em PDF.',
@@ -67,6 +66,6 @@ export default {
   
   // New translations for plan cards
   simplePricing: "Preços simples e transparentes",
-  learnMore: "Saber mais",
+  learnMore: "Saiba mais",
   popular: "Mais popular",
 } as const;

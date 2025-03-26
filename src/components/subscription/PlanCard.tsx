@@ -43,7 +43,7 @@ export const PlanCard = ({ plan, onSelect, isLoading, isCurrentPlan, isPopular }
   };
 
   return (
-    <Card className={`w-full relative overflow-hidden transition-all duration-200 ${getBgColor()}`}>
+    <Card className={`w-full relative overflow-hidden transition-all duration-200 ${getBgColor()} flex flex-col`}>
       {isPopular && (
         <div className="absolute top-0 right-0 bg-green-500 text-white px-4 py-1 rounded-bl-lg text-sm font-medium">
           {t('popular')}
@@ -55,7 +55,7 @@ export const PlanCard = ({ plan, onSelect, isLoading, isCurrentPlan, isPopular }
         <CardDescription className="text-gray-700">{plan.product.description}</CardDescription>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="flex-grow">
         <div className="flex flex-col items-start justify-start space-y-6">
           <div className="flex items-baseline gap-1">
             <span className="text-4xl font-bold">{formattedPrice}</span>

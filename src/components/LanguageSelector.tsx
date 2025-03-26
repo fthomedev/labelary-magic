@@ -11,10 +11,15 @@ import {
 export const LanguageSelector = () => {
   const { i18n } = useTranslation();
 
+  const handleLanguageChange = (value: string) => {
+    i18n.changeLanguage(value);
+    localStorage.setItem('i18nextLng', value);
+  };
+
   return (
     <Select
       defaultValue={i18n.language}
-      onValueChange={(value) => i18n.changeLanguage(value)}
+      onValueChange={handleLanguageChange}
     >
       <SelectTrigger className="w-[120px]">
         <SelectValue />

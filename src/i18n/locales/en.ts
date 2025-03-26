@@ -1,4 +1,3 @@
-
 export default {
   title: 'ZPL to PDF Converter',
   subtitle: 'Upload your ZPL file and convert it to PDF instantly',
