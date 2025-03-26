@@ -30,16 +30,19 @@ export const NavigationButtons = ({ onClose }: NavigationButtonsProps) => {
     }
   };
 
+  // Prevent default behavior and navigate using React Router
+  const handleNavigation = (path: string) => {
+    onClose();
+    navigate(path);
+  };
+
   return (
     <div className="space-y-3">
       {location.pathname !== "/" && (
         <Button
           variant="outline"
           className="w-full justify-start gap-2 text-base font-normal"
-          onClick={() => {
-            onClose();
-            navigate("/");
-          }}
+          onClick={() => handleNavigation("/")}
         >
           <Home className="h-4 w-4" />
           {t("home")}
@@ -50,10 +53,7 @@ export const NavigationButtons = ({ onClose }: NavigationButtonsProps) => {
         <Button
           variant="outline"
           className="w-full justify-start gap-2 text-base font-normal"
-          onClick={() => {
-            onClose();
-            navigate("/subscription");
-          }}
+          onClick={() => handleNavigation("/subscription")}
         >
           <CreditCard className="h-4 w-4" />
           {t("subscriptionPage")}

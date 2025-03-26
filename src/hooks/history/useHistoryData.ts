@@ -13,10 +13,13 @@ export function useHistoryData(
   const [dbRecords, setDbRecords] = useState<ProcessingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(!localOnly);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const fetchProcessingHistory = useCallback(async () => {
     try {
-      setIsLoading(true);
+      if (!isInitialized) {
+        setIsLoading(true);
+      }
       
       // Check if user is authenticated
       const { data: sessionData } = await supabase.auth.getSession();
@@ -64,8 +67,9 @@ export function useHistoryData(
       console.error('Failed to fetch processing history:', err);
     } finally {
       setIsLoading(false);
+      setIsInitialized(true);
     }
-  }, [currentPage, recordsPerPage]);
+  }, [currentPage, recordsPerPage, isInitialized]);
   
   useEffect(() => {
     if (!localOnly) {
