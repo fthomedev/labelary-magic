@@ -74,4 +74,14 @@ export default {
   basicPlan: "Plano Básico",
   advancedPlan: "Plano Avançado",
   proPlan: "Plano Profissional",
+
+  // User Menu translations
+  userMenu: "Menu do Usuário",
+  unnamed: "Sem nome",
+  logout: "Sair",
+  deleteAccount: "Excluir Conta",
+  deleteAccountConfirm: "Confirmar exclusão de conta?",
+  deleteAccountWarning: "Esta ação não pode ser desfeita. Sua conta será permanentemente excluída.",
+  cancel: "Cancelar",
+  confirm: "Confirmar",
 } as const;

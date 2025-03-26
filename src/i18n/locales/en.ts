@@ -107,4 +107,14 @@ export default {
   basicPlan: "Basic Plan",
   advancedPlan: "Advanced Plan",
   proPlan: "Pro Plan",
+
+  // User Menu translations
+  userMenu: "User Menu",
+  unnamed: "Unnamed",
+  logout: "Logout",
+  deleteAccount: "Delete Account",
+  deleteAccountConfirm: "Delete Account?",
+  deleteAccountWarning: "This action cannot be undone. Your account will be permanently deleted.",
+  cancel: "Cancel",
+  confirm: "Confirm",
 } as const;

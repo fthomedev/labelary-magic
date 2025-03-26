@@ -20,6 +20,7 @@ i18n.use(initReactI18next).init({
   react: {
     useSuspense: false,
   },
+  debug: process.env.NODE_ENV === 'development',
 });
 
 // Store language preference and update HTML lang attribute
