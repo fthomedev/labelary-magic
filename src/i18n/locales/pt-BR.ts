@@ -66,7 +66,7 @@ export default {
   errorFetchingSubscription: "Erro ao carregar dados da assinatura.",
   
   // New translations for plan cards
-  precosSimples: "Preços simples e transparentes",
-  saberMais: "Saber mais",
+  simplePricing: "Preços simples e transparentes",
+  learnMore: "Saber mais",
   popular: "Mais popular",
 } as const;

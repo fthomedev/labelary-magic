@@ -99,7 +99,7 @@ export default {
   errorFetchingSubscription: "Error loading subscription data.",
   
   // New translations for plan cards
-  precosSimples: "Simple and transparent pricing",
-  saberMais: "Learn more",
+  simplePricing: "Simple and transparent pricing",
+  learnMore: "Learn more",
   popular: "Most popular",
 } as const;

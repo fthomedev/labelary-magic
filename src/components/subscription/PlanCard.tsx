@@ -92,13 +92,13 @@ export const PlanCard = ({ plan, onSelect, isLoading, isCurrentPlan, isPopular }
         </div>
       </CardContent>
       
-      <CardFooter className="pb-6">
+      <CardFooter className="pb-6 mt-auto">
         <Button 
           onClick={() => onSelect(plan.id)} 
           className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
           disabled={isLoading || isCurrentPlan}
         >
-          {isCurrentPlan ? t('currentPlan') : t('saberMais')}
+          {isCurrentPlan ? t('currentPlan') : t('learnMore')}
         </Button>
       </CardFooter>
     </Card>
