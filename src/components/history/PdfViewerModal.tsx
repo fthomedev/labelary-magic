@@ -34,7 +34,7 @@ export function PdfViewerModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl w-[90vw] h-[90vh] max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-4xl w-[90vw] h-[90vh] max-h-[90vh] flex flex-col p-0" hideCloseButton>
         <DialogHeader className="px-4 py-2 border-b flex flex-row items-center justify-between">
           <DialogTitle className="text-lg">{t('viewPdf')}</DialogTitle>
           <div className="flex items-center gap-2">
