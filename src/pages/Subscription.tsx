@@ -14,10 +14,11 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 const Subscription = () => {
   const { t, i18n } = useTranslation();
   const [hasSubscription, setHasSubscription] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
   const { getCustomerSubscription } = useStripe();
   const navigate = useNavigate();
+  const [forcedRender, setForcedRender] = useState(0);
 
+  // Check if user has a subscription
   useEffect(() => {
     const checkSubscription = async () => {
       const subscription = await getCustomerSubscription();
@@ -27,16 +28,14 @@ const Subscription = () => {
     checkSubscription();
   }, []);
 
-  // Force component to re-render when language changes
+  // Force re-render when language changes
   useEffect(() => {
     const handleLanguageChanged = () => {
-      setCurrentLanguage(i18n.language);
+      setForcedRender(prev => prev + 1);
     };
 
-    // Add event listener for language changes
     i18n.on('languageChanged', handleLanguageChanged);
     
-    // Cleanup event listener
     return () => {
       i18n.off('languageChanged', handleLanguageChanged);
     };
@@ -70,11 +69,11 @@ const Subscription = () => {
           </TabsList>
           
           <TabsContent value="plans" className="mt-4">
-            <SubscriptionPlans key={`plans-${currentLanguage}`} />
+            <SubscriptionPlans key={`plans-${forcedRender}`} />
           </TabsContent>
           
           <TabsContent value="status" className="mt-4">
-            <SubscriptionStatus key={`status-${currentLanguage}`} />
+            <SubscriptionStatus key={`status-${forcedRender}`} />
           </TabsContent>
         </Tabs>
       </div>

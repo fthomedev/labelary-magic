@@ -5,7 +5,7 @@ import { PlanCard } from "./PlanCard";
 import { useTranslation } from "react-i18next";
 
 export const SubscriptionPlans = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const { getSubscriptionPlans, createCheckoutSession, getCustomerSubscription, isLoading } = useStripe();
@@ -60,7 +60,7 @@ export const SubscriptionPlans = () => {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 max-w-4xl mx-auto">
         {plans.map((plan, index) => (
           <PlanCard
-            key={`${plan.id}-${i18n.language}`}
+            key={plan.id}
             plan={plan}
             onSelect={handleSelectPlan}
             isLoading={isLoading}

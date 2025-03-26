@@ -1,13 +1,6 @@
 
 import { useEffect } from "react";
 import { useTranslation } from 'react-i18next';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Check, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +10,6 @@ export const LanguageSelector = () => {
 
   const handleLanguageChange = (value: string) => {
     i18n.changeLanguage(value);
-    localStorage.setItem('i18nextLng', value);
   };
 
   // Force a re-render when the component mounts to ensure the correct language is displayed
@@ -26,7 +18,7 @@ export const LanguageSelector = () => {
     if (savedLanguage && savedLanguage !== i18n.language) {
       i18n.changeLanguage(savedLanguage);
     }
-  }, []);
+  }, [i18n]);
 
   return (
     <DropdownMenu>
