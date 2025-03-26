@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Menu, User, Trash2, LogOut, CreditCard } from "lucide-react";
+import { Menu, User, Trash2, LogOut, CreditCard, Home } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -31,6 +31,7 @@ export const UserMenu = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
   const [userData, setUserData] = useState<{
     name: string | null;
@@ -128,17 +129,34 @@ export const UserMenu = () => {
             </div>
           </div>
           <div className="space-y-3">
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-2 text-base font-normal"
-              onClick={() => {
-                setIsOpen(false);
-                navigate("/subscription");
-              }}
-            >
-              <CreditCard className="h-4 w-4" />
-              {t("subscriptionPage")}
-            </Button>
+            {location.pathname !== "/" && (
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2 text-base font-normal"
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate("/");
+                }}
+              >
+                <Home className="h-4 w-4" />
+                {t("home")}
+              </Button>
+            )}
+
+            {location.pathname !== "/subscription" && (
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2 text-base font-normal"
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate("/subscription");
+                }}
+              >
+                <CreditCard className="h-4 w-4" />
+                {t("subscriptionPage")}
+              </Button>
+            )}
+
             <Button
               variant="outline"
               className="w-full justify-start gap-2 text-base font-normal"

@@ -5,12 +5,16 @@ import { SubscriptionPlans } from "@/components/subscription/SubscriptionPlans";
 import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 import { useStripe } from "@/hooks/useStripe";
 import { useTranslation } from "react-i18next";
-import { LogoutButton } from "@/components/LogoutButton";
+import { UserMenu } from "@/components/UserMenu";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Home } from "lucide-react";
 
 const Subscription = () => {
   const { t } = useTranslation();
   const [hasSubscription, setHasSubscription] = useState(false);
   const { getCustomerSubscription } = useStripe();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkSubscription = async () => {
@@ -24,7 +28,18 @@ const Subscription = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
       <div className="absolute top-4 right-4 z-10">
-        <LogoutButton />
+        <UserMenu />
+      </div>
+      
+      <div className="absolute top-4 left-4 z-10">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2"
+        >
+          <Home className="h-4 w-4" />
+          {t('home')}
+        </Button>
       </div>
       
       <div className="flex-1 container max-w-6xl mx-auto mt-16">
