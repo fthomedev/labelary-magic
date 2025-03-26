@@ -1,3 +1,4 @@
+
 export default {
   title: 'Conversor ZPL para PDF',
   subtitle: 'Faça upload do seu arquivo ZPL para converter em PDF.',
@@ -68,4 +69,9 @@ export default {
   simplePricing: "Preços simples e transparentes",
   learnMore: "Saiba mais",
   popular: "Mais popular",
+  
+  // Plan names translations
+  basicPlan: "Plano Básico",
+  advancedPlan: "Plano Avançado",
+  proPlan: "Plano Profissional",
 } as const;

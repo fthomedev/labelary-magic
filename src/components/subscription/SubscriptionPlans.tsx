@@ -5,7 +5,7 @@ import { PlanCard } from "./PlanCard";
 import { useTranslation } from "react-i18next";
 
 export const SubscriptionPlans = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const { getSubscriptionPlans, createCheckoutSession, getCustomerSubscription, isLoading } = useStripe();
@@ -35,6 +35,11 @@ export const SubscriptionPlans = () => {
     
     loadPlans();
   }, []);
+
+  // Force component to re-render when language changes
+  useEffect(() => {
+    // This is intentionally empty, just to trigger re-render on i18n change
+  }, [i18n.language]);
 
   const isCurrentPlan = (priceId: string) => {
     if (!currentSubscription) return false;

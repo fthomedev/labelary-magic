@@ -101,4 +101,9 @@ export default {
   simplePricing: "Simple and transparent pricing",
   learnMore: "Learn more",
   popular: "Most popular",
+  
+  // Plan names translations
+  basicPlan: "Basic Plan",
+  advancedPlan: "Advanced Plan",
+  proPlan: "Pro Plan",
 } as const;

@@ -33,10 +33,23 @@ export const PlanCard = ({ plan, onSelect, isLoading, isCurrentPlan, isPopular }
     return '';
   };
   
+  // Translate plan name
+  const getTranslatedPlanName = () => {
+    const planName = plan.product.name.toLowerCase();
+    if (planName.includes('básico') || planName.includes('basico') || planName.includes('basic')) {
+      return t('basicPlan');
+    } else if (planName.includes('avançado') || planName.includes('avancado') || planName.includes('advanced')) {
+      return t('advancedPlan');
+    } else if (planName.includes('pro') || planName.includes('professional')) {
+      return t('proPlan');
+    }
+    return plan.product.name; // Fallback to original name if no match
+  };
+  
   // Determine background color based on plan name
   const getBgColor = () => {
-    if (plan.product.name.toLowerCase().includes('básico') || 
-        plan.product.name.toLowerCase().includes('basico')) {
+    const planName = plan.product.name.toLowerCase();
+    if (planName.includes('básico') || planName.includes('basico') || planName.includes('basic')) {
       return "bg-[#F2FCE2] hover:bg-[#E8F8D8]";
     }
     return "bg-[#E5DEFF] hover:bg-[#DBD4F5]";
@@ -51,7 +64,7 @@ export const PlanCard = ({ plan, onSelect, isLoading, isCurrentPlan, isPopular }
       )}
       
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">{plan.product.name}</CardTitle>
+        <CardTitle className="text-2xl font-bold">{getTranslatedPlanName()}</CardTitle>
         <CardDescription className="text-gray-700">{plan.product.description}</CardDescription>
       </CardHeader>
       
