@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Home, Download, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Download, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -25,7 +24,6 @@ export function PdfViewerModal({
   onDownload
 }: PdfViewerModalProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -34,27 +32,11 @@ export function PdfViewerModal({
     }
   }, [isOpen, pdfUrl]);
 
-  const handleNavigateHome = () => {
-    onClose();
-    navigate('/');
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-4xl w-[90vw] h-[90vh] max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-4 py-2 border-b flex flex-row items-center justify-between">
-          <div className="flex items-center gap-4">
-            <DialogTitle className="text-lg">{t('viewPdf')}</DialogTitle>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="flex items-center gap-2"
-              onClick={handleNavigateHome}
-            >
-              <Home className="h-4 w-4" />
-              {t('home')}
-            </Button>
-          </div>
+          <DialogTitle className="text-lg">{t('viewPdf')}</DialogTitle>
           <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
