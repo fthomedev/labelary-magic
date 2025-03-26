@@ -18,7 +18,7 @@ export const LanguageSelector = () => {
 
   return (
     <Select
-      defaultValue={i18n.language}
+      value={i18n.language} // Use value instead of defaultValue to respond to changes
       onValueChange={handleLanguageChange}
     >
       <SelectTrigger className="w-[120px]">
