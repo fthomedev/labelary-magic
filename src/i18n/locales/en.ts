@@ -116,4 +116,9 @@ export default {
   deleteAccountConfirm: "Delete Account?",
   deleteAccountWarning: "This action cannot be undone. Your account will be permanently deleted.",
   accountDeleted: "Your account has been successfully deleted",
+  
+  // PDF Viewer Modal
+  viewPdf: "View PDF",
+  close: "Close",
+  view: "View",
 } as const;

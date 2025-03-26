@@ -8,6 +8,19 @@ import { ProcessingRecord } from '@/hooks/useZplConversion';
 export function useHistoryDownload() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPdfUrl, setCurrentPdfUrl] = useState<string | null>(null);
+  const [currentRecord, setCurrentRecord] = useState<ProcessingRecord | null>(null);
+  
+  const openPdfModal = (url: string, record: ProcessingRecord) => {
+    setCurrentPdfUrl(url);
+    setCurrentRecord(record);
+    setIsModalOpen(true);
+  };
+
+  const closePdfModal = () => {
+    setIsModalOpen(false);
+  };
   
   const handleDownload = async (record: ProcessingRecord) => {
     try {
@@ -18,7 +31,7 @@ export function useHistoryDownload() {
         // Get direct download URL with proper authorization
         const { data, error } = await supabase.storage
           .from('pdfs')
-          .createSignedUrl(record.pdfPath, 60); // 60 seconds expiration
+          .createSignedUrl(record.pdfPath, 3600); // 60 minutes expiration for better viewing experience
           
         if (error || !data?.signedUrl) {
           console.error('Error creating signed URL:', error);
@@ -27,40 +40,15 @@ export function useHistoryDownload() {
         
         console.log('Signed URL created successfully:', data.signedUrl);
         
-        // Create download link with the signed URL
-        const a = document.createElement('a');
-        a.href = data.signedUrl;
-        a.download = 'etiquetas.pdf';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        toast({
-          title: t('downloadStarted'),
-          description: t('downloadStartedDesc'),
-          duration: 3000,
-        });
-        
+        // Open the PDF in modal
+        openPdfModal(data.signedUrl, record);
         return;
       } 
       
       // If the pdfUrl is a complete URL (not a blob), use that directly
       if (record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
         console.log('Using direct URL from Supabase:', record.pdfUrl);
-        
-        const a = document.createElement('a');
-        a.href = record.pdfUrl;
-        a.download = 'etiquetas.pdf';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        toast({
-          title: t('downloadStarted'),
-          description: t('downloadStartedDesc'),
-          duration: 3000,
-        });
-        
+        openPdfModal(record.pdfUrl, record);
         return;
       }
       
@@ -78,19 +66,7 @@ export function useHistoryDownload() {
             throw new Error('Blob URL is no longer valid');
           }
           
-          const a = document.createElement('a');
-          a.href = record.pdfUrl;
-          a.download = 'etiquetas.pdf';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          
-          toast({
-            title: t('downloadStarted'),
-            description: t('downloadStartedDesc'),
-            duration: 3000,
-          });
-          
+          openPdfModal(record.pdfUrl, record);
           return;
         } catch (e) {
           console.error('Error with blob URL:', e);
@@ -112,5 +88,39 @@ export function useHistoryDownload() {
     }
   };
 
-  return { handleDownload };
+  const downloadCurrentPdf = () => {
+    if (!currentPdfUrl || !currentRecord) return;
+    
+    try {
+      // Create download link with the signed URL
+      const a = document.createElement('a');
+      a.href = currentPdfUrl;
+      a.download = 'etiquetas.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      toast({
+        title: t('downloadStarted'),
+        description: t('downloadStartedDesc'),
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: t('downloadError'),
+        duration: 3000,
+      });
+    }
+  };
+
+  return { 
+    handleDownload,
+    isModalOpen,
+    currentPdfUrl,
+    closePdfModal,
+    downloadCurrentPdf
+  };
 }

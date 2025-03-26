@@ -52,20 +52,20 @@ export function HistoryTableRow({
                   }`}
                   onClick={() => onDownload(record)}
                   disabled={isBlobUrl && !hasStoragePath && !hasValidUrl}
-                  title={t('download')}
+                  title={t('view')}
                 >
                   {isBlobUrl && !hasStoragePath && !hasValidUrl ? (
                     <AlertCircle className="h-3 w-3" />
                   ) : (
                     <Download className="h-3 w-3" />
                   )}
-                  <span className="sr-only">{t('download')}</span>
+                  <span className="sr-only">{t('view')}</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
                 {isBlobUrl && !hasStoragePath && !hasValidUrl
                   ? t('downloadUnavailableAfterRefresh') 
-                  : t('download')}
+                  : t('view')}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

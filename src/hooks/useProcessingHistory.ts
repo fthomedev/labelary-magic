@@ -10,7 +10,13 @@ import { usePagination } from '@/hooks/history/usePagination';
 export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnly = false) {
   const { t } = useTranslation();
   const { formatDate, isMobile } = useDateFormatter();
-  const { handleDownload } = useHistoryDownload();
+  const { 
+    handleDownload, 
+    isModalOpen, 
+    currentPdfUrl, 
+    closePdfModal,
+    downloadCurrentPdf
+  } = useHistoryDownload();
   
   const pagination = usePagination(0, 10); // Default values before fetching data
   const { 
@@ -37,6 +43,11 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     totalPages: Math.ceil(totalRecords / recordsPerPage),
     handlePageChange,
     totalRecords,
-    refreshData
+    refreshData,
+    // PDF modal state and handlers
+    isModalOpen,
+    currentPdfUrl,
+    closePdfModal,
+    downloadCurrentPdf
   };
 }

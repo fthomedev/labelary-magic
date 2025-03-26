@@ -7,6 +7,7 @@ import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useProcessingHistory } from '@/hooks/useProcessingHistory';
 import { HistoryTable } from './history/HistoryTable';
 import { HistoryPagination } from './history/HistoryPagination';
+import { PdfViewerModal } from './history/PdfViewerModal';
 
 interface ProcessingHistoryProps {
   records?: ProcessingRecord[];
@@ -25,7 +26,12 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     totalPages,
     handlePageChange,
     totalRecords,
-    refreshData
+    refreshData,
+    // PDF modal state and handlers
+    isModalOpen,
+    currentPdfUrl,
+    closePdfModal,
+    downloadCurrentPdf
   } = useProcessingHistory(localRecords, localOnly);
 
   if (isLoading) {
@@ -93,6 +99,14 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           />
         </CardFooter>
       )}
+
+      {/* PDF Viewer Modal */}
+      <PdfViewerModal
+        pdfUrl={currentPdfUrl}
+        isOpen={isModalOpen}
+        onClose={closePdfModal}
+        onDownload={downloadCurrentPdf}
+      />
     </>
   );
 }
