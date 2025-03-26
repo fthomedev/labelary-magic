@@ -12,11 +12,10 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { StaticSubscriptionPlans } from "@/components/subscription/StaticSubscriptionPlans";
 
 const Subscription = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [hasSubscription, setHasSubscription] = useState(false);
   const { getCustomerSubscription } = useStripe();
   const navigate = useNavigate();
-  const [forcedRender, setForcedRender] = useState(0);
   const [mounted, setMounted] = useState(false);
 
   // Check if user has a subscription
@@ -27,25 +26,12 @@ const Subscription = () => {
     };
     
     checkSubscription();
-  }, []);
+  }, [getCustomerSubscription]);
 
   // Mark component as mounted to avoid hydration issues
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Force re-render when language changes
-  useEffect(() => {
-    const handleLanguageChanged = () => {
-      setForcedRender(prev => prev + 1);
-    };
-
-    i18n.on('languageChanged', handleLanguageChanged);
-    
-    return () => {
-      i18n.off('languageChanged', handleLanguageChanged);
-    };
-  }, [i18n]);
 
   // Only render content after initial mount to avoid hydration mismatch
   if (!mounted) return null;
@@ -78,11 +64,11 @@ const Subscription = () => {
           </TabsList>
           
           <TabsContent value="plans" className="mt-4">
-            <StaticSubscriptionPlans key={`plans-${forcedRender}`} />
+            <StaticSubscriptionPlans />
           </TabsContent>
           
           <TabsContent value="status" className="mt-4">
-            <SubscriptionStatus key={`status-${forcedRender}`} />
+            <SubscriptionStatus />
           </TabsContent>
         </Tabs>
       </div>

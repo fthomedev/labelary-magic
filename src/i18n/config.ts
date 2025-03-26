@@ -21,7 +21,7 @@ i18n.use(initReactI18next).init({
   },
 });
 
-// Force language reload when changed
+// Store language preference and update HTML lang attribute
 i18n.on('languageChanged', (lng) => {
   localStorage.setItem('i18nextLng', lng);
   document.documentElement.lang = lng;

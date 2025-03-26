@@ -5,14 +5,14 @@ import { useEffect, useState } from "react";
 
 export const StaticSubscriptionPlans = () => {
   const { t, i18n } = useTranslation();
-  const [forcedRender, setForcedRender] = useState(0);
+  const [plans, setPlans] = useState<any[]>([]);
 
-  // Pricing structure by language
-  const getPlansByLanguage = () => {
-    // Different pricing based on language
+  // Atualizar planos quando o idioma mudar
+  useEffect(() => {
+    // Preços diferentes com base no idioma
     const isPtBR = i18n.language === 'pt-BR';
     
-    return [
+    setPlans([
       {
         id: "basic-plan",
         name: "basicPlan",
@@ -37,23 +37,8 @@ export const StaticSubscriptionPlans = () => {
           : ["1,000 Labels per month", "Priority support", "Advanced analytics", "Bulk processing"],
         isPopular: true
       }
-    ];
-  };
-
-  // Force re-render when language changes
-  useEffect(() => {
-    const handleLanguageChanged = () => {
-      setForcedRender(prev => prev + 1);
-    };
-
-    i18n.on('languageChanged', handleLanguageChanged);
-    
-    return () => {
-      i18n.off('languageChanged', handleLanguageChanged);
-    };
-  }, [i18n]);
-
-  const plans = getPlansByLanguage();
+    ]);
+  }, [i18n.language]);
 
   return (
     <div className="space-y-8">
@@ -62,7 +47,7 @@ export const StaticSubscriptionPlans = () => {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 max-w-4xl mx-auto">
         {plans.map((plan) => (
           <StaticPlanCard
-            key={`${plan.id}-${forcedRender}`}
+            key={`${plan.id}-${i18n.language}`}
             plan={plan}
             isPopular={plan.isPopular}
           />

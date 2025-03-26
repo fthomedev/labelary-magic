@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Check, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 export const LanguageSelector = () => {
   const { i18n } = useTranslation();
   const [mounted, setMounted] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Mark component as mounted to avoid hydration issues
@@ -21,12 +23,17 @@ export const LanguageSelector = () => {
   }, [i18n]);
 
   const handleLanguageChange = (value: string) => {
+    if (i18n.language === value) return;
+    
     i18n.changeLanguage(value);
     // Manual storage in case the i18n event doesn't trigger
     localStorage.setItem('i18nextLng', value);
     
-    // Force a page reload for components that might not listen to i18n events
-    window.location.reload();
+    toast({
+      title: value === 'pt-BR' ? 'Idioma alterado' : 'Language changed',
+      description: value === 'pt-BR' ? 'Português selecionado' : 'English selected',
+      duration: 2000
+    });
   };
 
   // Only render content after initial mount to avoid hydration mismatch
