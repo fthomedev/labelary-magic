@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
@@ -86,7 +85,7 @@ export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
         <Button 
           className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
         >
-          {t('learnMore')}
+          {t('subscribe')}
         </Button>
       </CardFooter>
     </Card>

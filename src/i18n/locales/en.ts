@@ -1,4 +1,3 @@
-
 export default {
   title: 'ZPL to PDF Converter',
   subtitle: 'Upload your ZPL file and convert it to PDF instantly',
@@ -100,7 +99,7 @@ export default {
   
   // New translations for plan cards
   simplePricing: "Simple and transparent pricing",
-  learnMore: "Learn more",
+  learnMore: "Subscribe",
   popular: "Most popular",
   
   // Plan names translations
@@ -116,6 +115,4 @@ export default {
   deleteAccountConfirm: "Delete Account?",
   deleteAccountWarning: "This action cannot be undone. Your account will be permanently deleted.",
   accountDeleted: "Your account has been successfully deleted",
-  // Note: 'cancel' and 'confirm' are already defined above, so we don't repeat them here
 } as const;
-

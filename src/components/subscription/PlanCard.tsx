@@ -111,7 +111,7 @@ export const PlanCard = ({ plan, onSelect, isLoading, isCurrentPlan, isPopular }
           className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
           disabled={isLoading || isCurrentPlan}
         >
-          {isCurrentPlan ? t('currentPlan') : t('learnMore')}
+          {isCurrentPlan ? t('currentPlan') : t('subscribe')}
         </Button>
       </CardFooter>
     </Card>
