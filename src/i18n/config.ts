@@ -18,4 +18,10 @@ i18n.use(initReactI18next).init({
   },
 });
 
+// Force language reload when changed
+i18n.on('languageChanged', (lng) => {
+  localStorage.setItem('i18nextLng', lng);
+  document.documentElement.lang = lng;
+});
+
 export default i18n;

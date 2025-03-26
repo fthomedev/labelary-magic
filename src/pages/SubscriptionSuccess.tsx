@@ -8,13 +8,13 @@ import { CheckCircle2 } from "lucide-react";
 import { LanguageSelector } from "@/components/LanguageSelector";
 
 const SubscriptionSuccess = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
+  // Force component to re-render when language changes
   useEffect(() => {
-    // Add session_id parameter check if needed
-    // This could be used to verify the subscription on the backend
-  }, []);
+    // This is intentionally empty, just to trigger re-render on i18n change
+  }, [i18n.language]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">

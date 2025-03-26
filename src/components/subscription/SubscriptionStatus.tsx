@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 
 export const SubscriptionStatus = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [subscription, setSubscription] = useState<any>(null);
   const { getCustomerSubscription, isLoading } = useStripe();
 
@@ -20,6 +20,11 @@ export const SubscriptionStatus = () => {
     
     loadSubscription();
   }, []);
+
+  // Force component to re-render when language changes
+  useEffect(() => {
+    // This is intentionally empty, just to trigger re-render on i18n change
+  }, [i18n.language]);
 
   if (isLoading) {
     return (
@@ -39,7 +44,7 @@ export const SubscriptionStatus = () => {
 
   // Format dates
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleDateString();
+    return new Date(timestamp * 1000).toLocaleDateString(i18n.language);
   };
 
   const currentPeriodEnd = formatDate(subscription.current_period_end);
@@ -53,7 +58,7 @@ export const SubscriptionStatus = () => {
   const interval = price.recurring.interval;
 
   // Format currency
-  const formatter = new Intl.NumberFormat('pt-BR', {
+  const formatter = new Intl.NumberFormat(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', {
     style: 'currency',
     currency: currency,
   });

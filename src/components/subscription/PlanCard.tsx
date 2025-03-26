@@ -14,11 +14,11 @@ interface PlanCardProps {
 }
 
 export const PlanCard = ({ plan, onSelect, isLoading, isCurrentPlan, isPopular }: PlanCardProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { unit_amount, currency, recurring } = plan;
   
   // Format currency
-  const formatter = new Intl.NumberFormat('pt-BR', {
+  const formatter = new Intl.NumberFormat(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', {
     style: 'currency',
     currency: currency.toUpperCase(),
   });

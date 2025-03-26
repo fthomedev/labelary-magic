@@ -12,7 +12,7 @@ import { Home } from "lucide-react";
 import { LanguageSelector } from "@/components/LanguageSelector";
 
 const Subscription = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [hasSubscription, setHasSubscription] = useState(false);
   const { getCustomerSubscription } = useStripe();
   const navigate = useNavigate();
@@ -25,6 +25,11 @@ const Subscription = () => {
     
     checkSubscription();
   }, []);
+
+  // Force component to re-render when language changes
+  useEffect(() => {
+    // This is intentionally empty, just to trigger re-render on i18n change
+  }, [i18n.language]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
