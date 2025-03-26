@@ -27,11 +27,29 @@ export default {
   labelCount: "Quantidade de etiquetas",
   actions: "Ações",
   download: "Baixar",
+  delete: "Excluir",
+  noHistory: "Nenhum histórico de processamento encontrado",
+  loadingHistory: "Carregando histórico...",
+  pagination: "Página {{current}} de {{total}}",
+  previous: "Anterior",
+  next: "Próximo",
+  totalRecords: "Total: {{count}} registros",
+  
+  // Delete record confirmation
+  deleteRecordConfirm: "Excluir Registro?",
+  deleteRecordWarning: "Esta ação não pode ser desfeita. O registro será excluído permanentemente.",
+  cancel: "Cancelar",
+  confirm: "Excluir",
+  deleteRecordSuccess: "Registro excluído com sucesso",
+  deleteRecordError: "Ocorreu um erro ao excluir o registro. Por favor, tente novamente.",
 
   // Add these new translations
   downloadUnavailableAfterRefresh: "Este download não está mais disponível após atualização da página",
   downloadStarted: "Download Iniciado",
   downloadStartedDesc: "Seu arquivo será baixado em breve",
+  conversionInterrupted: "Conversão Interrompida",
+  resumeConversion: "Você tem uma conversão inacabada. Deseja continuar?",
+  resume: "Continuar",
 
   // Subscription page
   home: "Início",
@@ -82,6 +100,7 @@ export default {
   deleteAccount: "Excluir Conta",
   deleteAccountConfirm: "Confirmar exclusão de conta?",
   deleteAccountWarning: "Esta ação não pode ser desfeita. Sua conta será permanentemente excluída.",
-  cancel: "Cancelar",
-  confirm: "Confirmar",
+  accountDeleted: "Sua conta foi excluída com sucesso",
+  // Note: 'cancel' and 'confirm' are already defined above, so we don't repeat them here
 } as const;
+
