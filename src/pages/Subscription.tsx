@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SubscriptionPlans } from "@/components/subscription/SubscriptionPlans";
 import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 import { useStripe } from "@/hooks/useStripe";
 import { useTranslation } from "react-i18next";
@@ -10,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { StaticSubscriptionPlans } from "@/components/subscription/StaticSubscriptionPlans";
 
 const Subscription = () => {
   const { t, i18n } = useTranslation();
@@ -69,7 +69,7 @@ const Subscription = () => {
           </TabsList>
           
           <TabsContent value="plans" className="mt-4">
-            <SubscriptionPlans key={`plans-${forcedRender}`} />
+            <StaticSubscriptionPlans key={`plans-${forcedRender}`} />
           </TabsContent>
           
           <TabsContent value="status" className="mt-4">
