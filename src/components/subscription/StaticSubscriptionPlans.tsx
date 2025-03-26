@@ -21,8 +21,8 @@ export const StaticSubscriptionPlans = () => {
         currency: isPtBR ? "BRL" : "USD",
         interval: "month",
         features: isPtBR 
-          ? ["100 Etiquetas por mês", "Suporte por email", "Análises básicas"] 
-          : ["100 Labels per month", "Email support", "Basic analytics"],
+          ? ["100 Etiquetas por dia", "Suporte por email", "Processamento em lote"] 
+          : ["100 Labels per day", "Email support", "Bulk processing"],
         isPopular: false
       },
       {
@@ -33,8 +33,8 @@ export const StaticSubscriptionPlans = () => {
         currency: isPtBR ? "BRL" : "USD",
         interval: "month",
         features: isPtBR 
-          ? ["1.000 Etiquetas por mês", "Suporte prioritário", "Análises avançadas", "Processamento em lote"] 
-          : ["1,000 Labels per month", "Priority support", "Advanced analytics", "Bulk processing"],
+          ? ["Etiquetas ilimitadas", "Suporte por Whatsapp", "Processamento em lote"] 
+          : ["Unlimited labels", "WhatsApp support", "Bulk processing"],
         isPopular: true
       }
     ]);
