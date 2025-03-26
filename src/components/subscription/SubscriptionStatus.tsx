@@ -21,11 +21,6 @@ export const SubscriptionStatus = () => {
     loadSubscription();
   }, []);
 
-  // Force component to re-render when language changes
-  useEffect(() => {
-    // This is intentionally empty, just to trigger re-render on i18n change
-  }, [i18n.language]);
-
   if (isLoading) {
     return (
       <div className="flex justify-center p-8">

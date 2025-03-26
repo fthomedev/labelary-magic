@@ -14,6 +14,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 const Subscription = () => {
   const { t, i18n } = useTranslation();
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
   const { getCustomerSubscription } = useStripe();
   const navigate = useNavigate();
 
@@ -28,8 +29,18 @@ const Subscription = () => {
 
   // Force component to re-render when language changes
   useEffect(() => {
-    // This is intentionally empty, just to trigger re-render on i18n change
-  }, [i18n.language]);
+    const handleLanguageChanged = () => {
+      setCurrentLanguage(i18n.language);
+    };
+
+    // Add event listener for language changes
+    i18n.on('languageChanged', handleLanguageChanged);
+    
+    // Cleanup event listener
+    return () => {
+      i18n.off('languageChanged', handleLanguageChanged);
+    };
+  }, [i18n]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
@@ -59,11 +70,11 @@ const Subscription = () => {
           </TabsList>
           
           <TabsContent value="plans" className="mt-4">
-            <SubscriptionPlans />
+            <SubscriptionPlans key={`plans-${currentLanguage}`} />
           </TabsContent>
           
           <TabsContent value="status" className="mt-4">
-            <SubscriptionStatus />
+            <SubscriptionStatus key={`status-${currentLanguage}`} />
           </TabsContent>
         </Tabs>
       </div>

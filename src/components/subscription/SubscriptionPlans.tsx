@@ -36,11 +36,6 @@ export const SubscriptionPlans = () => {
     loadPlans();
   }, []);
 
-  // Force component to re-render when language changes
-  useEffect(() => {
-    // This is intentionally empty, just to trigger re-render on i18n change
-  }, [i18n.language]);
-
   const isCurrentPlan = (priceId: string) => {
     if (!currentSubscription) return false;
     return currentSubscription.items.data.some((item: any) => item.price.id === priceId);
@@ -65,7 +60,7 @@ export const SubscriptionPlans = () => {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 max-w-4xl mx-auto">
         {plans.map((plan, index) => (
           <PlanCard
-            key={plan.id}
+            key={`${plan.id}-${i18n.language}`}
             plan={plan}
             onSelect={handleSelectPlan}
             isLoading={isLoading}
