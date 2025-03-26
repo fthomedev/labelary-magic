@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Menu, User, Trash2, LogOut } from "lucide-react";
+import { Menu, User, Trash2, LogOut, CreditCard } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -128,6 +128,17 @@ export const UserMenu = () => {
             </div>
           </div>
           <div className="space-y-3">
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2 text-base font-normal"
+              onClick={() => {
+                setIsOpen(false);
+                navigate("/subscription");
+              }}
+            >
+              <CreditCard className="h-4 w-4" />
+              {t("subscriptionPage")}
+            </Button>
             <Button
               variant="outline"
               className="w-full justify-start gap-2 text-base font-normal"
