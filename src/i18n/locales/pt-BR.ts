@@ -1,3 +1,4 @@
+
 export default {
   title: 'Conversor ZPL para PDF',
   subtitle: 'Faça upload do seu arquivo ZPL para converter em PDF.',
@@ -33,6 +34,7 @@ export default {
   downloadStartedDesc: "Seu arquivo será baixado em breve",
 
   // Subscription page
+  home: "Início",
   subscriptionPage: "Assinaturas",
   availablePlans: "Planos Disponíveis",
   yourSubscription: "Sua Assinatura",
@@ -62,4 +64,9 @@ export default {
   errorFetchingPlans: "Erro ao carregar os planos de assinatura.",
   errorCreatingCheckout: "Erro ao criar sessão de pagamento.",
   errorFetchingSubscription: "Erro ao carregar dados da assinatura.",
+  
+  // New translations for plan cards
+  precosSimples: "Preços simples e transparentes",
+  saberMais: "Saber mais",
+  popular: "Mais popular",
 } as const;

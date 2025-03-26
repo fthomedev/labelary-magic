@@ -63,6 +63,57 @@ serve(async (req) => {
       }
 
       case 'get-prices': {
+        // If we don't have any subscription products in Stripe yet, let's create them
+        const products = await stripe.products.list({ active: true });
+        
+        if (products.data.length === 0) {
+          // Create Basic Plan product
+          const basicProduct = await stripe.products.create({
+            name: 'Plano Básico',
+            description: 'Até 100 processamentos por dia',
+            metadata: {
+              limit: 'Até 100 processamentos por dia',
+              features: 'Suporte por email,Acesso a todas as funcionalidades básicas'
+            }
+          });
+          
+          // Create price for Basic Plan (R$9.90/month)
+          await stripe.prices.create({
+            product: basicProduct.id,
+            unit_amount: 990, // R$9.90
+            currency: 'brl',
+            recurring: {
+              interval: 'month',
+            },
+            metadata: {
+              type: 'basic'
+            }
+          });
+          
+          // Create Advanced Plan product
+          const advancedProduct = await stripe.products.create({
+            name: 'Plano Avançado',
+            description: 'Processamentos ilimitados',
+            metadata: {
+              limit: 'Processamentos ilimitados',
+              features: 'Suporte prioritário,Acesso a todas as funcionalidades,Sem restrições de uso'
+            }
+          });
+          
+          // Create price for Advanced Plan (R$15.90/month)
+          await stripe.prices.create({
+            product: advancedProduct.id,
+            unit_amount: 1590, // R$15.90
+            currency: 'brl',
+            recurring: {
+              interval: 'month',
+            },
+            metadata: {
+              type: 'advanced'
+            }
+          });
+        }
+
         const prices = await stripe.prices.list({
           active: true,
           limit: 10,

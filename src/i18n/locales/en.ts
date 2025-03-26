@@ -1,3 +1,4 @@
+
 export default {
   title: 'ZPL to PDF Converter',
   subtitle: 'Upload your ZPL file and convert it to PDF instantly',
@@ -66,6 +67,7 @@ export default {
   resume: "Resume",
   
   // Subscription page
+  home: "Home",
   subscriptionPage: "Subscriptions",
   availablePlans: "Available Plans",
   yourSubscription: "Your Subscription",
@@ -95,4 +97,9 @@ export default {
   errorFetchingPlans: "Error loading subscription plans.",
   errorCreatingCheckout: "Error creating checkout session.",
   errorFetchingSubscription: "Error loading subscription data.",
+  
+  // New translations for plan cards
+  precosSimples: "Simple and transparent pricing",
+  saberMais: "Learn more",
+  popular: "Most popular",
 } as const;

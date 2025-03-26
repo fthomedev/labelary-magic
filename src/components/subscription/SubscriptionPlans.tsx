@@ -13,7 +13,10 @@ export const SubscriptionPlans = () => {
   useEffect(() => {
     const loadPlans = async () => {
       const fetchedPlans = await getSubscriptionPlans();
-      setPlans(fetchedPlans);
+      
+      // Sort plans by price (lowest first)
+      const sortedPlans = [...fetchedPlans].sort((a, b) => a.unit_amount - b.unit_amount);
+      setPlans(sortedPlans);
       
       const subscription = await getCustomerSubscription();
       setCurrentSubscription(subscription && subscription.length > 0 ? subscription[0] : null);
@@ -40,16 +43,21 @@ export const SubscriptionPlans = () => {
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {plans.map((plan) => (
-        <PlanCard
-          key={plan.id}
-          plan={plan}
-          onSelect={handleSelectPlan}
-          isLoading={isLoading}
-          isCurrentPlan={isCurrentPlan(plan.id)}
-        />
-      ))}
+    <div className="space-y-8">
+      <h2 className="text-3xl font-bold text-center mb-6">{t('precosSimples')}</h2>
+      
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 max-w-4xl mx-auto">
+        {plans.map((plan, index) => (
+          <PlanCard
+            key={plan.id}
+            plan={plan}
+            onSelect={handleSelectPlan}
+            isLoading={isLoading}
+            isCurrentPlan={isCurrentPlan(plan.id)}
+            isPopular={index === 1} // Mark the second (advanced) plan as popular
+          />
+        ))}
+      </div>
     </div>
   );
 };
