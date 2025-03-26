@@ -9,6 +9,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 const Subscription = () => {
   const { t } = useTranslation();
@@ -27,7 +28,8 @@ const Subscription = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-4">
+        <LanguageSelector />
         <UserMenu />
       </div>
       

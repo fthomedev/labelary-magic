@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2 } from "lucide-react";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 const SubscriptionSuccess = () => {
   const { t } = useTranslation();
@@ -17,6 +18,10 @@ const SubscriptionSuccess = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageSelector />
+      </div>
+      
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
