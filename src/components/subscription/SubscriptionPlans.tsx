@@ -14,8 +14,19 @@ export const SubscriptionPlans = () => {
     const loadPlans = async () => {
       const fetchedPlans = await getSubscriptionPlans();
       
+      // Filter out duplicate plans by product name and take only the first occurrence
+      const uniquePlans = fetchedPlans.reduce((acc: SubscriptionPlan[], current) => {
+        const existingPlan = acc.find(
+          (plan) => plan.product.name.toLowerCase() === current.product.name.toLowerCase()
+        );
+        if (!existingPlan) {
+          acc.push(current);
+        }
+        return acc;
+      }, []);
+      
       // Sort plans by price (lowest first)
-      const sortedPlans = [...fetchedPlans].sort((a, b) => a.unit_amount - b.unit_amount);
+      const sortedPlans = [...uniquePlans].sort((a, b) => a.unit_amount - b.unit_amount);
       setPlans(sortedPlans);
       
       const subscription = await getCustomerSubscription();
