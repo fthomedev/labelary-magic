@@ -9,6 +9,7 @@ interface StaticPlanProps {
   name: string;
   description: string;
   price: number;
+  currency: string;
   interval: string;
   features: string[];
   isPopular: boolean;
@@ -22,10 +23,10 @@ interface StaticPlanCardProps {
 export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
   const { t, i18n } = useTranslation();
   
-  // Format currency based on language
+  // Format currency based on language and currency code
   const formatter = new Intl.NumberFormat(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: plan.currency,
   });
   
   const formattedPrice = formatter.format(plan.price);

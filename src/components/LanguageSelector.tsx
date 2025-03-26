@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Check, Globe } from "lucide-react";
@@ -7,18 +7,30 @@ import { Button } from "@/components/ui/button";
 
 export const LanguageSelector = () => {
   const { i18n } = useTranslation();
+  const [mounted, setMounted] = useState(false);
 
-  const handleLanguageChange = (value: string) => {
-    i18n.changeLanguage(value);
-  };
-
-  // Force a re-render when the component mounts to ensure the correct language is displayed
   useEffect(() => {
+    // Mark component as mounted to avoid hydration issues
+    setMounted(true);
+    
+    // Check for saved language
     const savedLanguage = localStorage.getItem('i18nextLng');
     if (savedLanguage && savedLanguage !== i18n.language) {
       i18n.changeLanguage(savedLanguage);
     }
   }, [i18n]);
+
+  const handleLanguageChange = (value: string) => {
+    i18n.changeLanguage(value);
+    // Manual storage in case the i18n event doesn't trigger
+    localStorage.setItem('i18nextLng', value);
+    
+    // Force a page reload for components that might not listen to i18n events
+    window.location.reload();
+  };
+
+  // Only render content after initial mount to avoid hydration mismatch
+  if (!mounted) return null;
 
   return (
     <DropdownMenu>

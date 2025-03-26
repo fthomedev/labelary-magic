@@ -17,6 +17,7 @@ const Subscription = () => {
   const { getCustomerSubscription } = useStripe();
   const navigate = useNavigate();
   const [forcedRender, setForcedRender] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   // Check if user has a subscription
   useEffect(() => {
@@ -26,6 +27,11 @@ const Subscription = () => {
     };
     
     checkSubscription();
+  }, []);
+
+  // Mark component as mounted to avoid hydration issues
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   // Force re-render when language changes
@@ -40,6 +46,9 @@ const Subscription = () => {
       i18n.off('languageChanged', handleLanguageChanged);
     };
   }, [i18n]);
+
+  // Only render content after initial mount to avoid hydration mismatch
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
