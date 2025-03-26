@@ -1,3 +1,4 @@
+
 export default {
   title: 'ZPL to PDF Converter',
   subtitle: 'Upload your ZPL file and convert it to PDF instantly',
@@ -67,7 +68,7 @@ export default {
   
   // Subscription page
   home: "Home",
-  subscriptionPage: "Subscriptions",
+  subscriptionPage: "Simple and Transparent Plans",
   availablePlans: "Available Plans",
   yourSubscription: "Your Subscription",
   subscriptionDetails: "Details of your current subscription",

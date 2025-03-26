@@ -35,7 +35,7 @@ export default {
 
   // Subscription page
   home: "Início",
-  subscriptionPage: "Preços Simples e Transparentes",
+  subscriptionPage: "Planos Simples e Transparentes",
   availablePlans: "Planos Disponíveis",
   yourSubscription: "Sua Assinatura",
   subscriptionDetails: "Detalhes da sua assinatura atual",
