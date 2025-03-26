@@ -1,4 +1,3 @@
-
 export default {
   title: 'ZPL to PDF Converter',
   subtitle: 'Upload your ZPL file and convert it to PDF instantly',
@@ -64,5 +63,36 @@ export default {
   downloadStartedDesc: "Your file will download shortly",
   conversionInterrupted: "Conversion Interrupted",
   resumeConversion: "You have an unfinished conversion. Would you like to resume?",
-  resume: "Resume"
+  resume: "Resume",
+  
+  // Subscription page
+  subscriptionPage: "Subscriptions",
+  availablePlans: "Available Plans",
+  yourSubscription: "Your Subscription",
+  subscriptionDetails: "Details of your current subscription",
+  loadingPlans: "Loading plans...",
+  loadingSubscription: "Loading subscription data...",
+  noActiveSubscription: "You don't have an active subscription.",
+  subscribe: "Subscribe",
+  currentPlan: "Current Plan",
+  plan: "Plan",
+  price: "Price",
+  currentPeriod: "Current Period",
+  status: "Status",
+  manageSubscription: "Manage Subscription",
+  perDay: "per day",
+  perWeek: "per week",
+  perMonth: "per month",
+  perYear: "per year",
+  perXDays: "every {{count}} days",
+  perXWeeks: "every {{count}} weeks",
+  perXMonths: "every {{count}} months",
+  perXYears: "every {{count}} years",
+  subscriptionSuccess: "Subscription Successful!",
+  subscriptionSuccessMessage: "Your payment has been processed and your subscription is now active.",
+  subscriptionThankYou: "Thank you for subscribing to our service. You now have access to all premium features.",
+  viewSubscription: "View Subscription Details",
+  errorFetchingPlans: "Error loading subscription plans.",
+  errorCreatingCheckout: "Error creating checkout session.",
+  errorFetchingSubscription: "Error loading subscription data.",
 } as const;

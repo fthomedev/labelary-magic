@@ -8,6 +8,8 @@ import { AuthGuard } from "@/components/AuthGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Subscription from "./pages/Subscription";
+import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +26,22 @@ const App = () => (
             element={
               <AuthGuard>
                 <Index />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/subscription"
+            element={
+              <AuthGuard>
+                <Subscription />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/subscription/success"
+            element={
+              <AuthGuard>
+                <SubscriptionSuccess />
               </AuthGuard>
             }
           />
