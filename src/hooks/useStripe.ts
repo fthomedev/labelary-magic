@@ -66,11 +66,15 @@ export const useStripe = () => {
 
       // Get or create a customer record in the database
       let customerData;
-      const { data: subscriptionData } = await supabase
+      const { data: subscriptionData, error: subscriptionError } = await supabase
         .from('subscriptions')
         .select('stripe_customer_id')
         .eq('user_id', user.id)
         .maybeSingle();
+
+      if (subscriptionError) {
+        console.error('Error fetching subscription data:', subscriptionError);
+      }
 
       const customerId = subscriptionData?.stripe_customer_id;
 
@@ -112,11 +116,16 @@ export const useStripe = () => {
       }
 
       // Get customer ID from subscriptions table
-      const { data: subscriptionData } = await supabase
+      const { data: subscriptionData, error: subscriptionError } = await supabase
         .from('subscriptions')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
+
+      if (subscriptionError) {
+        console.error('Error fetching subscription data:', subscriptionError);
+        return null;
+      }
 
       if (!subscriptionData || !subscriptionData.stripe_customer_id) {
         return null;
