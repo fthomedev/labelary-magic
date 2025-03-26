@@ -53,7 +53,7 @@ export default {
 
   // Subscription page
   home: "Início",
-  subscriptionPage: "Planos Simples e Transparentes",
+  subscriptionPage: "Planos", // Changed from "Planos Simples e Transparentes" to just "Planos"
   availablePlans: "Planos Disponíveis",
   yourSubscription: "Sua Assinatura",
   subscriptionDetails: "Detalhes da sua assinatura atual",
@@ -101,6 +101,4 @@ export default {
   deleteAccountConfirm: "Confirmar exclusão de conta?",
   deleteAccountWarning: "Esta ação não pode ser desfeita. Sua conta será permanentemente excluída.",
   accountDeleted: "Sua conta foi excluída com sucesso",
-  // Note: 'cancel' and 'confirm' are already defined above, so we don't repeat them here
 } as const;
-
