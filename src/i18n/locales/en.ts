@@ -41,6 +41,16 @@ export default {
   confirmNewPassword: 'Confirm new password',
   resetPasswordSuccess: 'Password reset successfully!',
   resetPasswordError: 'Failed to reset password. Please try again.',
+  alreadyHaveAccount: 'Already have an account?',
+  needAccount: "Don't have an account?",
+  sending: 'Sending...',
+  sendResetLink: 'Send reset link',
+  backToLogin: 'Back to login',
+  resetPasswordEmailSent: 'Reset password email sent',
+  checkYourEmail: 'Check your email',
+  signUp: 'Sign up',
+  signUpSuccess: 'Sign up successful',
+  passwordTooShort: 'Password must be at least 6 characters',
   
   // History page
   history: 'History',
@@ -49,7 +59,7 @@ export default {
   deleteConfirmation: 'Are you sure you want to delete this PDF?',
   deleteSuccess: 'PDF deleted successfully!',
   deleteError: 'Failed to delete PDF. Please try again.',
-  date: 'Date',
+  date: 'Data',
   labelCount: 'Label Count',
   actions: 'Actions',
   loadingHistory: 'Loading history...',
@@ -80,6 +90,11 @@ export default {
   blockErrorMessage: 'An error occurred while processing block {{block}}',
   mergePdfError: 'Error merging PDFs',
   processingComplete: 'Processing complete',
+  dragAndDrop: 'Drag and drop your ZPL file here or click to select',
+  acceptedFormats: 'ZPL and ZIP files accepted',
+  selectFile: 'Select File',
+  processingZip: 'Processing ZIP file...',
+  dropHere: 'Drop file here',
   
   // Download notifications
   downloadUnavailableAfterRefresh: 'This download is no longer available after page refresh',
@@ -119,6 +134,9 @@ export default {
   errorFetchingSubscription: 'Failed to fetch customer subscription. Please try again.',
   subscriptionStatus: 'Subscription Status',
   manageSubscription: 'Manage Subscription',
+  selectPlan: 'Subscribe',
+  currentPeriod: 'Current Period',
+  status: 'Status',
   
   // Billing periods
   perDay: 'per day',

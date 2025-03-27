@@ -3,8 +3,24 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { translations } from './locales';
 
+// Função para detectar o idioma preferido do usuário
+const detectUserLanguage = () => {
+  const savedLanguage = localStorage.getItem('i18nextLng');
+  if (savedLanguage && ['en', 'pt-BR'].includes(savedLanguage)) {
+    return savedLanguage;
+  }
+  
+  // Verifica o idioma do navegador
+  const browserLang = navigator.language;
+  if (browserLang && browserLang.startsWith('pt')) {
+    return 'pt-BR';
+  }
+  
+  return 'pt-BR'; // Idioma padrão
+};
+
 // Initialize i18n with the saved language preference or default to pt-BR
-const savedLanguage = localStorage.getItem('i18nextLng') || 'pt-BR';
+const savedLanguage = detectUserLanguage();
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -37,6 +53,27 @@ export const getCurrentLanguage = () => i18n.language;
 // Add a function to get a specific translation
 export const getTranslation = (key: string, options?: Record<string, any>) => {
   return i18n.t(key, options);
+};
+
+// Verificar se uma chave existe nas traduções
+export const hasTranslation = (key: string): boolean => {
+  return i18n.exists(key);
+};
+
+// Função para verificar se há chaves faltantes (útil para desenvolvimento)
+export const findMissingKeys = (): string[] => {
+  if (process.env.NODE_ENV !== 'development') return [];
+  
+  const missingKeys: string[] = [];
+  const allKeys = Object.keys(translations.en);
+  
+  for (const key of allKeys) {
+    if (!i18n.exists(key)) {
+      missingKeys.push(key);
+    }
+  }
+  
+  return missingKeys;
 };
 
 export default i18n;

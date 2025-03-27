@@ -41,6 +41,16 @@ export default {
   confirmNewPassword: 'Confirmar nova senha',
   resetPasswordSuccess: 'Senha redefinida com sucesso!',
   resetPasswordError: 'Falha ao redefinir senha. Por favor, tente novamente.',
+  alreadyHaveAccount: 'Já possui uma conta?',
+  needAccount: 'Não possui uma conta?',
+  sending: 'Enviando...',
+  sendResetLink: 'Enviar link de redefinição',
+  backToLogin: 'Voltar para login',
+  resetPasswordEmailSent: 'E-mail de redefinição de senha enviado',
+  checkYourEmail: 'Verifique seu e-mail',
+  signUp: 'Cadastrar',
+  signUpSuccess: 'Cadastro realizado com sucesso',
+  passwordTooShort: 'A senha deve ter pelo menos 6 caracteres',
   
   // History page
   history: 'Histórico',
@@ -80,6 +90,11 @@ export default {
   blockErrorMessage: 'Ocorreu um erro ao processar o bloco {{block}}',
   mergePdfError: 'Erro ao mesclar os PDFs',
   processingComplete: 'Processamento concluído',
+  dragAndDrop: 'Arraste e solte seu arquivo ZPL aqui ou clique para selecionar',
+  acceptedFormats: 'Arquivos ZPL e ZIP aceitos',
+  selectFile: 'Selecionar Arquivo',
+  processingZip: 'Processando arquivo ZIP...',
+  dropHere: 'Solte o arquivo aqui',
   
   // Download notifications
   downloadUnavailableAfterRefresh: 'Este download não está mais disponível após atualização da página',
@@ -119,6 +134,9 @@ export default {
   errorFetchingSubscription: 'Falha ao buscar dados da assinatura. Por favor, tente novamente.',
   subscriptionStatus: 'Status da Assinatura',
   manageSubscription: 'Gerenciar Assinatura',
+  selectPlan: 'Assinar',
+  currentPeriod: 'Período Atual',
+  status: 'Status',
   
   // Billing periods
   perDay: 'por dia',
