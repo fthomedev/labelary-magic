@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
 import { Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface StaticPlanProps {
   id: string;
@@ -22,6 +23,7 @@ interface StaticPlanCardProps {
 
 export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   
   // Format currency based on language and currency code
   const formatter = new Intl.NumberFormat(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', {
@@ -47,6 +49,28 @@ export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
       return "bg-[#F2FCE2] hover:bg-[#E8F8D8]";
     }
     return "bg-[#E5DEFF] hover:bg-[#DBD4F5]";
+  };
+
+  const handleSubscribe = () => {
+    // Create a simplified plan object to pass to the checkout page
+    const checkoutPlan = {
+      id: plan.id,
+      product: {
+        name: t(plan.name),
+        description: plan.description,
+        metadata: {
+          limit: plan.features[0] // Use first feature as limit description
+        }
+      },
+      unit_amount: plan.price * 100, // Convert to cents as expected by Stripe
+      currency: plan.currency,
+      recurring: {
+        interval: plan.interval
+      }
+    };
+    
+    // Navigate to checkout page with plan data
+    navigate('/checkout', { state: { plan: checkoutPlan } });
   };
 
   return (
@@ -85,6 +109,7 @@ export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
       <CardFooter className="pb-6 mt-auto">
         <Button 
           className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
+          onClick={handleSubscribe}
         >
           {t('subscribe')}
         </Button>

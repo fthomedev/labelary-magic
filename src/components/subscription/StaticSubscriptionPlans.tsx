@@ -1,53 +1,54 @@
 
 import { useTranslation } from "react-i18next";
 import { StaticPlanCard } from "./StaticPlanCard";
-import { useEffect, useState } from "react";
 
 export const StaticSubscriptionPlans = () => {
-  const { t, i18n } = useTranslation();
-  const [plans, setPlans] = useState<any[]>([]);
+  const { t } = useTranslation();
 
-  // Atualizar planos quando o idioma mudar
-  useEffect(() => {
-    // Preços diferentes com base no idioma
-    const isPtBR = i18n.language === 'pt-BR';
-    
-    setPlans([
-      {
-        id: "basic-plan",
-        name: "basicPlan",
-        description: isPtBR ? "Perfeito para projetos individuais e pequenos" : "Perfect for individuals and small projects",
-        price: isPtBR ? 9.90 : 2,
-        currency: isPtBR ? "BRL" : "USD",
-        interval: "month",
-        features: isPtBR 
-          ? ["100 Etiquetas por dia", "Suporte por email", "Processamento em lote"] 
-          : ["100 Labels per day", "Email support", "Bulk processing"],
-        isPopular: false
-      },
-      {
-        id: "premium-plan",
-        name: "advancedPlan",
-        description: isPtBR ? "Ótimo para empresas com maior volume" : "Great for businesses with higher volume needs",
-        price: isPtBR ? 15.90 : 3,
-        currency: isPtBR ? "BRL" : "USD",
-        interval: "month",
-        features: isPtBR 
-          ? ["Etiquetas ilimitadas", "Suporte por Whatsapp", "Processamento em lote"] 
-          : ["Unlimited labels", "WhatsApp support", "Bulk processing"],
-        isPopular: true
-      }
-    ]);
-  }, [i18n.language]);
+  // Static plan data with real Stripe product IDs
+  const plans = [
+    {
+      id: "prod_S109xhc7K0XxCU", // ID do produto básico no Stripe
+      name: "basicPlan",
+      description: t("basicPlanDescription"),
+      price: 9.90,
+      currency: "BRL",
+      interval: "month",
+      features: [
+        t("basicFeature1"),
+        t("basicFeature2"),
+        t("basicFeature3")
+      ],
+      isPopular: false
+    },
+    {
+      id: "prod_S109EaoLA02QYK", // ID do produto avançado no Stripe
+      name: "advancedPlan",
+      description: t("advancedPlanDescription"),
+      price: 15.90,
+      currency: "BRL",
+      interval: "month",
+      features: [
+        t("advancedFeature1"),
+        t("advancedFeature2"),
+        t("advancedFeature3"),
+        t("advancedFeature4")
+      ],
+      isPopular: true
+    }
+  ];
 
   return (
-    <div className="space-y-8">
-      <h2 className="text-3xl font-bold text-center mb-6">{t('simplePricing')}</h2>
-      
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 max-w-4xl mx-auto">
+    <div className="container mx-auto px-4 py-8">
+      <div className="text-center mb-12">
+        <h2 className="text-3xl font-bold mb-4">{t("choosePlan")}</h2>
+        <p className="text-muted-foreground max-w-2xl mx-auto">{t("choosePlanDescription")}</p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
         {plans.map((plan) => (
           <StaticPlanCard
-            key={`${plan.id}-${i18n.language}`}
+            key={plan.id}
             plan={plan}
             isPopular={plan.isPopular}
           />
