@@ -36,16 +36,45 @@ serve(async (req) => {
           );
         }
 
-        // Verifique se o priceId é válido
-        try {
-          // Tentativa de obter o preço para validar
-          await stripe.prices.retrieve(priceId);
-        } catch (priceError) {
-          console.error('Invalid price ID:', priceError);
-          return new Response(
-            JSON.stringify({ error: `Invalid price ID: ${priceId}` }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+        // Verificar se estamos lidando com um ID de produto em vez de um ID de preço
+        let actualPriceId = priceId;
+        
+        if (priceId.startsWith('prod_')) {
+          // É um ID de produto, então precisamos obter o primeiro preço associado a ele
+          try {
+            const prices = await stripe.prices.list({
+              product: priceId,
+              active: true,
+              limit: 1,
+            });
+            
+            if (prices.data.length === 0) {
+              return new Response(
+                JSON.stringify({ error: `No active prices found for product: ${priceId}` }),
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
+            }
+            
+            actualPriceId = prices.data[0].id;
+            console.log(`Converted product ID ${priceId} to price ID ${actualPriceId}`);
+          } catch (priceError) {
+            console.error('Error finding price for product:', priceError);
+            return new Response(
+              JSON.stringify({ error: `Invalid product ID or no prices found: ${priceId}` }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        } else {
+          // É um ID de preço, vamos validar diretamente
+          try {
+            await stripe.prices.retrieve(actualPriceId);
+          } catch (priceError) {
+            console.error('Invalid price ID:', priceError);
+            return new Response(
+              JSON.stringify({ error: `Invalid price ID: ${actualPriceId}` }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
         }
 
         const params = {
@@ -53,7 +82,7 @@ serve(async (req) => {
           payment_method_types: ['card'],
           line_items: [
             {
-              price: priceId,
+              price: actualPriceId,
               quantity: 1,
             },
           ],

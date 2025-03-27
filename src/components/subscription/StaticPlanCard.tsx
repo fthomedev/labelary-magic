@@ -54,9 +54,9 @@ export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
   const handleSubscribe = () => {
     // Create a simplified plan object to pass to the checkout page
     const checkoutPlan = {
-      id: plan.id, // Este é já o ID do preço no Stripe
+      id: plan.id, // Este é um ID de produto (não de preço)
       product: {
-        name: t(plan.name),
+        name: plan.name,
         description: plan.description,
         metadata: {
           limit: plan.features[0] // Use first feature as limit description
