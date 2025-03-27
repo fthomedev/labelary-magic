@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useTranslation } from "react-i18next";
 import { Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useStripe } from "@/hooks/useStripe";
+import { useToast } from "@/components/ui/use-toast";
 
 interface StaticPlanProps {
   id: string;
@@ -24,6 +26,8 @@ interface StaticPlanCardProps {
 export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { createCheckoutSession } = useStripe();
+  const { toast } = useToast();
   
   // Format currency based on language and currency code
   const formatter = new Intl.NumberFormat(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', {
@@ -51,26 +55,19 @@ export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
     return "bg-[#E5DEFF] hover:bg-[#DBD4F5]";
   };
 
-  const handleSubscribe = () => {
-    // Create a simplified plan object to pass to the checkout page
-    const checkoutPlan = {
-      id: plan.id, // Este é um ID de produto (não de preço)
-      product: {
-        name: plan.name,
-        description: plan.description,
-        metadata: {
-          limit: plan.features[0] // Use first feature as limit description
-        }
-      },
-      unit_amount: plan.price * 100, // Convert to cents as expected by Stripe
-      currency: plan.currency,
-      recurring: {
-        interval: plan.interval
-      }
-    };
-    
-    // Navigate to checkout page with plan data
-    navigate('/checkout', { state: { plan: checkoutPlan } });
+  const handleSubscribe = async () => {
+    try {
+      // Diretamente chamar o createCheckoutSession com o ID do produto
+      // A função Edge vai lidar com a conversão para preço
+      await createCheckoutSession(plan.id);
+    } catch (error) {
+      console.error("Error starting checkout:", error);
+      toast({
+        variant: "destructive",
+        title: t("error"),
+        description: t("errorStartingCheckout"),
+      });
+    }
   };
 
   return (
