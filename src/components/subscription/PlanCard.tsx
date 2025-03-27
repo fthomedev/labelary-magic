@@ -1,119 +1,95 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { type SubscriptionPlan } from "@/hooks/useStripe";
+import { Check, LoaderCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Check, Infinity } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { type SubscriptionPlan } from "@/hooks/useStripe";
 
 interface PlanCardProps {
   plan: SubscriptionPlan;
-  onSelect: (priceId: string) => void;
-  isLoading: boolean;
+  onSelect?: (priceId: string) => void;
+  isLoading?: boolean;
   isCurrentPlan?: boolean;
   isPopular?: boolean;
 }
 
-export const PlanCard = ({ plan, onSelect, isLoading, isCurrentPlan, isPopular }: PlanCardProps) => {
-  const { t, i18n } = useTranslation();
-  const { unit_amount, currency, recurring } = plan;
+export function PlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPopular }: PlanCardProps) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   
-  // Format currency
-  const formatter = new Intl.NumberFormat(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', {
+  const features = plan.product.metadata?.features
+    ? plan.product.metadata.features.split(',')
+    : [];
+  
+  const formattedPrice = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: currency.toUpperCase(),
-  });
-  
-  const formattedPrice = formatter.format(unit_amount / 100);
+    currency: plan.currency || 'BRL'
+  }).format((plan.unit_amount || 0) / 100);
 
-  // Get interval text for the "per month" label
-  const getIntervalText = () => {
-    if (recurring.interval === 'month' && recurring.interval_count === 1) {
-      return t('perMonth');
+  const handleSelectPlan = () => {
+    if (onSelect) {
+      // Use the original direct checkout if provided
+      onSelect(plan.id);
+    } else {
+      // Navigate to checkout page with plan data
+      navigate('/checkout', { state: { plan } });
     }
-    return '';
-  };
-  
-  // Translate plan name
-  const getTranslatedPlanName = () => {
-    const planName = plan.product.name.toLowerCase();
-    if (planName.includes('básico') || planName.includes('basico') || planName.includes('basic')) {
-      return t('basicPlan');
-    } else if (planName.includes('avançado') || planName.includes('avancado') || planName.includes('advanced')) {
-      return t('advancedPlan');
-    } else if (planName.includes('pro') || planName.includes('professional')) {
-      return t('proPlan');
-    }
-    return plan.product.name; // Fallback to original name if no match
-  };
-  
-  // Determine background color based on plan name
-  const getBgColor = () => {
-    const planName = plan.product.name.toLowerCase();
-    if (planName.includes('básico') || planName.includes('basico') || planName.includes('basic')) {
-      return "bg-[#F2FCE2] hover:bg-[#E8F8D8]";
-    }
-    return "bg-[#E5DEFF] hover:bg-[#DBD4F5]";
   };
 
   return (
-    <Card className={`w-full relative overflow-hidden transition-all duration-200 ${getBgColor()} flex flex-col`}>
+    <Card className={`relative flex flex-col ${isPopular ? 'border-primary shadow-lg' : ''}`}>
       {isPopular && (
-        <div className="absolute top-0 right-0 bg-green-500 text-white px-4 py-1 rounded-bl-lg text-sm font-medium">
+        <div className="absolute -top-3 right-4 bg-primary text-primary-foreground px-3 py-1 text-xs rounded-full font-medium">
           {t('popular')}
         </div>
       )}
       
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">{getTranslatedPlanName()}</CardTitle>
-        <CardDescription className="text-gray-700">{plan.product.description}</CardDescription>
+        <CardTitle>{plan.product.name}</CardTitle>
+        <CardDescription>{plan.product.description}</CardDescription>
       </CardHeader>
       
-      <CardContent className="flex-grow">
-        <div className="flex flex-col items-start justify-start space-y-6">
-          <div className="flex items-baseline gap-1">
-            <span className="text-4xl font-bold">{formattedPrice}</span>
-            <span className="text-sm text-gray-600 ml-1">{getIntervalText()}</span>
+      <CardContent className="flex-1">
+        <div className="mb-6">
+          <span className="text-3xl font-bold">{formattedPrice}</span>
+          <span className="text-muted-foreground">/{t('month')}</span>
+        </div>
+        
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Check className="h-4 w-4 text-primary" />
+            <span>{plan.product.metadata?.limit || t('noLimit')}</span>
           </div>
           
-          {plan.product.metadata && (
-            <ul className="space-y-3 w-full">
-              {plan.product.metadata.limit && (
-                <li className="flex items-start">
-                  <span className="mr-2 mt-1 flex-shrink-0">
-                    {plan.product.metadata.limit.toLowerCase().includes('ilimitado') ? (
-                      <Infinity className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <Check className="h-5 w-5 text-green-600" />
-                    )}
-                  </span>
-                  <span className="text-gray-700">{plan.product.metadata.limit}</span>
-                </li>
-              )}
-              
-              {plan.product.metadata.features && 
-                plan.product.metadata.features.split(',').map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="mr-2 mt-1 flex-shrink-0">
-                      <Check className="h-5 w-5 text-green-600" />
-                    </span>
-                    <span className="text-gray-700">{feature.trim()}</span>
-                  </li>
-                ))
-              }
-            </ul>
-          )}
+          {features.map((feature, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-primary" />
+              <span>{feature}</span>
+            </div>
+          ))}
         </div>
       </CardContent>
       
-      <CardFooter className="pb-6 mt-auto">
+      <CardFooter>
         <Button 
-          onClick={() => onSelect(plan.id)} 
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
+          className="w-full"
+          onClick={handleSelectPlan}
           disabled={isLoading || isCurrentPlan}
+          variant={isCurrentPlan ? "outline" : isPopular ? "default" : "secondary"}
         >
-          {isCurrentPlan ? t('currentPlan') : t('subscribe')}
+          {isLoading ? (
+            <>
+              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+              {t('processing')}
+            </>
+          ) : isCurrentPlan ? (
+            t('currentPlan')
+          ) : (
+            t('selectPlan')
+          )}
         </Button>
       </CardFooter>
     </Card>
   );
-};
+}

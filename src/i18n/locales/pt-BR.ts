@@ -100,4 +100,23 @@ export default {
   deleteAccountConfirm: "Confirmar exclusão de conta?",
   deleteAccountWarning: "Esta ação não pode ser desfeita. Sua conta será permanentemente excluída.",
   accountDeleted: "Sua conta foi excluída com sucesso",
+
+  // Checkout page
+  checkoutTitle: 'Finalizar assinatura',
+  checkoutDescription: 'Revise os detalhes do seu plano e prossiga para o pagamento',
+  plan: 'Plano',
+  price: 'Preço',
+  features: 'Recursos',
+  paymentSecureNote: 'Pagamento seguro',
+  stripeSecureMessage: 'Seus dados de pagamento serão processados de forma segura pelo Stripe, líder em soluções de pagamento online.',
+  proceedToCheckout: 'Prosseguir para o pagamento',
+  processing: 'Processando...',
+  selectPlan: 'Selecionar plano',
+  currentPlan: 'Plano atual',
+  back: 'Voltar',
+  month: 'mês',
+  noLimit: 'Sem limite',
+  popular: 'Popular',
+  noPlanSelected: 'Nenhum plano selecionado',
+  invalidPlanData: 'Dados do plano inválidos',
 } as const;

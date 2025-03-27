@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Subscription from "./pages/Subscription";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
+import CheckoutPage from "./pages/CheckoutPage";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,14 @@ const App = () => (
             element={
               <AuthGuard>
                 <Subscription />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <AuthGuard>
+                <CheckoutPage />
               </AuthGuard>
             }
           />
