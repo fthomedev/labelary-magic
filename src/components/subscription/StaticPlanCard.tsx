@@ -57,8 +57,8 @@ export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
 
   const handleSubscribe = async () => {
     try {
+      console.log("Iniciando checkout para produto:", plan.id);
       // Diretamente chamar o createCheckoutSession com o ID do produto
-      // A função Edge vai lidar com a conversão para preço
       await createCheckoutSession(plan.id);
     } catch (error) {
       console.error("Error starting checkout:", error);
