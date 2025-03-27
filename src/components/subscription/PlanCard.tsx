@@ -41,7 +41,7 @@ export function PlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPopular }
     <Card className={`relative flex flex-col ${isPopular ? 'border-primary shadow-lg' : ''}`}>
       {isPopular && (
         <div className="absolute -top-3 right-4 bg-primary text-primary-foreground px-3 py-1 text-xs rounded-full font-medium">
-          {t('popular')}
+          {t('popularTag')}
         </div>
       )}
       

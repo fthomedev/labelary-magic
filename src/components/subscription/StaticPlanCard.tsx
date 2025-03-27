@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
@@ -52,7 +53,7 @@ export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
     <Card className={`w-full relative overflow-hidden transition-all duration-200 ${getBgColor()} flex flex-col`}>
       {isPopular && (
         <div className="absolute top-0 right-0 bg-green-500 text-white px-4 py-1 rounded-bl-lg text-sm font-medium">
-          {t('popular')}
+          {t('popularTag')}
         </div>
       )}
       

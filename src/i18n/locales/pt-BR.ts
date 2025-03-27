@@ -1,3 +1,4 @@
+
 export default {
   title: 'Conversor ZPL para PDF',
   subtitle: 'Faça upload do seu arquivo ZPL para converter em PDF.',
@@ -61,8 +62,8 @@ export default {
   noActiveSubscription: "Você não possui uma assinatura ativa.",
   subscribe: "Assinar",
   currentPlan: "Plano Atual",
-  plan: "Plano",
-  price: "Preço",
+  planLabel: "Plano",
+  priceLabel: "Preço",
   currentPeriod: "Período Atual",
   status: "Status",
   manageSubscription: "Gerenciar Assinatura",
@@ -85,7 +86,7 @@ export default {
   // New translations for plan cards
   simplePricing: "Preços simples e transparentes",
   learnMore: "Assinar",
-  popular: "Mais popular",
+  popularTag: "Mais popular",
   
   // Plan names translations
   basicPlan: "Plano Básico",
@@ -104,19 +105,14 @@ export default {
   // Checkout page
   checkoutTitle: 'Finalizar assinatura',
   checkoutDescription: 'Revise os detalhes do seu plano e prossiga para o pagamento',
-  plan: 'Plano',
-  price: 'Preço',
   features: 'Recursos',
   paymentSecureNote: 'Pagamento seguro',
   stripeSecureMessage: 'Seus dados de pagamento serão processados de forma segura pelo Stripe, líder em soluções de pagamento online.',
   proceedToCheckout: 'Prosseguir para o pagamento',
-  processing: 'Processando...',
   selectPlan: 'Selecionar plano',
-  currentPlan: 'Plano atual',
   back: 'Voltar',
   month: 'mês',
   noLimit: 'Sem limite',
-  popular: 'Popular',
   noPlanSelected: 'Nenhum plano selecionado',
   invalidPlanData: 'Dados do plano inválidos',
 } as const;

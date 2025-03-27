@@ -68,11 +68,11 @@ export const SubscriptionStatus = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1">
-          <p className="text-sm font-medium">{t('plan')}</p>
+          <p className="text-sm font-medium">{t('planLabel')}</p>
           <p>{productName}</p>
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-medium">{t('price')}</p>
+          <p className="text-sm font-medium">{t('priceLabel')}</p>
           <p>{formattedAmount} / {interval}</p>
         </div>
         <div className="space-y-1">

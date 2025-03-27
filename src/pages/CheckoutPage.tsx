@@ -81,11 +81,11 @@ const CheckoutPage = () => {
             {planDetails ? (
               <div className="border rounded-md p-4 space-y-2">
                 <div className="flex justify-between">
-                  <span className="font-medium">{t('plan')}:</span>
+                  <span className="font-medium">{t('planLabel')}:</span>
                   <span>{planDetails.product?.name || '-'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">{t('price')}:</span>
+                  <span className="font-medium">{t('priceLabel')}:</span>
                   <span>
                     {new Intl.NumberFormat('pt-BR', { 
                       style: 'currency', 

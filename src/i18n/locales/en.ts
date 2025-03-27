@@ -1,3 +1,4 @@
+
 export default {
   // General
   error: 'Error',
@@ -72,19 +73,18 @@ export default {
   // Checkout page
   checkoutTitle: 'Complete Subscription',
   checkoutDescription: 'Review your plan details and proceed to payment',
-  plan: 'Plan',
-  price: 'Price',
+  planLabel: 'Plan',
+  priceLabel: 'Price',
   features: 'Features',
   paymentSecureNote: 'Secure Payment',
   stripeSecureMessage: 'Your payment information will be securely processed by Stripe, a leader in online payment solutions.',
   proceedToPayment: 'Proceed to Payment',
   processing: 'Processing...',
   selectPlan: 'Select Plan',
-  currentPlan: 'Current Plan',
   back: 'Back',
   month: 'month',
   noLimit: 'No limit',
-  popular: 'Popular',
+  popularTag: 'Popular',
   noPlanSelected: 'No plan selected',
   invalidPlanData: 'Invalid plan data',
   proceedToCheckout: 'Proceed to Checkout',
