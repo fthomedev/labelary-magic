@@ -36,6 +36,18 @@ serve(async (req) => {
           );
         }
 
+        // Verifique se o priceId é válido
+        try {
+          // Tentativa de obter o preço para validar
+          await stripe.prices.retrieve(priceId);
+        } catch (priceError) {
+          console.error('Invalid price ID:', priceError);
+          return new Response(
+            JSON.stringify({ error: `Invalid price ID: ${priceId}` }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         const params = {
           mode: 'subscription',
           payment_method_types: ['card'],

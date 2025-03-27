@@ -45,7 +45,7 @@ export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
   
   // Determine background color based on plan name
   const getBgColor = () => {
-    if (plan.name === 'basicPlan') {
+    if (plan.name === t('basicPlan')) {
       return "bg-[#F2FCE2] hover:bg-[#E8F8D8]";
     }
     return "bg-[#E5DEFF] hover:bg-[#DBD4F5]";
@@ -54,7 +54,7 @@ export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
   const handleSubscribe = () => {
     // Create a simplified plan object to pass to the checkout page
     const checkoutPlan = {
-      id: plan.id,
+      id: plan.id, // Este é já o ID do preço no Stripe
       product: {
         name: t(plan.name),
         description: plan.description,
@@ -82,7 +82,7 @@ export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
       )}
       
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">{t(plan.name)}</CardTitle>
+        <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
         <CardDescription className="text-gray-700">{plan.description}</CardDescription>
       </CardHeader>
       

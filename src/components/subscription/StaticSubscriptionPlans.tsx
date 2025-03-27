@@ -5,10 +5,10 @@ import { StaticPlanCard } from "./StaticPlanCard";
 export const StaticSubscriptionPlans = () => {
   const { t } = useTranslation();
 
-  // Static plan data with real Stripe product IDs
+  // Static plan data with real Stripe price IDs (não product IDs)
   const plans = [
     {
-      id: "prod_S109xhc7K0XxCU", // ID do produto básico no Stripe
+      id: "price_S109xhc7K0XxCU", // ID do preço (não produto) básico no Stripe
       name: t("basicPlan"),
       description: t("basicPlanDescription"),
       price: 9.90,
@@ -22,7 +22,7 @@ export const StaticSubscriptionPlans = () => {
       isPopular: false
     },
     {
-      id: "prod_S109EaoLA02QYK", // ID do produto avançado no Stripe
+      id: "price_S109EaoLA02QYK", // ID do preço (não produto) avançado no Stripe
       name: t("advancedPlan"),
       description: t("advancedPlanDescription"),
       price: 15.90,
