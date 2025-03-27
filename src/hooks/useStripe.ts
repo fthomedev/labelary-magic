@@ -54,10 +54,9 @@ export const useStripe = () => {
   };
 
   // Create a checkout session
-  const createCheckoutSession = async (priceOrProductId: string) => {
+  const createCheckoutSession = async (priceId: string) => {
     setIsLoading(true);
     try {
-      console.log("Criando sessão de checkout para ID:", priceOrProductId);
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -83,24 +82,14 @@ export const useStripe = () => {
       const { data, error } = await supabase.functions.invoke('stripe', {
         body: {
           action: 'create-checkout-session',
-          priceId: priceOrProductId, // Passa o ID fornecido (pode ser produto ou preço)
+          priceId,
           customerId,
           successUrl: `${window.location.origin}/subscription/success`,
           cancelUrl: `${window.location.origin}/subscription`,
         },
       });
       
-      if (error) {
-        console.error("Erro na resposta da função stripe:", error);
-        throw error;
-      }
-      
-      if (!data || !data.url) {
-        console.error("Resposta da função stripe sem URL de checkout:", data);
-        throw new Error("URL de checkout não encontrada na resposta");
-      }
-      
-      console.log("URL de checkout recebida:", data.url);
+      if (error) throw error;
       
       // Redirect to Stripe Checkout
       window.location.href = data.url;

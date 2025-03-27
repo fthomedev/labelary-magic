@@ -8,7 +8,7 @@ export const StaticSubscriptionPlans = () => {
   // Static plan data with real Stripe product IDs
   const plans = [
     {
-      id: "prod_S109EaoLA02QYK", // ID do produto básico no Stripe
+      id: "prod_S109EaoLA02QYK", // ID do produto básico no Stripe (correto)
       name: t("basicPlan"),
       description: t("basicPlanDescription"),
       price: 9.90,
