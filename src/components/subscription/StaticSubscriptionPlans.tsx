@@ -9,7 +9,7 @@ export const StaticSubscriptionPlans = () => {
   const plans = [
     {
       id: "prod_S109xhc7K0XxCU", // ID do produto básico no Stripe
-      name: "basicPlan",
+      name: t("basicPlan"),
       description: t("basicPlanDescription"),
       price: 9.90,
       currency: "BRL",
@@ -23,7 +23,7 @@ export const StaticSubscriptionPlans = () => {
     },
     {
       id: "prod_S109EaoLA02QYK", // ID do produto avançado no Stripe
-      name: "advancedPlan",
+      name: t("advancedPlan"),
       description: t("advancedPlanDescription"),
       price: 15.90,
       currency: "BRL",

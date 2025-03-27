@@ -9,6 +9,15 @@ export default {
   close: 'Close',
   download: 'Download',
   viewPdf: 'View PDF',
+  processing: 'Processing',
+  delete: 'Delete',
+  cancel: 'Cancel',
+  confirm: 'Confirm',
+  back: 'Back',
+  
+  // Navigation
+  title: 'ZPL to PDF Converter',
+  subtitle: 'Upload your ZPL file to convert to PDF.',
   
   // Index page
   welcome: 'Welcome',
@@ -35,21 +44,61 @@ export default {
   
   // History page
   history: 'History',
+  processingHistory: 'Processing History',
   noHistory: 'No history found.',
   deleteConfirmation: 'Are you sure you want to delete this PDF?',
   deleteSuccess: 'PDF deleted successfully!',
   deleteError: 'Failed to delete PDF. Please try again.',
+  date: 'Date',
+  labelCount: 'Label Count',
+  actions: 'Actions',
+  loadingHistory: 'Loading history...',
+  pagination: 'Page {{current}} of {{total}}',
+  previous: 'Previous',
+  next: 'Next',
+  totalRecords: 'Total: {{count}} records',
+  
+  // Delete record confirmation
+  deleteRecordConfirm: 'Delete Record?',
+  deleteRecordWarning: 'This action cannot be undone. The record will be permanently deleted.',
+  deleteRecordSuccess: 'Record deleted successfully',
+  deleteRecordError: 'An error occurred while deleting the record. Please try again.',
+  
+  // Upload and Processing
+  upload: 'Drag and drop your ZPL file here or click to select',
+  uploadSuccess: 'File uploaded successfully!',
+  uploadError: 'Error uploading file.',
+  converting: 'Converting...',
+  process: 'Process',
+  successMessage: 'PDF generated successfully!',
+  errorMessage: 'An error occurred while converting the ZPL file to PDF.',
+  totalLabels: 'Total Labels',
+  labelsProcessed: '{{count}} labels processed',
+  downloadAgain: 'Download again',
+  filesProcessedFromZip: '{{count}} files processed from ZIP',
+  blockError: 'Block Error',
+  blockErrorMessage: 'An error occurred while processing block {{block}}',
+  mergePdfError: 'Error merging PDFs',
+  processingComplete: 'Processing complete',
+  
+  // Download notifications
+  downloadUnavailableAfterRefresh: 'This download is no longer available after page refresh',
+  downloadStarted: 'Download Started',
+  downloadStartedDesc: 'Your file will download soon',
+  conversionInterrupted: 'Conversion Interrupted',
+  resumeConversion: 'You have an unfinished conversion. Would you like to continue?',
+  resume: 'Continue',
   
   // Subscription page
-  subscriptionPage: 'Subscription',
+  subscriptionPage: 'Plans',
   availablePlans: 'Available Plans',
   yourSubscription: 'Your Subscription',
+  subscriptionDetails: 'Details of your current subscription',
   simplePricing: 'Simple Pricing',
   loadingPlans: 'Loading plans...',
-  errorFetchingPlans: 'Failed to fetch subscription plans. Please try again.',
-  errorCreatingCheckout: 'Failed to create checkout session. Please try again.',
-  errorFetchingSubscription: 'Failed to fetch customer subscription. Please try again.',
-  subscriptionStatus: 'Subscription Status',
+  loadingSubscription: 'Loading subscription data...',
+  noActiveSubscription: 'You don\'t have an active subscription.',
+  subscribe: 'Subscribe',
   currentPlan: 'Current Plan',
   cancelSubscription: 'Cancel Subscription',
   reactivateSubscription: 'Reactivate Subscription',
@@ -65,10 +114,31 @@ export default {
   subscriptionSuccessMessage: 'Thank you for subscribing!',
   subscriptionThankYou: 'You now have access to all premium features.',
   viewSubscription: 'View Subscription',
+  errorFetchingPlans: 'Failed to fetch subscription plans. Please try again.',
+  errorCreatingCheckout: 'Failed to create checkout session. Please try again.',
+  errorFetchingSubscription: 'Failed to fetch customer subscription. Please try again.',
+  subscriptionStatus: 'Subscription Status',
+  manageSubscription: 'Manage Subscription',
+  
+  // Billing periods
+  perDay: 'per day',
+  perWeek: 'per week',
+  perMonth: 'per month',
+  perYear: 'per year',
+  perXDays: 'every {{count}} days',
+  perXWeeks: 'every {{count}} weeks',
+  perXMonths: 'every {{count}} months',
+  perXYears: 'every {{count}} years',
   
   // User menu
+  userMenu: 'User Menu',
+  unnamed: 'Unnamed',
   myAccount: 'My Account',
   subscriptionPageLink: 'Subscription',
+  deleteAccount: 'Delete Account',
+  deleteAccountConfirm: 'Confirm account deletion?',
+  deleteAccountWarning: 'This action cannot be undone. Your account will be permanently deleted.',
+  accountDeleted: 'Your account has been successfully deleted',
   
   // Checkout page
   checkoutTitle: 'Complete Subscription',
@@ -79,13 +149,31 @@ export default {
   paymentSecureNote: 'Secure Payment',
   stripeSecureMessage: 'Your payment information will be securely processed by Stripe, a leader in online payment solutions.',
   proceedToPayment: 'Proceed to Payment',
-  processing: 'Processing...',
-  selectPlan: 'Select Plan',
-  back: 'Back',
-  month: 'month',
-  noLimit: 'No limit',
-  popularTag: 'Popular',
+  proceedToCheckout: 'Proceed to Checkout',
   noPlanSelected: 'No plan selected',
   invalidPlanData: 'Invalid plan data',
-  proceedToCheckout: 'Proceed to Checkout',
+  
+  // Plan descriptions
+  basicPlan: 'Basic Plan',
+  advancedPlan: 'Advanced Plan',
+  proPlan: 'Pro Plan',
+  basicPlanDescription: 'Perfect for individuals and small projects',
+  advancedPlanDescription: 'Best for growing businesses with larger needs',
+  popularTag: 'Popular',
+  learnMore: 'Subscribe',
+  month: 'month',
+  noLimit: 'No limit',
+  
+  // Plan features
+  basicFeature1: 'Up to 100 labels per month',
+  basicFeature2: 'Basic support',
+  basicFeature3: 'Single user',
+  advancedFeature1: 'Up to 1000 labels per month',
+  advancedFeature2: 'Priority support',
+  advancedFeature3: 'Multiple users',
+  advancedFeature4: 'Advanced analytics',
+  
+  // Plan selection
+  choosePlan: 'Choose Your Plan',
+  choosePlanDescription: 'Select the plan that best fits your needs',
 } as const;
