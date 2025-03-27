@@ -1,116 +1,77 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Check, LoaderCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Check } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useStripe } from "@/hooks/useStripe";
-import { useToast } from "@/components/ui/use-toast";
-
-interface StaticPlanProps {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  interval: string;
-  features: string[];
-  isPopular: boolean;
-}
 
 interface StaticPlanCardProps {
-  plan: StaticPlanProps;
+  plan: {
+    id: string;
+    name: string;
+    description: string;
+    price: string;
+    currency: string;
+    features: string[];
+    isPopular?: boolean;
+    productId?: string;
+  };
+  onSelect: () => void;
+  isLoading?: boolean;
+  isCurrentPlan?: boolean;
   isPopular?: boolean;
 }
 
-export const StaticPlanCard = ({ plan, isPopular }: StaticPlanCardProps) => {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const { createCheckoutSession } = useStripe();
-  const { toast } = useToast();
+export function StaticPlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPopular }: StaticPlanCardProps) {
+  const { t } = useTranslation();
   
-  // Format currency based on language and currency code
-  const formatter = new Intl.NumberFormat(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', {
-    style: 'currency',
-    currency: plan.currency,
-  });
-  
-  const formattedPrice = formatter.format(plan.price);
-
-  // Get interval text (per month, per year, etc.)
-  const getIntervalText = () => {
-    if (plan.interval === 'month') {
-      return t('perMonth');
-    } else if (plan.interval === 'year') {
-      return t('perYear');
-    }
-    return '';
-  };
-  
-  // Determine background color based on plan name
-  const getBgColor = () => {
-    if (plan.name === t('basicPlan')) {
-      return "bg-[#F2FCE2] hover:bg-[#E8F8D8]";
-    }
-    return "bg-[#E5DEFF] hover:bg-[#DBD4F5]";
-  };
-
-  const handleSubscribe = async () => {
-    try {
-      // Diretamente chamar o createCheckoutSession com o ID do produto
-      // A função Edge vai lidar com a conversão para preço
-      await createCheckoutSession(plan.id);
-    } catch (error) {
-      console.error("Error starting checkout:", error);
-      toast({
-        variant: "destructive",
-        title: t("error"),
-        description: t("errorStartingCheckout"),
-      });
-    }
-  };
-
   return (
-    <Card className={`w-full relative overflow-hidden transition-all duration-200 ${getBgColor()} flex flex-col`}>
+    <Card className={`relative flex flex-col ${isPopular ? 'border-primary shadow-lg' : ''}`}>
       {isPopular && (
-        <div className="absolute top-0 right-0 bg-green-500 text-white px-4 py-1 rounded-bl-lg text-sm font-medium">
+        <div className="absolute -top-3 right-4 bg-primary text-primary-foreground px-3 py-1 text-xs rounded-full font-medium">
           {t('popularTag')}
         </div>
       )}
       
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-        <CardDescription className="text-gray-700">{plan.description}</CardDescription>
+        <CardTitle>{plan.name}</CardTitle>
+        <CardDescription>{plan.description}</CardDescription>
       </CardHeader>
       
-      <CardContent className="flex-grow">
-        <div className="flex flex-col items-start justify-start space-y-6">
-          <div className="flex items-baseline gap-1">
-            <span className="text-4xl font-bold">{formattedPrice}</span>
-            <span className="text-sm text-gray-600 ml-1">{getIntervalText()}</span>
-          </div>
-          
-          <ul className="space-y-3 w-full">
-            {plan.features.map((feature, index) => (
-              <li key={index} className="flex items-start">
-                <span className="mr-2 mt-1 flex-shrink-0">
-                  <Check className="h-5 w-5 text-green-600" />
-                </span>
-                <span className="text-gray-700">{feature}</span>
-              </li>
-            ))}
-          </ul>
+      <CardContent className="flex-1">
+        <div className="mb-6">
+          <span className="text-3xl font-bold">R$ {plan.price}</span>
+          <span className="text-muted-foreground">/{t('month')}</span>
+        </div>
+        
+        <div className="space-y-3">
+          {plan.features.map((feature, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-primary" />
+              <span>{feature}</span>
+            </div>
+          ))}
         </div>
       </CardContent>
       
-      <CardFooter className="pb-6 mt-auto">
+      <CardFooter>
         <Button 
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
-          onClick={handleSubscribe}
+          className="w-full"
+          onClick={onSelect}
+          disabled={isLoading || isCurrentPlan}
+          variant={isCurrentPlan ? "outline" : isPopular ? "default" : "secondary"}
         >
-          {t('subscribe')}
+          {isLoading ? (
+            <>
+              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+              {t('processing')}
+            </>
+          ) : isCurrentPlan ? (
+            t('currentPlan')
+          ) : (
+            t('learnMore')
+          )}
         </Button>
       </CardFooter>
     </Card>
   );
-};
+}

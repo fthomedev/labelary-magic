@@ -20,31 +20,56 @@ const CheckoutPage = () => {
 
   // Extract plan info from location state
   useEffect(() => {
+    console.log('Location state:', location.state);
+    
     if (location.state?.plan) {
+      console.log('Setting plan details from location state:', location.state.plan);
       setPlanDetails(location.state.plan);
     } else {
       // If no plan was selected, redirect back to subscription page
+      console.error('No plan details found in location state');
       toast({
         variant: "destructive",
-        title: t("error"),
-        description: t("noPlanSelected"),
+        title: t('error'),
+        description: t('noPlanSelected'),
       });
       navigate("/subscription");
     }
   }, [location.state, navigate, toast, t]);
 
   const handleProceedToCheckout = async () => {
-    if (!planDetails || !planDetails.id) {
+    if (!planDetails) {
+      console.error('No plan details available');
       toast({
         variant: "destructive",
-        title: t("error"),
-        description: t("invalidPlanData"),
+        title: t('error'),
+        description: t('invalidPlanData'),
       });
       return;
     }
 
-    // Create checkout session and redirect to Stripe
-    await createCheckoutSession(planDetails.id);
+    console.log('Proceeding to checkout with plan:', planDetails);
+    
+    try {
+      // For product objects, we'll use the product ID directly
+      if (planDetails.product && planDetails.id) {
+        console.log(`Initiating checkout with price ID: ${planDetails.id}`);
+        await createCheckoutSession(planDetails.id);
+      } else if (planDetails.id) {
+        // Fallback for simplified objects
+        console.log(`Initiating checkout with ID: ${planDetails.id}`);
+        await createCheckoutSession(planDetails.id);
+      } else {
+        throw new Error('Invalid plan data structure');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: t('errorCreatingCheckout'),
+      });
+    }
   };
 
   return (

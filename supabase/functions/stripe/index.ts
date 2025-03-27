@@ -24,6 +24,7 @@ serve(async (req) => {
     });
 
     const { action, ...data } = await req.json();
+    console.log(`Stripe function called with action: ${action}`, data);
 
     switch (action) {
       case 'create-checkout-session': {
@@ -36,11 +37,12 @@ serve(async (req) => {
           );
         }
 
-        // Verificar se estamos lidando com um ID de produto em vez de um ID de preço
+        // Determine if we're dealing with a product ID or a price ID
         let actualPriceId = priceId;
         
         if (priceId.startsWith('prod_')) {
-          // É um ID de produto, então precisamos obter o primeiro preço associado a ele
+          console.log(`Input appears to be a product ID: ${priceId}. Looking up associated price...`);
+          
           try {
             const prices = await stripe.prices.list({
               product: priceId,
@@ -49,6 +51,7 @@ serve(async (req) => {
             });
             
             if (prices.data.length === 0) {
+              console.error(`No active prices found for product: ${priceId}`);
               return new Response(
                 JSON.stringify({ error: `No active prices found for product: ${priceId}` }),
                 { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -56,7 +59,7 @@ serve(async (req) => {
             }
             
             actualPriceId = prices.data[0].id;
-            console.log(`Converted product ID ${priceId} to price ID ${actualPriceId}`);
+            console.log(`Successfully converted product ID ${priceId} to price ID ${actualPriceId}`);
           } catch (priceError) {
             console.error('Error finding price for product:', priceError);
             return new Response(
@@ -65,9 +68,10 @@ serve(async (req) => {
             );
           }
         } else {
-          // É um ID de preço, vamos validar diretamente
+          // It's a price ID, validate it directly
           try {
-            await stripe.prices.retrieve(actualPriceId);
+            const price = await stripe.prices.retrieve(actualPriceId);
+            console.log(`Validated price ID ${actualPriceId}, associated with product ${price.product}`);
           } catch (priceError) {
             console.error('Invalid price ID:', priceError);
             return new Response(
@@ -77,6 +81,7 @@ serve(async (req) => {
           }
         }
 
+        // Create the checkout session parameters
         const params = {
           mode: 'subscription',
           payment_method_types: ['card'],
@@ -93,9 +98,13 @@ serve(async (req) => {
         // Add customer ID if provided
         if (customerId) {
           params.customer = customerId;
+          console.log(`Using existing customer ID: ${customerId}`);
         }
 
+        // Create the checkout session
+        console.log('Creating checkout session with params:', JSON.stringify(params));
         const session = await stripe.checkout.sessions.create(params);
+        console.log(`Checkout session created: ${session.id}, URL: ${session.url}`);
 
         return new Response(
           JSON.stringify({ url: session.url }),
@@ -104,10 +113,14 @@ serve(async (req) => {
       }
 
       case 'get-prices': {
+        console.log('Fetching prices from Stripe');
+        
         // If we don't have any subscription products in Stripe yet, let's create them
         const products = await stripe.products.list({ active: true });
         
         if (products.data.length === 0) {
+          console.log('No products found. Creating default subscription products...');
+          
           // Create Basic Plan product
           const basicProduct = await stripe.products.create({
             name: 'Plano Básico',
@@ -118,8 +131,10 @@ serve(async (req) => {
             }
           });
           
+          console.log(`Created basic product: ${basicProduct.id}`);
+          
           // Create price for Basic Plan (R$9.90/month)
-          await stripe.prices.create({
+          const basicPrice = await stripe.prices.create({
             product: basicProduct.id,
             unit_amount: 990, // R$9.90
             currency: 'brl',
@@ -131,6 +146,8 @@ serve(async (req) => {
             }
           });
           
+          console.log(`Created price for basic product: ${basicPrice.id}`);
+          
           // Create Advanced Plan product
           const advancedProduct = await stripe.products.create({
             name: 'Plano Avançado',
@@ -141,8 +158,10 @@ serve(async (req) => {
             }
           });
           
+          console.log(`Created advanced product: ${advancedProduct.id}`);
+          
           // Create price for Advanced Plan (R$15.90/month)
-          await stripe.prices.create({
+          const advancedPrice = await stripe.prices.create({
             product: advancedProduct.id,
             unit_amount: 1590, // R$15.90
             currency: 'brl',
@@ -153,6 +172,10 @@ serve(async (req) => {
               type: 'advanced'
             }
           });
+          
+          console.log(`Created price for advanced product: ${advancedPrice.id}`);
+        } else {
+          console.log(`Found ${products.data.length} existing products`);
         }
 
         const prices = await stripe.prices.list({
@@ -161,6 +184,8 @@ serve(async (req) => {
           expand: ['data.product'],
         });
 
+        console.log(`Returning ${prices.data.length} prices`);
+        
         return new Response(
           JSON.stringify(prices.data),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -177,12 +202,15 @@ serve(async (req) => {
           );
         }
 
+        console.log(`Fetching subscriptions for customer: ${customerId}`);
         const subscriptions = await stripe.subscriptions.list({
           customer: customerId,
           status: 'active',
           expand: ['data.default_payment_method'],
         });
 
+        console.log(`Found ${subscriptions.data.length} active subscriptions`);
+        
         return new Response(
           JSON.stringify(subscriptions.data),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -190,6 +218,7 @@ serve(async (req) => {
       }
 
       default:
+        console.error(`Invalid action: ${action}`);
         return new Response(
           JSON.stringify({ error: 'Invalid action' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

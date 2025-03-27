@@ -34,11 +34,17 @@ export const useStripe = () => {
   const getSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {
     setIsLoading(true);
     try {
+      console.log('Fetching subscription plans...');
       const { data, error } = await supabase.functions.invoke('stripe', {
         body: { action: 'get-prices' },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching plans from Supabase function:', error);
+        throw error;
+      }
+      
+      console.log('Subscription plans fetched successfully:', data);
       return data;
     } catch (error) {
       console.error('Error fetching subscription plans:', error);
@@ -57,42 +63,61 @@ export const useStripe = () => {
   const createCheckoutSession = async (priceId: string) => {
     setIsLoading(true);
     try {
+      console.log(`Creating checkout session for price ID: ${priceId}`);
+      
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.error('No authenticated user found');
         navigate('/auth');
         return;
       }
 
       // Get or create a customer record in the database
       let customerData;
-      const { data: subscriptionData, error: subscriptionError } = await supabase
-        .from('subscriptions')
-        .select('stripe_customer_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      try {
+        const { data: subscriptionData, error: subscriptionError } = await supabase
+          .from('subscriptions')
+          .select('stripe_customer_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-      if (subscriptionError) {
-        console.error('Error fetching subscription data:', subscriptionError);
+        if (subscriptionError) {
+          console.error('Error fetching subscription data:', subscriptionError);
+        }
+
+        const customerId = subscriptionData?.stripe_customer_id;
+        console.log('Retrieved customer ID from database:', customerId);
+        
+        // Create checkout session
+        const { data, error } = await supabase.functions.invoke('stripe', {
+          body: {
+            action: 'create-checkout-session',
+            priceId,
+            customerId,
+            successUrl: `${window.location.origin}/subscription/success`,
+            cancelUrl: `${window.location.origin}/subscription`,
+          },
+        });
+        
+        if (error) {
+          console.error('Error from Supabase function:', error);
+          throw error;
+        }
+        
+        console.log('Checkout session created successfully:', data);
+        
+        // Redirect to Stripe Checkout
+        if (data.url) {
+          console.log('Redirecting to Stripe checkout:', data.url);
+          window.location.href = data.url;
+        } else {
+          throw new Error('No checkout URL returned from Stripe');
+        }
+      } catch (dbError) {
+        console.error('Database operation failed:', dbError);
+        throw dbError;
       }
-
-      const customerId = subscriptionData?.stripe_customer_id;
-
-      // Create checkout session
-      const { data, error } = await supabase.functions.invoke('stripe', {
-        body: {
-          action: 'create-checkout-session',
-          priceId,
-          customerId,
-          successUrl: `${window.location.origin}/subscription/success`,
-          cancelUrl: `${window.location.origin}/subscription`,
-        },
-      });
-      
-      if (error) throw error;
-      
-      // Redirect to Stripe Checkout
-      window.location.href = data.url;
     } catch (error) {
       console.error('Error creating checkout session:', error);
       toast({
@@ -108,9 +133,12 @@ export const useStripe = () => {
   const getCustomerSubscription = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching customer subscription...');
+      
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.error('No authenticated user found');
         navigate('/auth');
         return null;
       }
@@ -128,8 +156,11 @@ export const useStripe = () => {
       }
 
       if (!subscriptionData || !subscriptionData.stripe_customer_id) {
+        console.log('No subscription data found for user');
         return null;
       }
+
+      console.log('Found customer ID:', subscriptionData.stripe_customer_id);
 
       // Get subscription from Stripe
       const { data, error } = await supabase.functions.invoke('stripe', {
@@ -139,8 +170,12 @@ export const useStripe = () => {
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error from Supabase function:', error);
+        throw error;
+      }
       
+      console.log('Subscription data retrieved successfully:', data);
       return data;
     } catch (error) {
       console.error('Error fetching customer subscription:', error);

@@ -28,11 +28,15 @@ export function PlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPopular }
   }).format((plan.unit_amount || 0) / 100);
 
   const handleSelectPlan = () => {
+    console.log('Selecting plan:', plan.id);
+    
     if (onSelect) {
       // Use the original direct checkout if provided
+      console.log('Using provided onSelect function');
       onSelect(plan.id);
     } else {
       // Navigate to checkout page with plan data
+      console.log('Navigating to checkout page with plan data');
       navigate('/checkout', { state: { plan } });
     }
   };

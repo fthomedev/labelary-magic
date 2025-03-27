@@ -1,55 +1,80 @@
 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { StaticPlanCard } from "./StaticPlanCard";
+import { useStripe } from "@/hooks/useStripe";
 
 export const StaticSubscriptionPlans = () => {
   const { t } = useTranslation();
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { createCheckoutSession } = useStripe();
 
-  // Static plan data with real Stripe product IDs
-  const plans = [
+  // Definição estática dos planos para quando não conseguimos carregar do Stripe
+  const staticPlans = [
     {
-      id: "prod_S109EaoLA02QYK", // ID do produto básico no Stripe (correto)
-      name: t("basicPlan"),
-      description: t("basicPlanDescription"),
-      price: 9.90,
+      id: "basic", // Será substituído pelo ID real do produto/preço do Stripe
+      name: t('basicPlan'),
+      description: t('basicPlanDescription'),
+      price: "9,90",
       currency: "BRL",
-      interval: "month",
       features: [
-        t("basicFeature1"),
-        t("basicFeature2"),
-        t("basicFeature3")
+        t('basicFeature1'),
+        t('basicFeature2'),
+        t('basicFeature3')
       ],
-      isPopular: false
+      isPopular: false,
+      productId: "prod_S109EaoLA02QYK" // ID real do produto no Stripe
     },
     {
-      id: "prod_S109xhc7K0XxCU", // ID do produto avançado no Stripe
-      name: t("advancedPlan"),
-      description: t("advancedPlanDescription"),
-      price: 15.90,
+      id: "advanced",
+      name: t('advancedPlan'),
+      description: t('advancedPlanDescription'),
+      price: "15,90",
       currency: "BRL",
-      interval: "month",
       features: [
-        t("advancedFeature1"),
-        t("advancedFeature2"),
-        t("advancedFeature3"),
-        t("advancedFeature4")
+        t('advancedFeature1'),
+        t('advancedFeature2'),
+        t('advancedFeature3'),
+        t('advancedFeature4')
       ],
-      isPopular: true
+      isPopular: true,
+      productId: "prod_S109xhc7K0XxCU" // ID real do produto no Stripe
     }
   ];
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold mb-4">{t("choosePlan")}</h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto">{t("choosePlanDescription")}</p>
-      </div>
+  const handleSelectPlan = async (plan) => {
+    console.log("Selected plan:", plan);
+    setIsLoading(true);
+    
+    try {
+      // Usar o ID do produto para checkout
+      if (plan.productId) {
+        console.log(`Initiating checkout with product ID: ${plan.productId}`);
+        await createCheckoutSession(plan.productId);
+      } else {
+        // Navegação alternativa para a página de checkout
+        console.log('No product ID found, navigating to checkout page');
+        navigate('/checkout', { state: { plan } });
+      }
+    } catch (error) {
+      console.error("Error selecting plan:", error);
+      setIsLoading(false);
+    }
+  };
 
-      <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-        {plans.map((plan) => (
+  return (
+    <div className="space-y-8">
+      <h2 className="text-3xl font-bold text-center mb-6">{t('simplePricing')}</h2>
+      
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 max-w-4xl mx-auto">
+        {staticPlans.map((plan, index) => (
           <StaticPlanCard
             key={plan.id}
             plan={plan}
+            onSelect={() => handleSelectPlan(plan)}
+            isLoading={isLoading}
             isPopular={plan.isPopular}
           />
         ))}
