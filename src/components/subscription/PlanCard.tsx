@@ -39,7 +39,18 @@ export function PlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPopular }
     } else {
       // Navigate to checkout page with plan data
       console.log('Navigating to checkout page with plan data');
-      navigate('/checkout', { state: { plan } });
+      navigate('/checkout', { 
+        state: { 
+          plan: {
+            id: plan.id,
+            productId: plan.product?.id,
+            name: plan.product.name,
+            description: plan.product.description,
+            price: (plan.unit_amount || 0) / 100,
+            currency: plan.currency || 'BRL'
+          } 
+        }
+      });
     }
   };
 

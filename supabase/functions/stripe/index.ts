@@ -14,11 +14,11 @@ serve(async (req) => {
   }
 
   try {
-    // Configurando o cliente Stripe
+    // Configuring Stripe client
     const { action, ...data } = await req.json();
     console.log(`Stripe function called with action: ${action}`, data);
     
-    // Usar a chave de teste fornecida
+    // Use the test key provided
     const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') || 'sk_test_51R6iAqBLaDKP56zdyAArtHj8Sd2Fxfr66bizL0NHFxOJtlaOOE6jBJgDEHbgXLlFIgBpIysSQZOrOho1FeW6E2RP009ViMszRz';
     
     if (!STRIPE_SECRET_KEY) {
@@ -40,14 +40,14 @@ serve(async (req) => {
           );
         }
 
-        // Preparar os itens para o checkout
+        // Prepare checkout items
         let checkoutItems = [];
         
         if (priceId === 'basic' || priceId === 'prod_S109EaoLA02QYK') {
-          // Plano básico (usando o ID de produto fornecido ou o nome "basic")
+          // Basic plan (using provided product ID or "basic" name)
           console.log('Using test mode basic plan');
           try {
-            // Verificar se já existe um preço de teste para o plano básico
+            // Check if a test price already exists for the basic plan
             const prices = await stripe.prices.list({
               limit: 1,
               active: true,
@@ -59,7 +59,7 @@ serve(async (req) => {
               testPrice = prices.data[0];
               console.log('Found existing test price:', testPrice.id);
             } else {
-              // Criar produto e preço de teste se não existir
+              // Create test product and price if it doesn't exist
               const testProduct = await stripe.products.create({
                 name: 'Plano Básico (Test)',
                 description: 'Plano de teste - até 100 processamentos por dia',
@@ -87,10 +87,10 @@ serve(async (req) => {
             throw err;
           }
         } else if (priceId === 'advanced' || priceId === 'prod_S109H2KiOoZULm') {
-          // Plano avançado (usando o ID de produto fornecido ou o nome "advanced")
+          // Advanced plan (using provided product ID or "advanced" name)
           console.log('Using test mode advanced plan');
           try {
-            // Verificar se já existe um preço de teste para o plano avançado
+            // Check if a test price already exists for the advanced plan
             const prices = await stripe.prices.list({
               limit: 1,
               active: true,
@@ -102,7 +102,7 @@ serve(async (req) => {
               testPrice = prices.data[0];
               console.log('Found existing test price:', testPrice.id);
             } else {
-              // Criar produto e preço de teste se não existir
+              // Create test product and price if it doesn't exist
               const testProduct = await stripe.products.create({
                 name: 'Plano Avançado (Test)',
                 description: 'Plano de teste - processamentos ilimitados',
@@ -130,13 +130,13 @@ serve(async (req) => {
             throw err;
           }
         } else if (priceId.startsWith('price_')) {
-          // Se já é um ID de preço válido, usar diretamente
+          // If it's already a valid price ID, use it directly
           checkoutItems.push({
             price: priceId,
             quantity: 1,
           });
         } else if (priceId.startsWith('prod_')) {
-          // Se for ID de produto, tentar encontrar um preço associado
+          // If it's a product ID, try to find an associated price
           try {
             const prices = await stripe.prices.list({
               product: priceId,
@@ -145,7 +145,7 @@ serve(async (req) => {
             });
             
             if (prices.data.length === 0) {
-              // Se não encontrar preços no modo teste para esse produto, criar um
+              // If no test mode prices found for this product, create one
               console.log(`No active prices found for product: ${priceId}, creating test price`);
               
               const testProduct = await stripe.products.create({
@@ -176,7 +176,7 @@ serve(async (req) => {
           } catch (error) {
             console.error('Error finding price for product:', error);
             
-            // Criar um produto de teste alternativo em caso de erro
+            // Create a fallback test product in case of error
             const testProduct = await stripe.products.create({
               name: 'Fallback Test Product',
               description: 'Generated after error with original product',
@@ -198,10 +198,10 @@ serve(async (req) => {
             });
           }
         } else {
-          // Para qualquer outro input, usar o plano básico como fallback
+          // For any other input, use basic plan as fallback
           console.log(`Unrecognized priceId format: ${priceId}, using fallback test plan`);
           
-          // Verificar se já existe um preço de teste para o plano básico
+          // Check if a test price already exists for the basic plan
           const prices = await stripe.prices.list({
             limit: 1,
             active: true,
@@ -212,7 +212,7 @@ serve(async (req) => {
           if (prices.data.length > 0) {
             testPrice = prices.data[0];
           } else {
-            // Criar produto e preço de teste se não existir
+            // Create test product and price if it doesn't exist
             const testProduct = await stripe.products.create({
               name: 'Plano Básico (Test)',
               description: 'Plano de teste - até 100 processamentos por dia',
@@ -236,22 +236,28 @@ serve(async (req) => {
           });
         }
 
-        // Parâmetros para a sessão de checkout
+        // Setup checkout session parameters
         const params = {
           mode: 'subscription',
           payment_method_types: ['card'],
           line_items: checkoutItems,
           success_url: successUrl,
           cancel_url: cancelUrl,
+          // Add critical parameter to prevent embedding issues
+          payment_method_collection: 'always',
+          // Add billing address collection to improve success rates
+          billing_address_collection: 'auto',
+          // Add locale for better browser compatibility
+          locale: 'pt-BR',
         };
 
-        // Adiciona o cliente se fornecido
+        // Add customer if provided
         if (customerId) {
           params.customer = customerId;
           console.log(`Using existing customer ID: ${customerId}`);
         }
 
-        // Cria a sessão de checkout
+        // Create checkout session
         console.log('Creating checkout session with params:', JSON.stringify(params));
         const session = await stripe.checkout.sessions.create(params);
         console.log(`Checkout session created: ${session.id}, URL: ${session.url}`);

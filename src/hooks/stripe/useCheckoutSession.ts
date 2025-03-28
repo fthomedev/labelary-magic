@@ -76,8 +76,17 @@ export const useCheckoutSession = () => {
         
         console.log('Checkout session created successfully, redirecting to:', data.url);
         
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
+        // Fix: Instead of directly changing window.location.href, use window.open to open in a new tab
+        // This prevents iframe loading issues and third-party cookie problems
+        const checkoutWindow = window.open(data.url, '_blank');
+        
+        // If popup was blocked, fall back to redirect
+        if (!checkoutWindow) {
+          console.warn('Popup blocked. Falling back to redirect.');
+          window.location.href = data.url;
+        }
+        
+        setIsLoading(false);
         return data;
       } catch (dbError) {
         console.error('Database or checkout operation failed:', dbError);

@@ -46,7 +46,7 @@ const CheckoutPage = () => {
       // Determine which ID to use for checkout
       let checkoutId = null;
       
-      // Priorizar o uso do productId
+      // Prioritize using the productId
       if (plan?.productId) {
         console.log('Using product ID for checkout:', plan.productId);
         checkoutId = plan.productId;
@@ -66,11 +66,11 @@ const CheckoutPage = () => {
         throw new Error('Invalid plan data structure - no valid ID found');
       }
       
-      const result = await createCheckoutSession(checkoutId);
+      // Call the checkout session creation function
+      // The actual redirect now happens in the useCheckoutSession hook
+      await createCheckoutSession(checkoutId);
+      setIsProcessing(false);
       
-      if (!result) {
-        throw new Error('Falha ao criar a sessão de checkout');
-      }
     } catch (error) {
       console.error('Checkout error:', error);
       toast({
