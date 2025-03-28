@@ -27,6 +27,7 @@ serve(async (req) => {
 
     const stripe = new Stripe(STRIPE_SECRET_KEY, {
       apiVersion: '2023-10-16',
+      maxNetworkRetries: 3, // Add retry logic
     });
 
     switch (action) {
@@ -236,7 +237,7 @@ serve(async (req) => {
           });
         }
 
-        // Setup checkout session parameters
+        // Setup checkout session parameters with optimized performance parameters
         const params = {
           mode: 'subscription',
           payment_method_types: ['card'],
@@ -249,6 +250,10 @@ serve(async (req) => {
           billing_address_collection: 'auto',
           // Add locale for better browser compatibility
           locale: 'pt-BR',
+          // Optimize checkout completion
+          submit_type: 'auto',
+          // Expire sessions quicker to free resources
+          expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // 30 minutes from now
         };
 
         // Add customer if provided

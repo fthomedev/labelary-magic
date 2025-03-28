@@ -45,11 +45,13 @@ export const StaticSubscriptionPlans = () => {
       ],
       isPopular: true,
       // Using product ID for advanced plan too
-      productId: "prod_S109H2KiOoZULm" // Substitua pelo ID correto do seu produto avançado
+      productId: "prod_S109H2KiOoZULm"
     }
   ];
 
   const handleSelectPlan = async (plan) => {
+    if (isLoading) return; // Prevent multiple clicks
+    
     console.log("Selected plan:", plan);
     setIsLoading(true);
     setProcessingPlanId(plan.id);

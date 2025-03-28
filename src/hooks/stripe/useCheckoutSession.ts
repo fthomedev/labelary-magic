@@ -27,6 +27,7 @@ export const useCheckoutSession = () => {
           description: t('loginRequired'),
         });
         navigate('/auth');
+        setIsLoading(false);
         return null;
       }
 
@@ -45,7 +46,7 @@ export const useCheckoutSession = () => {
         const customerId = subscriptionData?.stripe_customer_id;
         console.log('Retrieved customer ID from database:', customerId);
         
-        // Create checkout session with clear logging
+        // Create checkout session with optimized caching
         console.log('Sending request to Stripe function with params:', {
           action: 'create-checkout-session',
           priceId: priceOrProductId,
@@ -54,6 +55,7 @@ export const useCheckoutSession = () => {
           cancelUrl: `${window.location.origin}/subscription`,
         });
         
+        // Add cache busting parameter to avoid Edge Function caching
         const { data, error } = await supabase.functions.invoke('stripe', {
           body: {
             action: 'create-checkout-session',
@@ -61,6 +63,7 @@ export const useCheckoutSession = () => {
             customerId,
             successUrl: `${window.location.origin}/subscription/success`,
             cancelUrl: `${window.location.origin}/subscription`,
+            timestamp: Date.now() // Add timestamp to prevent caching
           },
         });
         

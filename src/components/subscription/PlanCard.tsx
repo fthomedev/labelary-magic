@@ -28,6 +28,8 @@ export function PlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPopular }
   }).format((plan.unit_amount || 0) / 100);
 
   const handleSelectPlan = () => {
+    if (isLoading || isCurrentPlan) return;
+    
     console.log('Selecting plan:', plan.id);
     
     if (onSelect) {
