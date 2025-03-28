@@ -46,7 +46,7 @@ export const useCheckoutSession = () => {
         const customerId = subscriptionData?.stripe_customer_id;
         console.log('Retrieved customer ID from database:', customerId);
         
-        // Create checkout session with optimized caching and test mode indicator
+        // Create checkout session with explicit test mode configuration
         console.log('Sending request to Stripe function with params:', {
           action: 'create-checkout-session',
           priceId: priceOrProductId,
@@ -56,7 +56,7 @@ export const useCheckoutSession = () => {
           testMode: true // Explicitly mark as test mode
         });
         
-        // Add cache busting parameter to avoid Edge Function caching
+        // Add cache busting parameter and explicit test mode flag
         const { data, error } = await supabase.functions.invoke('stripe', {
           body: {
             action: 'create-checkout-session',
