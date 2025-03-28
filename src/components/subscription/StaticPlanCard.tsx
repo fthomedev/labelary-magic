@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, LoaderCircle } from "lucide-react";
+import { Check, LoaderCircle, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface StaticPlanCardProps {
@@ -50,6 +50,11 @@ export function StaticPlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPop
               <span>{feature}</span>
             </div>
           ))}
+        </div>
+        
+        <div className="mt-4 bg-amber-50 p-2 rounded-md border border-amber-200 flex items-center gap-2 text-xs text-amber-800">
+          <AlertCircle className="h-3 w-3" />
+          <span>Ambiente de teste - Use cartões de teste Stripe</span>
         </div>
       </CardContent>
       

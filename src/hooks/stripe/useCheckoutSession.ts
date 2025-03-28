@@ -46,13 +46,14 @@ export const useCheckoutSession = () => {
         const customerId = subscriptionData?.stripe_customer_id;
         console.log('Retrieved customer ID from database:', customerId);
         
-        // Create checkout session with optimized caching
+        // Create checkout session with optimized caching and test mode indicator
         console.log('Sending request to Stripe function with params:', {
           action: 'create-checkout-session',
           priceId: priceOrProductId,
           customerId,
           successUrl: `${window.location.origin}/subscription/success`,
           cancelUrl: `${window.location.origin}/subscription`,
+          testMode: true // Explicitly mark as test mode
         });
         
         // Add cache busting parameter to avoid Edge Function caching
@@ -63,7 +64,8 @@ export const useCheckoutSession = () => {
             customerId,
             successUrl: `${window.location.origin}/subscription/success`,
             cancelUrl: `${window.location.origin}/subscription`,
-            timestamp: Date.now() // Add timestamp to prevent caching
+            timestamp: Date.now(), // Add timestamp to prevent caching
+            testMode: true // Explicitly mark as test mode
           },
         });
         
@@ -101,8 +103,8 @@ export const useCheckoutSession = () => {
         variant: 'destructive',
         title: t('error'),
         description: typeof error === 'object' && error !== null && 'message' in error 
-          ? error.message as string
-          : t('errorCreatingCheckout'),
+          ? (error.message as string) + ' (Certifique-se de usar cartões de teste no ambiente de teste Stripe)'
+          : t('errorCreatingCheckout') + ' (Certifique-se de usar cartões de teste no ambiente de teste Stripe)',
       });
       setIsLoading(false);
       return null;

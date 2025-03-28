@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.18.0";
 
@@ -18,8 +17,9 @@ serve(async (req) => {
     const { action, ...data } = await req.json();
     console.log(`Stripe function called with action: ${action}`, data);
     
-    // Use the test key provided
+    // Explicitly set to test mode using the test key
     const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') || 'sk_test_51R6iAqBLaDKP56zdyAArtHj8Sd2Fxfr66bizL0NHFxOJtlaOOE6jBJgDEHbgXLlFIgBpIysSQZOrOho1FeW6E2RP009ViMszRz';
+    console.log('Using Stripe in TEST mode with test key');
     
     if (!STRIPE_SECRET_KEY) {
       throw new Error('STRIPE_SECRET_KEY is not set');
@@ -27,7 +27,7 @@ serve(async (req) => {
 
     const stripe = new Stripe(STRIPE_SECRET_KEY, {
       apiVersion: '2023-10-16',
-      maxNetworkRetries: 3, // Add retry logic
+      maxNetworkRetries: 3,
     });
 
     switch (action) {
@@ -254,6 +254,11 @@ serve(async (req) => {
           submit_type: 'auto',
           // Expire sessions quicker to free resources
           expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // 30 minutes from now
+          
+          // Add test mode flag explicitly
+          metadata: {
+            is_test_mode: 'true'
+          }
         };
 
         // Add customer if provided

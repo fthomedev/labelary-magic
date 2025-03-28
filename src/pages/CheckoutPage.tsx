@@ -5,8 +5,9 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useStripe } from "@/hooks/useStripe";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const CheckoutPage = () => {
   const { t } = useTranslation();
@@ -95,6 +96,14 @@ const CheckoutPage = () => {
             <p className="text-gray-500">{plan.description}</p>
             <p className="text-gray-700">{t('price')}: {plan.price} {plan.currency}</p>
           </div>
+          
+          <Alert variant="warning" className="bg-amber-50 border-amber-200">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Ambiente de teste Stripe - Use apenas cartões de teste. 
+              Ex: 4242 4242 4242 4242 (Visa) ou 5555 5555 5555 4444 (Mastercard)
+            </AlertDescription>
+          </Alert>
         </CardContent>
         <CardFooter>
           <Button 
