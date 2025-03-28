@@ -74,7 +74,11 @@ const CheckoutPage = () => {
         throw new Error('Invalid plan data structure - no valid ID found');
       }
       
-      await createCheckoutSession(checkoutId);
+      const result = await createCheckoutSession(checkoutId);
+      
+      if (!result) {
+        throw new Error('Falha ao criar a sessão de checkout');
+      }
     } catch (error) {
       console.error('Checkout error:', error);
       toast({

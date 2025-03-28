@@ -1,1 +1,17 @@
+
 project_id = "ekoakbihwprthzjyztwq"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[functions.stripe]
+verify_jwt = true

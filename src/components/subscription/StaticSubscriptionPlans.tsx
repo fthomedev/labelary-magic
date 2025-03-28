@@ -28,7 +28,8 @@ export const StaticSubscriptionPlans = () => {
         t('basicFeature3')
       ],
       isPopular: false,
-      productId: "prod_S109EaoLA02QYK" // Real product ID in Stripe
+      // Using test product IDs - you should update these with your actual Stripe product IDs
+      productId: "prod_S109EaoLA02QYK" 
     },
     {
       id: "advanced",
@@ -43,7 +44,8 @@ export const StaticSubscriptionPlans = () => {
         t('advancedFeature4')
       ],
       isPopular: true,
-      productId: "prod_S109xhc7K0XxCU" // Real product ID in Stripe
+      // Using test product IDs - you should update these with your actual Stripe product IDs
+      productId: "prod_S109xhc7K0XxCU" 
     }
   ];
 
@@ -56,7 +58,12 @@ export const StaticSubscriptionPlans = () => {
       // Use the product ID for checkout if available
       if (plan.productId) {
         console.log(`Initiating checkout with product ID: ${plan.productId}`);
-        await createCheckoutSession(plan.productId);
+        const result = await createCheckoutSession(plan.productId);
+        console.log("Checkout session result:", result);
+        
+        if (!result) {
+          throw new Error("Falha ao criar sessão de checkout");
+        }
       } else {
         // Alternative navigation to checkout page
         console.log('No product ID found, navigating to checkout page');

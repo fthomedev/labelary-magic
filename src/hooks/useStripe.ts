@@ -75,7 +75,7 @@ export const useStripe = () => {
           description: t('loginRequired'),
         });
         navigate('/auth');
-        return;
+        return null;
       }
 
       // Get or create a customer record in the database
@@ -126,6 +126,7 @@ export const useStripe = () => {
         
         // Redirect to Stripe Checkout
         window.location.href = data.url;
+        return data;
       } catch (dbError) {
         console.error('Database or checkout operation failed:', dbError);
         throw dbError;
@@ -140,6 +141,7 @@ export const useStripe = () => {
           : t('errorCreatingCheckout'),
       });
       setIsLoading(false);
+      return null;
     }
   };
 
