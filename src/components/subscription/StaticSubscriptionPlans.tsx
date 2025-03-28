@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { StaticPlanCard } from "./StaticPlanCard";
 import { useStripe } from "@/hooks/useStripe";
+import { useToast } from "@/components/ui/use-toast";
 
 export const StaticSubscriptionPlans = () => {
   const { t } = useTranslation();
@@ -11,6 +12,7 @@ export const StaticSubscriptionPlans = () => {
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { createCheckoutSession } = useStripe();
+  const { toast } = useToast();
 
   // Static plans definition for when we can't load from Stripe
   const staticPlans = [
@@ -62,6 +64,11 @@ export const StaticSubscriptionPlans = () => {
       }
     } catch (error) {
       console.error("Error selecting plan:", error);
+      toast({
+        variant: 'destructive',
+        title: t('error'),
+        description: t('errorProcessingRequest')
+      });
     } finally {
       setIsLoading(false);
       setProcessingPlanId(null);

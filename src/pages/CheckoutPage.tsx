@@ -17,6 +17,7 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const { createCheckoutSession, isLoading } = useStripe();
   const [planDetails, setPlanDetails] = useState<any>(null);
+  const [localLoading, setLocalLoading] = useState(false);
 
   // Extract plan info from location state
   useEffect(() => {
@@ -49,6 +50,7 @@ const CheckoutPage = () => {
     }
 
     console.log('Proceeding to checkout with plan:', planDetails);
+    setLocalLoading(true);
     
     try {
       // Determine what ID to use for checkout
@@ -80,6 +82,8 @@ const CheckoutPage = () => {
         title: t('error'),
         description: t('errorCreatingCheckout'),
       });
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -137,6 +141,12 @@ const CheckoutPage = () => {
                   <span className="font-medium">{t('features')}:</span>
                   <span>{planDetails.product?.metadata?.limit || planDetails.features?.[0] || '-'}</span>
                 </div>
+                {planDetails.productId && (
+                  <div className="flex justify-between">
+                    <span className="font-medium">ID:</span>
+                    <span className="text-xs truncate max-w-[180px]">{planDetails.productId}</span>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex justify-center py-4">
@@ -157,9 +167,9 @@ const CheckoutPage = () => {
               onClick={handleProceedToCheckout} 
               className="w-full" 
               size="lg"
-              disabled={isLoading || !planDetails}
+              disabled={isLoading || localLoading || !planDetails}
             >
-              {isLoading ? (
+              {isLoading || localLoading ? (
                 <>
                   <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                   {t('processing')}

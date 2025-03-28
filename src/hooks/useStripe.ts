@@ -79,7 +79,6 @@ export const useStripe = () => {
       }
 
       // Get or create a customer record in the database
-      let customerData;
       try {
         const { data: subscriptionData, error: subscriptionError } = await supabase
           .from('subscriptions')
@@ -94,11 +93,19 @@ export const useStripe = () => {
         const customerId = subscriptionData?.stripe_customer_id;
         console.log('Retrieved customer ID from database:', customerId);
         
-        // Create checkout session
+        // Create checkout session with clear logging
+        console.log('Sending request to Stripe function with params:', {
+          action: 'create-checkout-session',
+          priceId: priceOrProductId,
+          customerId,
+          successUrl: `${window.location.origin}/subscription/success`,
+          cancelUrl: `${window.location.origin}/subscription`,
+        });
+        
         const { data, error } = await supabase.functions.invoke('stripe', {
           body: {
             action: 'create-checkout-session',
-            priceId: priceOrProductId, // This could be either a price ID or product ID
+            priceId: priceOrProductId,
             customerId,
             successUrl: `${window.location.origin}/subscription/success`,
             cancelUrl: `${window.location.origin}/subscription`,
