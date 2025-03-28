@@ -97,7 +97,7 @@ const CheckoutPage = () => {
             <p className="text-gray-700">{t('price')}: {plan.price} {plan.currency}</p>
           </div>
           
-          <Alert variant="warning" className="bg-amber-50 border-amber-200">
+          <Alert className="bg-amber-50 border-amber-200">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Ambiente de teste Stripe - Use apenas cartões de teste. 
