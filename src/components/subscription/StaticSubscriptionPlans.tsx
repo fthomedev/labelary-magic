@@ -8,31 +8,32 @@ import { useStripe } from "@/hooks/useStripe";
 export const StaticSubscriptionPlans = () => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
+  const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { createCheckoutSession } = useStripe();
 
-  // Definição estática dos planos para quando não conseguimos carregar do Stripe
+  // Static plans definition for when we can't load from Stripe
   const staticPlans = [
     {
-      id: "basic", // Será substituído pelo ID real do produto/preço do Stripe
+      id: "basic",
       name: t('basicPlan'),
       description: t('basicPlanDescription'),
       price: "9,90",
-      currency: "BRL",
+      currency: "R$",
       features: [
         t('basicFeature1'),
         t('basicFeature2'),
         t('basicFeature3')
       ],
       isPopular: false,
-      productId: "prod_S109EaoLA02QYK" // ID real do produto no Stripe
+      productId: "prod_S109EaoLA02QYK" // Real product ID in Stripe
     },
     {
       id: "advanced",
       name: t('advancedPlan'),
       description: t('advancedPlanDescription'),
       price: "15,90",
-      currency: "BRL",
+      currency: "R$",
       features: [
         t('advancedFeature1'),
         t('advancedFeature2'),
@@ -40,27 +41,30 @@ export const StaticSubscriptionPlans = () => {
         t('advancedFeature4')
       ],
       isPopular: true,
-      productId: "prod_S109xhc7K0XxCU" // ID real do produto no Stripe
+      productId: "prod_S109xhc7K0XxCU" // Real product ID in Stripe
     }
   ];
 
   const handleSelectPlan = async (plan) => {
     console.log("Selected plan:", plan);
     setIsLoading(true);
+    setProcessingPlanId(plan.id);
     
     try {
-      // Usar o ID do produto para checkout
+      // Use the product ID for checkout if available
       if (plan.productId) {
         console.log(`Initiating checkout with product ID: ${plan.productId}`);
         await createCheckoutSession(plan.productId);
       } else {
-        // Navegação alternativa para a página de checkout
+        // Alternative navigation to checkout page
         console.log('No product ID found, navigating to checkout page');
         navigate('/checkout', { state: { plan } });
       }
     } catch (error) {
       console.error("Error selecting plan:", error);
+    } finally {
       setIsLoading(false);
+      setProcessingPlanId(null);
     }
   };
 
@@ -69,12 +73,12 @@ export const StaticSubscriptionPlans = () => {
       <h2 className="text-3xl font-bold text-center mb-6">{t('simplePricing')}</h2>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 max-w-4xl mx-auto">
-        {staticPlans.map((plan, index) => (
+        {staticPlans.map((plan) => (
           <StaticPlanCard
             key={plan.id}
             plan={plan}
             onSelect={() => handleSelectPlan(plan)}
-            isLoading={isLoading}
+            isLoading={isLoading && processingPlanId === plan.id}
             isPopular={plan.isPopular}
           />
         ))}

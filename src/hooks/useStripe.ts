@@ -60,15 +60,20 @@ export const useStripe = () => {
   };
 
   // Create a checkout session
-  const createCheckoutSession = async (priceId: string) => {
+  const createCheckoutSession = async (priceOrProductId: string) => {
     setIsLoading(true);
     try {
-      console.log(`Creating checkout session for price ID: ${priceId}`);
+      console.log(`Creating checkout session for ID: ${priceOrProductId}`);
       
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.error('No authenticated user found');
+        toast({
+          variant: 'destructive',
+          title: t('error'),
+          description: t('loginRequired'),
+        });
         navigate('/auth');
         return;
       }
@@ -93,7 +98,7 @@ export const useStripe = () => {
         const { data, error } = await supabase.functions.invoke('stripe', {
           body: {
             action: 'create-checkout-session',
-            priceId,
+            priceId: priceOrProductId, // This could be either a price ID or product ID
             customerId,
             successUrl: `${window.location.origin}/subscription/success`,
             cancelUrl: `${window.location.origin}/subscription`,
@@ -105,17 +110,17 @@ export const useStripe = () => {
           throw error;
         }
         
-        console.log('Checkout session created successfully:', data);
+        if (!data || !data.url) {
+          console.error('No checkout URL returned from Stripe function:', data);
+          throw new Error(data?.error || 'No checkout URL returned from Stripe');
+        }
+        
+        console.log('Checkout session created successfully, redirecting to:', data.url);
         
         // Redirect to Stripe Checkout
-        if (data.url) {
-          console.log('Redirecting to Stripe checkout:', data.url);
-          window.location.href = data.url;
-        } else {
-          throw new Error('No checkout URL returned from Stripe');
-        }
+        window.location.href = data.url;
       } catch (dbError) {
-        console.error('Database operation failed:', dbError);
+        console.error('Database or checkout operation failed:', dbError);
         throw dbError;
       }
     } catch (error) {
@@ -123,7 +128,9 @@ export const useStripe = () => {
       toast({
         variant: 'destructive',
         title: t('error'),
-        description: t('errorCreatingCheckout'),
+        description: typeof error === 'object' && error !== null && 'message' in error 
+          ? error.message as string
+          : t('errorCreatingCheckout'),
       });
       setIsLoading(false);
     }

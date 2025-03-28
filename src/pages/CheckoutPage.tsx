@@ -51,17 +51,28 @@ const CheckoutPage = () => {
     console.log('Proceeding to checkout with plan:', planDetails);
     
     try {
-      // For product objects, we'll use the product ID directly
-      if (planDetails.product && planDetails.id) {
-        console.log(`Initiating checkout with price ID: ${planDetails.id}`);
-        await createCheckoutSession(planDetails.id);
-      } else if (planDetails.id) {
-        // Fallback for simplified objects
-        console.log(`Initiating checkout with ID: ${planDetails.id}`);
-        await createCheckoutSession(planDetails.id);
+      // Determine what ID to use for checkout
+      let checkoutId;
+      
+      // For product objects with productId
+      if (planDetails.productId) {
+        checkoutId = planDetails.productId;
+        console.log(`Using product ID for checkout: ${checkoutId}`);
+      } 
+      // For Stripe price objects
+      else if (planDetails.product && planDetails.id) {
+        checkoutId = planDetails.id;
+        console.log(`Using price ID for checkout: ${checkoutId}`);
+      } 
+      // Fallback for simplified objects
+      else if (planDetails.id) {
+        checkoutId = planDetails.id;
+        console.log(`Using ID for checkout: ${checkoutId}`);
       } else {
-        throw new Error('Invalid plan data structure');
+        throw new Error('Invalid plan data structure - no valid ID found');
       }
+      
+      await createCheckoutSession(checkoutId);
     } catch (error) {
       console.error('Checkout error:', error);
       toast({
@@ -107,21 +118,24 @@ const CheckoutPage = () => {
               <div className="border rounded-md p-4 space-y-2">
                 <div className="flex justify-between">
                   <span className="font-medium">{t('planLabel')}:</span>
-                  <span>{planDetails.product?.name || '-'}</span>
+                  <span>{planDetails.name || planDetails.product?.name || '-'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">{t('priceLabel')}:</span>
                   <span>
-                    {new Intl.NumberFormat('pt-BR', { 
-                      style: 'currency', 
-                      currency: planDetails.currency || 'BRL' 
-                    }).format((planDetails.unit_amount || 0) / 100)}
+                    {planDetails.price ? 
+                      `${planDetails.currency || 'R$'} ${planDetails.price}` : 
+                      new Intl.NumberFormat('pt-BR', { 
+                        style: 'currency', 
+                        currency: planDetails.currency || 'BRL' 
+                      }).format((planDetails.unit_amount || 0) / 100)
+                    }
                     /{t('month')}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">{t('features')}:</span>
-                  <span>{planDetails.product?.metadata?.limit || '-'}</span>
+                  <span>{planDetails.product?.metadata?.limit || planDetails.features?.[0] || '-'}</span>
                 </div>
               </div>
             ) : (

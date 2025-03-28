@@ -13,7 +13,7 @@ interface StaticPlanCardProps {
     currency: string;
     features: string[];
     isPopular?: boolean;
-    productId?: string;
+    productId?: string; // This is the Stripe product ID
   };
   onSelect: () => void;
   isLoading?: boolean;
@@ -39,7 +39,7 @@ export function StaticPlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPop
       
       <CardContent className="flex-1">
         <div className="mb-6">
-          <span className="text-3xl font-bold">R$ {plan.price}</span>
+          <span className="text-3xl font-bold">{plan.currency} {plan.price}</span>
           <span className="text-muted-foreground">/{t('month')}</span>
         </div>
         
@@ -68,7 +68,7 @@ export function StaticPlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPop
           ) : isCurrentPlan ? (
             t('currentPlan')
           ) : (
-            t('learnMore')
+            t('selectPlan')
           )}
         </Button>
       </CardFooter>
