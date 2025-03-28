@@ -14,8 +14,15 @@ serve(async (req) => {
   }
 
   try {
-    // Use the test key you provided
-    const STRIPE_SECRET_KEY = 'sk_test_51R6iAqBLaDKP56zdyAArtHj8Sd2Fxfr66bizL0NHFxOJtlaOOE6jBJgDEHbgXLlFIgBpIysSQZOrOho1FeW6E2RP009ViMszRz';
+    // Configurando o cliente Stripe
+    // IMPORTANTE: Vamos alternar entre chaves de teste e produção com base em um parâmetro
+    const { action, ...data } = await req.json();
+    console.log(`Stripe function called with action: ${action}`, data);
+    
+    // Determinar qual chave usar (teste ou produção)
+    // A chave de produção deve estar configurada nos secrets da Edge Function
+    const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') || 'sk_test_51R6iAqBLaDKP56zdyAArtHj8Sd2Fxfr66bizL0NHFxOJtlaOOE6jBJgDEHbgXLlFIgBpIysSQZOrOho1FeW6E2RP009ViMszRz';
+    
     if (!STRIPE_SECRET_KEY) {
       throw new Error('STRIPE_SECRET_KEY is not set');
     }
@@ -23,9 +30,6 @@ serve(async (req) => {
     const stripe = new Stripe(STRIPE_SECRET_KEY, {
       apiVersion: '2023-10-16',
     });
-
-    const { action, ...data } = await req.json();
-    console.log(`Stripe function called with action: ${action}`, data);
 
     switch (action) {
       case 'create-checkout-session': {
@@ -38,12 +42,120 @@ serve(async (req) => {
           );
         }
 
-        // Determine if we're dealing with a product ID or a price ID
-        let actualPriceId = priceId;
+        // SOLUÇÃO: Para o modo de teste, criaremos produtos/preços específicos para teste
+        let checkoutItems = [];
         
-        if (priceId.startsWith('prod_')) {
-          console.log(`Input appears to be a product ID: ${priceId}. Looking up associated price...`);
-          
+        // Lógica para modo de teste: Usamos preços pré-definidos em vez de tentar converter produtos
+        if (priceId === 'prod_S109EaoLA02QYK' || priceId === 'basic') {
+          // Produto básico no ambiente de teste
+          console.log('Using test mode basic plan');
+          try {
+            // Verifica se o produto de teste existe, senão cria
+            let testPrice;
+            try {
+              const prices = await stripe.prices.list({
+                limit: 1,
+                active: true,
+                lookup_keys: ['basic_test_plan'],
+              });
+              
+              if (prices.data.length > 0) {
+                testPrice = prices.data[0];
+                console.log('Found existing test price:', testPrice.id);
+              } else {
+                // Cria produto e preço de teste se não existir
+                const testProduct = await stripe.products.create({
+                  name: 'Plano Básico (Test)',
+                  description: 'Plano de teste - até 100 processamentos por dia',
+                  active: true,
+                });
+                
+                testPrice = await stripe.prices.create({
+                  product: testProduct.id,
+                  unit_amount: 990, // R$9.90
+                  currency: 'brl',
+                  recurring: {
+                    interval: 'month',
+                  },
+                  lookup_key: 'basic_test_plan',
+                });
+                console.log('Created new test price:', testPrice.id);
+              }
+              
+              checkoutItems.push({
+                price: testPrice.id,
+                quantity: 1,
+              });
+            } catch (err) {
+              console.error('Error setting up test price:', err);
+              throw err;
+            }
+          } catch (error) {
+            console.error('Error in test product setup:', error);
+            return new Response(
+              JSON.stringify({ error: 'Failed to set up test product' }),
+              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        } else if (priceId === 'prod_S109H2KiOoZULm' || priceId === 'advanced') {
+          // Produto avançado no ambiente de teste
+          console.log('Using test mode advanced plan');
+          try {
+            // Verifica se o produto de teste existe, senão cria
+            let testPrice;
+            try {
+              const prices = await stripe.prices.list({
+                limit: 1,
+                active: true,
+                lookup_keys: ['advanced_test_plan'],
+              });
+              
+              if (prices.data.length > 0) {
+                testPrice = prices.data[0];
+                console.log('Found existing test price:', testPrice.id);
+              } else {
+                // Cria produto e preço de teste se não existir
+                const testProduct = await stripe.products.create({
+                  name: 'Plano Avançado (Test)',
+                  description: 'Plano de teste - processamentos ilimitados',
+                  active: true,
+                });
+                
+                testPrice = await stripe.prices.create({
+                  product: testProduct.id,
+                  unit_amount: 1590, // R$15.90
+                  currency: 'brl',
+                  recurring: {
+                    interval: 'month',
+                  },
+                  lookup_key: 'advanced_test_plan',
+                });
+                console.log('Created new test price:', testPrice.id);
+              }
+              
+              checkoutItems.push({
+                price: testPrice.id,
+                quantity: 1,
+              });
+            } catch (err) {
+              console.error('Error setting up test price:', err);
+              throw err;
+            }
+          } catch (error) {
+            console.error('Error in test product setup:', error);
+            return new Response(
+              JSON.stringify({ error: 'Failed to set up test product' }),
+              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        } else if (priceId.startsWith('price_')) {
+          // Se já é um ID de preço válido, usar diretamente
+          checkoutItems.push({
+            price: priceId,
+            quantity: 1,
+          });
+        } else if (priceId.startsWith('prod_')) {
+          // Se for ID de produto, tenta encontrar um preço associado
           try {
             const prices = await stripe.prices.list({
               product: priceId,
@@ -52,57 +164,46 @@ serve(async (req) => {
             });
             
             if (prices.data.length === 0) {
-              console.error(`No active prices found for product: ${priceId}`);
               return new Response(
                 JSON.stringify({ error: `No active prices found for product: ${priceId}` }),
                 { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
               );
             }
             
-            actualPriceId = prices.data[0].id;
-            console.log(`Successfully converted product ID ${priceId} to price ID ${actualPriceId}`);
-          } catch (priceError) {
-            console.error('Error finding price for product:', priceError);
+            checkoutItems.push({
+              price: prices.data[0].id,
+              quantity: 1,
+            });
+          } catch (error) {
+            console.error('Error finding price for product:', error);
             return new Response(
               JSON.stringify({ error: `Invalid product ID or no prices found: ${priceId}` }),
               { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           }
         } else {
-          // It's a price ID, validate it directly
-          try {
-            const price = await stripe.prices.retrieve(actualPriceId);
-            console.log(`Validated price ID ${actualPriceId}, associated with product ${price.product}`);
-          } catch (priceError) {
-            console.error('Invalid price ID:', priceError);
-            return new Response(
-              JSON.stringify({ error: `Invalid price ID: ${actualPriceId}` }),
-              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
+          return new Response(
+            JSON.stringify({ error: `Invalid price or product ID: ${priceId}` }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
 
-        // Create the checkout session parameters
+        // Parâmetros para a sessão de checkout
         const params = {
           mode: 'subscription',
           payment_method_types: ['card'],
-          line_items: [
-            {
-              price: actualPriceId,
-              quantity: 1,
-            },
-          ],
+          line_items: checkoutItems,
           success_url: successUrl,
           cancel_url: cancelUrl,
         };
 
-        // Add customer ID if provided
+        // Adiciona o cliente se fornecido
         if (customerId) {
           params.customer = customerId;
           console.log(`Using existing customer ID: ${customerId}`);
         }
 
-        // Create the checkout session
+        // Cria a sessão de checkout
         console.log('Creating checkout session with params:', JSON.stringify(params));
         const session = await stripe.checkout.sessions.create(params);
         console.log(`Checkout session created: ${session.id}, URL: ${session.url}`);
@@ -116,13 +217,13 @@ serve(async (req) => {
       case 'get-prices': {
         console.log('Fetching prices from Stripe');
         
-        // If we don't have any subscription products in Stripe yet, let's create them
+        // Se não temos produtos de assinatura no Stripe ainda, criamos eles
         const products = await stripe.products.list({ active: true });
         
         if (products.data.length === 0) {
           console.log('No products found. Creating default subscription products...');
           
-          // Create Basic Plan product
+          // Criar produto para o Plano Básico
           const basicProduct = await stripe.products.create({
             name: 'Plano Básico',
             description: 'Até 100 processamentos por dia',
@@ -134,7 +235,7 @@ serve(async (req) => {
           
           console.log(`Created basic product: ${basicProduct.id}`);
           
-          // Create price for Basic Plan (R$9.90/month)
+          // Criar preço para o Plano Básico (R$9,90/mês)
           const basicPrice = await stripe.prices.create({
             product: basicProduct.id,
             unit_amount: 990, // R$9.90
@@ -144,12 +245,13 @@ serve(async (req) => {
             },
             metadata: {
               type: 'basic'
-            }
+            },
+            lookup_key: 'basic_test_plan'
           });
           
           console.log(`Created price for basic product: ${basicPrice.id}`);
           
-          // Create Advanced Plan product
+          // Criar produto para o Plano Avançado
           const advancedProduct = await stripe.products.create({
             name: 'Plano Avançado',
             description: 'Processamentos ilimitados',
@@ -161,7 +263,7 @@ serve(async (req) => {
           
           console.log(`Created advanced product: ${advancedProduct.id}`);
           
-          // Create price for Advanced Plan (R$15.90/month)
+          // Criar preço para o Plano Avançado (R$15,90/mês)
           const advancedPrice = await stripe.prices.create({
             product: advancedProduct.id,
             unit_amount: 1590, // R$15.90
@@ -171,7 +273,8 @@ serve(async (req) => {
             },
             metadata: {
               type: 'advanced'
-            }
+            },
+            lookup_key: 'advanced_test_plan'
           });
           
           console.log(`Created price for advanced product: ${advancedPrice.id}`);
