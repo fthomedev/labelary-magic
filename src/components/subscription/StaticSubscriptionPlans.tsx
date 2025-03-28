@@ -28,8 +28,8 @@ export const StaticSubscriptionPlans = () => {
         t('basicFeature3')
       ],
       isPopular: false,
-      // Using test product IDs - you should update these with your actual Stripe product IDs
-      productId: "prod_S109EaoLA02QYK" 
+      // Using price IDs directly to avoid product ID lookup
+      priceId: "price_1R6y8lBLaDKP56zd251rK0RI"
     },
     {
       id: "advanced",
@@ -44,8 +44,8 @@ export const StaticSubscriptionPlans = () => {
         t('advancedFeature4')
       ],
       isPopular: true,
-      // Using test product IDs - you should update these with your actual Stripe product IDs
-      productId: "prod_S109xhc7K0XxCU" 
+      // Using price IDs directly to avoid product ID lookup
+      priceId: "price_1R6y9BBLaDKP56zdQdEOKmEa"
     }
   ];
 
@@ -55,8 +55,18 @@ export const StaticSubscriptionPlans = () => {
     setProcessingPlanId(plan.id);
     
     try {
-      // Use the product ID for checkout if available
-      if (plan.productId) {
+      // Use the price ID for checkout directly if available
+      if (plan.priceId) {
+        console.log(`Initiating checkout with price ID: ${plan.priceId}`);
+        const result = await createCheckoutSession(plan.priceId);
+        console.log("Checkout session result:", result);
+        
+        if (!result) {
+          throw new Error("Falha ao criar sessão de checkout");
+        }
+      } 
+      // Fallback to product ID if price ID isn't available
+      else if (plan.productId) {
         console.log(`Initiating checkout with product ID: ${plan.productId}`);
         const result = await createCheckoutSession(plan.productId);
         console.log("Checkout session result:", result);
@@ -64,9 +74,10 @@ export const StaticSubscriptionPlans = () => {
         if (!result) {
           throw new Error("Falha ao criar sessão de checkout");
         }
-      } else {
-        // Alternative navigation to checkout page
-        console.log('No product ID found, navigating to checkout page');
+      }
+      // Alternative navigation to checkout page if no IDs are found
+      else {
+        console.log('No price or product ID found, navigating to checkout page');
         navigate('/checkout', { state: { plan } });
       }
     } catch (error) {
