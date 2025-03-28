@@ -28,8 +28,8 @@ export const StaticSubscriptionPlans = () => {
         t('basicFeature3')
       ],
       isPopular: false,
-      // Using price IDs directly to avoid product ID lookup
-      priceId: "price_1R6y8lBLaDKP56zd251rK0RI"
+      // Using product ID instead of price ID to avoid errors
+      productId: "prod_S109EaoLA02QYK"
     },
     {
       id: "advanced",
@@ -44,8 +44,8 @@ export const StaticSubscriptionPlans = () => {
         t('advancedFeature4')
       ],
       isPopular: true,
-      // Using price IDs directly to avoid product ID lookup
-      priceId: "price_1R6y9BBLaDKP56zdQdEOKmEa"
+      // Using product ID for advanced plan too
+      productId: "prod_S109H2KiOoZULm" // Substitua pelo ID correto do seu produto avançado
     }
   ];
 
@@ -55,20 +55,20 @@ export const StaticSubscriptionPlans = () => {
     setProcessingPlanId(plan.id);
     
     try {
-      // Use the price ID for checkout directly if available
-      if (plan.priceId) {
-        console.log(`Initiating checkout with price ID: ${plan.priceId}`);
-        const result = await createCheckoutSession(plan.priceId);
+      // Priorizar o uso do productId em vez do priceId
+      if (plan.productId) {
+        console.log(`Iniciando checkout com product ID: ${plan.productId}`);
+        const result = await createCheckoutSession(plan.productId);
         console.log("Checkout session result:", result);
         
         if (!result) {
           throw new Error("Falha ao criar sessão de checkout");
         }
       } 
-      // Fallback to product ID if price ID isn't available
-      else if (plan.productId) {
-        console.log(`Initiating checkout with product ID: ${plan.productId}`);
-        const result = await createCheckoutSession(plan.productId);
+      // Fallback para price ID apenas se disponível
+      else if (plan.priceId) {
+        console.log(`Iniciando checkout com price ID: ${plan.priceId}`);
+        const result = await createCheckoutSession(plan.priceId);
         console.log("Checkout session result:", result);
         
         if (!result) {

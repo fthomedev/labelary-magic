@@ -31,9 +31,11 @@ export function PlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPopular }
     console.log('Selecting plan:', plan.id);
     
     if (onSelect) {
-      // Use the original direct checkout if provided
+      // Se for uma chamada direta, passar preferencialmente o ID do produto
       console.log('Using provided onSelect function');
-      onSelect(plan.id);
+      // Preferimos usar o ID do produto (no objeto product) em vez do ID do preço
+      const selectId = plan.product?.id || plan.id;
+      onSelect(selectId);
     } else {
       // Navigate to checkout page with plan data
       console.log('Navigating to checkout page with plan data');

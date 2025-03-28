@@ -41,8 +41,17 @@ export const SubscriptionPlans = () => {
     return currentSubscription.items.data.some((item: any) => item.price.id === priceId);
   };
 
-  const handleSelectPlan = (priceId: string) => {
-    createCheckoutSession(priceId);
+  const handleSelectPlan = (planId: string) => {
+    // Procurar o plano selecionado
+    const selectedPlan = plans.find(plan => plan.id === planId);
+    
+    // Se encontrou o plano, usar preferencialmente o ID do produto
+    if (selectedPlan) {
+      const checkoutId = selectedPlan.product.id || planId;
+      createCheckoutSession(checkoutId);
+    } else {
+      createCheckoutSession(planId);
+    }
   };
 
   if (plans.length === 0 && isLoading) {

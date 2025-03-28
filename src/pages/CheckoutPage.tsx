@@ -46,15 +46,15 @@ const CheckoutPage = () => {
       // Determine which ID to use for checkout
       let checkoutId = null;
       
-      // Try to get priceId first (direct price ID is preferred)
-      if (plan?.priceId) {
-        console.log('Using price ID for checkout:', plan.priceId);
-        checkoutId = plan.priceId;
-      }
-      // Fall back to productId if priceId is not available
-      else if (plan?.productId) {
+      // Priorizar o uso do productId
+      if (plan?.productId) {
         console.log('Using product ID for checkout:', plan.productId);
         checkoutId = plan.productId;
+      }
+      // Fall back to priceId if productId is not available
+      else if (plan?.priceId) {
+        console.log('Using price ID for checkout:', plan.priceId);
+        checkoutId = plan.priceId;
       }
       // As a last resort, use the plan ID
       else if (plan?.id) {
