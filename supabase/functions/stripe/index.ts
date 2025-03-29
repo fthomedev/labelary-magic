@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    // Configuring Stripe client
+    // Configuring Stripe client - always use test mode
     const { action, ...data } = await req.json();
     console.log(`Stripe function called with action: ${action}`, data);
     
@@ -44,31 +44,25 @@ serve(async (req) => {
         // Prepare checkout items
         let checkoutItems = [];
         
-        if (priceId === 'basic' || priceId === 'prod_S109EaoLA02QYK') {
-          // Basic plan (using provided product ID or "basic" name)
-          console.log('Using test mode basic plan');
+        if (priceId === 'basic' || priceId === 'prod_S1qlt19OAovrSE') {
+          // Basic plan with correct product ID
+          console.log('Using test mode basic plan with product ID: prod_S1qlt19OAovrSE');
           try {
             // Check if a test price already exists for the basic plan
             const prices = await stripe.prices.list({
               limit: 1,
               active: true,
-              lookup_keys: ['basic_test_plan'],
+              product: 'prod_S1qlt19OAovrSE',
             });
             
             let testPrice;
             if (prices.data.length > 0) {
               testPrice = prices.data[0];
-              console.log('Found existing test price:', testPrice.id);
+              console.log('Found existing test price for basic plan:', testPrice.id);
             } else {
-              // Create test product and price if it doesn't exist
-              const testProduct = await stripe.products.create({
-                name: 'Plano Básico (Test)',
-                description: 'Plano de teste - até 100 processamentos por dia',
-                active: true,
-              });
-              
+              // Create test price if it doesn't exist
               testPrice = await stripe.prices.create({
-                product: testProduct.id,
+                product: 'prod_S1qlt19OAovrSE',
                 unit_amount: 990, // R$9.90
                 currency: 'brl',
                 recurring: {
@@ -76,7 +70,7 @@ serve(async (req) => {
                 },
                 lookup_key: 'basic_test_plan',
               });
-              console.log('Created new test price:', testPrice.id);
+              console.log('Created new test price for basic plan:', testPrice.id);
             }
             
             checkoutItems.push({
@@ -84,34 +78,28 @@ serve(async (req) => {
               quantity: 1,
             });
           } catch (err) {
-            console.error('Error setting up test price:', err);
+            console.error('Error setting up test price for basic plan:', err);
             throw err;
           }
-        } else if (priceId === 'advanced' || priceId === 'prod_S109H2KiOoZULm') {
-          // Advanced plan (using provided product ID or "advanced" name)
-          console.log('Using test mode advanced plan');
+        } else if (priceId === 'advanced' || priceId === 'prod_S1qmbByFFnRUaT') {
+          // Advanced plan with correct product ID
+          console.log('Using test mode advanced plan with product ID: prod_S1qmbByFFnRUaT');
           try {
             // Check if a test price already exists for the advanced plan
             const prices = await stripe.prices.list({
               limit: 1,
               active: true,
-              lookup_keys: ['advanced_test_plan'],
+              product: 'prod_S1qmbByFFnRUaT',
             });
             
             let testPrice;
             if (prices.data.length > 0) {
               testPrice = prices.data[0];
-              console.log('Found existing test price:', testPrice.id);
+              console.log('Found existing test price for advanced plan:', testPrice.id);
             } else {
-              // Create test product and price if it doesn't exist
-              const testProduct = await stripe.products.create({
-                name: 'Plano Avançado (Test)',
-                description: 'Plano de teste - processamentos ilimitados',
-                active: true,
-              });
-              
+              // Create test price if it doesn't exist
               testPrice = await stripe.prices.create({
-                product: testProduct.id,
+                product: 'prod_S1qmbByFFnRUaT',
                 unit_amount: 1590, // R$15.90
                 currency: 'brl',
                 recurring: {
@@ -119,7 +107,7 @@ serve(async (req) => {
                 },
                 lookup_key: 'advanced_test_plan',
               });
-              console.log('Created new test price:', testPrice.id);
+              console.log('Created new test price for advanced plan:', testPrice.id);
             }
             
             checkoutItems.push({
@@ -127,7 +115,7 @@ serve(async (req) => {
               quantity: 1,
             });
           } catch (err) {
-            console.error('Error setting up test price:', err);
+            console.error('Error setting up test price for advanced plan:', err);
             throw err;
           }
         } else if (priceId.startsWith('price_')) {
@@ -146,17 +134,59 @@ serve(async (req) => {
             });
             
             if (prices.data.length === 0) {
-              // If no test mode prices found for this product, create one
-              console.log(`No active prices found for product: ${priceId}, creating test price`);
+              // If no prices found for this product, fallback to basic plan
+              console.log(`No active prices found for product: ${priceId}, falling back to basic plan`);
               
-              const testProduct = await stripe.products.create({
-                name: 'Test Product',
-                description: 'Generated test product',
+              const basicPrices = await stripe.prices.list({
+                product: 'prod_S1qlt19OAovrSE',
                 active: true,
+                limit: 1,
               });
               
+              if (basicPrices.data.length > 0) {
+                checkoutItems.push({
+                  price: basicPrices.data[0].id,
+                  quantity: 1,
+                });
+              } else {
+                // Create a new price if none exists
+                const testPrice = await stripe.prices.create({
+                  product: 'prod_S1qlt19OAovrSE',
+                  unit_amount: 990, // R$9.90
+                  currency: 'brl',
+                  recurring: {
+                    interval: 'month',
+                  },
+                });
+                
+                checkoutItems.push({
+                  price: testPrice.id,
+                  quantity: 1,
+                });
+              }
+            } else {
+              checkoutItems.push({
+                price: prices.data[0].id,
+                quantity: 1,
+              });
+            }
+          } catch (error) {
+            console.error('Error finding price for product:', error);
+            // Fallback to basic plan on error
+            const basicPrices = await stripe.prices.list({
+              product: 'prod_S1qlt19OAovrSE',
+              active: true,
+              limit: 1,
+            });
+            
+            if (basicPrices.data.length > 0) {
+              checkoutItems.push({
+                price: basicPrices.data[0].id,
+                quantity: 1,
+              });
+            } else {
               const testPrice = await stripe.prices.create({
-                product: testProduct.id,
+                product: 'prod_S1qlt19OAovrSE',
                 unit_amount: 990, // R$9.90
                 currency: 'brl',
                 recurring: {
@@ -168,24 +198,28 @@ serve(async (req) => {
                 price: testPrice.id,
                 quantity: 1,
               });
-            } else {
-              checkoutItems.push({
-                price: prices.data[0].id,
-                quantity: 1,
-              });
             }
-          } catch (error) {
-            console.error('Error finding price for product:', error);
-            
-            // Create a fallback test product in case of error
-            const testProduct = await stripe.products.create({
-              name: 'Fallback Test Product',
-              description: 'Generated after error with original product',
-              active: true,
+          }
+        } else {
+          // For any unrecognized input, fallback to basic plan
+          console.log(`Unrecognized priceId format: ${priceId}, using basic plan fallback`);
+          
+          // Check if a price exists for the basic plan
+          const prices = await stripe.prices.list({
+            product: 'prod_S1qlt19OAovrSE',
+            active: true,
+            limit: 1,
+          });
+          
+          if (prices.data.length > 0) {
+            checkoutItems.push({
+              price: prices.data[0].id,
+              quantity: 1,
             });
-            
+          } else {
+            // Create a new price if none exists
             const testPrice = await stripe.prices.create({
-              product: testProduct.id,
+              product: 'prod_S1qlt19OAovrSE',
               unit_amount: 990, // R$9.90
               currency: 'brl',
               recurring: {
@@ -198,46 +232,9 @@ serve(async (req) => {
               quantity: 1,
             });
           }
-        } else {
-          // For any other input, use basic plan as fallback
-          console.log(`Unrecognized priceId format: ${priceId}, using fallback test plan`);
-          
-          // Check if a test price already exists for the basic plan
-          const prices = await stripe.prices.list({
-            limit: 1,
-            active: true,
-            lookup_keys: ['basic_test_plan'],
-          });
-          
-          let testPrice;
-          if (prices.data.length > 0) {
-            testPrice = prices.data[0];
-          } else {
-            // Create test product and price if it doesn't exist
-            const testProduct = await stripe.products.create({
-              name: 'Plano Básico (Test)',
-              description: 'Plano de teste - até 100 processamentos por dia',
-              active: true,
-            });
-            
-            testPrice = await stripe.prices.create({
-              product: testProduct.id,
-              unit_amount: 990, // R$9.90
-              currency: 'brl',
-              recurring: {
-                interval: 'month',
-              },
-              lookup_key: 'basic_test_plan',
-            });
-          }
-          
-          checkoutItems.push({
-            price: testPrice.id,
-            quantity: 1,
-          });
         }
 
-        // Setup checkout session parameters with optimized performance parameters
+        // Setup checkout session parameters with test mode explicitly set
         const params = {
           mode: 'subscription',
           payment_method_types: ['card'],
@@ -288,8 +285,9 @@ serve(async (req) => {
         if (products.data.length === 0) {
           console.log('No products found. Creating default subscription products...');
           
-          // Criar produto para o Plano Básico
+          // Criar produto para o Plano Básico com ID correto
           const basicProduct = await stripe.products.create({
+            id: 'prod_S1qlt19OAovrSE',
             name: 'Plano Básico',
             description: 'Até 100 processamentos por dia',
             metadata: {
@@ -316,8 +314,9 @@ serve(async (req) => {
           
           console.log(`Created price for basic product: ${basicPrice.id}`);
           
-          // Criar produto para o Plano Avançado
+          // Criar produto para o Plano Avançado com ID correto
           const advancedProduct = await stripe.products.create({
+            id: 'prod_S1qmbByFFnRUaT',
             name: 'Plano Avançado',
             description: 'Processamentos ilimitados',
             metadata: {

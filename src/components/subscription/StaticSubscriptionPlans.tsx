@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -14,7 +13,7 @@ export const StaticSubscriptionPlans = () => {
   const { createCheckoutSession } = useStripe();
   const { toast } = useToast();
 
-  // Static plans definition for when we can't load from Stripe
+  // Static plans definition with correct test product IDs
   const staticPlans = [
     {
       id: "basic",
@@ -28,8 +27,8 @@ export const StaticSubscriptionPlans = () => {
         t('basicFeature3')
       ],
       isPopular: false,
-      // Using product ID instead of price ID to avoid errors
-      productId: "prod_S109EaoLA02QYK"
+      // Using the provided test product ID
+      productId: "prod_S1qlt19OAovrSE"
     },
     {
       id: "advanced",
@@ -44,8 +43,8 @@ export const StaticSubscriptionPlans = () => {
         t('advancedFeature4')
       ],
       isPopular: true,
-      // Using product ID for advanced plan too
-      productId: "prod_S109H2KiOoZULm"
+      // Using the provided test product ID
+      productId: "prod_S1qmbByFFnRUaT"
     }
   ];
 
@@ -57,7 +56,7 @@ export const StaticSubscriptionPlans = () => {
     setProcessingPlanId(plan.id);
     
     try {
-      // Priorizar o uso do productId em vez do priceId
+      // Prioritize using the productId
       if (plan.productId) {
         console.log(`Iniciando checkout com product ID: ${plan.productId}`);
         const result = await createCheckoutSession(plan.productId);
@@ -67,7 +66,7 @@ export const StaticSubscriptionPlans = () => {
           throw new Error("Falha ao criar sessão de checkout");
         }
       } 
-      // Fallback para price ID apenas se disponível
+      // Fallback to price ID if available
       else if (plan.priceId) {
         console.log(`Iniciando checkout com price ID: ${plan.priceId}`);
         const result = await createCheckoutSession(plan.priceId);
