@@ -8,6 +8,7 @@ import { useStripe } from "@/hooks/useStripe";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 const CheckoutPage = () => {
   const { t } = useTranslation();
@@ -31,7 +32,7 @@ const CheckoutPage = () => {
     return (
       <div className="flex justify-center items-center h-screen">
         <Card>
-          <CardContent className="flex flex-col items-center justify-center">
+          <CardContent className="flex flex-col items-center justify-center p-6">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             <p>{t('redirecting')}</p>
           </CardContent>
@@ -68,7 +69,6 @@ const CheckoutPage = () => {
       }
       
       // Call the checkout session creation function
-      // The actual redirect now happens in the useCheckoutSession hook
       await createCheckoutSession(checkoutId);
       setIsProcessing(false);
       
@@ -85,6 +85,10 @@ const CheckoutPage = () => {
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="absolute top-4 right-4 z-10">
+        <LanguageSelector />
+      </div>
+      
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{t('checkout')}</CardTitle>

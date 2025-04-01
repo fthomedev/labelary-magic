@@ -3,20 +3,20 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { translations } from './locales';
 
-// Função para detectar o idioma preferido do usuário
+// Function to detect user's preferred language
 const detectUserLanguage = () => {
   const savedLanguage = localStorage.getItem('i18nextLng');
   if (savedLanguage && ['en', 'pt-BR'].includes(savedLanguage)) {
     return savedLanguage;
   }
   
-  // Verifica o idioma do navegador
+  // Check browser language
   const browserLang = navigator.language;
   if (browserLang && browserLang.startsWith('pt')) {
     return 'pt-BR';
   }
   
-  return 'pt-BR'; // Idioma padrão
+  return 'pt-BR'; // Default language
 };
 
 // Initialize i18n with the saved language preference or default to pt-BR
@@ -55,17 +55,20 @@ export const getTranslation = (key: string, options?: Record<string, any>) => {
   return i18n.t(key, options);
 };
 
-// Verificar se uma chave existe nas traduções
+// Check if a translation key exists
 export const hasTranslation = (key: string): boolean => {
   return i18n.exists(key);
 };
 
-// Função para verificar se há chaves faltantes (útil para desenvolvimento)
+// Function to find missing translation keys (useful for development)
 export const findMissingKeys = (): string[] => {
   if (process.env.NODE_ENV !== 'development') return [];
   
   const missingKeys: string[] = [];
-  const allKeys = Object.keys(translations.en);
+  const allKeys = new Set([
+    ...Object.keys(translations.en),
+    ...Object.keys(translations['pt-BR'])
+  ]);
   
   for (const key of allKeys) {
     if (!i18n.exists(key)) {
@@ -74,6 +77,17 @@ export const findMissingKeys = (): string[] => {
   }
   
   return missingKeys;
+};
+
+// Function to validate translation consistency between languages
+export const validateTranslations = (): { missingInEn: string[], missingInPtBR: string[] } => {
+  const enKeys = new Set(Object.keys(translations.en));
+  const ptBRKeys = new Set(Object.keys(translations['pt-BR']));
+  
+  const missingInEn = [...ptBRKeys].filter(key => !enKeys.has(key));
+  const missingInPtBR = [...enKeys].filter(key => !ptBRKeys.has(key));
+  
+  return { missingInEn, missingInPtBR };
 };
 
 export default i18n;

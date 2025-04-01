@@ -13,7 +13,7 @@ export default {
   delete: 'Delete',
   cancel: 'Cancel',
   confirm: 'Confirm',
-  back: 'Back',
+  back: 'Back to Home',
   
   // Navigation
   title: 'ZPL to PDF Converter',
@@ -137,6 +137,12 @@ export default {
   selectPlan: 'Subscribe',
   currentPeriod: 'Current Period',
   status: 'Status',
+  confirmAndPay: 'Confirm & Pay',
+  redirecting: 'Redirecting...',
+  checkout: 'Checkout',
+  confirmSubscription: 'Confirm your subscription',
+  price: 'Price',
+  errorProcessingCheckout: 'Error processing checkout',
   
   // Billing periods
   perDay: 'per day',

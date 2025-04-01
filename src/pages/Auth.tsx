@@ -6,12 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const showSignUp = searchParams.get('signup') === 'true';
+  const { t } = useTranslation();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -40,7 +42,7 @@ const Auth = () => {
         <Button variant="ghost" size="sm" asChild>
           <Link to="/" className="flex items-center gap-1">
             <ArrowLeft className="h-4 w-4" />
-            {showSignUp ? "Back to Home" : "Back to Home"}
+            {t('back')}
           </Link>
         </Button>
       </div>

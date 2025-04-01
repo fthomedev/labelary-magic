@@ -13,7 +13,7 @@ export default {
   delete: 'Excluir',
   cancel: 'Cancelar',
   confirm: 'Confirmar',
-  back: 'Voltar',
+  back: 'Voltar para Início',
   
   // Navigation
   title: 'Conversor ZPL para PDF',
@@ -137,6 +137,12 @@ export default {
   selectPlan: 'Assinar',
   currentPeriod: 'Período Atual',
   status: 'Status',
+  confirmAndPay: 'Confirmar e Pagar',
+  redirecting: 'Redirecionando...',
+  checkout: 'Finalizar Compra',
+  confirmSubscription: 'Confirme sua assinatura',
+  price: 'Preço',
+  errorProcessingCheckout: 'Erro ao processar pagamento',
   
   // Billing periods
   perDay: 'por dia',
