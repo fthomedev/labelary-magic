@@ -1,9 +1,11 @@
 
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { AuthForm } from "@/components/AuthForm";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -34,6 +36,15 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
+      <div className="absolute top-4 left-4 z-10">
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/" className="flex items-center gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            {showSignUp ? "Back to Home" : "Back to Home"}
+          </Link>
+        </Button>
+      </div>
+      
       <div className="absolute top-4 right-4 z-10 flex items-center gap-4">
         <LanguageSelector />
       </div>
