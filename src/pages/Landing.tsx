@@ -1,10 +1,11 @@
+
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
-import { Check, FileText, ArrowRight, BarChart, Lock, Zap } from 'lucide-react';
+import { Check, FileText, ArrowRight, BarChart, Lock, Zap, LogIn } from 'lucide-react';
 import { LanguageSelector } from '@/components/LanguageSelector';
 
 const Landing = () => {
@@ -24,6 +25,10 @@ const Landing = () => {
   }, [navigate]);
 
   const handleGetStarted = () => {
+    navigate('/auth');
+  };
+
+  const handleLogin = () => {
     navigate('/auth');
   };
 
@@ -55,7 +60,7 @@ const Landing = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section with Login Button */}
       <section className="relative py-20 md:py-32 overflow-hidden">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-4xl mx-auto">
@@ -67,14 +72,25 @@ const Landing = () => {
                 ? 'Simplifique o seu fluxo de impressão de etiquetas e ganhe tempo com a nossa solução online confiável'
                 : 'Simplify your label printing workflow and save time with our reliable online solution'}
             </p>
-            <Button 
-              size="lg" 
-              onClick={handleGetStarted} 
-              className="px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-            >
-              {i18n.language === 'pt-BR' ? 'Crie sua Conta Gratuitamente' : 'Create Your Free Account'}
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+              <Button 
+                size="lg" 
+                onClick={handleGetStarted} 
+                className="px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto"
+              >
+                {i18n.language === 'pt-BR' ? 'Crie sua Conta Gratuitamente' : 'Create Your Free Account'}
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                onClick={handleLogin} 
+                className="px-8 py-6 text-lg rounded-full shadow-md hover:shadow-lg transition-all duration-300 w-full sm:w-auto"
+              >
+                <LogIn className="mr-2 h-5 w-5" />
+                {i18n.language === 'pt-BR' ? 'Entrar na Conta' : 'Log In'}
+              </Button>
+            </div>
           </div>
         </div>
         
