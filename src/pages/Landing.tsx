@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
 import { Check, FileText, ArrowRight, BarChart, Lock, Zap } from 'lucide-react';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 const Landing = () => {
   const { t, i18n } = useTranslation();
@@ -50,14 +50,7 @@ const Landing = () => {
             >
               {t('register')}
             </Button>
-            <Button 
-              variant="ghost"
-              size="icon"
-              onClick={() => i18n.changeLanguage(i18n.language === 'pt-BR' ? 'en' : 'pt-BR')}
-              className="text-xs"
-            >
-              {i18n.language === 'pt-BR' ? 'EN' : 'PT'}
-            </Button>
+            <LanguageSelector />
           </div>
         </div>
       </header>
