@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import Subscription from "./pages/Subscription";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import CheckoutPage from "./pages/CheckoutPage";
+import Landing from "./pages/Landing";
 
 const queryClient = new QueryClient();
 
@@ -21,9 +22,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
           <Route
-            path="/"
+            path="/app"
             element={
               <AuthGuard>
                 <Index />

@@ -1,24 +1,27 @@
 
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AuthForm } from "@/components/AuthForm";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageSelector } from "@/components/LanguageSelector";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const showSignUp = searchParams.get('signup') === 'true';
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/");
+        navigate("/app");
       }
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/");
+        navigate("/app");
       }
     });
 
@@ -35,7 +38,7 @@ const Auth = () => {
         <LanguageSelector />
       </div>
       <div className="flex justify-center w-full">
-        <AuthForm />
+        <AuthForm initialTab={showSignUp ? 'signup' : 'login'} />
       </div>
     </div>
   );
