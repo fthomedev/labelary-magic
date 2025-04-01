@@ -245,40 +245,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Integration Section */}
-      <section className="py-20 bg-gray-50 dark:bg-gray-800" id="integracoes">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
-            {i18n.language === 'pt-BR' ? 'Integre Nossa Solução ao Seu Sistema' : 'Integrate Our Solution into Your System'}
-          </h2>
-          <p className="text-center mb-16 max-w-2xl mx-auto text-gray-600 dark:text-gray-300">
-            {i18n.language === 'pt-BR' 
-              ? 'Use nossa API para automatizar a conversão de etiquetas diretamente no seu sistema de gestão, ERP ou plataforma de e-commerce. Suporte completo para desenvolvedores.' 
-              : 'Use our API to automate label conversion directly in your management system, ERP or e-commerce platform. Complete support for developers.'}
-          </p>
-          
-          <div className="bg-white dark:bg-gray-900 p-8 rounded-xl shadow-sm max-w-4xl mx-auto">
-            <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto text-sm">
-              <code>
-                {`// ${i18n.language === 'pt-BR' ? 'Exemplo simples de integração com API' : 'Simple API integration example'}
-fetch('https://api.zplmagic.com/convert', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
-  },
-  body: JSON.stringify({
-    content: zplContent
-  })
-})
-.then(response => response.json())
-.then(data => console.log(data.pdfUrl));`}
-              </code>
-            </pre>
-          </div>
-        </div>
-      </section>
-
       {/* Sign Up / Login Section */}
       <section className="py-20 bg-gradient-to-br from-primary/20 to-primary/5" id="cadastro">
         <div className="container mx-auto px-4">
