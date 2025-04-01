@@ -8,9 +8,13 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-export const AuthForm = () => {
+type AuthFormProps = {
+  initialTab?: 'login' | 'signup';
+}
+
+export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(initialTab === 'signup');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
