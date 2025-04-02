@@ -1,4 +1,3 @@
-
 export default {
   // General
   error: 'Error',
@@ -163,6 +162,13 @@ export default {
   deleteAccountConfirm: 'Confirm account deletion?',
   deleteAccountWarning: 'This action cannot be undone. Your account will be permanently deleted.',
   accountDeleted: 'Your account has been successfully deleted',
+  deleteAccountConsequences: 'All your data will be permanently lost.',
+  finalDeleteConfirm: 'Are you absolutely sure?',
+  finalDeleteWarning: 'This action is permanent and cannot be undone. Please confirm that you understand the consequences:',
+  deleteAccountEffect1: 'Your account will be permanently deleted',
+  deleteAccountEffect2: 'All your processing history will be deleted',
+  deleteAccountEffect3: 'Your subscription information will be lost',
+  deleteAccountFinal: 'Yes, delete my account',
   
   // Checkout page
   checkoutTitle: 'Complete Subscription',

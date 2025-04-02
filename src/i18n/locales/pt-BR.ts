@@ -1,4 +1,3 @@
-
 export default {
   // General
   error: 'Erro',
@@ -163,6 +162,13 @@ export default {
   deleteAccountConfirm: 'Confirmar exclusão de conta?',
   deleteAccountWarning: 'Esta ação não pode ser desfeita. Sua conta será permanentemente excluída.',
   accountDeleted: 'Sua conta foi excluída com sucesso',
+  deleteAccountConsequences: 'Todos os seus dados serão permanentemente perdidos.',
+  finalDeleteConfirm: 'Você tem absoluta certeza?',
+  finalDeleteWarning: 'Esta ação é permanente e não pode ser desfeita. Por favor, confirme que você entende as consequências:',
+  deleteAccountEffect1: 'Sua conta será permanentemente excluída',
+  deleteAccountEffect2: 'Todo seu histórico de processamento será excluído',
+  deleteAccountEffect3: 'Suas informações de assinatura serão perdidas',
+  deleteAccountFinal: 'Sim, exclua minha conta',
   
   // Checkout page
   checkoutTitle: 'Finalizar assinatura',
