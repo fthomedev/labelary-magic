@@ -18,7 +18,7 @@ export async function getPrices(stripe: Stripe) {
       name: 'Plano Básico',
       description: 'Até 50 processamentos por dia',
       metadata: {
-        limit: 'Até 50 processamentos por dia',
+        limit: '50',
         features: 'Suporte por email,Acesso a todas as funcionalidades básicas'
       }
     });
@@ -34,6 +34,7 @@ export async function getPrices(stripe: Stripe) {
         interval: 'month',
       },
       metadata: {
+        usage_limit: '50',
         type: 'basic'
       },
       lookup_key: 'basic_plan'
@@ -47,7 +48,7 @@ export async function getPrices(stripe: Stripe) {
       name: 'Plano Avançado',
       description: 'Até 100 processamentos por dia',
       metadata: {
-        limit: 'Até 100 processamentos por dia',
+        limit: '100',
         features: 'Suporte prioritário,Acesso a todas as funcionalidades,Múltiplos usuários'
       }
     });
@@ -63,6 +64,7 @@ export async function getPrices(stripe: Stripe) {
         interval: 'month',
       },
       metadata: {
+        usage_limit: '100',
         type: 'advanced'
       },
       lookup_key: 'advanced_plan'
@@ -76,7 +78,7 @@ export async function getPrices(stripe: Stripe) {
       name: 'Plano Ilimitado',
       description: 'Processamentos ilimitados',
       metadata: {
-        limit: 'Processamentos ilimitados',
+        limit: '-1',
         features: 'Suporte prioritário 24/7,Acesso a todas as funcionalidades,Múltiplos usuários,Recursos avançados'
       }
     });
@@ -92,6 +94,7 @@ export async function getPrices(stripe: Stripe) {
         interval: 'month',
       },
       metadata: {
+        usage_limit: '-1',
         type: 'unlimited'
       },
       lookup_key: 'unlimited_plan'

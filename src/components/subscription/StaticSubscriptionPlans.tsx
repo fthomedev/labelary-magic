@@ -14,7 +14,7 @@ export const StaticSubscriptionPlans = () => {
   const { createCheckoutSession } = useStripe();
   const { toast } = useToast();
 
-  // Planos estáticos atualizados com os novos valores e limites
+  // Updated static plans with new values and limits
   const staticPlans = [
     {
       id: "free",
@@ -29,7 +29,7 @@ export const StaticSubscriptionPlans = () => {
       ],
       isPopular: false,
       isFree: true,
-      productId: "free_plan"  // Plano gratuito não tem ID de produto no Stripe
+      productId: "free_plan"  // Free plan has no product ID in Stripe
     },
     {
       id: "basic",
@@ -43,7 +43,7 @@ export const StaticSubscriptionPlans = () => {
         t('basicFeature3')
       ],
       isPopular: false,
-      productId: "prod_basic_plan" // Placeholder, será criado no Stripe
+      productId: "prod_basic_plan"
     },
     {
       id: "advanced",
@@ -58,7 +58,7 @@ export const StaticSubscriptionPlans = () => {
         t('advancedFeature4')
       ],
       isPopular: true,
-      productId: "prod_advanced_plan" // Placeholder, será criado no Stripe
+      productId: "prod_advanced_plan"
     },
     {
       id: "unlimited",
@@ -73,12 +73,12 @@ export const StaticSubscriptionPlans = () => {
         t('unlimitedFeature4')
       ],
       isPopular: false,
-      productId: "prod_unlimited_plan" // Placeholder, será criado no Stripe
+      productId: "prod_unlimited_plan"
     }
   ];
 
   const handleSelectPlan = async (plan) => {
-    // Não processamos o plano gratuito
+    // Don't process free plan
     if (plan.isFree) {
       toast({
         title: t('freePlanSelected'),
@@ -96,22 +96,22 @@ export const StaticSubscriptionPlans = () => {
     try {
       // Prioritize using the productId
       if (plan.productId) {
-        console.log(`Iniciando checkout com product ID: ${plan.productId}`);
+        console.log(`Starting checkout with product ID: ${plan.productId}`);
         const result = await createCheckoutSession(plan.productId);
         console.log("Checkout session result:", result);
         
         if (!result) {
-          throw new Error("Falha ao criar sessão de checkout");
+          throw new Error("Failed to create checkout session");
         }
       } 
       // Fallback to price ID if available
       else if (plan.priceId) {
-        console.log(`Iniciando checkout com price ID: ${plan.priceId}`);
+        console.log(`Starting checkout with price ID: ${plan.priceId}`);
         const result = await createCheckoutSession(plan.priceId);
         console.log("Checkout session result:", result);
         
         if (!result) {
-          throw new Error("Falha ao criar sessão de checkout");
+          throw new Error("Failed to create checkout session");
         }
       }
       // Alternative navigation to checkout page if no IDs are found

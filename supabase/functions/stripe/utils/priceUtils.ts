@@ -26,6 +26,10 @@ export async function findOrCreatePrice(stripe: Stripe, productId: string, amoun
       },
       lookup_key: productId === 'prod_basic_plan' ? 'basic_plan' : 
                  productId === 'prod_advanced_plan' ? 'advanced_plan' : 'unlimited_plan',
+      metadata: {
+        usage_limit: productId === 'prod_basic_plan' ? '50' : 
+                    productId === 'prod_advanced_plan' ? '100' : '-1', // -1 means unlimited
+      }
     });
     
     console.log(`Created new price for product ${productId}:`, price.id);
