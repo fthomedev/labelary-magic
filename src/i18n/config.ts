@@ -5,6 +5,9 @@ import { translations } from './locales';
 
 // Function to detect user's preferred language
 const detectUserLanguage = () => {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined') return 'pt-BR';
+  
   const savedLanguage = localStorage.getItem('i18nextLng');
   if (savedLanguage && ['en', 'pt-BR'].includes(savedLanguage)) {
     return savedLanguage;
@@ -20,13 +23,10 @@ const detectUserLanguage = () => {
 };
 
 // Initialize i18n with the saved language preference or default to pt-BR
-const savedLanguage = detectUserLanguage();
+const savedLanguage = typeof window !== 'undefined' ? detectUserLanguage() : 'pt-BR';
 
 i18n.use(initReactI18next).init({
-  resources: {
-    en: { translation: translations.en },
-    'pt-BR': { translation: translations['pt-BR'] },
-  },
+  resources: translations,
   lng: savedLanguage,
   fallbackLng: 'en',
   interpolation: {
@@ -40,11 +40,13 @@ i18n.use(initReactI18next).init({
 
 // Store language preference and update HTML lang attribute
 i18n.on('languageChanged', (lng) => {
-  localStorage.setItem('i18nextLng', lng);
-  document.documentElement.lang = lng;
-  
-  // Trigger a custom event that components can listen for
-  document.dispatchEvent(new CustomEvent('i18n-language-changed', { detail: lng }));
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('i18nextLng', lng);
+    document.documentElement.lang = lng;
+    
+    // Trigger a custom event that components can listen for
+    document.dispatchEvent(new CustomEvent('i18n-language-changed', { detail: lng }));
+  }
 });
 
 // Add a function to get the current language
@@ -66,8 +68,8 @@ export const findMissingKeys = (): string[] => {
   
   const missingKeys: string[] = [];
   const allKeys = new Set([
-    ...Object.keys(translations.en),
-    ...Object.keys(translations['pt-BR'])
+    ...Object.keys(translations.en.translation),
+    ...Object.keys(translations['pt-BR'].translation)
   ]);
   
   for (const key of allKeys) {
@@ -81,8 +83,8 @@ export const findMissingKeys = (): string[] => {
 
 // Function to validate translation consistency between languages
 export const validateTranslations = (): { missingInEn: string[], missingInPtBR: string[] } => {
-  const enKeys = new Set(Object.keys(translations.en));
-  const ptBRKeys = new Set(Object.keys(translations['pt-BR']));
+  const enKeys = new Set(Object.keys(translations.en.translation));
+  const ptBRKeys = new Set(Object.keys(translations['pt-BR'].translation));
   
   const missingInEn = [...ptBRKeys].filter(key => !enKeys.has(key));
   const missingInPtBR = [...enKeys].filter(key => !ptBRKeys.has(key));
