@@ -54,18 +54,17 @@ export const useUsageLimits = () => {
       // If no subscription, user is on free plan (10 labels/day)
       if (!subscription) {
         // Query usage directly for free tier users using the custom RPC function
-        // Fix: Add the second type parameter (input params type)
-        const { data: usageData, error: usageError } = await supabase.rpc<number, { user_id_param: string }>(
-          'check_free_tier_usage', 
-          { user_id_param: user.id }
-        );
+        const { data: usageData, error: usageError } = await supabase
+          .rpc('check_free_tier_usage', { user_id_param: user.id });
         
         if (usageError) {
           console.error('Error checking free tier usage:', usageError);
           return false;
         }
         
-        const reachedLimit = usageData && usageData > 10;
+        // The usage data is typed as number, we can convert it explicitly
+        const usage = usageData as number;
+        const reachedLimit = usage > 10;
         setHasReachedLimit(reachedLimit);
         
         if (reachedLimit) {
@@ -120,18 +119,18 @@ export const useUsageLimits = () => {
       }
       
       // Call RPC function to increment usage
-      // Fix: Add the second type parameter (input params type)
-      const { data, error } = await supabase.rpc<boolean, { user_id_param: string, increment_amount: number }>(
-        'increment_usage_count', 
-        { user_id_param: user.id, increment_amount: count }
-      );
+      const { data, error } = await supabase
+        .rpc('increment_usage_count', { 
+          user_id_param: user.id, 
+          increment_amount: count 
+        });
       
       if (error) {
         console.error('Error incrementing usage:', error);
         return false;
       }
       
-      return true;
+      return data as boolean;
     } catch (error) {
       console.error('Error incrementing usage:', error);
       return false;
