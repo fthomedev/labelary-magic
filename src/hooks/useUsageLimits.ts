@@ -3,6 +3,25 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
+// Define an interface for the subscription properties to avoid TypeScript errors
+interface Subscription {
+  id: string;
+  user_id: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  status: string;
+  price_id: string | null;
+  quantity: number | null;
+  cancel_at_period_end: boolean | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  created_at: string;
+  updated_at: string;
+  usage_quota: number | null;
+  usage_count: number | null;
+  usage_reset_date: string | null;
+}
+
 export const useUsageLimits = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasReachedLimit, setHasReachedLimit] = useState(false);
@@ -34,9 +53,11 @@ export const useUsageLimits = () => {
       
       // If no subscription, user is on free plan (10 labels/day)
       if (!subscription) {
-        // Query usage directly for free tier users
-        const { data: usageData, error: usageError } = await supabase
-          .rpc('check_free_tier_usage', { user_id_param: user.id });
+        // Query usage directly for free tier users using the custom RPC function
+        const { data: usageData, error: usageError } = await supabase.rpc<number>(
+          'check_free_tier_usage', 
+          { user_id_param: user.id }
+        );
         
         if (usageError) {
           console.error('Error checking free tier usage:', usageError);
@@ -57,20 +78,23 @@ export const useUsageLimits = () => {
         return reachedLimit;
       }
       
+      // Cast the subscription to our interface to access the usage properties
+      const typedSubscription = subscription as unknown as Subscription;
+      
       // If unlimited plan, never reached limit
-      if (subscription.usage_quota === -1) {
+      if (typedSubscription.usage_quota === -1) {
         setHasReachedLimit(false);
         return false;
       }
       
       // Check if user has reached their limit
-      const hasReached = subscription.usage_count >= subscription.usage_quota;
+      const hasReached = (typedSubscription.usage_count || 0) >= (typedSubscription.usage_quota || 0);
       setHasReachedLimit(hasReached);
       
       if (hasReached) {
         toast({
           title: 'Limite de uso atingido',
-          description: `Você atingiu o limite de ${subscription.usage_quota} etiquetas por dia no seu plano atual.`,
+          description: `Você atingiu o limite de ${typedSubscription.usage_quota} etiquetas por dia no seu plano atual.`,
           variant: 'destructive'
         });
       }
@@ -95,7 +119,7 @@ export const useUsageLimits = () => {
       }
       
       // Call RPC function to increment usage
-      const { data, error } = await supabase.rpc(
+      const { data, error } = await supabase.rpc<boolean>(
         'increment_usage_count', 
         { user_id_param: user.id, increment_amount: count }
       );
