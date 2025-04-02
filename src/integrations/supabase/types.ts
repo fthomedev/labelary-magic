@@ -73,6 +73,9 @@ export type Database = {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
+          usage_count: number | null
+          usage_quota: number | null
+          usage_reset_date: string | null
           user_id: string
         }
         Insert: {
@@ -87,6 +90,9 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
+          usage_count?: number | null
+          usage_quota?: number | null
+          usage_reset_date?: string | null
           user_id: string
         }
         Update: {
@@ -101,6 +107,9 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
+          usage_count?: number | null
+          usage_quota?: number | null
+          usage_reset_date?: string | null
           user_id?: string
         }
         Relationships: []
@@ -117,6 +126,10 @@ export type Database = {
           p_pdf_url: string
           p_pdf_path?: string
         }
+        Returns: undefined
+      }
+      reset_daily_usage: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
     }
