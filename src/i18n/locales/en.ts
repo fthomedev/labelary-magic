@@ -1,3 +1,4 @@
+
 export default {
   // General
   error: 'Error',
@@ -176,25 +177,40 @@ export default {
   noPlanSelected: 'No plan selected',
   invalidPlanData: 'Invalid plan data',
   
-  // Plan descriptions
+  // Plan descriptions and features - New plans
+  freePlan: 'Free Plan',
+  freePlanDescription: 'Perfect for testing and occasional use',
+  freePlanButton: 'Use Free',
+  freePlanSelected: 'Free Plan Selected',
+  freePlanSelectedDescription: 'You are using the free plan with a limit of 10 labels per day.',
+  freeFeature1: 'Up to 10 labels per day',
+  freeFeature2: 'Basic features',
+  freeFeature3: 'No priority support',
+  
   basicPlan: 'Basic Plan',
+  basicPlanDescription: 'For regular use with small demands',
+  basicFeature1: 'Up to 50 labels per day',
+  basicFeature2: 'Email support',
+  basicFeature3: 'Access to all basic features',
+  
   advancedPlan: 'Advanced Plan',
-  proPlan: 'Pro Plan',
-  basicPlanDescription: 'Perfect for individuals and small projects',
-  advancedPlanDescription: 'Best for growing businesses with larger needs',
+  advancedPlanDescription: 'Perfect for growing businesses',
+  advancedFeature1: 'Up to 100 labels per day',
+  advancedFeature2: 'Priority support',
+  advancedFeature3: 'Multiple users',
+  advancedFeature4: 'Advanced features',
+  
+  unlimitedPlan: 'Unlimited Plan',
+  unlimitedPlanDescription: 'For high-volume businesses',
+  unlimitedFeature1: 'Unlimited labels',
+  unlimitedFeature2: '24/7 priority support',
+  unlimitedFeature3: 'Multiple users',
+  unlimitedFeature4: 'All available features',
+  
   popularTag: 'Popular',
   learnMore: 'Subscribe',
   month: 'month',
   noLimit: 'No limit',
-  
-  // Plan features
-  basicFeature1: 'Up to 100 labels per month',
-  basicFeature2: 'Basic support',
-  basicFeature3: 'Single user',
-  advancedFeature1: 'Up to 1000 labels per month',
-  advancedFeature2: 'Priority support',
-  advancedFeature3: 'Multiple users',
-  advancedFeature4: 'Advanced analytics',
   
   // Plan selection
   choosePlan: 'Choose Your Plan',

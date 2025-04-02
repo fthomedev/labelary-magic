@@ -8,23 +8,37 @@ export async function getCheckoutItems(stripe: Stripe, priceId: string) {
   let checkoutItems = [];
   
   // Basic plan
-  if (priceId === 'basic' || priceId === 'prod_S1qlt19OAovrSE') {
-    console.log('Using test mode basic plan with product ID: prod_S1qlt19OAovrSE');
-    const testPrice = await findOrCreatePrice(stripe, 'prod_S1qlt19OAovrSE', 990, 'brl', 'month');
+  if (priceId === 'basic' || priceId === 'prod_basic_plan') {
+    console.log('Using basic plan with product ID: prod_basic_plan');
+    const price = await findOrCreatePrice(stripe, 'prod_basic_plan', 499, 'brl', 'month');
     checkoutItems.push({
-      price: testPrice.id,
+      price: price.id,
       quantity: 1,
     });
   } 
   // Advanced plan
-  else if (priceId === 'advanced' || priceId === 'prod_S1qmbByFFnRUaT') {
-    console.log('Using test mode advanced plan with product ID: prod_S1qmbByFFnRUaT');
-    const testPrice = await findOrCreatePrice(stripe, 'prod_S1qmbByFFnRUaT', 1590, 'brl', 'month');
+  else if (priceId === 'advanced' || priceId === 'prod_advanced_plan') {
+    console.log('Using advanced plan with product ID: prod_advanced_plan');
+    const price = await findOrCreatePrice(stripe, 'prod_advanced_plan', 999, 'brl', 'month');
     checkoutItems.push({
-      price: testPrice.id,
+      price: price.id,
       quantity: 1,
     });
   } 
+  // Unlimited plan
+  else if (priceId === 'unlimited' || priceId === 'prod_unlimited_plan') {
+    console.log('Using unlimited plan with product ID: prod_unlimited_plan');
+    const price = await findOrCreatePrice(stripe, 'prod_unlimited_plan', 1999, 'brl', 'month');
+    checkoutItems.push({
+      price: price.id,
+      quantity: 1,
+    });
+  } 
+  // Free plan - don't add anything
+  else if (priceId === 'free' || priceId === 'free_plan') {
+    console.log('Free plan selected - no checkout needed');
+    return [];
+  }
   // Direct price ID
   else if (priceId.startsWith('price_')) {
     checkoutItems.push({
@@ -43,7 +57,7 @@ export async function getCheckoutItems(stripe: Stripe, priceId: string) {
       
       if (prices.data.length === 0) {
         console.log(`No active prices found for product: ${priceId}, falling back to basic plan`);
-        return getCheckoutItems(stripe, 'prod_S1qlt19OAovrSE');
+        return getCheckoutItems(stripe, 'prod_basic_plan');
       }
       
       checkoutItems.push({
@@ -52,13 +66,13 @@ export async function getCheckoutItems(stripe: Stripe, priceId: string) {
       });
     } catch (error) {
       console.error('Error finding price for product:', error);
-      return getCheckoutItems(stripe, 'prod_S1qlt19OAovrSE');
+      return getCheckoutItems(stripe, 'prod_basic_plan');
     }
   } 
   // Fallback to basic plan
   else {
     console.log(`Unrecognized priceId format: ${priceId}, using basic plan fallback`);
-    return getCheckoutItems(stripe, 'prod_S1qlt19OAovrSE');
+    return getCheckoutItems(stripe, 'prod_basic_plan');
   }
   
   return checkoutItems;
@@ -74,6 +88,12 @@ export async function createCheckoutSession(stripe: Stripe, data: any) {
 
   // Get checkout items
   const checkoutItems = await getCheckoutItems(stripe, priceId);
+  
+  // If free plan or no items, return success without creating checkout
+  if (checkoutItems.length === 0) {
+    console.log('No checkout items - free plan selected');
+    return { url: successUrl };
+  }
 
   // Setup checkout session parameters with test mode explicitly set
   const params = {

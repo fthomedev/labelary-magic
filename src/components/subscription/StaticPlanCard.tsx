@@ -13,15 +13,17 @@ interface StaticPlanCardProps {
     currency: string;
     features: string[];
     isPopular?: boolean;
+    isFree?: boolean;
     productId?: string; // This is the Stripe product ID
   };
   onSelect: () => void;
   isLoading?: boolean;
   isCurrentPlan?: boolean;
   isPopular?: boolean;
+  isFree?: boolean;
 }
 
-export function StaticPlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPopular }: StaticPlanCardProps) {
+export function StaticPlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPopular, isFree }: StaticPlanCardProps) {
   const { t } = useTranslation();
   
   return (
@@ -40,7 +42,7 @@ export function StaticPlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPop
       <CardContent className="flex-1">
         <div className="mb-6">
           <span className="text-3xl font-bold">{plan.currency} {plan.price}</span>
-          <span className="text-muted-foreground">/{t('month')}</span>
+          {!isFree && <span className="text-muted-foreground">/{t('month')}</span>}
         </div>
         
         <div className="space-y-3">
@@ -52,10 +54,12 @@ export function StaticPlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPop
           ))}
         </div>
         
-        <div className="mt-4 bg-amber-50 p-2 rounded-md border border-amber-200 flex items-center gap-2 text-xs text-amber-800">
-          <AlertCircle className="h-3 w-3" />
-          <span>Ambiente de teste - Use cartões de teste Stripe</span>
-        </div>
+        {!isFree && (
+          <div className="mt-4 bg-amber-50 p-2 rounded-md border border-amber-200 flex items-center gap-2 text-xs text-amber-800">
+            <AlertCircle className="h-3 w-3" />
+            <span>Ambiente de teste - Use cartões de teste Stripe</span>
+          </div>
+        )}
       </CardContent>
       
       <CardFooter>
@@ -63,7 +67,7 @@ export function StaticPlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPop
           className="w-full"
           onClick={onSelect}
           disabled={isLoading || isCurrentPlan}
-          variant={isCurrentPlan ? "outline" : isPopular ? "default" : "secondary"}
+          variant={isFree ? "outline" : isCurrentPlan ? "outline" : isPopular ? "default" : "secondary"}
         >
           {isLoading ? (
             <>
@@ -72,6 +76,8 @@ export function StaticPlanCard({ plan, onSelect, isLoading, isCurrentPlan, isPop
             </>
           ) : isCurrentPlan ? (
             t('currentPlan')
+          ) : isFree ? (
+            t('freePlanButton')
           ) : (
             t('selectPlan')
           )}

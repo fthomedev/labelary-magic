@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -13,13 +14,28 @@ export const StaticSubscriptionPlans = () => {
   const { createCheckoutSession } = useStripe();
   const { toast } = useToast();
 
-  // Static plans definition with correct test product IDs
+  // Planos estáticos atualizados com os novos valores e limites
   const staticPlans = [
+    {
+      id: "free",
+      name: t('freePlan'),
+      description: t('freePlanDescription'),
+      price: "0",
+      currency: "R$",
+      features: [
+        t('freeFeature1'),
+        t('freeFeature2'),
+        t('freeFeature3')
+      ],
+      isPopular: false,
+      isFree: true,
+      productId: "free_plan"  // Plano gratuito não tem ID de produto no Stripe
+    },
     {
       id: "basic",
       name: t('basicPlan'),
       description: t('basicPlanDescription'),
-      price: "9,90",
+      price: "4,99",
       currency: "R$",
       features: [
         t('basicFeature1'),
@@ -27,14 +43,13 @@ export const StaticSubscriptionPlans = () => {
         t('basicFeature3')
       ],
       isPopular: false,
-      // Using the provided test product ID
-      productId: "prod_S1qlt19OAovrSE"
+      productId: "prod_basic_plan" // Placeholder, será criado no Stripe
     },
     {
       id: "advanced",
       name: t('advancedPlan'),
       description: t('advancedPlanDescription'),
-      price: "15,90",
+      price: "9,99",
       currency: "R$",
       features: [
         t('advancedFeature1'),
@@ -43,12 +58,35 @@ export const StaticSubscriptionPlans = () => {
         t('advancedFeature4')
       ],
       isPopular: true,
-      // Using the provided test product ID
-      productId: "prod_S1qmbByFFnRUaT"
+      productId: "prod_advanced_plan" // Placeholder, será criado no Stripe
+    },
+    {
+      id: "unlimited",
+      name: t('unlimitedPlan'),
+      description: t('unlimitedPlanDescription'),
+      price: "19,99",
+      currency: "R$",
+      features: [
+        t('unlimitedFeature1'),
+        t('unlimitedFeature2'),
+        t('unlimitedFeature3'),
+        t('unlimitedFeature4')
+      ],
+      isPopular: false,
+      productId: "prod_unlimited_plan" // Placeholder, será criado no Stripe
     }
   ];
 
   const handleSelectPlan = async (plan) => {
+    // Não processamos o plano gratuito
+    if (plan.isFree) {
+      toast({
+        title: t('freePlanSelected'),
+        description: t('freePlanSelectedDescription'),
+      });
+      return;
+    }
+    
     if (isLoading) return; // Prevent multiple clicks
     
     console.log("Selected plan:", plan);
@@ -98,7 +136,7 @@ export const StaticSubscriptionPlans = () => {
     <div className="space-y-8">
       <h2 className="text-3xl font-bold text-center mb-6">{t('simplePricing')}</h2>
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 max-w-4xl mx-auto">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
         {staticPlans.map((plan) => (
           <StaticPlanCard
             key={plan.id}
@@ -106,6 +144,7 @@ export const StaticSubscriptionPlans = () => {
             onSelect={() => handleSelectPlan(plan)}
             isLoading={isLoading && processingPlanId === plan.id}
             isPopular={plan.isPopular}
+            isFree={plan.isFree}
           />
         ))}
       </div>

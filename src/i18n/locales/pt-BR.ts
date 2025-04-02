@@ -1,3 +1,4 @@
+
 export default {
   // General
   error: 'Erro',
@@ -176,25 +177,40 @@ export default {
   noPlanSelected: 'Nenhum plano selecionado',
   invalidPlanData: 'Dados do plano inválidos',
   
-  // Plan descriptions
+  // Plan descriptions and features - Novos planos
+  freePlan: 'Plano Gratuito',
+  freePlanDescription: 'Ideal para testes e uso ocasional',
+  freePlanButton: 'Usar Grátis',
+  freePlanSelected: 'Plano Gratuito Selecionado',
+  freePlanSelectedDescription: 'Você está utilizando o plano gratuito com limite de 10 etiquetas por dia.',
+  freeFeature1: 'Até 10 etiquetas por dia',
+  freeFeature2: 'Funcionalidades básicas',
+  freeFeature3: 'Sem suporte prioritário',
+  
   basicPlan: 'Plano Básico',
+  basicPlanDescription: 'Para uso regular com pequenas demandas',
+  basicFeature1: 'Até 50 etiquetas por dia',
+  basicFeature2: 'Suporte por email',
+  basicFeature3: 'Acesso a todas as funcionalidades básicas',
+  
   advancedPlan: 'Plano Avançado',
-  proPlan: 'Plano Profissional',
-  basicPlanDescription: 'Perfeito para indivíduos e pequenos projetos',
-  advancedPlanDescription: 'Ideal para empresas em crescimento com maiores necessidades',
+  advancedPlanDescription: 'Perfeito para negócios em crescimento',
+  advancedFeature1: 'Até 100 etiquetas por dia',
+  advancedFeature2: 'Suporte prioritário',
+  advancedFeature3: 'Múltiplos usuários',
+  advancedFeature4: 'Recursos avançados',
+  
+  unlimitedPlan: 'Plano Ilimitado',
+  unlimitedPlanDescription: 'Para empresas com alto volume',
+  unlimitedFeature1: 'Etiquetas ilimitadas',
+  unlimitedFeature2: 'Suporte prioritário 24/7',
+  unlimitedFeature3: 'Múltiplos usuários',
+  unlimitedFeature4: 'Todos os recursos disponíveis',
+  
   popularTag: 'Mais popular',
   learnMore: 'Assinar',
   month: 'mês',
   noLimit: 'Sem limite',
-  
-  // Plan features
-  basicFeature1: 'Até 100 etiquetas por mês',
-  basicFeature2: 'Suporte básico',
-  basicFeature3: 'Usuário único',
-  advancedFeature1: 'Até 1000 etiquetas por mês',
-  advancedFeature2: 'Suporte prioritário',
-  advancedFeature3: 'Múltiplos usuários',
-  advancedFeature4: 'Análises avançadas',
   
   // Plan selection
   choosePlan: 'Escolha Seu Plano',

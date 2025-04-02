@@ -14,11 +14,11 @@ export async function getPrices(stripe: Stripe) {
     
     // Create basic product
     const basicProduct = await stripe.products.create({
-      id: 'prod_S1qlt19OAovrSE',
+      id: 'prod_basic_plan',
       name: 'Plano Básico',
-      description: 'Até 100 processamentos por dia',
+      description: 'Até 50 processamentos por dia',
       metadata: {
-        limit: 'Até 100 processamentos por dia',
+        limit: 'Até 50 processamentos por dia',
         features: 'Suporte por email,Acesso a todas as funcionalidades básicas'
       }
     });
@@ -28,7 +28,7 @@ export async function getPrices(stripe: Stripe) {
     // Create price for basic product
     const basicPrice = await stripe.prices.create({
       product: basicProduct.id,
-      unit_amount: 990, // R$9.90
+      unit_amount: 499, // R$4.99
       currency: 'brl',
       recurring: {
         interval: 'month',
@@ -36,19 +36,19 @@ export async function getPrices(stripe: Stripe) {
       metadata: {
         type: 'basic'
       },
-      lookup_key: 'basic_test_plan'
+      lookup_key: 'basic_plan'
     });
     
     console.log(`Created price for basic product: ${basicPrice.id}`);
     
     // Create advanced product
     const advancedProduct = await stripe.products.create({
-      id: 'prod_S1qmbByFFnRUaT',
+      id: 'prod_advanced_plan',
       name: 'Plano Avançado',
-      description: 'Processamentos ilimitados',
+      description: 'Até 100 processamentos por dia',
       metadata: {
-        limit: 'Processamentos ilimitados',
-        features: 'Suporte prioritário,Acesso a todas as funcionalidades,Sem restrições de uso'
+        limit: 'Até 100 processamentos por dia',
+        features: 'Suporte prioritário,Acesso a todas as funcionalidades,Múltiplos usuários'
       }
     });
     
@@ -57,7 +57,7 @@ export async function getPrices(stripe: Stripe) {
     // Create price for advanced product
     const advancedPrice = await stripe.prices.create({
       product: advancedProduct.id,
-      unit_amount: 1590, // R$15.90
+      unit_amount: 999, // R$9.99
       currency: 'brl',
       recurring: {
         interval: 'month',
@@ -65,10 +65,39 @@ export async function getPrices(stripe: Stripe) {
       metadata: {
         type: 'advanced'
       },
-      lookup_key: 'advanced_test_plan'
+      lookup_key: 'advanced_plan'
     });
     
     console.log(`Created price for advanced product: ${advancedPrice.id}`);
+    
+    // Create unlimited product
+    const unlimitedProduct = await stripe.products.create({
+      id: 'prod_unlimited_plan',
+      name: 'Plano Ilimitado',
+      description: 'Processamentos ilimitados',
+      metadata: {
+        limit: 'Processamentos ilimitados',
+        features: 'Suporte prioritário 24/7,Acesso a todas as funcionalidades,Múltiplos usuários,Recursos avançados'
+      }
+    });
+    
+    console.log(`Created unlimited product: ${unlimitedProduct.id}`);
+    
+    // Create price for unlimited product
+    const unlimitedPrice = await stripe.prices.create({
+      product: unlimitedProduct.id,
+      unit_amount: 1999, // R$19.99
+      currency: 'brl',
+      recurring: {
+        interval: 'month',
+      },
+      metadata: {
+        type: 'unlimited'
+      },
+      lookup_key: 'unlimited_plan'
+    });
+    
+    console.log(`Created price for unlimited product: ${unlimitedPrice.id}`);
   } else {
     console.log(`Found ${products.data.length} existing products`);
   }
