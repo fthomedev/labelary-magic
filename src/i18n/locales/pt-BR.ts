@@ -1,4 +1,3 @@
-
 export const translations = {
   translation: {
     // General
@@ -31,6 +30,11 @@ export const translations = {
     passwordMismatch: 'As senhas não coincidem',
     resetPasswordSuccess: 'Sua senha foi redefinida com sucesso!',
     resetPasswordEmailSent: 'Enviamos um e-mail com instruções para redefinir sua senha.',
+    confirmPassword: 'Confirmar senha',
+    confirmPasswordRequired: 'Confirmação de senha obrigatória',
+    loginSuccess: 'Login realizado com sucesso',
+    logoutSuccess: 'Logout realizado com sucesso',
+    registerSuccess: 'Cadastro realizado com sucesso',
     
     // Delete Account
     deleteAccount: 'Deletar conta',
@@ -43,12 +47,20 @@ export const translations = {
     deleteAccountEffect2: 'Todos os seus dados associados à conta serão apagados.',
     deleteAccountEffect3: 'Você não poderá recuperar sua conta ou dados excluídos.',
     accountDeleted: 'Conta excluída com sucesso!',
+    profileUpdateSuccess: 'Perfil atualizado com sucesso',
+    profileUpdateError: 'Falha ao atualizar perfil',
     
     // Index
     indexPage: 'Página Inicial',
     welcome: 'Bem-vindo(a), {{name}}!',
     labelsProcessed: 'Etiquetas Processadas',
     processAnotherLabel: 'Processar outra etiqueta',
+    labels: 'Etiquetas',
+    settings: 'Configurações',
+    account: 'Conta',
+    general: 'Geral',
+    security: 'Segurança',
+    delete: 'Excluir',
     
     // Checkout
     checkoutPage: 'Checkout',
@@ -63,9 +75,12 @@ export const translations = {
     city: 'Cidade',
     addressLine1: 'Endereço linha 1',
     addressLine2: 'Endereço linha 2',
+    confirmAndPay: 'Confirmar e pagar',
+    errorProcessingCheckout: 'Erro ao processar pagamento',
     
     // Footer
     footerText: '© {year} Todos os direitos reservados.',
+    allRightsReserved: 'Todos os direitos reservados.',
     
     // Subscription related
     subscriptionPage: 'Assinatura',
@@ -91,5 +106,34 @@ export const translations = {
     currentUsage: 'Uso atual',
     active: 'Ativo',
     upgradePlan: 'Fazer upgrade',
+    confirmSubscription: 'Confirmar assinatura',
+    
+    // Other UI elements
+    saveChanges: 'Salvar alterações',
+    english: 'Inglês',
+    portuguese: 'Português',
+    theme: 'Tema',
+    light: 'Claro',
+    dark: 'Escuro',
+    system: 'Sistema',
+    editProfile: 'Editar perfil',
+    updateProfile: 'Atualizar perfil',
+    currentPassword: 'Senha atual',
+    newPassword: 'Nova senha',
+    updatePassword: 'Atualizar senha',
+    currentPasswordRequired: 'Senha atual obrigatória',
+    newPasswordRequired: 'Nova senha obrigatória',
+    passwordUpdateSuccess: 'Senha atualizada com sucesso',
+    passwordUpdateError: 'Falha ao atualizar senha',
+    unauthorized: 'Não autorizado',
+    notFound: 'Não encontrado',
+    pageNotFound: 'Página não encontrada',
+    goHome: 'Ir para o início',
+    back: 'Voltar',
+    title: 'ZPL Magic',
+    subtitle: 'Transforme seus arquivos ZPL em etiquetas PDF',
+    downloadStarted: 'Download iniciado',
+    downloadStartedDesc: 'Seu arquivo está sendo baixado',
+    redirecting: 'Redirecionando...'
   }
 };
