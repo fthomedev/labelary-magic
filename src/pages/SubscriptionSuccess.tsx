@@ -1,5 +1,4 @@
 
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,7 @@ const SubscriptionSuccess = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
+    <div className="flex items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8 flex-grow">
       <div className="absolute top-4 right-4 z-10">
         <LanguageSelector />
       </div>

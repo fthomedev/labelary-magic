@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthGuard } from "@/components/AuthGuard";
+import { Footer } from "@/components/Footer";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -15,6 +16,14 @@ import Landing from "./pages/Landing";
 
 const queryClient = new QueryClient();
 
+// Layout component to wrap pages with footer
+const PageWithFooter = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen flex flex-col">
+    <div className="flex-grow">{children}</div>
+    <Footer />
+  </div>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -22,13 +31,13 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/auth" element={<Auth />} />
+          <Route path="/" element={<PageWithFooter><Landing /></PageWithFooter>} />
+          <Route path="/auth" element={<PageWithFooter><Auth /></PageWithFooter>} />
           <Route
             path="/app"
             element={
               <AuthGuard>
-                <Index />
+                <PageWithFooter><Index /></PageWithFooter>
               </AuthGuard>
             }
           />
@@ -36,7 +45,7 @@ const App = () => (
             path="/subscription"
             element={
               <AuthGuard>
-                <Subscription />
+                <PageWithFooter><Subscription /></PageWithFooter>
               </AuthGuard>
             }
           />
@@ -44,7 +53,7 @@ const App = () => (
             path="/checkout"
             element={
               <AuthGuard>
-                <CheckoutPage />
+                <PageWithFooter><CheckoutPage /></PageWithFooter>
               </AuthGuard>
             }
           />
@@ -52,11 +61,11 @@ const App = () => (
             path="/subscription/success"
             element={
               <AuthGuard>
-                <SubscriptionSuccess />
+                <PageWithFooter><SubscriptionSuccess /></PageWithFooter>
               </AuthGuard>
             }
           />
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<PageWithFooter><NotFound /></PageWithFooter>} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

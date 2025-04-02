@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -33,7 +32,7 @@ const Landing = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
+    <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
       {/* Header/Navigation */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur dark:bg-gray-900/95 dark:border-gray-800">
         <div className="container mx-auto flex h-16 items-center justify-between">
@@ -333,31 +332,6 @@ const Landing = () => {
           </div>
         </div>
       </section>
-
-      {/* Footer / Final CTA */}
-      <footer className="py-16 bg-gray-900 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">
-            {i18n.language === 'pt-BR' ? 'Pronto para Otimizar seu Fluxo de Impressão de Etiquetas?' : 'Ready to Optimize Your Label Printing Workflow?'}
-          </h2>
-          <p className="mb-10 max-w-2xl mx-auto text-gray-300">
-            {i18n.language === 'pt-BR' 
-              ? 'Simplifique a criação de etiquetas e poupe tempo precioso. Acesse agora e descubra por que nossa ferramenta de conversão ZPL para PDF é a escolha ideal para milhares de usuários.' 
-              : 'Simplify label creation and save precious time. Access now and discover why our ZPL to PDF conversion tool is the ideal choice for thousands of users.'}
-          </p>
-          <Button 
-            size="lg" 
-            onClick={handleGetStarted}
-            className="px-8 py-6 text-lg bg-white text-gray-900 hover:bg-gray-100"
-          >
-            {i18n.language === 'pt-BR' ? 'Quero Criar Minha Conta Agora' : 'I Want to Create My Account Now'}
-          </Button>
-          
-          <div className="mt-16 pt-8 border-t border-gray-800 text-sm text-gray-400">
-            <p>© {new Date().getFullYear()} ZPL Magic. {i18n.language === 'pt-BR' ? 'Todos os direitos reservados.' : 'All rights reserved.'}</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

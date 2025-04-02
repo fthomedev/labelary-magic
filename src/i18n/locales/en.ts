@@ -1,4 +1,3 @@
-
 export default {
   // General
   error: 'Error',
@@ -200,4 +199,6 @@ export default {
   // Plan selection
   choosePlan: 'Choose Your Plan',
   choosePlanDescription: 'Select the plan that best fits your needs',
+  
+  allRightsReserved: "All rights reserved."
 } as const;

@@ -37,7 +37,7 @@ const Auth = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
+    <div className="flex flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8 flex-grow">
       <div className="absolute top-4 left-4 z-10">
         <Button variant="ghost" size="sm" asChild>
           <Link to="/" className="flex items-center gap-1">

@@ -37,7 +37,7 @@ const Subscription = () => {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
+    <div className="flex flex-col bg-gradient-to-b from-background to-secondary/20 px-4 py-8 flex-grow">
       <div className="absolute top-4 right-4 z-10 flex items-center gap-4">
         <LanguageSelector />
         <UserMenu />
