@@ -5,10 +5,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Check, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { findMissingKeys } from "@/i18n/config";
 
 export const LanguageSelector = () => {
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
 
@@ -20,16 +19,6 @@ export const LanguageSelector = () => {
     const savedLanguage = localStorage.getItem('i18nextLng');
     if (savedLanguage && savedLanguage !== i18n.language) {
       i18n.changeLanguage(savedLanguage);
-    }
-
-    // In development mode, check for missing translations
-    if (process.env.NODE_ENV === 'development') {
-      const { enMissing, ptBRMissing } = findMissingKeys();
-      if (enMissing.length > 0 || ptBRMissing.length > 0) {
-        console.warn('Missing translations detected:');
-        if (enMissing.length > 0) console.warn('Missing in English:', enMissing);
-        if (ptBRMissing.length > 0) console.warn('Missing in Portuguese:', ptBRMissing);
-      }
     }
   }, [i18n]);
 
@@ -53,7 +42,7 @@ export const LanguageSelector = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-label={t('language')}>
+        <Button variant="outline" size="icon">
           <Globe className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -63,7 +52,7 @@ export const LanguageSelector = () => {
           className="cursor-pointer"
         >
           <div className="flex items-center justify-between w-full">
-            <span>{t('portuguese')}</span>
+            <span>Português</span>
             {i18n.language === 'pt-BR' && <Check className="h-4 w-4 ml-2" />}
           </div>
         </DropdownMenuItem>
@@ -72,7 +61,7 @@ export const LanguageSelector = () => {
           className="cursor-pointer"
         >
           <div className="flex items-center justify-between w-full">
-            <span>{t('english')}</span>
+            <span>English</span>
             {i18n.language === 'en' && <Check className="h-4 w-4 ml-2" />}
           </div>
         </DropdownMenuItem>

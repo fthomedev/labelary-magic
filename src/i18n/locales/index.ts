@@ -1,34 +1,21 @@
 
-import { translations as enTranslations } from './en';
-import { translations as ptBRTranslations } from './pt-BR';
+import enTranslations from './en';
+import ptBRTranslations from './pt-BR';
 
-// Define a base type using all keys from both languages to ensure completeness
-export type TranslationKeys = keyof typeof enTranslations.translation | keyof typeof ptBRTranslations.translation;
+// Define a base type using Record (dictionary) type
+// This allows each language to have its own string values while sharing keys
+export type TranslationKeys = keyof typeof enTranslations;
+
+// Create a type for translations that allows different string values per language
+export type Translations = {
+  [key in TranslationKeys]: string;
+};
 
 // Export the translations object with the correct type
-export const translations = {
-  en: enTranslations,
-  'pt-BR': ptBRTranslations
+export const translations: Record<string, Translations> = {
+  en: enTranslations as any, // Type assertion to avoid circular type reference
+  'pt-BR': ptBRTranslations as any, // Type assertion to avoid circular type reference
 };
 
 // Export a type for the translation keys
-export type TranslationKey = TranslationKeys;
-
-// Helper function to check for missing translations during development
-export const checkMissingTranslations = () => {
-  if (process.env.NODE_ENV !== 'development') return;
-  
-  const enKeys = Object.keys(enTranslations.translation);
-  const ptBRKeys = Object.keys(ptBRTranslations.translation);
-  
-  const missingInEn = ptBRKeys.filter(key => !enTranslations.translation.hasOwnProperty(key));
-  const missingInPtBR = enKeys.filter(key => !ptBRTranslations.translation.hasOwnProperty(key));
-  
-  if (missingInEn.length > 0) {
-    console.warn('Missing translations in English:', missingInEn);
-  }
-  
-  if (missingInPtBR.length > 0) {
-    console.warn('Missing translations in Portuguese:', missingInPtBR);
-  }
-};
+export type TranslationKey = keyof typeof enTranslations;
