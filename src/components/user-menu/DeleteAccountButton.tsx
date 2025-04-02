@@ -40,9 +40,10 @@ export const DeleteAccountButton = () => {
   const handleFinalConfirmation = async () => {
     try {
       setIsDeleting(true);
-      // Using type assertion to work around type checking
-      const result = await (supabase.rpc as any)('delete_user');
-      if (result.error) throw result.error;
+      
+      const { data, error } = await supabase.rpc('delete_user');
+      
+      if (error) throw error;
       
       await supabase.auth.signOut();
       setShowFinalConfirmation(false);
@@ -52,6 +53,7 @@ export const DeleteAccountButton = () => {
         description: t("accountDeleted"),
       });
     } catch (error: any) {
+      console.error("Error deleting account:", error);
       toast({
         variant: "destructive",
         title: t("error"),

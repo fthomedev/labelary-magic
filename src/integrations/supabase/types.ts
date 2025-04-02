@@ -119,6 +119,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_user: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       insert_processing_history: {
         Args: {
           p_user_id: string
