@@ -41,7 +41,9 @@ export const DeleteAccountButton = () => {
     try {
       setIsDeleting(true);
       
-      const { data, error } = await supabase.rpc('delete_user');
+      // Use type assertion to work around TypeScript limitations
+      // The delete_user function exists in Supabase but TypeScript doesn't know about it yet
+      const { data, error } = await supabase.rpc('delete_user' as any);
       
       if (error) throw error;
       
