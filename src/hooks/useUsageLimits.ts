@@ -54,7 +54,8 @@ export const useUsageLimits = () => {
       // If no subscription, user is on free plan (10 labels/day)
       if (!subscription) {
         // Query usage directly for free tier users using the custom RPC function
-        const { data: usageData, error: usageError } = await supabase.rpc<number>(
+        // Fix: Add the second type parameter (input params type)
+        const { data: usageData, error: usageError } = await supabase.rpc<number, { user_id_param: string }>(
           'check_free_tier_usage', 
           { user_id_param: user.id }
         );
@@ -119,7 +120,8 @@ export const useUsageLimits = () => {
       }
       
       // Call RPC function to increment usage
-      const { data, error } = await supabase.rpc<boolean>(
+      // Fix: Add the second type parameter (input params type)
+      const { data, error } = await supabase.rpc<boolean, { user_id_param: string, increment_amount: number }>(
         'increment_usage_count', 
         { user_id_param: user.id, increment_amount: count }
       );
