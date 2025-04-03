@@ -57,16 +57,27 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           description: t("checkYourEmail"),
         });
       } else if (isSignUp) {
+        // Garantir que o nome é enviado corretamente no objeto de metadados
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
-              name,
+              name: name, // Garantir que o nome seja passado aqui
             },
+            emailRedirectTo: `${window.location.origin}/auth`,
           },
         });
         if (error) throw error;
+
+        // Atualizar diretamente o perfil após o cadastro para garantir que o nome seja salvo
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('profiles')
+            .update({ name: name })
+            .eq('id', user.id);
+        }
+
         toast({
           title: t("signUpSuccess"),
           description: t("checkYourEmail"),
