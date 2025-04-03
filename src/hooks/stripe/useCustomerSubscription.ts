@@ -13,7 +13,10 @@ export const useCustomerSubscription = () => {
   const { t } = useTranslation();
 
   // Get customer subscription details
-  const getCustomerSubscription = async (): Promise<StripeSubscription[] | null> => {
+  const getCustomerSubscription = async (): Promise<{ 
+    subscription: StripeSubscription[] | null; 
+    hasSubscriptionData: boolean; 
+  }> => {
     setIsLoading(true);
     try {
       console.log('Fetching customer subscription...');
@@ -23,7 +26,7 @@ export const useCustomerSubscription = () => {
       if (!user) {
         console.error('No authenticated user found');
         navigate('/auth');
-        return null;
+        return { subscription: null, hasSubscriptionData: false };
       }
 
       // Get customer ID from subscriptions table
@@ -35,12 +38,12 @@ export const useCustomerSubscription = () => {
 
       if (subscriptionError) {
         console.error('Error fetching subscription data:', subscriptionError);
-        return null;
+        return { subscription: null, hasSubscriptionData: false };
       }
 
       if (!subscriptionData || !subscriptionData.stripe_customer_id) {
         console.log('No subscription data found for user');
-        return null;
+        return { subscription: null, hasSubscriptionData: false };
       }
 
       console.log('Found customer ID:', subscriptionData.stripe_customer_id);
@@ -59,7 +62,7 @@ export const useCustomerSubscription = () => {
       }
       
       console.log('Subscription data retrieved successfully:', data);
-      return data;
+      return { subscription: data, hasSubscriptionData: true };
     } catch (error) {
       console.error('Error fetching customer subscription:', error);
       toast({
@@ -67,7 +70,7 @@ export const useCustomerSubscription = () => {
         title: t('error'),
         description: t('errorFetchingSubscription'),
       });
-      return null;
+      return { subscription: null, hasSubscriptionData: false };
     } finally {
       setIsLoading(false);
     }

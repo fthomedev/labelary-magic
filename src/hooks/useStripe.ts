@@ -21,10 +21,15 @@ export const useStripe = () => {
     checkoutSessionHook.isLoading || 
     customerSubscriptionHook.isLoading;
 
+  const getCustomerSubscription = async () => {
+    const result = await customerSubscriptionHook.getCustomerSubscription();
+    return result.subscription;
+  };
+
   return {
     isLoading: combinedIsLoading,
     getSubscriptionPlans: subscriptionPlansHook.getSubscriptionPlans,
     createCheckoutSession: checkoutSessionHook.createCheckoutSession,
-    getCustomerSubscription: customerSubscriptionHook.getCustomerSubscription,
+    getCustomerSubscription,
   };
 };

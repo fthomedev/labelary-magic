@@ -4,10 +4,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useStripe } from "@/hooks/useStripe";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export const SubscriptionStatus = () => {
   const { t, i18n } = useTranslation();
   const [subscription, setSubscription] = useState<any>(null);
+  const [isChecked, setIsChecked] = useState(false);
   const { getCustomerSubscription, isLoading } = useStripe();
 
   useEffect(() => {
@@ -16,10 +19,11 @@ export const SubscriptionStatus = () => {
       if (data && data.length > 0) {
         setSubscription(data[0]);
       }
+      setIsChecked(true);
     };
     
     loadSubscription();
-  }, []);
+  }, [getCustomerSubscription]);
 
   if (isLoading) {
     return (
@@ -29,12 +33,34 @@ export const SubscriptionStatus = () => {
     );
   }
 
-  if (!subscription) {
+  if (isChecked && !subscription) {
     return (
-      <div className="flex justify-center p-8">
-        <p>{t('noActiveSubscription')}</p>
+      <div className="flex flex-col items-center gap-6 p-8">
+        <Alert variant="default">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>{t('noActiveSubscription')}</AlertTitle>
+          <AlertDescription>
+            {t('noActiveSubscriptionDescription')}
+          </AlertDescription>
+        </Alert>
+        <Button 
+          onClick={() => {
+            const plansTab = document.querySelector('[value="plans"]') as HTMLButtonElement;
+            if (plansTab) {
+              plansTab.click();
+            }
+          }}
+          className="w-full max-w-md"
+        >
+          {t('viewAvailablePlans')}
+        </Button>
       </div>
     );
+  }
+
+  // Only try to format and display information if we have a subscription
+  if (!subscription) {
+    return null;
   }
 
   // Format dates

@@ -13,7 +13,7 @@ import { StaticSubscriptionPlans } from "@/components/subscription/StaticSubscri
 
 const Subscription = () => {
   const { t } = useTranslation();
-  const [hasSubscription, setHasSubscription] = useState(false);
+  const [defaultTab, setDefaultTab] = useState<string | null>(null);
   const { getCustomerSubscription } = useStripe();
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
@@ -22,7 +22,7 @@ const Subscription = () => {
   useEffect(() => {
     const checkSubscription = async () => {
       const subscription = await getCustomerSubscription();
-      setHasSubscription(subscription && subscription.length > 0);
+      setDefaultTab(subscription && subscription.length > 0 ? "status" : "plans");
     };
     
     checkSubscription();
@@ -34,7 +34,8 @@ const Subscription = () => {
   }, []);
 
   // Only render content after initial mount to avoid hydration mismatch
-  if (!mounted) return null;
+  // and after we've determined the default tab
+  if (!mounted || !defaultTab) return null;
 
   return (
     <div className="flex flex-col bg-gradient-to-b from-background to-secondary/20 px-4 py-8 flex-grow">
@@ -57,7 +58,7 @@ const Subscription = () => {
       <div className="flex-1 container max-w-6xl mx-auto mt-16">
         <h1 className="text-3xl font-bold text-center mb-8">{t('subscriptionPage')}</h1>
         
-        <Tabs defaultValue={hasSubscription ? "status" : "plans"} className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-8">
             <TabsTrigger value="plans">{t('availablePlans')}</TabsTrigger>
             <TabsTrigger value="status">{t('yourSubscription')}</TabsTrigger>
