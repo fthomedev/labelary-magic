@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Menu } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -31,11 +31,16 @@ export const UserMenu = () => {
       <SheetTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
-          className="relative"
+          size={isMobile ? "sm" : "icon"}
+          className="relative flex items-center gap-1"
           onClick={handleOpen}
         >
-          <Menu className="h-5 w-5" />
+          {isMobile ? (
+            <User className="h-4 w-4" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
+          {isMobile && <span className="text-xs">{t("myAccount")}</span>}
         </Button>
       </SheetTrigger>
       <SheetContent side={isMobile ? "bottom" : "right"} className="w-full sm:max-w-md">

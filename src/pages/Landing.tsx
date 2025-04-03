@@ -7,11 +7,14 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { supabase } from '@/integrations/supabase/client';
 import { Check, FileText, ArrowRight, BarChart, Lock, Zap, LogIn, User } from 'lucide-react';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { UserMenu } from '@/components/UserMenu';
 
 const Landing = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const isMobile = useIsMobile();
   
   // Verificar se o usuário está autenticado
   useEffect(() => {
@@ -63,14 +66,20 @@ const Landing = () => {
           </div>
           <div className="flex items-center gap-4">
             {isLoggedIn ? (
-              <Button 
-                variant="outline" 
-                onClick={handleMyAccount}
-                className="hidden sm:flex items-center gap-2"
-              >
-                <User size={16} />
-                {t('myAccount')}
-              </Button>
+              <>
+                {/* User menu for desktop */}
+                <Button 
+                  variant="outline" 
+                  onClick={handleMyAccount}
+                  className="hidden sm:flex items-center gap-2"
+                >
+                  <User size={16} />
+                  {t('myAccount')}
+                </Button>
+                
+                {/* User menu for mobile */}
+                {isMobile && <UserMenu />}
+              </>
             ) : (
               <>
                 <Button 

@@ -1,3 +1,4 @@
+
 const translations = {
   home: 'Início',
   login: 'Entrar',
@@ -64,6 +65,8 @@ const translations = {
   convertedSuccessfully: 'Convertido com sucesso!',
   conversionFailed: 'Falha na conversão. Por favor, tente novamente.',
   myAccount: 'Minha Conta',
+  accessApplication: 'Acessar Aplicativo',
+  goToDashboard: 'Ir para o Dashboard',
 };
 
 export default translations;

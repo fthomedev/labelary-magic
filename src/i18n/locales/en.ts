@@ -1,3 +1,4 @@
+
 const translations = {
   home: 'Home',
   login: 'Login',
@@ -46,6 +47,8 @@ const translations = {
   subscriptionCanceled: 'Subscription Canceled',
   subscriptionResumed: 'Subscription Resumed',
   myAccount: 'My Account',
+  accessApplication: 'Access Application',
+  goToDashboard: 'Go to Dashboard',
 };
 
 export default translations;
