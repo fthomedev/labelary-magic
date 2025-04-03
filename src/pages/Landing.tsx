@@ -1,34 +1,55 @@
-import { useEffect } from 'react';
+
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
-import { Check, FileText, ArrowRight, BarChart, Lock, Zap, LogIn } from 'lucide-react';
+import { Check, FileText, ArrowRight, BarChart, Lock, Zap, LogIn, User } from 'lucide-react';
 import { LanguageSelector } from '@/components/LanguageSelector';
 
 const Landing = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
-  // Verificar se o usuário já está autenticado
+  // Verificar se o usuário está autenticado
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        navigate('/');
+        setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
       }
     };
     
     checkAuth();
+
+    // Configurar listener para mudanças no estado de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleGetStarted = () => {
-    navigate('/auth');
+    if (isLoggedIn) {
+      navigate('/app');
+    } else {
+      navigate('/auth');
+    }
   };
 
   const handleLogin = () => {
     navigate('/auth');
+  };
+
+  const handleMyAccount = () => {
+    navigate('/app');
   };
 
   return (
@@ -41,19 +62,32 @@ const Landing = () => {
             <span className="text-xl font-semibold">ZPL Magic</span>
           </div>
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/auth')}
-              className="hidden sm:flex"
-            >
-              {t('login')}
-            </Button>
-            <Button 
-              onClick={() => navigate('/auth?signup=true')}
-              className="hidden sm:flex"
-            >
-              {t('register')}
-            </Button>
+            {isLoggedIn ? (
+              <Button 
+                variant="outline" 
+                onClick={handleMyAccount}
+                className="hidden sm:flex items-center gap-2"
+              >
+                <User size={16} />
+                {t('myAccount')}
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => navigate('/auth')}
+                  className="hidden sm:flex"
+                >
+                  {t('login')}
+                </Button>
+                <Button 
+                  onClick={() => navigate('/auth?signup=true')}
+                  className="hidden sm:flex"
+                >
+                  {t('register')}
+                </Button>
+              </>
+            )}
             <LanguageSelector />
           </div>
         </div>
@@ -77,18 +111,22 @@ const Landing = () => {
                 onClick={handleGetStarted} 
                 className="px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto"
               >
-                {i18n.language === 'pt-BR' ? 'Crie sua Conta Gratuitamente' : 'Create Your Free Account'}
+                {isLoggedIn 
+                  ? (i18n.language === 'pt-BR' ? 'Acessar Aplicativo' : 'Access Application') 
+                  : (i18n.language === 'pt-BR' ? 'Crie sua Conta Gratuitamente' : 'Create Your Free Account')}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                onClick={handleLogin} 
-                className="px-8 py-6 text-lg rounded-full shadow-md hover:shadow-lg transition-all duration-300 w-full sm:w-auto"
-              >
-                <LogIn className="mr-2 h-5 w-5" />
-                {i18n.language === 'pt-BR' ? 'Entrar na Conta' : 'Log In'}
-              </Button>
+              {!isLoggedIn && (
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  onClick={handleLogin} 
+                  className="px-8 py-6 text-lg rounded-full shadow-md hover:shadow-lg transition-all duration-300 w-full sm:w-auto"
+                >
+                  <LogIn className="mr-2 h-5 w-5" />
+                  {i18n.language === 'pt-BR' ? 'Entrar na Conta' : 'Log In'}
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -258,19 +296,27 @@ const Landing = () => {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              {i18n.language === 'pt-BR' ? 'Crie Sua Conta Agora Mesmo' : 'Create Your Account Right Now'}
+              {isLoggedIn 
+                ? (i18n.language === 'pt-BR' ? 'Acesse Seu Painel de Controle' : 'Access Your Dashboard')
+                : (i18n.language === 'pt-BR' ? 'Crie Sua Conta Agora Mesmo' : 'Create Your Account Right Now')}
             </h2>
             <p className="text-xl mb-10 text-gray-600 dark:text-gray-300">
-              {i18n.language === 'pt-BR' 
-                ? 'Faça parte de uma comunidade que já converteu milhares de etiquetas ZPL com apenas alguns cliques.' 
-                : 'Join a community that has already converted thousands of ZPL labels with just a few clicks.'}
+              {isLoggedIn
+                ? (i18n.language === 'pt-BR' 
+                    ? 'Continue convertendo ZPL para PDF com facilidade no seu painel de controle.' 
+                    : 'Continue converting ZPL to PDF easily in your dashboard.')
+                : (i18n.language === 'pt-BR' 
+                    ? 'Faça parte de uma comunidade que já converteu milhares de etiquetas ZPL com apenas alguns cliques.' 
+                    : 'Join a community that has already converted thousands of ZPL labels with just a few clicks.')}
             </p>
             <Button 
               size="lg" 
               onClick={handleGetStarted}
               className="px-8 py-6 text-lg"
             >
-              {i18n.language === 'pt-BR' ? 'Cadastrar / Login' : 'Register / Login'}
+              {isLoggedIn
+                ? (i18n.language === 'pt-BR' ? 'Ir para o Dashboard' : 'Go to Dashboard')
+                : (i18n.language === 'pt-BR' ? 'Cadastrar / Login' : 'Register / Login')}
             </Button>
           </div>
         </div>
