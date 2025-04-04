@@ -19,7 +19,7 @@ const detectUserLanguage = () => {
   return 'pt-BR'; // Idioma padrão
 };
 
-// Inicializar i18n com a preferência de idioma salva ou padrão para pt-BR
+// Inicializar i18n com a preferência de idioma salva ou padrão
 const savedLanguage = detectUserLanguage();
 
 i18n.use(initReactI18next).init({
