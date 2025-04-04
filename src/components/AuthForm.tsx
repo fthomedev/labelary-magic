@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -59,20 +58,18 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           description: t("checkYourEmail"),
         });
       } else if (isSignUp) {
-        // Garantir que o nome é enviado corretamente no objeto de metadados
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
-              name: name, // Garantir que o nome seja passado aqui
+              name: name,
             },
             emailRedirectTo: `${window.location.origin}/auth`,
           },
         });
         if (error) throw error;
 
-        // Atualizar diretamente o perfil após o cadastro para garantir que o nome seja salvo
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           await supabase.from('profiles')
@@ -88,12 +85,18 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
-          options: {
-            // Quando "Lembrar-me" estiver marcado, manteremos a sessão por 7 dias
-            // Caso contrário, usaremos o padrão (1 hora)
-            expiresIn: rememberMe ? 60 * 60 * 24 * 7 : 3600, // 7 dias ou 1 hora em segundos
-          }
         });
+        
+        if (!error && rememberMe) {
+          const { data } = await supabase.auth.getSession();
+          if (data.session) {
+            await supabase.auth.setSession({
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+            });
+          }
+        }
+        
         if (error) throw error;
       }
     } catch (error: any) {
