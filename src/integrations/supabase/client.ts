@@ -10,8 +10,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
     persistSession: true,
     storage: localStorage,
-    // Define a duração do token de acesso para 3600 segundos (1 hora)
-    // O valor padrão já é 3600 segundos, mas estamos configurando explicitamente
+    // A duração padrão do token é 3600 segundos (1 hora)
+    // A opção expiresIn no login pode sobrescrever isso
     flowType: 'pkce',
   }
 });

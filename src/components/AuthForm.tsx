@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type AuthFormProps = {
   initialTab?: 'login' | 'signup';
@@ -19,6 +20,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [isResetPassword, setIsResetPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const { t } = useTranslation();
   const { toast } = useToast();
 
@@ -86,6 +88,11 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
+          options: {
+            // Quando "Lembrar-me" estiver marcado, manteremos a sessão por 7 dias
+            // Caso contrário, usaremos o padrão (1 hora)
+            expiresIn: rememberMe ? 60 * 60 * 24 * 7 : 3600, // 7 dias ou 1 hora em segundos
+          }
         });
         if (error) throw error;
       }
@@ -166,6 +173,20 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
             minLength={6}
           />
         </div>
+        
+        {!isSignUp && (
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="rememberMe" 
+              checked={rememberMe} 
+              onCheckedChange={(checked) => setRememberMe(checked as boolean)} 
+            />
+            <Label htmlFor="rememberMe" className="text-sm cursor-pointer">
+              {t("rememberMe") || "Lembrar-me"}
+            </Label>
+          </div>
+        )}
+        
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? t("loading") : isSignUp ? t("signUp") : t("login")}
         </Button>
