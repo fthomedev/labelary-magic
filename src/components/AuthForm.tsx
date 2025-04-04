@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -90,6 +91,9 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
         if (!error && rememberMe) {
           const { data } = await supabase.auth.getSession();
           if (data.session) {
+            // Estender a sessão quando "Lembrar-me" estiver marcado
+            // Isso redefine a sessão após o login com o token atual
+            // para garantir que a persistência seja aplicada corretamente
             await supabase.auth.setSession({
               access_token: data.session.access_token,
               refresh_token: data.session.refresh_token,
@@ -185,7 +189,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
               onCheckedChange={(checked) => setRememberMe(checked as boolean)} 
             />
             <Label htmlFor="rememberMe" className="text-sm cursor-pointer">
-              {t("rememberMe") || "Lembrar-me"}
+              {t("rememberMe")}
             </Label>
           </div>
         )}

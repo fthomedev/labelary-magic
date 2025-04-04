@@ -3,23 +3,23 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { translations } from './locales';
 
-// Function to detect user's preferred language
+// Função para detectar o idioma preferido do usuário
 const detectUserLanguage = () => {
   const savedLanguage = localStorage.getItem('i18nextLng');
   if (savedLanguage && ['en', 'pt-BR'].includes(savedLanguage)) {
     return savedLanguage;
   }
   
-  // Check browser language
+  // Verificar idioma do navegador
   const browserLang = navigator.language;
   if (browserLang && browserLang.startsWith('pt')) {
     return 'pt-BR';
   }
   
-  return 'pt-BR'; // Default language
+  return 'pt-BR'; // Idioma padrão
 };
 
-// Initialize i18n with the saved language preference or default to pt-BR
+// Inicializar i18n com a preferência de idioma salva ou padrão para pt-BR
 const savedLanguage = detectUserLanguage();
 
 i18n.use(initReactI18next).init({
@@ -28,7 +28,7 @@ i18n.use(initReactI18next).init({
     'pt-BR': { translation: translations['pt-BR'] },
   },
   lng: savedLanguage,
-  fallbackLng: 'en',
+  fallbackLng: 'pt-BR', // Fallback para português
   interpolation: {
     escapeValue: false,
   },
@@ -38,29 +38,29 @@ i18n.use(initReactI18next).init({
   debug: process.env.NODE_ENV === 'development',
 });
 
-// Store language preference and update HTML lang attribute
+// Armazenar preferência de idioma e atualizar atributo lang do HTML
 i18n.on('languageChanged', (lng) => {
   localStorage.setItem('i18nextLng', lng);
   document.documentElement.lang = lng;
   
-  // Trigger a custom event that components can listen for
+  // Disparar um evento personalizado que os componentes podem escutar
   document.dispatchEvent(new CustomEvent('i18n-language-changed', { detail: lng }));
 });
 
-// Add a function to get the current language
+// Adicionar uma função para obter o idioma atual
 export const getCurrentLanguage = () => i18n.language;
 
-// Add a function to get a specific translation
+// Adicionar uma função para obter uma tradução específica
 export const getTranslation = (key: string, options?: Record<string, any>) => {
   return i18n.t(key, options);
 };
 
-// Check if a translation key exists
+// Verificar se uma chave de tradução existe
 export const hasTranslation = (key: string): boolean => {
   return i18n.exists(key);
 };
 
-// Function to find missing translation keys (useful for development)
+// Função para encontrar chaves de tradução ausentes (útil para desenvolvimento)
 export const findMissingKeys = (): string[] => {
   if (process.env.NODE_ENV !== 'development') return [];
   
@@ -79,7 +79,7 @@ export const findMissingKeys = (): string[] => {
   return missingKeys;
 };
 
-// Function to validate translation consistency between languages
+// Função para validar a consistência das traduções entre idiomas
 export const validateTranslations = (): { missingInEn: string[], missingInPtBR: string[] } => {
   const enKeys = new Set(Object.keys(translations.en));
   const ptBRKeys = new Set(Object.keys(translations['pt-BR']));

@@ -11,7 +11,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     persistSession: true,
     storage: localStorage,
     // A duração padrão do token é 3600 segundos (1 hora)
-    // A opção expiresIn no login pode sobrescrever isso
+    // A opção "Lembrar-me" gerencia a persistência da sessão após o login
     flowType: 'pkce',
   }
 });
