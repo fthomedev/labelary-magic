@@ -150,6 +150,16 @@ const translations = {
   downloadUnavailableAfterRefresh: 'Download indisponível após atualizar a página',
   deleteRecordConfirm: 'Excluir Registro',
   deleteRecordWarning: 'Tem certeza de que deseja excluir este registro? Esta ação não pode ser desfeita.',
+  
+  // Dashboard
+  title: 'Conversor ZPL para PDF',
+  subtitle: 'Carregue seus arquivos ZPL para convertê-los para o formato PDF',
+  processingHistory: 'Histórico de Processamento',
+  loadingHistory: 'Carregando histórico...',
+  noHistory: 'Nenhum histórico de processamento encontrado',
+  totalRecords: 'Total: {{count}} registros',
+  downloadStarted: 'Download Iniciado',
+  downloadStartedDesc: 'O download do seu arquivo foi iniciado',
 };
 
 export default translations;

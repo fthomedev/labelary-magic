@@ -150,6 +150,16 @@ const translations = {
   downloadUnavailableAfterRefresh: 'Download unavailable after page refresh',
   deleteRecordConfirm: 'Delete Record',
   deleteRecordWarning: 'Are you sure you want to delete this record? This action cannot be undone.',
+  
+  // Dashboard
+  title: 'ZPL to PDF Converter',
+  subtitle: 'Upload your ZPL files to convert them to PDF format',
+  processingHistory: 'Processing History',
+  loadingHistory: 'Loading history...',
+  noHistory: 'No processing history found',
+  totalRecords: 'Total: {{count}} records',
+  downloadStarted: 'Download Started',
+  downloadStartedDesc: 'Your file download has started',
 };
 
 export default translations;

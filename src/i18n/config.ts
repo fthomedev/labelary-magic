@@ -2,6 +2,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { translations } from './locales';
+import LanguageDetector from 'i18next-browser-languagedetector';
 
 // Função para detectar o idioma preferido do usuário
 const detectUserLanguage = () => {
@@ -22,21 +23,29 @@ const detectUserLanguage = () => {
 // Inicializar i18n com a preferência de idioma salva ou padrão
 const savedLanguage = detectUserLanguage();
 
-i18n.use(initReactI18next).init({
-  resources: {
-    en: { translation: translations.en },
-    'pt-BR': { translation: translations['pt-BR'] },
-  },
-  lng: savedLanguage,
-  fallbackLng: 'pt-BR', // Fallback para português
-  interpolation: {
-    escapeValue: false,
-  },
-  react: {
-    useSuspense: false,
-  },
-  debug: process.env.NODE_ENV === 'development',
-});
+i18n
+  .use(LanguageDetector) // Adiciona detector de idioma do navegador
+  .use(initReactI18next)
+  .init({
+    resources: {
+      en: { translation: translations.en },
+      'pt-BR': { translation: translations['pt-BR'] },
+    },
+    lng: savedLanguage,
+    fallbackLng: 'pt-BR', // Fallback para português
+    interpolation: {
+      escapeValue: false,
+    },
+    react: {
+      useSuspense: false,
+    },
+    detection: {
+      order: ['localStorage', 'navigator'],
+      lookupLocalStorage: 'i18nextLng',
+      caches: ['localStorage'],
+    },
+    debug: process.env.NODE_ENV === 'development',
+  });
 
 // Armazenar preferência de idioma e atualizar atributo lang do HTML
 i18n.on('languageChanged', (lng) => {
