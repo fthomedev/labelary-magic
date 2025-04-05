@@ -31,16 +31,16 @@ export const UserMenu = () => {
       <SheetTrigger asChild>
         <Button
           variant="ghost"
-          size={isMobile ? "sm" : "icon"}
-          className="relative flex items-center gap-1"
+          size="icon"
+          className="relative flex items-center justify-center w-9 h-9"
           onClick={handleOpen}
+          aria-label={t("myAccount")}
         >
           {isMobile ? (
             <User className="h-4 w-4" />
           ) : (
             <Menu className="h-5 w-5" />
           )}
-          {isMobile && <span className="text-xs">{t("myAccount")}</span>}
         </Button>
       </SheetTrigger>
       <SheetContent side={isMobile ? "bottom" : "right"} className="w-full sm:max-w-md">

@@ -79,12 +79,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
-          <div className="flex h-12 justify-between items-center">
-            <h1 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white truncate mr-2">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="flex h-14 justify-between items-center">
+            <h1 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white truncate max-w-[180px] sm:max-w-none">
               {t('title')}
             </h1>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <LanguageSelector />
               <UserMenu />
             </div>
@@ -93,8 +93,8 @@ const Index = () => {
       </header>
 
       <main className="py-3 md:py-5">
-        <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
-          <div className="px-0 sm:px-0">
+        <div className="mx-auto max-w-7xl px-4">
+          <div>
             <h2 className="text-xs md:text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100">
               {t('subtitle')}
             </h2>

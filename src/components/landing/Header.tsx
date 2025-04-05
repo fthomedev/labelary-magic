@@ -23,12 +23,14 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur dark:bg-gray-900/95 dark:border-gray-800">
-      <div className="container mx-auto flex h-16 items-center justify-between">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <FileText className="h-6 w-6 text-primary" />
-          <span className="text-xl font-semibold">ZPL Magic</span>
+          <span className="text-xl font-semibold truncate max-w-[200px] sm:max-w-none">
+            {t('title')}
+          </span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           {isLoggedIn ? (
             <>
               {/* User menu for desktop */}
@@ -36,13 +38,14 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
                 variant="outline" 
                 onClick={handleMyAccount}
                 className="hidden sm:flex items-center gap-2"
+                size="sm"
               >
                 <User size={16} />
                 {t('myAccount')}
               </Button>
               
               {/* User menu for mobile */}
-              {isMobile && <UserMenu />}
+              <UserMenu />
             </>
           ) : (
             <>
@@ -50,14 +53,26 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
                 variant="ghost" 
                 onClick={() => navigate('/auth')}
                 className="hidden sm:flex"
+                size="sm"
               >
                 {t('login')}
               </Button>
               <Button 
                 onClick={() => navigate('/auth?signup=true')}
                 className="hidden sm:flex"
+                size="sm"
               >
                 {t('register')}
+              </Button>
+              
+              {/* Botão mobile para login */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/auth')}
+                className="sm:hidden"
+              >
+                <User size={16} />
               </Button>
             </>
           )}
