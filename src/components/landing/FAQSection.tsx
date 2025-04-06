@@ -17,7 +17,7 @@ export const FAQSection: React.FC = () => {
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1">
               <AccordionTrigger>
-                {i18n.language === 'pt-BR' ? 'Preciso pagar algo para começar?' : 'Do I need to pay anything to start?'}
+                {i18n.language === 'pt-BR' ? 'Preciso pagar algo para começar' : 'Do I need to pay anything to start'}
               </AccordionTrigger>
               <AccordionContent>
                 {i18n.language === 'pt-BR' 
@@ -28,7 +28,7 @@ export const FAQSection: React.FC = () => {
             
             <AccordionItem value="item-2">
               <AccordionTrigger>
-                {i18n.language === 'pt-BR' ? 'É seguro enviar meus arquivos ZPL?' : 'Is it safe to upload my ZPL files?'}
+                {i18n.language === 'pt-BR' ? 'É seguro enviar meus arquivos ZPL' : 'Is it safe to upload my ZPL files'}
               </AccordionTrigger>
               <AccordionContent>
                 {i18n.language === 'pt-BR' 
@@ -39,7 +39,7 @@ export const FAQSection: React.FC = () => {
             
             <AccordionItem value="item-3">
               <AccordionTrigger>
-                {i18n.language === 'pt-BR' ? 'Posso converter vários arquivos ao mesmo tempo?' : 'Can I convert multiple files at the same time?'}
+                {i18n.language === 'pt-BR' ? 'Posso converter vários arquivos ao mesmo tempo' : 'Can I convert multiple files at the same time'}
               </AccordionTrigger>
               <AccordionContent>
                 {i18n.language === 'pt-BR' 
@@ -50,7 +50,7 @@ export const FAQSection: React.FC = () => {
             
             <AccordionItem value="item-4">
               <AccordionTrigger>
-                {i18n.language === 'pt-BR' ? 'Há limite de tamanho de arquivo?' : 'Is there a file size limit?'}
+                {i18n.language === 'pt-BR' ? 'Há limite de tamanho de arquivo' : 'Is there a file size limit'}
               </AccordionTrigger>
               <AccordionContent>
                 {i18n.language === 'pt-BR' 
@@ -62,8 +62,8 @@ export const FAQSection: React.FC = () => {
             <AccordionItem value="item-5">
               <AccordionTrigger>
                 {i18n.language === 'pt-BR' 
-                  ? '❓ Quais plataformas de marketplace e e-commerce utilizam etiquetas ZPL?' 
-                  : '❓ Which marketplace and e-commerce platforms use ZPL labels?'}
+                  ? 'Quais plataformas de marketplace e e-commerce utilizam etiquetas ZPL' 
+                  : 'Which marketplace and e-commerce platforms use ZPL labels'}
               </AccordionTrigger>
               <AccordionContent>
                 {i18n.language === 'pt-BR' 
@@ -75,13 +75,39 @@ export const FAQSection: React.FC = () => {
             <AccordionItem value="item-6">
               <AccordionTrigger>
                 {i18n.language === 'pt-BR' 
-                  ? '❓ Por que usar etiquetas ZPL em vez de PDF?' 
-                  : '❓ Why use ZPL labels instead of PDF?'}
+                  ? 'Por que usar etiquetas ZPL em vez de PDF' 
+                  : 'Why use ZPL labels instead of PDF'}
               </AccordionTrigger>
               <AccordionContent>
                 {i18n.language === 'pt-BR' 
                   ? 'Etiquetas no formato ZPL são ideais para impressoras térmicas, especialmente da marca Zebra. Diferente do PDF, o ZPL é leve, rápido, e compatível com sistemas de automação. Isso significa:\n\nImpressão mais rápida\n\nMenor uso de memória da impressora\n\nMaior controle do layout e da qualidade da impressão\n\nRedução de erros em grandes volumes de etiquetas\n\nSe você trabalha com alto volume de pedidos, usar ZPL pode melhorar significativamente sua operação logística.'
                   : 'Labels in ZPL format are ideal for thermal printers, especially from Zebra. Unlike PDF, ZPL is lightweight, fast, and compatible with automation systems. This means:\n\nFaster printing\n\nLower printer memory usage\n\nGreater control over layout and print quality\n\nReduction of errors in large volumes of labels\n\nIf you work with high order volumes, using ZPL can significantly improve your logistics operation.'}
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-7">
+              <AccordionTrigger>
+                {i18n.language === 'pt-BR' 
+                  ? 'Minha impressora térmica Zebra é compatível com a conversão ZPL' 
+                  : 'Is my Zebra thermal printer compatible with ZPL conversion'}
+              </AccordionTrigger>
+              <AccordionContent>
+                {i18n.language === 'pt-BR' 
+                  ? 'Sim! Toda impressora que suporte o padrão ZPL II (como os modelos GK420t, ZD220, ZT230, entre outros) é compatível com as etiquetas geradas por nossa ferramenta. Basta colar ou enviar o conteúdo ZPL e imprimir.\n\nVocê também pode ajustar o tamanho, margens e resolução antes de imprimir, garantindo que a etiqueta fique perfeita.'
+                  : 'Yes! Any printer that supports the ZPL II standard (such as models GK420t, ZD220, ZT230, among others) is compatible with the labels generated by our tool. Just paste or send the ZPL content and print.\n\nYou can also adjust the size, margins, and resolution before printing, ensuring that the label looks perfect.'}
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-8">
+              <AccordionTrigger>
+                {i18n.language === 'pt-BR' 
+                  ? 'Como funciona a conversão de etiquetas para ZPL' 
+                  : 'How does label conversion to ZPL work'}
+              </AccordionTrigger>
+              <AccordionContent>
+                {i18n.language === 'pt-BR' 
+                  ? 'Com nossa ferramenta, você faz o upload de arquivos PDF, imagens ou até códigos ZPL brutos e recebe a versão otimizada para impressão. Você pode:\n\nVisualizar a etiqueta antes de imprimir\n\nAjustar configurações de tamanho e resolução\n\nSalvar etiquetas para reimpressão futura\n\nExportar lotes inteiros em ZPL\n\nIdeal para sellers de marketplaces e operadores logísticos que precisam imprimir em massa.'
+                  : 'With our tool, you upload PDF files, images, or even raw ZPL code and receive the optimized version for printing. You can:\n\nPreview the label before printing\n\nAdjust size and resolution settings\n\nSave labels for future reprinting\n\nExport entire batches in ZPL\n\nIdeal for marketplace sellers and logistics operators who need to print in bulk.'}
               </AccordionContent>
             </AccordionItem>
           </Accordion>
