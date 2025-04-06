@@ -41,7 +41,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isLoggedIn }) => {
             <Button 
               size="lg" 
               onClick={handleGetStarted} 
-              className="px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto"
+              className="px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:bg-primary-foreground/10 active:scale-[0.98] cursor-pointer w-full sm:w-auto"
+              aria-label={isLoggedIn ? 'Access Application' : 'Create Free Account'}
             >
               {isLoggedIn 
                 ? (i18n.language === 'pt-BR' ? 'Acessar Aplicativo' : 'Access Application') 
@@ -53,7 +54,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isLoggedIn }) => {
                 size="lg" 
                 variant="outline" 
                 onClick={handleLogin} 
-                className="px-8 py-6 text-lg rounded-full shadow-md hover:shadow-lg transition-all duration-300 w-full sm:w-auto"
+                className="px-8 py-6 text-lg rounded-full shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer w-full sm:w-auto"
+                aria-label="Log In"
               >
                 <LogIn className="mr-2 h-5 w-5" />
                 {i18n.language === 'pt-BR' ? 'Entrar na Conta' : 'Log In'}
