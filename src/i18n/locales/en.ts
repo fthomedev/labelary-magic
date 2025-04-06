@@ -1,4 +1,3 @@
-
 const translations = {
   // Geral
   home: 'Home',
@@ -90,17 +89,15 @@ const translations = {
   basicPlanDescription: 'For individual users',
   advancedPlanDescription: 'For professional users',
   unlimitedPlanDescription: 'For intensive usage',
-  freeFeature1: 'Convert up to 5 labels/month',
+  labelsPerDay: 'labels/day',
+  unlimitedLabels: 'Unlimited conversions',
   freeFeature2: 'Standard support',
   freeFeature3: 'Manual label processing',
-  basicFeature1: 'Convert up to 100 labels/month',
   basicFeature2: 'Email support',
   basicFeature3: 'Batch processing',
-  advancedFeature1: 'Convert up to 500 labels/month',
   advancedFeature2: 'Priority support',
   advancedFeature3: 'Batch processing',
   advancedFeature4: 'History for 90 days',
-  unlimitedFeature1: 'Unlimited conversions',
   unlimitedFeature2: 'Premium support',
   unlimitedFeature3: 'Advanced batch processing',
   unlimitedFeature4: 'Unlimited history',

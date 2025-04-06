@@ -1,4 +1,3 @@
-
 const translations = {
   // Geral
   home: 'Início',
@@ -90,17 +89,15 @@ const translations = {
   basicPlanDescription: 'Para usuários individuais',
   advancedPlanDescription: 'Para usuários profissionais',
   unlimitedPlanDescription: 'Para uso intensivo',
-  freeFeature1: 'Converta até 5 etiquetas/mês',
+  labelsPerDay: 'etiquetas/dia',
+  unlimitedLabels: 'Conversões ilimitadas',
   freeFeature2: 'Suporte padrão',
   freeFeature3: 'Processamento manual de etiquetas',
-  basicFeature1: 'Converta até 100 etiquetas/mês',
   basicFeature2: 'Suporte por e-mail',
   basicFeature3: 'Processamento em lote',
-  advancedFeature1: 'Converta até 500 etiquetas/mês',
   advancedFeature2: 'Suporte prioritário',
   advancedFeature3: 'Processamento em lote',
   advancedFeature4: 'Histórico por 90 dias',
-  unlimitedFeature1: 'Conversões ilimitadas',
   unlimitedFeature2: 'Suporte premium',
   unlimitedFeature3: 'Processamento avançado em lote',
   unlimitedFeature4: 'Histórico ilimitado',
