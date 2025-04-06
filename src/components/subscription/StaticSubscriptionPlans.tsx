@@ -23,7 +23,7 @@ export const StaticSubscriptionPlans = () => {
       price: "0",
       currency: "R$",
       features: [
-        t('freeFeature1'),
+        `10 ${t('labelsPerDay')}`,
         t('freeFeature2'),
         t('freeFeature3')
       ],
@@ -38,7 +38,7 @@ export const StaticSubscriptionPlans = () => {
       price: "4,99",
       currency: "R$",
       features: [
-        t('basicFeature1'),
+        `50 ${t('labelsPerDay')}`,
         t('basicFeature2'),
         t('basicFeature3')
       ],
@@ -52,7 +52,7 @@ export const StaticSubscriptionPlans = () => {
       price: "9,99",
       currency: "R$",
       features: [
-        t('advancedFeature1'),
+        `100 ${t('labelsPerDay')}`,
         t('advancedFeature2'),
         t('advancedFeature3'),
         t('advancedFeature4')
@@ -67,7 +67,7 @@ export const StaticSubscriptionPlans = () => {
       price: "19,99",
       currency: "R$",
       features: [
-        t('unlimitedFeature1'),
+        t('unlimitedLabels'),
         t('unlimitedFeature2'),
         t('unlimitedFeature3'),
         t('unlimitedFeature4')
