@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
         <div className="flex items-center gap-2">
           <FileText className="h-6 w-6 text-primary" />
           <span className="text-xl font-semibold truncate max-w-[200px] sm:max-w-none">
-            {t('title')}
+            ZPL Magic
           </span>
         </div>
         <div className="flex items-center gap-2 sm:gap-4">

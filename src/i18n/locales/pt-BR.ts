@@ -152,7 +152,7 @@ const translations = {
   deleteRecordWarning: 'Tem certeza de que deseja excluir este registro? Esta ação não pode ser desfeita.',
   
   // Dashboard
-  title: 'Conversor ZPL para PDF',
+  title: 'ZPL Magic',
   subtitle: 'Carregue seus arquivos ZPL para convertê-los para o formato PDF',
   processingHistory: 'Histórico de Processamento',
   loadingHistory: 'Carregando histórico...',
