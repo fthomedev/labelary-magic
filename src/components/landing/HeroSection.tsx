@@ -41,7 +41,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isLoggedIn }) => {
             <Button 
               size="lg" 
               onClick={handleGetStarted} 
-              className="px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:bg-primary-foreground/10 active:scale-[0.98] cursor-pointer w-full sm:w-auto"
+              className="px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-[0.98] cursor-pointer w-full sm:w-auto"
               aria-label={isLoggedIn ? 'Access Application' : 'Create Free Account'}
             >
               {isLoggedIn 
