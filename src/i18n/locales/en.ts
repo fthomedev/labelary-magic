@@ -1,3 +1,4 @@
+
 const translations = {
   // Geral
   home: 'Home',
@@ -157,6 +158,16 @@ const translations = {
   totalRecords: 'Total: {{count}} records',
   downloadStarted: 'Download Started',
   downloadStartedDesc: 'Your file download has started',
+  
+  // Preview & Conversion
+  totalLabels: 'Total Labels',
+  labelsProcessed: '{{count}} labels processed',
+  downloadAgain: 'Download Again',
+  process: 'Process',
+  converting: 'Converting...',
+  successMessage: 'Conversion completed successfully',
+  errorMessage: 'Error processing the file',
+  mergePdfError: 'Error merging PDF files',
 };
 
 export default translations;

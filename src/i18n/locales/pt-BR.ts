@@ -1,3 +1,4 @@
+
 const translations = {
   // Geral
   home: 'Início',
@@ -157,6 +158,16 @@ const translations = {
   totalRecords: 'Total: {{count}} registros',
   downloadStarted: 'Download Iniciado',
   downloadStartedDesc: 'O download do seu arquivo foi iniciado',
+  
+  // Preview & Conversion
+  totalLabels: 'Total de Etiquetas',
+  labelsProcessed: '{{count}} etiquetas processadas',
+  downloadAgain: 'Baixar Novamente',
+  process: 'Processar',
+  converting: 'Convertendo...',
+  successMessage: 'Conversão concluída com sucesso',
+  errorMessage: 'Erro ao processar o arquivo',
+  mergePdfError: 'Erro ao mesclar arquivos PDF',
 };
 
 export default translations;
