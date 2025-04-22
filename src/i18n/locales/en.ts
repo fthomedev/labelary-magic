@@ -1,4 +1,3 @@
-
 const translations = {
   // Geral
   home: 'Home',
@@ -150,7 +149,7 @@ const translations = {
   deleteRecordWarning: 'Are you sure you want to delete this record? This action cannot be undone.',
   
   // Dashboard
-  title: 'ZPL Magic',
+  title: 'ZPL Easy',
   subtitle: 'Upload your ZPL files to convert them to PDF format',
   processingHistory: 'Processing History',
   loadingHistory: 'Loading history...',

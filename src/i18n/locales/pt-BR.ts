@@ -1,4 +1,3 @@
-
 const translations = {
   // Geral
   home: 'Início',
@@ -150,7 +149,7 @@ const translations = {
   deleteRecordWarning: 'Tem certeza de que deseja excluir este registro? Esta ação não pode ser desfeita.',
   
   // Dashboard
-  title: 'ZPL Magic',
+  title: 'ZPL Easy',
   subtitle: 'Carregue seus arquivos ZPL para convertê-los para o formato PDF',
   processingHistory: 'Histórico de Processamento',
   loadingHistory: 'Carregando histórico...',

@@ -30,7 +30,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isLoggedIn }) => {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
-            {i18n.language === 'pt-BR' ? 'Converta ZPL para PDF de Forma Rápida e Segura' : 'Convert ZPL to PDF Quickly and Securely'}
+            {i18n.language === 'pt-BR' 
+              ? 'Converta ZPL para PDF de Forma Rápida e Segura com ZPL Easy' 
+              : 'Convert ZPL to PDF Quickly and Securely with ZPL Easy'}
           </h1>
           <p className="text-xl mb-10 text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             {i18n.language === 'pt-BR' 
