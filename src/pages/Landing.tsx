@@ -8,6 +8,7 @@ import { BenefitsSection } from '@/components/landing/BenefitsSection';
 import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { CallToActionSection } from '@/components/landing/CallToActionSection';
 import { FAQSection } from '@/components/landing/FAQSection';
+import { SEO } from '@/components/SEO';
 
 const Landing = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -37,6 +38,10 @@ const Landing = () => {
 
   return (
     <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
+      <SEO 
+        title="ZPL Easy – Gerador de ZPL em PDF" 
+        description="Converta ZPL em PDF, crie etiquetas em lote e integre via API. Teste grátis."
+      />
       <Header isLoggedIn={isLoggedIn} />
       <HeroSection isLoggedIn={isLoggedIn} />
       <HowItWorksSection />

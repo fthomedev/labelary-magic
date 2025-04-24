@@ -13,6 +13,9 @@ import Subscription from "./pages/Subscription";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import CheckoutPage from "./pages/CheckoutPage";
 import Landing from "./pages/Landing";
+import Pricing from "./pages/Pricing";
+import Documentation from "./pages/Documentation";
+import FAQ from "./pages/FAQ";
 import { useEffect } from "react";
 
 // Cliente QueryClient criado fora do componente para evitar re-criação
@@ -60,6 +63,24 @@ const App = () => (
             <AuthGuard>
               <PageWithFooter><Subscription /></PageWithFooter>
             </AuthGuard>
+          }
+        />
+        <Route
+          path="/pricing"
+          element={
+            <PageWithFooter><Pricing /></PageWithFooter>
+          }
+        />
+        <Route
+          path="/docs"
+          element={
+            <PageWithFooter><Documentation /></PageWithFooter>
+          }
+        />
+        <Route
+          path="/faq"
+          element={
+            <PageWithFooter><FAQ /></PageWithFooter>
           }
         />
         <Route

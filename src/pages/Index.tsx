@@ -10,6 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { ProcessingHistory } from '@/components/ProcessingHistory';
 import { useZplConversion } from '@/hooks/useZplConversion';
 import { supabase } from '@/integrations/supabase/client';
+import { SEO } from '@/components/SEO';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -78,6 +79,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <SEO 
+        title="Conversor ZPL Online – ZPL Easy"
+        description="Cole seu código ZPL e baixe o PDF instantâneo. Sem instalar drivers."
+      />
+      
       <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="mx-auto max-w-7xl px-4">
           <div className="flex h-14 justify-between items-center">
