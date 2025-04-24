@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -20,9 +21,9 @@ const ProcessingHistory = () => {
       }
       
       const { data, error } = await supabase
-        .from('conversions')
+        .from('processing_history')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('date', { ascending: false })
         .limit(10);
         
       if (error) throw error;
@@ -109,10 +110,10 @@ const ProcessingHistory = () => {
             >
               <div>
                 <p className="font-medium truncate max-w-[200px] sm:max-w-xs">
-                  {item.filename || t('zplConversion')}
+                  {t('zplConversion')} ({item.label_count} {t('labels')})
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {formatDate(item.created_at)}
+                  {formatDate(item.date)}
                 </p>
               </div>
               {item.pdf_url && (

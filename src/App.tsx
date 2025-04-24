@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +6,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Footer } from "@/components/Footer";
 import { lazy, Suspense, useEffect } from "react";
+import { ToastProvider } from "@/hooks/use-toast";
 
 // Lazy load pages to reduce initial bundle size
 const Index = lazy(() => import("./pages/Index"));
@@ -59,119 +59,121 @@ const ScrollToTop = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <ScrollToTop />
-      <Routes>
-        <Route 
-          path="/" 
-          element={
-            <PageWithFooter>
-              <Suspense fallback={<PageLoading />}>
-                <Landing />
-              </Suspense>
-            </PageWithFooter>
-          } 
-        />
-        <Route 
-          path="/auth" 
-          element={
-            <PageWithFooter>
-              <Suspense fallback={<PageLoading />}>
-                <Auth />
-              </Suspense>
-            </PageWithFooter>
-          } 
-        />
-        <Route
-          path="/app"
-          element={
-            <AuthGuard>
+      <ToastProvider>
+        <Toaster />
+        <Sonner />
+        <ScrollToTop />
+        <Routes>
+          <Route 
+            path="/" 
+            element={
               <PageWithFooter>
                 <Suspense fallback={<PageLoading />}>
-                  <Index />
+                  <Landing />
                 </Suspense>
               </PageWithFooter>
-            </AuthGuard>
-          }
-        />
-        <Route
-          path="/subscription"
-          element={
-            <AuthGuard>
+            } 
+          />
+          <Route 
+            path="/auth" 
+            element={
               <PageWithFooter>
                 <Suspense fallback={<PageLoading />}>
-                  <Subscription />
+                  <Auth />
                 </Suspense>
               </PageWithFooter>
-            </AuthGuard>
-          }
-        />
-        <Route
-          path="/pricing"
-          element={
-            <PageWithFooter>
-              <Suspense fallback={<PageLoading />}>
-                <Pricing />
-              </Suspense>
-            </PageWithFooter>
-          }
-        />
-        <Route
-          path="/docs"
-          element={
-            <PageWithFooter>
-              <Suspense fallback={<PageLoading />}>
-                <Documentation />
-              </Suspense>
-            </PageWithFooter>
-          }
-        />
-        <Route
-          path="/faq"
-          element={
-            <PageWithFooter>
-              <Suspense fallback={<PageLoading />}>
-                <FAQ />
-              </Suspense>
-            </PageWithFooter>
-          }
-        />
-        <Route
-          path="/checkout"
-          element={
-            <AuthGuard>
+            } 
+          />
+          <Route
+            path="/app"
+            element={
+              <AuthGuard>
+                <PageWithFooter>
+                  <Suspense fallback={<PageLoading />}>
+                    <Index />
+                  </Suspense>
+                </PageWithFooter>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/subscription"
+            element={
+              <AuthGuard>
+                <PageWithFooter>
+                  <Suspense fallback={<PageLoading />}>
+                    <Subscription />
+                  </Suspense>
+                </PageWithFooter>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/pricing"
+            element={
               <PageWithFooter>
                 <Suspense fallback={<PageLoading />}>
-                  <CheckoutPage />
+                  <Pricing />
                 </Suspense>
               </PageWithFooter>
-            </AuthGuard>
-          }
-        />
-        <Route
-          path="/subscription/success"
-          element={
-            <AuthGuard>
+            }
+          />
+          <Route
+            path="/docs"
+            element={
               <PageWithFooter>
                 <Suspense fallback={<PageLoading />}>
-                  <SubscriptionSuccess />
+                  <Documentation />
                 </Suspense>
               </PageWithFooter>
-            </AuthGuard>
-          }
-        />
-        <Route 
-          path="*" 
-          element={
-            <PageWithFooter>
-              <Suspense fallback={<PageLoading />}>
-                <NotFound />
-              </Suspense>
-            </PageWithFooter>
-          } 
-        />
-      </Routes>
+            }
+          />
+          <Route
+            path="/faq"
+            element={
+              <PageWithFooter>
+                <Suspense fallback={<PageLoading />}>
+                  <FAQ />
+                </Suspense>
+              </PageWithFooter>
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <AuthGuard>
+                <PageWithFooter>
+                  <Suspense fallback={<PageLoading />}>
+                    <CheckoutPage />
+                  </Suspense>
+                </PageWithFooter>
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/subscription/success"
+            element={
+              <AuthGuard>
+                <PageWithFooter>
+                  <Suspense fallback={<PageLoading />}>
+                    <SubscriptionSuccess />
+                  </Suspense>
+                </PageWithFooter>
+              </AuthGuard>
+            }
+          />
+          <Route 
+            path="*" 
+            element={
+              <PageWithFooter>
+                <Suspense fallback={<PageLoading />}>
+                  <NotFound />
+                </Suspense>
+              </PageWithFooter>
+            } 
+          />
+        </Routes>
+      </ToastProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

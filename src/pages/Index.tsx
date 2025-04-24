@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -10,12 +11,25 @@ import { useZplConversion } from '@/hooks/useZplConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
 
-// Ensure the component is properly loaded with default import
+// Properly type and load ProcessingHistory component
 const ProcessingHistory = lazy(() => 
-  import('@/components/ProcessingHistory').then(module => {
-    // Ensure we're returning an object with a default property
-    return { default: module.default || module };
-  })
+  import('@/components/ProcessingHistory')
+    .then(module => {
+      // Ensure we get a React component function back
+      if (typeof module.default !== 'function') {
+        console.error('ProcessingHistory is not a function');
+        return { 
+          default: () => <div>Failed to load processing history</div> 
+        };
+      }
+      return { default: module.default };
+    })
+    .catch(error => {
+      console.error('Error loading ProcessingHistory:', error);
+      return { 
+        default: () => <div>Failed to load processing history</div> 
+      };
+    })
 );
 
 const Index = () => {

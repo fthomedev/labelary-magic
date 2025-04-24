@@ -3,13 +3,21 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
-// App import with more robust error handling
+// App import with proper type handling
 const App = React.lazy(() => 
   import('./App')
-    .then(module => ({ default: module.default || module }))
+    .then(module => {
+      // Ensure we get a React component function back
+      if (typeof module.default !== 'function') {
+        throw new Error('App component is not a function');
+      }
+      return { default: module.default };
+    })
     .catch(error => {
       console.error('Error loading App component:', error);
-      return { default: () => <div>Failed to load application</div> };
+      return { 
+        default: () => <div>Failed to load application</div> 
+      };
     })
 );
 
