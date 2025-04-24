@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Download, RefreshCw, AlertCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
+import { toast } from '@/hooks/use-toast';
 
 const ProcessingHistory = () => {
   const { t, i18n } = useTranslation();
@@ -35,6 +36,13 @@ const ProcessingHistory = () => {
   
   const handleDownload = (url: string) => {
     window.open(url, '_blank');
+    
+    // Show toast notification
+    toast({
+      title: t('downloadStarted'),
+      description: t('downloadStartedDesc'),
+      duration: 3000,
+    });
   };
   
   const getLocale = () => {
