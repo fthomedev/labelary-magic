@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
@@ -7,10 +7,12 @@ import { ConversionProgress } from '@/components/ConversionProgress';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { UserMenu } from '@/components/UserMenu';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ProcessingHistory } from '@/components/ProcessingHistory';
 import { useZplConversion } from '@/hooks/useZplConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
+
+// Lazy load non-critical component
+const ProcessingHistory = lazy(() => import('@/components/ProcessingHistory'));
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -34,13 +36,18 @@ const Index = () => {
   useEffect(() => {
     // Check if user is logged in
     const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      setIsLoggedIn(!!data.session);
-      
-      // Set up auth state change listener
-      supabase.auth.onAuthStateChange((event, session) => {
-        setIsLoggedIn(!!session);
-      });
+      try {
+        const { data } = await supabase.auth.getSession();
+        setIsLoggedIn(!!data.session);
+        
+        // Set up auth state change listener
+        supabase.auth.onAuthStateChange((event, session) => {
+          setIsLoggedIn(!!session);
+        });
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        setIsLoggedIn(false);
+      }
     };
     
     checkAuth();
@@ -76,6 +83,13 @@ const Index = () => {
       });
     }
   };
+
+  // Loading fallback for ProcessingHistory
+  const HistoryLoadingFallback = () => (
+    <div className="flex items-center justify-center p-8 h-64">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -145,7 +159,9 @@ const Index = () => {
             </div>
 
             <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow" ref={processingHistoryRef}>
-              <ProcessingHistory key={historyRefreshTrigger} />
+              <Suspense fallback={<HistoryLoadingFallback />}>
+                <ProcessingHistory key={historyRefreshTrigger} />
+              </Suspense>
             </div>
           </div>
         </div>

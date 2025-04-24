@@ -86,7 +86,9 @@
       }
     </style>
 
-    <!-- Load critical fonts first -->
+    <!-- Preload critical fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" as="style">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" as="style">
@@ -160,10 +162,10 @@
       });
     </script>
     
-    <!-- Load GPT Engineer script asynchronously -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <!-- Load GPT Engineer script with optimal async attributes -->
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module" defer async fetchpriority="low"></script>
     
-    <!-- Load main app with highest priority but non-blocking -->
+    <!-- Load main app with module type for better performance -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
