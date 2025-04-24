@@ -162,10 +162,10 @@
       });
     </script>
     
-    <!-- Load GPT Engineer script with optimal async attributes -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module" defer async fetchpriority="low"></script>
+    <!-- Load GPT Engineer script with consistent async attribute -->
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module" async fetchpriority="low"></script>
     
-    <!-- Load main app with module type for better performance -->
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- Load main app with module type and async for consistency -->
+    <script type="module" src="/src/main.tsx" async></script>
   </body>
 </html>
