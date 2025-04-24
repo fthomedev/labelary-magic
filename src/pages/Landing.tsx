@@ -40,19 +40,6 @@ const Landing = () => {
     };
   }, []);
 
-  // Remover o conteúdo crítico pré-renderizado quando o React estiver pronto
-  useEffect(() => {
-    if (isLoaded) {
-      const criticalContent = document.getElementById('critical-content');
-      if (criticalContent) {
-        criticalContent.style.opacity = '0';
-        setTimeout(() => {
-          criticalContent.remove();
-        }, 300);
-      }
-    }
-  }, [isLoaded]);
-
   return (
     <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
       <SEO 

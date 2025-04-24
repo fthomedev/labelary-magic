@@ -34,8 +34,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isLoggedIn }) => {
               ? 'Converta ZPL para PDF de Forma Rápida e Segura com ZPL Easy' 
               : 'Convert ZPL to PDF Quickly and Securely with ZPL Easy'}
           </h1>
-          {/* Este é o elemento crítico LCP que precisa carregar rápido */}
-          <p className="text-xl mb-8 text-gray-600 dark:text-gray-300 max-w-3xl mx-auto" id="lcp-element">
+          <p className="text-xl mb-8 text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             {i18n.language === 'pt-BR' 
               ? 'Simplifique o seu fluxo de impressão de etiquetas e ganhe tempo com a nossa solução online confiável'
               : 'Simplify your label printing workflow and save time with our reliable online solution'}
@@ -68,7 +67,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isLoggedIn }) => {
         </div>
       </div>
       
-      {/* Simplificadas as decorações de fundo */}
       <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-2xl opacity-70" />
       <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-2xl opacity-70" />
     </section>

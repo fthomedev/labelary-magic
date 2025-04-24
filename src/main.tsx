@@ -37,6 +37,7 @@ const initializeApp = async () => {
     );
   } catch (error) {
     console.error('Failed to initialize app:', error);
+    document.getElementById('critical-content')?.classList.remove('opacity-0');
   }
 };
 
@@ -46,4 +47,3 @@ if (document.readyState === 'loading') {
 } else {
   initializeApp();
 }
-
