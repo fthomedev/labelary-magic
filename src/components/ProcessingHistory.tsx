@@ -1,115 +1,142 @@
-
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, History } from 'lucide-react';
-import { CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { ProcessingRecord } from '@/hooks/useZplConversion';
-import { useProcessingHistory } from '@/hooks/useProcessingHistory';
-import { HistoryTable } from './history/HistoryTable';
-import { HistoryPagination } from './history/HistoryPagination';
-import { PdfViewerModal } from './history/PdfViewerModal';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Download, RefreshCw, AlertCircle } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR, enUS } from 'date-fns/locale';
 
-interface ProcessingHistoryProps {
-  records?: ProcessingRecord[];
-  localOnly?: boolean;
-}
+const ProcessingHistory = () => {
+  const { t, i18n } = useTranslation();
+  
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['processingHistory'],
+    queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        throw new Error('Not authenticated');
+      }
+      
+      const { data, error } = await supabase
+        .from('conversions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+        
+      if (error) throw error;
+      return data;
+    },
+    retry: 1,
+    staleTime: 60000, // 1 minute
+  });
+  
+  const handleDownload = (url: string) => {
+    window.open(url, '_blank');
+  };
+  
+  const getLocale = () => {
+    return i18n.language.startsWith('pt') ? ptBR : enUS;
+  };
+  
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return formatDistanceToNow(date, { 
+        addSuffix: true,
+        locale: getLocale()
+      });
+    } catch (e) {
+      console.error('Date formatting error:', e);
+      return dateString;
+    }
+  };
 
-export function ProcessingHistory({ records: localRecords, localOnly = false }: ProcessingHistoryProps) {
-  const { t } = useTranslation();
-  const {
-    isLoading,
-    records,
-    formatDate,
-    handleDownload,
-    isMobile,
-    currentPage,
-    totalPages,
-    handlePageChange,
-    totalRecords,
-    refreshData,
-    // PDF modal state and handlers
-    isModalOpen,
-    currentPdfUrl,
-    closePdfModal,
-    downloadCurrentPdf
-  } = useProcessingHistory(localRecords, localOnly);
-
-  if (isLoading) {
+  if (error) {
     return (
-      <>
-        <CardHeader className="pb-1 pt-3 border-b">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <History className="h-4 w-4 text-primary" />
-            {t('processingHistory')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center py-6 flex flex-col items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
-          <span className="text-sm text-muted-foreground">{t('loadingHistory')}</span>
-        </CardContent>
-      </>
-    );
-  }
-
-  if (!records || records.length === 0) {
-    return (
-      <>
-        <CardHeader className="pb-1 pt-3 border-b">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <History className="h-4 w-4 text-primary" />
-            {t('processingHistory')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center py-6 text-sm text-muted-foreground">
-          {t('noHistory')}
-        </CardContent>
-      </>
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium">{t('processingHistory')}</h3>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {t('refresh')}
+          </Button>
+        </div>
+        <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-md flex items-start">
+          <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {t('errorLoadingHistory')}
+            </p>
+            <p className="text-xs text-red-500 dark:text-red-300 mt-1">
+              {error instanceof Error ? error.message : String(error)}
+            </p>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
-      <CardHeader className="pb-1 pt-3 border-b">
-        <CardTitle className="text-base font-medium flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <History className="h-4 w-4 text-primary" />
-            <span>{t('processingHistory')}</span>
-          </div>
-          {!localOnly && totalRecords > 0 && (
-            <span className="text-xs font-normal text-muted-foreground">
-              {t('totalRecords', { count: totalRecords })}
-            </span>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <HistoryTable
-          records={records}
-          formatDate={formatDate}
-          onDownload={handleDownload}
-          isMobile={isMobile}
-        />
-      </CardContent>
-      {!localOnly && totalPages > 1 && (
-        <CardFooter className="py-2 px-4 flex justify-center border-t">
-          <HistoryPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </CardFooter>
+    <div className="p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-medium">{t('processingHistory')}</h3>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          {t('refresh')}
+        </Button>
+      </div>
+      
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between p-3 border rounded-md">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded-md" />
+            </div>
+          ))}
+        </div>
+      ) : data && data.length > 0 ? (
+        <div className="space-y-2">
+          {data.map((item) => (
+            <div 
+              key={item.id} 
+              className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <div>
+                <p className="font-medium truncate max-w-[200px] sm:max-w-xs">
+                  {item.filename || t('zplConversion')}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {formatDate(item.created_at)}
+                </p>
+              </div>
+              {item.pdf_url && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleDownload(item.pdf_url)}
+                  aria-label={t('download')}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-gray-500 dark:text-gray-400">
+            {t('noConversionsYet')}
+          </p>
+        </div>
       )}
-
-      {/* PDF Viewer Modal */}
-      <PdfViewerModal
-        pdfUrl={currentPdfUrl}
-        isOpen={isModalOpen}
-        onClose={closePdfModal}
-        onDownload={downloadCurrentPdf}
-      />
-    </>
+    </div>
   );
-}
+};
 
-// Adding default export to fix the lazy loading issue
 export default ProcessingHistory;

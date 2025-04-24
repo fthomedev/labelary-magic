@@ -1,5 +1,5 @@
 
-// Import directly from the source file instead of re-exporting
+// Import directly from the source file
 import { useToast, toast } from "@/hooks/use-toast";
 
 export { useToast, toast };

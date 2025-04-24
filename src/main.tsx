@@ -3,11 +3,15 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
-// App import with error handling
-const App = React.lazy(() => import('./App').catch(error => {
-  console.error('Error loading App component:', error);
-  return { default: () => <div>Failed to load application</div> };
-}));
+// App import with more robust error handling
+const App = React.lazy(() => 
+  import('./App')
+    .then(module => ({ default: module.default || module }))
+    .catch(error => {
+      console.error('Error loading App component:', error);
+      return { default: () => <div>Failed to load application</div> };
+    })
+);
 
 // Loading component
 const LoadingFallback = () => (

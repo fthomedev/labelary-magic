@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -11,8 +10,13 @@ import { useZplConversion } from '@/hooks/useZplConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
 
-// Lazy load with proper default import
-const ProcessingHistory = lazy(() => import('@/components/ProcessingHistory'));
+// Ensure the component is properly loaded with default import
+const ProcessingHistory = lazy(() => 
+  import('@/components/ProcessingHistory').then(module => {
+    // Ensure we're returning an object with a default property
+    return { default: module.default || module };
+  })
+);
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
