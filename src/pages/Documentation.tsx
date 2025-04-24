@@ -39,7 +39,7 @@ const Documentation = () => {
           
           <h3 className="text-xl font-bold mt-6">Status da Conversão</h3>
           <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto">
-            <code>GET https://api.zpleasy.com/status/{conversion_id}</code>
+            <code>GET https://api.zpleasy.com/status/{job_id}</code>
           </pre>
           <p>
             Verifique o status de uma conversão em andamento utilizando o ID de referência.
