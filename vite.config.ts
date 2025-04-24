@@ -21,42 +21,50 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    rollupOptions: {
-      output: {
-        // Configure code splitting
-        manualChunks: {
-          // Vendor chunk for large external libraries
-          vendor: [
-            'react',
-            'react-dom',
-            'react-router-dom',
-            '@tanstack/react-query',
-          ],
-          // UI components
-          ui: [
-            '@/components/ui',
-          ],
-          // i18n translations
-          i18n: [
-            'i18next',
-            'react-i18next',
-            './src/i18n/config',
-            './src/i18n/locales',
-          ],
-          // Auth and Supabase
-          auth: [
-            '@supabase/supabase-js',
-          ],
-        },
-      },
-    },
+    outDir: "dist",
+    // Ensure source maps are only generated in development
     sourcemap: mode !== 'production',
-    // Minimize chunks
+    // Add error and warning capture
+    reportCompressedSize: true,
     minify: 'terser',
     terserOptions: {
       compress: {
-        // Remove console.log in production
         drop_console: mode === 'production',
+      },
+    },
+    rollupOptions: {
+      output: {
+        // Configure code splitting
+        manualChunks: (id) => {
+          // Group React and related packages
+          if (id.includes('node_modules/react') || 
+              id.includes('node_modules/react-dom') || 
+              id.includes('node_modules/scheduler')) {
+            return 'vendor-react';
+          }
+          
+          // Group Radix UI components
+          if (id.includes('node_modules/@radix-ui')) {
+            return 'vendor-radix';
+          }
+          
+          // Group UI components
+          if (id.includes('/src/components/ui/')) {
+            return 'ui-components';
+          }
+          
+          // Group i18n related packages
+          if (id.includes('node_modules/i18next') || 
+              id.includes('node_modules/react-i18next') ||
+              id.includes('/src/i18n/')) {
+            return 'i18n';
+          }
+          
+          // Default chunking behavior for other modules
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
       },
     },
   },
