@@ -124,14 +124,12 @@ export type Database = {
         Returns: Json
       }
       insert_processing_history: {
-        Args:
-          | Record<PropertyKey, never>
-          | {
-              p_user_id: string
-              p_label_count: number
-              p_pdf_url: string
-              p_pdf_path?: string
-            }
+        Args: {
+          p_user_id: string
+          p_label_count: number
+          p_pdf_url: string
+          p_pdf_path?: string
+        }
         Returns: undefined
       }
       reset_daily_usage: {
