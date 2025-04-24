@@ -3,52 +3,47 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
-// Lazy load App component
+// Split App and i18n into separate chunks
 const App = React.lazy(() => import('./App.tsx'));
-
-// Lazy load i18n configuration
 const loadI18n = () => import('./i18n/config');
 
-// Function to initialize the app
+// Create loading component for better user experience
+const LoadingFallback = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="h-32 w-32 animate-pulse bg-primary/10 rounded-full" />
+  </div>
+);
+
+// Initialize app with better error handling and code splitting
 const initializeApp = async () => {
   const rootElement = document.getElementById('root');
-
   if (!rootElement) {
-    console.error('Root element not found!');
+    console.error('Root element not found');
     return;
   }
 
-  // Load i18n configuration after initial render
-  await loadI18n();
+  try {
+    // Initialize i18n first but don't block rendering
+    loadI18n().catch(console.error);
 
-  console.log('Performing client-side rendering');
-  createRoot(rootElement).render(
-    <React.StrictMode>
-      <BrowserRouter>
-        <React.Suspense fallback={
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="h-32 w-32 animate-pulse bg-primary/10 rounded-full" />
-          </div>
-        }>
-          <App />
-        </React.Suspense>
-      </BrowserRouter>
-    </React.StrictMode>
-  );
+    createRoot(rootElement).render(
+      <React.StrictMode>
+        <BrowserRouter>
+          <React.Suspense fallback={<LoadingFallback />}>
+            <App />
+          </React.Suspense>
+        </BrowserRouter>
+      </React.StrictMode>
+    );
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+  }
 };
 
-// Verify if the document has loaded
+// Start app when document is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
-  // If document is already loaded, initialize immediately
   initializeApp();
 }
 
-// Load non-critical CSS after initial content is displayed
-window.addEventListener('load', () => {
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = '/src/index.css';
-  document.head.appendChild(link);
-});

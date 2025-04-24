@@ -63,11 +63,9 @@
       }
     </style>
 
-    <!-- Preload critical fonts -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
-    </noscript>
+    <!-- Load critical fonts first -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" as="style">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
     
     <!-- Meta tags and Schema.org markup -->
     <meta name="description" content="Converta ZPL em PDF, crie etiquetas em lote e integre via API. Teste grátis." />
@@ -112,9 +110,6 @@
 
     <!-- Defer non-critical CSS -->
     <link rel="stylesheet" href="/src/index.css" media="print" onload="this.media='all'">
-    <noscript>
-      <link rel="stylesheet" href="/src/index.css">
-    </noscript>
   </head>
 
   <body>
@@ -126,26 +121,24 @@
     
     <div id="root"></div>
     
-    <!-- Script para remover o pré-renderizado quando o app carregar -->
+    <!-- Remove critical content after main app loads -->
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-          var criticalContent = document.getElementById('critical-content');
+      document.addEventListener('DOMContentLoaded', () => {
+        requestIdleCallback(() => {
+          const criticalContent = document.getElementById('critical-content');
           if (criticalContent) {
             criticalContent.style.opacity = '0';
             criticalContent.style.transition = 'opacity 0.3s ease';
-            setTimeout(function() {
-              criticalContent.remove();
-            }, 300);
+            setTimeout(() => criticalContent.remove(), 300);
           }
-        }, 100);
+        });
       });
     </script>
     
-    <!-- GPT Engineer script - load asynchronously -->
+    <!-- Load GPT Engineer script asynchronously -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module" async></script>
     
-    <!-- Main application script - load with type module and defer -->
-    <script type="module" src="/src/main.tsx" defer></script>
+    <!-- Load main app with highest priority but non-blocking -->
+    <script type="module" src="/src/main.tsx" async></script>
   </body>
 </html>
