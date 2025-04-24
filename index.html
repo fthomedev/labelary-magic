@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -31,6 +32,35 @@
         border-bottom: 1px solid rgba(0,0,0,0.1);
         background-color: rgba(255,255,255,0.95);
         backdrop-filter: blur(8px);
+      }
+
+      /* Adicionando estilo específico para o elemento LCP */
+      #lcp-element {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+        color: rgba(107, 114, 128, 1);
+        max-width: 48rem;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* Estilos críticos para o hero-section */
+      #hero-section {
+        position: relative;
+        padding-top: 4rem;
+        padding-bottom: 4rem;
+        overflow: hidden;
+      }
+
+      /* Estilos adicionais para o elemento h1 */
+      .hero-heading {
+        font-size: 2.25rem;
+        line-height: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-image: linear-gradient(to right, #22c55e, #4ade80);
       }
     </style>
 
@@ -89,7 +119,29 @@
   </head>
 
   <body>
+    <!-- Pré-renderização do conteúdo crítico -->
+    <div id="critical-content" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 1rem; text-align: center;">
+      <h1 class="hero-heading">Converta ZPL para PDF de Forma Rápida e Segura com ZPL Easy</h1>
+      <p id="lcp-element">Simplifique o seu fluxo de impressão de etiquetas e ganhe tempo com a nossa solução online confiável</p>
+    </div>
+    
     <div id="root"></div>
+    
+    <!-- Script para remover o pré-renderizado quando o app carregar -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          var criticalContent = document.getElementById('critical-content');
+          if (criticalContent) {
+            criticalContent.style.opacity = '0';
+            criticalContent.style.transition = 'opacity 0.3s ease';
+            setTimeout(function() {
+              criticalContent.remove();
+            }, 300);
+          }
+        }, 100);
+      });
+    </script>
     
     <!-- GPT Engineer script -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module" defer></script>

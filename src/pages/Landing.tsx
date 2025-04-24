@@ -12,15 +12,19 @@ import { SEO } from '@/components/SEO';
 
 const Landing = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   
   // Verificar se o usuário está autenticado
   useEffect(() => {
     const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        setIsLoggedIn(true);
-      } else {
+      try {
+        const { data } = await supabase.auth.getSession();
+        setIsLoggedIn(!!data.session);
+      } catch (error) {
+        console.error("Auth check failed:", error);
         setIsLoggedIn(false);
+      } finally {
+        setIsLoaded(true);
       }
     };
     
@@ -35,6 +39,19 @@ const Landing = () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Remover o conteúdo crítico pré-renderizado quando o React estiver pronto
+  useEffect(() => {
+    if (isLoaded) {
+      const criticalContent = document.getElementById('critical-content');
+      if (criticalContent) {
+        criticalContent.style.opacity = '0';
+        setTimeout(() => {
+          criticalContent.remove();
+        }, 300);
+      }
+    }
+  }, [isLoaded]);
 
   return (
     <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
