@@ -11,7 +11,7 @@ import { useZplConversion } from '@/hooks/useZplConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
 
-// Lazy load non-critical component
+// Lazy load with proper default import
 const ProcessingHistory = lazy(() => import('@/components/ProcessingHistory'));
 
 const Index = () => {

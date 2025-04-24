@@ -110,3 +110,6 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     </>
   );
 }
+
+// Adding default export to fix the lazy loading issue
+export default ProcessingHistory;

@@ -3,18 +3,19 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
-// Improve code splitting with better chunking
-const App = React.lazy(() => import('./App'));
-const loadI18n = () => import('./i18n/config');
+// App import with error handling
+const App = React.lazy(() => import('./App').catch(error => {
+  console.error('Error loading App component:', error);
+  return { default: () => <div>Failed to load application</div> };
+}));
 
-// Enhanced loading component with better UX
+// Loading component
 const LoadingFallback = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="h-32 w-32 animate-pulse bg-primary/10 rounded-full" />
+    <div className="h-32 w-32 animate-pulse bg-primary/10 rounded-full"></div>
   </div>
 );
 
-// Improved initialization with progressive enhancement
 const initializeApp = async () => {
   const rootElement = document.getElementById('root');
   if (!rootElement) {
@@ -23,45 +24,71 @@ const initializeApp = async () => {
   }
 
   try {
-    // Start loading i18n in parallel but don't block rendering
-    const i18nPromise = loadI18n();
-
-    // Render the app immediately
-    createRoot(rootElement).render(
-      <React.StrictMode>
-        <BrowserRouter>
-          <React.Suspense fallback={<LoadingFallback />}>
-            <App />
-          </React.Suspense>
-        </BrowserRouter>
-      </React.StrictMode>
-    );
-
-    // Wait for i18n in background
-    await i18nPromise.catch(err => {
+    // Load i18n in a non-blocking way
+    import('./i18n/config').catch(err => {
       console.warn('Non-critical i18n load error:', err);
     });
-    
+
+    // Render app with error boundary
+    createRoot(rootElement).render(
+      <React.StrictMode>
+        <React.Suspense fallback={<LoadingFallback />}>
+          <ErrorBoundary>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </ErrorBoundary>
+        </React.Suspense>
+      </React.StrictMode>
+    );
   } catch (error) {
     console.error('Failed to initialize app:', error);
-    document.getElementById('critical-content')?.classList.remove('opacity-0');
+    document.getElementById('root')?.appendChild(
+      document.createTextNode('Failed to initialize application')
+    );
   }
 };
 
-// Use requestIdleCallback for non-critical initialization when browser is idle
-if ('requestIdleCallback' in window) {
-  window.requestIdleCallback(() => {
-    if (document.readyState === 'complete') {
-      initializeApp();
-    } else {
-      window.addEventListener('load', initializeApp);
-    }
-  }, { timeout: 2000 });
-} else {
-  // Fallback for browsers without requestIdleCallback
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-  } else {
-    initializeApp();
+// Simple error boundary component to catch render errors
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
   }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error('Render error caught:', error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center flex-col p-4">
+          <h2 className="text-xl font-bold mb-4">Something went wrong</h2>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded"
+          >
+            Reload Page
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Initialize when the DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
 }
