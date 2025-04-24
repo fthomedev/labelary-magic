@@ -41,32 +41,32 @@ export const FAQSection: React.FC = () => {
   return (
     <section className="py-20 bg-white dark:bg-gray-900" id="faq">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <div className="flex justify-center items-center mb-4">
-            <HelpCircle className="h-10 w-10 text-primary mr-3" />
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white">
+            <HelpCircle className="h-8 w-8 text-primary mr-2" />
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-white">
               {i18n.language === 'pt-BR' ? 'Perguntas Frequentes' : 'Frequently Asked Questions'}
             </h2>
           </div>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             {i18n.language === 'pt-BR' 
-              ? 'Encontre respostas para as dúvidas mais comuns sobre nossa plataforma de conversão ZPL' 
-              : 'Find answers to the most common questions about our ZPL conversion platform'}
+              ? 'Encontre respostas para as dúvidas mais comuns sobre nossa plataforma' 
+              : 'Find answers to the most common questions about our platform'}
           </p>
         </div>
         
         <div className="max-w-3xl mx-auto">
-          <Accordion type="single" collapsible className="w-full space-y-4">
+          <Accordion type="single" collapsible className="w-full">
             {faqItems.map((item) => (
               <AccordionItem 
                 key={item.id} 
-                value={item.id} 
-                className="border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                value={item.id}
+                className="border-b border-gray-200 dark:border-gray-700"
               >
-                <AccordionTrigger className="px-6 py-4 hover:no-underline text-lg font-medium text-gray-800 dark:text-white">
+                <AccordionTrigger className="py-4 text-gray-800 dark:text-white">
                   {item.question}
                 </AccordionTrigger>
-                <AccordionContent className="px-6 py-4 text-gray-600 dark:text-gray-300">
+                <AccordionContent className="pb-4 text-gray-600 dark:text-gray-300">
                   {item.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -77,4 +77,3 @@ export const FAQSection: React.FC = () => {
     </section>
   );
 };
-
