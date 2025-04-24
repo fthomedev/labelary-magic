@@ -2,14 +2,16 @@
 import React from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import App from './App';
-import './index.css';
-import './i18n/config';
+import App from '../App';
+import '../index.css';
+import '../i18n/config';
 
-// Wait until i18n is initialized before rendering
-const rootElement = document.getElementById('root');
+export { render };
 
-if (rootElement) {
+function render() {
+  const rootElement = document.getElementById('root');
+  if (!rootElement) throw new Error('Could not find root element');
+  
   hydrateRoot(
     rootElement,
     <React.StrictMode>
@@ -18,6 +20,4 @@ if (rootElement) {
       </BrowserRouter>
     </React.StrictMode>
   );
-} else {
-  console.error('Root element not found for hydration');
 }

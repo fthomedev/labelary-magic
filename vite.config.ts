@@ -10,10 +10,14 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    middlewareMode: true, // Enable middleware mode for SSR
   },
   plugins: [
     react(),
-    ssr({ prerender: true }),
+    ssr({ 
+      prerender: true,
+      includeAssetsImportedByServer: true
+    }),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
