@@ -6,7 +6,7 @@ export const Footer = () => {
   
   return (
     <footer className="w-full py-4 px-4 bg-gray-900 text-gray-400 text-center text-sm mt-auto">
-      <p>© {new Date().getFullYear()} ZPL Magic. {t('allRightsReserved')}</p>
+      <p>© {new Date().getFullYear()} ZPL Easy. {t('allRightsReserved')}</p>
     </footer>
   );
 };
