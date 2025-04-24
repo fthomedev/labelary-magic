@@ -4,6 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZPL Easy – Gerador de ZPL em PDF</title>
+    
+    <!-- Critical CSS inlined -->
+    <style>
+      /* Critical styles needed for above-the-fold content */
+      :root {
+        --background: 0 0% 100%;
+        --foreground: 240 10% 3.9%;
+        --primary: 240 5.9% 10%;
+        --primary-foreground: 0 0% 98%;
+      }
+      
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: system-ui, -apple-system, sans-serif;
+        background-color: hsl(var(--background));
+        color: hsl(var(--foreground));
+      }
+      
+      .header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        width: 100%;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        background-color: rgba(255,255,255,0.95);
+        backdrop-filter: blur(8px);
+      }
+    </style>
+
+    <!-- Preload critical fonts -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+    </noscript>
+    
+    <!-- Meta tags -->
     <meta name="description" content="Converta ZPL em PDF, crie etiquetas em lote e integre via API. Teste grátis." />
     <meta name="author" content="Lovable" />
     <link rel="canonical" href="https://zpleasy.com" />
@@ -16,6 +53,7 @@
     <meta name="twitter:description" content="Converta ZPL em PDF, crie etiquetas em lote e integre via API. Teste grátis." />
     <meta name="robots" content="index, follow" />
 
+    <!-- Schema.org markup -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -42,11 +80,21 @@
         }
       }
     </script>
+
+    <!-- Defer non-critical CSS -->
+    <link rel="stylesheet" href="/src/index.css" media="print" onload="this.media='all'">
+    <noscript>
+      <link rel="stylesheet" href="/src/index.css">
+    </noscript>
   </head>
 
   <body>
     <div id="root"></div>
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
-    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- GPT Engineer script -->
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module" defer></script>
+    
+    <!-- Main application script -->
+    <script type="module" src="/src/main.tsx" defer></script>
   </body>
 </html>
