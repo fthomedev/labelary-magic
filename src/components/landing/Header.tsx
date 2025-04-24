@@ -25,7 +25,7 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur dark:bg-gray-900/95 dark:border-gray-800">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <FileText className="h-6 w-6 text-primary" />
+          <FileText className="h-6 w-6 text-primary" aria-hidden="true" />
           <span className="text-xl font-semibold truncate max-w-[200px] sm:max-w-none">
             ZPL Easy
           </span>
@@ -39,9 +39,10 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
                 onClick={handleMyAccount}
                 className="hidden sm:flex items-center gap-2"
                 size="sm"
+                aria-label={t('myAccount')}
               >
-                <User size={16} />
-                {t('myAccount')}
+                <User size={16} aria-hidden="true" />
+                <span>{t('myAccount')}</span>
               </Button>
               
               <UserMenu />
@@ -53,6 +54,7 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
                 onClick={() => navigate('/auth')}
                 className="hidden sm:flex"
                 size="sm"
+                aria-label={t('login')}
               >
                 {t('login')}
               </Button>
@@ -60,6 +62,7 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
                 onClick={() => navigate('/auth?signup=true')}
                 className="hidden sm:flex"
                 size="sm"
+                aria-label={t('register')}
               >
                 {t('register')}
               </Button>
@@ -69,8 +72,9 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
                 size="sm"
                 onClick={() => navigate('/auth')}
                 className="sm:hidden"
+                aria-label={t('login')}
               >
-                <User size={16} />
+                <User size={16} aria-hidden="true" />
               </Button>
             </>
           )}

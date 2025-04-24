@@ -10,10 +10,8 @@ export const LanguageSelector = () => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Mark component as mounted to avoid hydration issues
     setMounted(true);
     
-    // Check for saved language
     const savedLanguage = localStorage.getItem('i18nextLng');
     if (savedLanguage && savedLanguage !== i18n.language) {
       i18n.changeLanguage(savedLanguage);
@@ -24,37 +22,41 @@ export const LanguageSelector = () => {
     if (i18n.language === value) return;
     
     i18n.changeLanguage(value);
-    // Manual storage in case the i18n event doesn't trigger
     localStorage.setItem('i18nextLng', value);
   };
 
-  // Only render content after initial mount to avoid hydration mismatch
   if (!mounted) return null;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Globe className="h-4 w-4" />
+        <Button 
+          variant="outline" 
+          size="icon"
+          aria-label={i18n.language === 'pt-BR' ? 'Selecionar idioma' : 'Select language'}
+        >
+          <Globe className="h-4 w-4" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-background border">
         <DropdownMenuItem 
           onClick={() => handleLanguageChange('pt-BR')}
           className="cursor-pointer"
+          role="menuitem"
         >
           <div className="flex items-center justify-between w-full">
             <span>Português</span>
-            {i18n.language === 'pt-BR' && <Check className="h-4 w-4 ml-2" />}
+            {i18n.language === 'pt-BR' && <Check className="h-4 w-4 ml-2" aria-hidden="true" />}
           </div>
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => handleLanguageChange('en')}
           className="cursor-pointer"
+          role="menuitem"
         >
           <div className="flex items-center justify-between w-full">
             <span>English</span>
-            {i18n.language === 'en' && <Check className="h-4 w-4 ml-2" />}
+            {i18n.language === 'en' && <Check className="h-4 w-4 ml-2" aria-hidden="true" />}
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>
