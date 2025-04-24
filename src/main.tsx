@@ -2,12 +2,15 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import App from './App.tsx';
-// Importamos o CSS apenas depois que o conteúdo crítico já foi renderizado
-import './i18n/config';
 
-// Função para inicializar o app
-const initializeApp = () => {
+// Lazy load App component
+const App = React.lazy(() => import('./App.tsx'));
+
+// Lazy load i18n configuration
+const loadI18n = () => import('./i18n/config');
+
+// Function to initialize the app
+const initializeApp = async () => {
   const rootElement = document.getElementById('root');
 
   if (!rootElement) {
@@ -15,25 +18,34 @@ const initializeApp = () => {
     return;
   }
 
+  // Load i18n configuration after initial render
+  await loadI18n();
+
   console.log('Performing client-side rendering');
   createRoot(rootElement).render(
     <React.StrictMode>
       <BrowserRouter>
-        <App />
+        <React.Suspense fallback={
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="h-32 w-32 animate-pulse bg-primary/10 rounded-full" />
+          </div>
+        }>
+          <App />
+        </React.Suspense>
       </BrowserRouter>
     </React.StrictMode>
   );
 };
 
-// Verificar se o documento já foi carregado
+// Verify if the document has loaded
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
-  // Se o documento já carregou, inicializar imediatamente
+  // If document is already loaded, initialize immediately
   initializeApp();
 }
 
-// Carregar o CSS não crítico somente após o conteúdo inicial ser exibido
+// Load non-critical CSS after initial content is displayed
 window.addEventListener('load', () => {
   const link = document.createElement('link');
   link.rel = 'stylesheet';
