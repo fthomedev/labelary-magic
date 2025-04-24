@@ -31,26 +31,9 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
           </span>
         </div>
         
-        {/* Navigation links */}
-        <div className="hidden md:flex items-center space-x-6">
-          <Button variant="link" onClick={() => navigate('/')}>
-            Home
-          </Button>
-          <Button variant="link" onClick={() => navigate('/pricing')}>
-            Preços
-          </Button>
-          <Button variant="link" onClick={() => navigate('/docs')}>
-            API
-          </Button>
-          <Button variant="link" onClick={() => navigate('/faq')}>
-            FAQ
-          </Button>
-        </div>
-        
         <div className="flex items-center gap-2 sm:gap-4">
           {isLoggedIn ? (
             <>
-              {/* User menu for desktop */}
               <Button 
                 variant="outline" 
                 onClick={handleMyAccount}
@@ -61,7 +44,6 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
                 {t('myAccount')}
               </Button>
               
-              {/* User menu for mobile */}
               <UserMenu />
             </>
           ) : (
@@ -82,7 +64,6 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
                 {t('register')}
               </Button>
               
-              {/* Botão mobile para login */}
               <Button
                 variant="outline"
                 size="sm"
