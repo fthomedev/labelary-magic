@@ -49,7 +49,8 @@ export const NavigationButtons = ({ onClose }: NavigationButtonsProps) => {
         </Button>
       )}
 
-      {location.pathname !== "/subscription" && (
+      {/* Commented out the subscription link */}
+      {/* {location.pathname !== "/subscription" && (
         <Button
           variant="outline"
           className="w-full justify-start gap-2 text-base font-normal"
@@ -58,7 +59,7 @@ export const NavigationButtons = ({ onClose }: NavigationButtonsProps) => {
           <CreditCard className="h-4 w-4" />
           {t("subscriptionPage")}
         </Button>
-      )}
+      )} */}
 
       <Button
         variant="outline"
