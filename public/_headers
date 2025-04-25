@@ -1,0 +1,12 @@
+
+# All assets in the assets folder
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML files
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Other static files
+/*
+  Cache-Control: public, max-age=3600, must-revalidate
