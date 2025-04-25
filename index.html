@@ -98,11 +98,41 @@
         src: url(https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2) format('woff2');
         unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
       }
+
+      /* Otimização para critical-content - evitando layout shifts */
+      #critical-content {
+        position: fixed;
+        top: 0;
+        left: 0; 
+        width: 100%;
+        height: 100%;
+        background: white;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0 1rem;
+        text-align: center;
+        opacity: 1;
+        transition: opacity 0.3s ease;
+        will-change: opacity;
+        contain: content;
+      }
+      
+      #critical-content h1, #critical-content p {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        contain: paint;
+      }
     </style>
 
     <!-- Carregamento otimizado de fontes -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"></noscript>
+    
+    <!-- Pre-carregando crítico -->
+    <link rel="preload" as="image" href="/og-image.png" />
     
     <!-- Meta tags e Schema.org markup -->
     <meta name="description" content="Converta ZPL em PDF, crie etiquetas em lote e integre via API. Teste grátis." />
@@ -151,25 +181,55 @@
   </head>
 
   <body>
-    <!-- Pre-rendered critical content -->
-    <div id="critical-content" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 1rem; text-align: center;">
+    <!-- Pre-rendered critical content - otimizado para LCP -->
+    <div id="critical-content">
       <h1 class="hero-heading">Converta ZPL para PDF de Forma Rápida e Segura com ZPL Easy</h1>
       <p id="lcp-element">Simplifique o seu fluxo de impressão de etiquetas e ganhe tempo com a nossa solução online confiável</p>
     </div>
     
     <div id="root"></div>
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     
-    <!-- Remove critical content após o carregamento principal -->
+    <!-- Otimização do script crítico para remover o elemento critical-content -->
     <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
+      // Função para remover o critical-content de forma otimizada
+      const removeCriticalContent = () => {
+        requestAnimationFrame(() => {
           const criticalContent = document.getElementById('critical-content');
           if (criticalContent) {
             criticalContent.style.opacity = '0';
-            criticalContent.style.transition = 'opacity 0.3s ease';
-            setTimeout(() => criticalContent.style.display = 'none', 300);
+            
+            // Remover completamente após a animação para liberar recursos
+            setTimeout(() => {
+              criticalContent.style.display = 'none';
+              criticalContent.innerHTML = '';  // Libera memória
+            }, 300);
           }
-        }, 300); // Reduzido para 300ms
+        });
+      };
+      
+      // Executa assim que o DOM estiver pronto
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', removeCriticalContent);
+      } else {
+        removeCriticalContent();
+      }
+      
+      // Otimização para carregar scripts não-críticos após o conteúdo principal
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const deferredScripts = document.querySelectorAll('script[data-deferred]');
+          deferredScripts.forEach(script => {
+            const newScript = document.createElement('script');
+            [...script.attributes].forEach(attr => {
+              if (attr.name !== 'data-deferred') {
+                newScript.setAttribute(attr.name, attr.value);
+              }
+            });
+            newScript.textContent = script.textContent;
+            script.parentNode.replaceChild(newScript, script);
+          });
+        }, 1000);
       });
     </script>
     
