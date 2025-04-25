@@ -1,5 +1,5 @@
 
-import React, { memo, useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, LogIn } from 'lucide-react';
@@ -9,26 +9,21 @@ interface HeroButtonsProps {
   isLoggedIn: boolean;
 }
 
-export const HeroButtons: React.FC<HeroButtonsProps> = memo(({ isLoggedIn }) => {
+export const HeroButtons: React.FC<HeroButtonsProps> = ({ isLoggedIn }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const isPortuguese = i18n.language === 'pt-BR';
 
-  const handleGetStarted = useCallback(() => {
-    navigate(isLoggedIn ? '/app' : '/auth');
-  }, [navigate, isLoggedIn]);
+  const handleGetStarted = () => {
+    if (isLoggedIn) {
+      navigate('/app');
+    } else {
+      navigate('/auth');
+    }
+  };
 
-  const handleLogin = useCallback(() => {
+  const handleLogin = () => {
     navigate('/auth');
-  }, [navigate]);
-
-  const mainButtonText = isLoggedIn 
-    ? (isPortuguese ? 'Acessar Aplicativo' : 'Access Application')
-    : (isPortuguese ? 'Crie sua Conta Gratuitamente' : 'Create Your Free Account');
-  
-  const loginButtonText = isPortuguese ? 'Entrar na Conta' : 'Log In';
-  const loginAriaLabel = 'Log In';
-  const mainAriaLabel = isLoggedIn ? 'Access Application' : 'Create Free Account';
+  };
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
@@ -36,9 +31,11 @@ export const HeroButtons: React.FC<HeroButtonsProps> = memo(({ isLoggedIn }) => 
         size="lg" 
         onClick={handleGetStarted} 
         className="px-8 py-6 text-lg rounded-full w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white"
-        aria-label={mainAriaLabel}
+        aria-label={isLoggedIn ? 'Access Application' : 'Create Free Account'}
       >
-        {mainButtonText}
+        {isLoggedIn 
+          ? (i18n.language === 'pt-BR' ? 'Acessar Aplicativo' : 'Access Application') 
+          : (i18n.language === 'pt-BR' ? 'Crie sua Conta Gratuitamente' : 'Create Your Free Account')}
         <ArrowRight className="ml-2 h-5 w-5" />
       </Button>
       {!isLoggedIn && (
@@ -47,16 +44,12 @@ export const HeroButtons: React.FC<HeroButtonsProps> = memo(({ isLoggedIn }) => 
           variant="outline" 
           onClick={handleLogin} 
           className="px-8 py-6 text-lg rounded-full w-full sm:w-auto border-emerald-600 text-emerald-600 hover:bg-emerald-50"
-          aria-label={loginAriaLabel}
+          aria-label="Log In"
         >
           <LogIn className="mr-2 h-5 w-5" />
-          {loginButtonText}
+          {i18n.language === 'pt-BR' ? 'Entrar na Conta' : 'Log In'}
         </Button>
       )}
     </div>
   );
-});
-
-HeroButtons.displayName = 'HeroButtons';
-
-export default HeroButtons;
+};
