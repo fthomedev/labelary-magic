@@ -1,14 +1,19 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/landing/Header';
 import { HeroSection } from '@/components/landing/HeroSection';
-import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
-import { BenefitsSection } from '@/components/landing/BenefitsSection';
-import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
-import { CallToActionSection } from '@/components/landing/CallToActionSection';
-import { FAQSection } from '@/components/landing/FAQSection';
 import { SEO } from '@/components/SEO';
+
+// Componentes carregados com lazy loading para melhorar o tempo de carregamento inicial
+const HowItWorksSection = lazy(() => import('@/components/landing/HowItWorksSection').then(mod => ({ default: mod.HowItWorksSection })));
+const BenefitsSection = lazy(() => import('@/components/landing/BenefitsSection').then(mod => ({ default: mod.BenefitsSection })));
+const TestimonialsSection = lazy(() => import('@/components/landing/TestimonialsSection').then(mod => ({ default: mod.TestimonialsSection })));
+const CallToActionSection = lazy(() => import('@/components/landing/CallToActionSection').then(mod => ({ default: mod.CallToActionSection })));
+const FAQSection = lazy(() => import('@/components/landing/FAQSection').then(mod => ({ default: mod.FAQSection })));
+
+// Componente de fallback leve para Suspense
+const SectionLoadingFallback = () => <div className="h-40 w-full"></div>;
 
 const Landing = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -48,11 +53,26 @@ const Landing = () => {
       />
       <Header isLoggedIn={isLoggedIn} />
       <HeroSection isLoggedIn={isLoggedIn} />
-      <HowItWorksSection />
-      <BenefitsSection />
-      <TestimonialsSection />
-      <CallToActionSection isLoggedIn={isLoggedIn} />
-      <FAQSection />
+      
+      <Suspense fallback={<SectionLoadingFallback />}>
+        <HowItWorksSection />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoadingFallback />}>
+        <BenefitsSection />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoadingFallback />}>
+        <TestimonialsSection />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoadingFallback />}>
+        <CallToActionSection isLoggedIn={isLoggedIn} />
+      </Suspense>
+      
+      <Suspense fallback={<SectionLoadingFallback />}>
+        <FAQSection />
+      </Suspense>
     </div>
   );
 };
