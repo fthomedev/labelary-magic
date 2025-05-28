@@ -61,20 +61,15 @@ export const useZplApiConversion = () => {
   const validateAndCleanZpl = (zplContent: string): string => {
     let cleanZpl = zplContent.trim();
     
-    // Garantir que tenha ^XA no início se não tiver
     if (!cleanZpl.startsWith('^XA')) {
       cleanZpl = '^XA' + cleanZpl;
     }
     
-    // Garantir que termine com ^XZ
     if (!cleanZpl.endsWith('^XZ')) {
       cleanZpl = cleanZpl + '^XZ';
     }
     
-    // Remover caracteres de controle que podem causar problemas
     cleanZpl = cleanZpl.replace(/[\r\n\t]/g, '');
-    
-    // Garantir que não tenha espaços extras
     cleanZpl = cleanZpl.replace(/\s+/g, ' ').trim();
     
     return cleanZpl;
@@ -85,10 +80,11 @@ export const useZplApiConversion = () => {
     onProgress: (progress: number) => void
   ): Promise<Blob[]> => {
     const pngs: Blob[] = [];
-    const BATCH_SIZE = 3; // Processar 3 etiquetas em paralelo
-    const MAX_RETRIES = 2;
+    const BATCH_SIZE = 5; // Aumentado para melhor throughput
+    const MAX_RETRIES = 3;
+    const TIMEOUT_MS = 10000; // 10 segundos de timeout
     
-    console.log(`Starting optimized PNG conversion for ${labels.length} labels`);
+    console.log(`Starting PNG conversion for ${labels.length} labels with ${BATCH_SIZE} parallel batches`);
     
     for (let i = 0; i < labels.length; i += BATCH_SIZE) {
       const batchLabels = labels.slice(i, i + BATCH_SIZE);
@@ -100,81 +96,98 @@ export const useZplApiConversion = () => {
           try {
             const cleanLabel = validateAndCleanZpl(rawLabel);
             
-            // Verificação básica do ZPL
             if (!cleanLabel || cleanLabel.length < 10 || !cleanLabel.includes('^XA') || !cleanLabel.includes('^XZ')) {
               console.warn(`Label ${globalIndex + 1} invalid, using fallback`);
               const fallbackZpl = `^XA^FO50,50^ADN,36,20^FDLabel ${globalIndex + 1}^FS^XZ`;
-              return await convertSingleLabelToPng(fallbackZpl, globalIndex + 1);
+              return await convertSingleLabelToPng(fallbackZpl, globalIndex + 1, TIMEOUT_MS);
             }
 
-            return await convertSingleLabelToPng(cleanLabel, globalIndex + 1);
+            return await convertSingleLabelToPng(cleanLabel, globalIndex + 1, TIMEOUT_MS);
           } catch (error) {
             retries++;
             console.warn(`Retry ${retries}/${MAX_RETRIES} for label ${globalIndex + 1}:`, error);
             
             if (retries > MAX_RETRIES) {
-              // Usar fallback após esgotar tentativas
               const fallbackZpl = `^XA^FO50,50^ADN,36,20^FDError Label ${globalIndex + 1}^FS^XZ`;
               try {
-                return await convertSingleLabelToPng(fallbackZpl, globalIndex + 1);
+                return await convertSingleLabelToPng(fallbackZpl, globalIndex + 1, TIMEOUT_MS);
               } catch (fallbackError) {
                 console.error(`Failed to create fallback for label ${globalIndex + 1}:`, fallbackError);
                 return null;
               }
             }
             
-            // Delay antes de retry
-            await delay(200);
+            await delay(100 * retries); // Backoff exponencial
           }
         }
         return null;
       });
 
-      // Aguardar o lote atual
-      const batchResults = await Promise.all(batchPromises);
-      
-      // Filtrar resultados válidos
-      batchResults.forEach(result => {
-        if (result) {
-          pngs.push(result);
+      try {
+        const batchResults = await Promise.allSettled(batchPromises);
+        
+        batchResults.forEach((result) => {
+          if (result.status === 'fulfilled' && result.value) {
+            pngs.push(result.value);
+          }
+        });
+
+        // Atualizar progresso de forma mais granular
+        const currentProgress = Math.min(((i + batchLabels.length) / labels.length) * 95, 95); // Máximo 95% aqui
+        onProgress(currentProgress);
+
+        // Delay menor entre lotes
+        if (i + BATCH_SIZE < labels.length) {
+          await delay(50);
         }
-      });
-
-      // Atualizar progresso
-      onProgress(((i + batchLabels.length) / labels.length) * 100);
-
-      // Delay reduzido entre lotes
-      if (i + BATCH_SIZE < labels.length) {
-        await delay(150); // Reduzido de 500ms para 150ms
+      } catch (error) {
+        console.error(`Batch error at index ${i}:`, error);
       }
     }
+    
+    // Garantir que chegamos a 100%
+    onProgress(100);
     
     console.log(`PNG conversion completed. Successfully converted ${pngs.length}/${labels.length} labels`);
     return pngs;
   };
 
-  const convertSingleLabelToPng = async (zplContent: string, labelNumber: number): Promise<Blob> => {
-    const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
-      method: 'POST',
-      headers: {
-        'Accept': 'image/png',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: zplContent,
-    });
+  const convertSingleLabelToPng = async (zplContent: string, labelNumber: number, timeoutMs: number = 10000): Promise<Blob> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API Error for label ${labelNumber}: ${response.status} - ${errorText}`);
-    }
+    try {
+      const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
+        method: 'POST',
+        headers: {
+          'Accept': 'image/png',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: zplContent,
+        signal: controller.signal,
+      });
 
-    const blob = await response.blob();
-    
-    if (blob.size === 0) {
-      throw new Error(`Empty image returned for label ${labelNumber}`);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API Error for label ${labelNumber}: ${response.status} - ${errorText}`);
+      }
+
+      const blob = await response.blob();
+      
+      if (blob.size === 0) {
+        throw new Error(`Empty image returned for label ${labelNumber}`);
+      }
+      
+      return blob;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error(`Timeout converting label ${labelNumber}`);
+      }
+      throw error;
     }
-    
-    return blob;
   };
 
   const parseLabelsFromZpl = (zplContent: string) => {

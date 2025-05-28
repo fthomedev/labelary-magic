@@ -14,10 +14,9 @@ export const generateSheetFromPngs = async (
     const sheet = SHEET_DIMENSIONS[config.sheetSize];
     
     if (layouts.length === 0) {
-      throw new Error('Nenhum layout calculado para as etiquetas');
+      throw new Error('No layout calculated for labels');
     }
     
-    // Conversão de mm para pixels (300 DPI para alta qualidade)
     const mmToPixels = (mm: number) => Math.round(mm * 11.811);
     
     const canvasWidth = mmToPixels(sheet.width);
@@ -29,17 +28,16 @@ export const generateSheetFromPngs = async (
     const ctx = canvas.getContext('2d');
     
     if (!ctx) {
-      throw new Error('Não foi possível criar contexto do canvas');
+      throw new Error('Could not create canvas context');
     }
     
-    // Fundo branco
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
     
     const labelsToProcess = Math.min(pngBlobs.length, layouts.length);
     console.log(`Processing ${labelsToProcess} labels for ${config.sheetSize} sheet`);
     
-    // Processar todas as imagens em paralelo
+    // Carregar todas as imagens em paralelo com Promise.allSettled para melhor controle
     const imagePromises = pngBlobs.slice(0, labelsToProcess).map(async (pngBlob, i) => {
       const layout = layouts[i];
       
@@ -48,14 +46,21 @@ export const generateSheetFromPngs = async (
         const imageUrl = URL.createObjectURL(pngBlob);
         
         return new Promise<{ img: HTMLImageElement; layout: typeof layout; index: number }>((resolve, reject) => {
+          const timeoutId = setTimeout(() => {
+            URL.revokeObjectURL(imageUrl);
+            reject(new Error(`Timeout loading image ${i + 1}`));
+          }, 5000); // 5 segundos de timeout por imagem
+
           img.onload = () => {
+            clearTimeout(timeoutId);
             URL.revokeObjectURL(imageUrl);
             resolve({ img, layout, index: i });
           };
           
-          img.onerror = (error) => {
+          img.onerror = () => {
+            clearTimeout(timeoutId);
             URL.revokeObjectURL(imageUrl);
-            reject(new Error(`Falha ao carregar imagem da etiqueta ${i + 1}`));
+            reject(new Error(`Failed to load image ${i + 1}`));
           };
           
           img.src = imageUrl;
@@ -66,10 +71,8 @@ export const generateSheetFromPngs = async (
       }
     });
 
-    // Aguardar carregamento de todas as imagens
     const loadedImages = await Promise.allSettled(imagePromises);
     
-    // Desenhar imagens carregadas com sucesso
     let successCount = 0;
     loadedImages.forEach((result) => {
       if (result.status === 'fulfilled') {
@@ -80,23 +83,32 @@ export const generateSheetFromPngs = async (
         const width = mmToPixels(layout.width);
         const height = mmToPixels(layout.height);
         
-        ctx.drawImage(img, x, y, width, height);
-        successCount++;
+        try {
+          ctx.drawImage(img, x, y, width, height);
+          successCount++;
+        } catch (drawError) {
+          console.error(`Error drawing image ${result.value.index + 1}:`, drawError);
+        }
+      } else {
+        console.error('Failed to load image:', result.reason);
       }
     });
     
     console.log(`Successfully placed ${successCount}/${labelsToProcess} labels on sheet`);
     
-    // Converter canvas para PNG
     return new Promise((resolve, reject) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          console.log(`Sheet generation completed. Final size: ${(blob.size / 1024).toFixed(1)}KB`);
-          resolve(blob);
-        } else {
-          reject(new Error('Falha ao gerar PNG da folha'));
-        }
-      }, 'image/png', 1.0);
+      try {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            console.log(`Sheet generation completed. Final size: ${(blob.size / 1024).toFixed(1)}KB`);
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to generate sheet PNG'));
+          }
+        }, 'image/png', 1.0);
+      } catch (error) {
+        reject(new Error(`Canvas conversion failed: ${error.message}`));
+      }
     });
   } catch (error) {
     console.error('Sheet generation error:', error);
@@ -118,22 +130,28 @@ export const convertPngToPdf = async (pngBlob: Blob): Promise<Blob> => {
     const ctx = canvas.getContext('2d');
     
     if (!ctx) {
-      throw new Error('Não foi possível criar contexto do canvas para PDF');
+      throw new Error('Could not create canvas context for PDF');
     }
     
     const img = new Image();
     const imageUrl = URL.createObjectURL(pngBlob);
     
     return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        URL.revokeObjectURL(imageUrl);
+        reject(new Error('Timeout converting PNG to PDF'));
+      }, 10000);
+
       img.onload = () => {
         try {
+          clearTimeout(timeoutId);
+          
           canvas.width = img.width;
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
           
           const dataUrl = canvas.toDataURL('image/png');
           
-          // Dimensões A4
           const pageWidth = 210;
           const pageHeight = 297;
           const margin = 5;
@@ -141,7 +159,6 @@ export const convertPngToPdf = async (pngBlob: Blob): Promise<Blob> => {
           const maxWidth = pageWidth - (margin * 2);
           const maxHeight = pageHeight - (margin * 2);
           
-          // Manter proporção
           const imgRatio = img.width / img.height;
           let finalWidth = maxWidth;
           let finalHeight = maxWidth / imgRatio;
@@ -151,7 +168,6 @@ export const convertPngToPdf = async (pngBlob: Blob): Promise<Blob> => {
             finalWidth = maxHeight * imgRatio;
           }
           
-          // Centralizar
           const x = (pageWidth - finalWidth) / 2;
           const y = (pageHeight - finalHeight) / 2;
           
@@ -163,14 +179,16 @@ export const convertPngToPdf = async (pngBlob: Blob): Promise<Blob> => {
           URL.revokeObjectURL(imageUrl);
           resolve(pdfBlob);
         } catch (error) {
+          clearTimeout(timeoutId);
           URL.revokeObjectURL(imageUrl);
-          reject(error);
+          reject(new Error(`PDF generation failed: ${error.message}`));
         }
       };
       
-      img.onerror = (error) => {
+      img.onerror = () => {
+        clearTimeout(timeoutId);
         URL.revokeObjectURL(imageUrl);
-        reject(new Error('Falha ao carregar imagem para conversão PDF'));
+        reject(new Error('Failed to load image for PDF conversion'));
       };
       
       img.src = imageUrl;

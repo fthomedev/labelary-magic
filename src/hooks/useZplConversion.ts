@@ -35,7 +35,6 @@ export const useZplConversion = () => {
   const { convertZplBlocksToPdfs, convertZplBlocksToPngs, parseLabelsFromZpl, countLabelsInZpl } = useZplApiConversion();
   const { ensurePdfBucketExists } = useStorageOperations();
 
-  // New function to reset processing status
   const resetProcessingStatus = () => {
     setIsProcessingComplete(false);
     setProgress(0);
@@ -58,7 +57,6 @@ export const useZplConversion = () => {
       console.log('Labels parsed:', labels.length, 'Actual count:', actualLabelCount);
 
       if (sheetConfig?.enabled) {
-        // Modo folha: converter para PNG e combinar
         const maxLabelsPerSheet = getMaxLabelsPerSheet(sheetConfig);
         console.log('Max labels per sheet:', maxLabelsPerSheet);
         
@@ -70,43 +68,53 @@ export const useZplConversion = () => {
           duration: 3000,
         });
 
-        // Processar etiquetas em lotes por folha
         for (let i = 0; i < labels.length; i += maxLabelsPerSheet) {
           const sheetLabels = labels.slice(i, i + maxLabelsPerSheet);
-          console.log(`Processing sheet ${Math.floor(i / maxLabelsPerSheet) + 1}, labels: ${sheetLabels.length}`);
+          const sheetNumber = Math.floor(i / maxLabelsPerSheet) + 1;
+          console.log(`Processing sheet ${sheetNumber}, labels: ${sheetLabels.length}`);
           
-          // Converter etiquetas para PNG
-          const pngs = await convertZplBlocksToPngs(sheetLabels, (progressValue) => {
-            const sheetProgress = (i / labels.length) * 80; // 80% para conversão
-            const currentProgress = (progressValue / 100) * (80 / Math.ceil(labels.length / maxLabelsPerSheet));
-            setProgress(sheetProgress + currentProgress);
-          });
+          try {
+            // Converter etiquetas para PNG com progresso mais granular
+            const baseProgress = (i / labels.length) * 85; // 85% para conversão PNG
+            const pngs = await convertZplBlocksToPngs(sheetLabels, (progressValue) => {
+              const currentProgress = baseProgress + (progressValue / 100) * (85 / Math.ceil(labels.length / maxLabelsPerSheet));
+              setProgress(Math.min(currentProgress, 85));
+            });
 
-          console.log(`Converted ${pngs.length} labels to PNG for sheet ${Math.floor(i / maxLabelsPerSheet) + 1}`);
+            console.log(`Converted ${pngs.length} labels to PNG for sheet ${sheetNumber}`);
 
-          if (pngs.length > 0) {
-            // Combinar PNGs em uma folha
-            const sheetPng = await generateSheetFromPngs(pngs, sheetConfig);
-            console.log('Generated sheet PNG, size:', sheetPng.size, 'bytes');
-            
-            // Converter PNG da folha para PDF
-            const sheetPdf = await convertPngToPdf(sheetPng);
-            console.log('Converted sheet to PDF, size:', sheetPdf.size, 'bytes');
-            sheets.push(sheetPdf);
+            if (pngs.length > 0) {
+              setProgress(85 + ((sheetNumber - 1) / Math.ceil(labels.length / maxLabelsPerSheet)) * 10); // 85-95% para geração da folha
+              
+              const sheetPng = await generateSheetFromPngs(pngs, sheetConfig);
+              console.log('Generated sheet PNG, size:', sheetPng.size, 'bytes');
+              
+              const sheetPdf = await convertPngToPdf(sheetPng);
+              console.log('Converted sheet to PDF, size:', sheetPdf.size, 'bytes');
+              sheets.push(sheetPdf);
+            }
+          } catch (sheetError) {
+            console.error(`Error processing sheet ${sheetNumber}:`, sheetError);
+            toast({
+              variant: "destructive",
+              title: t('error'),
+              description: `Erro na folha ${sheetNumber}: ${sheetError.message}`,
+              duration: 5000,
+            });
           }
         }
 
         if (sheets.length > 0) {
-          setProgress(90);
-          
-          // Merge all sheet PDFs
-          const mergedPdf = sheets.length > 1 ? await mergePDFs(sheets) : sheets[0];
-          console.log('Final merged PDF size:', mergedPdf.size, 'bytes');
-          
-          // Continue with upload and download...
-          await ensurePdfBucketExists();
+          setProgress(95); // 95% para merge dos PDFs
           
           try {
+            const mergedPdf = sheets.length > 1 ? await mergePDFs(sheets) : sheets[0];
+            console.log('Final merged PDF size:', mergedPdf.size, 'bytes');
+            
+            setProgress(98); // 98% para upload
+            
+            await ensurePdfBucketExists();
+            
             const pdfPath = await uploadPDFToStorage(mergedPdf);
             console.log('Successfully uploaded PDF to storage:', pdfPath);
             setLastPdfPath(pdfPath);
@@ -119,13 +127,15 @@ export const useZplConversion = () => {
               setHistoryRefreshTrigger(prev => prev + 1);
             }
             
-            // Download the file
+            // Download automatico
             const a = document.createElement('a');
             a.href = blobUrl;
             a.download = `etiquetas-folha-${sheetConfig.sheetSize}.pdf`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+
+            setProgress(100); // 100% completo
 
             toast({
               title: t('success'),
@@ -134,15 +144,12 @@ export const useZplConversion = () => {
             });
             
             setIsProcessingComplete(true);
-          } catch (uploadError) {
-            console.error('Error uploading to storage:', uploadError);
-            toast({
-              variant: "destructive",
-              title: t('error'),
-              description: t('errorMessage'),
-              duration: 5000,
-            });
+          } catch (finalError) {
+            console.error('Error in final processing:', finalError);
+            throw finalError;
           }
+        } else {
+          throw new Error("No sheets were generated successfully.");
         }
       } else {
         // Modo normal: converter para PDF diretamente
@@ -152,7 +159,6 @@ export const useZplConversion = () => {
           setProgress(progressValue);
         });
 
-        // Create temporary blob URLs for the current session
         pdfs.forEach(blob => {
           const blockUrl = window.URL.createObjectURL(blob);
           newPdfUrls.push(blockUrl);
@@ -163,27 +169,22 @@ export const useZplConversion = () => {
           try {
             const mergedPdf = await mergePDFs(pdfs);
             
-            // Ensure bucket exists
             await ensurePdfBucketExists();
             
-            // Upload PDF to storage
             let pdfPath;
             try {
               pdfPath = await uploadPDFToStorage(mergedPdf);
               console.log('Successfully uploaded PDF to storage:', pdfPath);
               setLastPdfPath(pdfPath);
               
-              // Get the temporary blob URL for the current session
               const blobUrl = window.URL.createObjectURL(mergedPdf);
               setLastPdfUrl(blobUrl);
               
-              // Only add to history if we have a valid path
               if (pdfPath) {
                 await addToProcessingHistory(actualLabelCount, pdfPath);
                 setHistoryRefreshTrigger(prev => prev + 1);
               }
               
-              // Download the file
               const a = document.createElement('a');
               a.href = blobUrl;
               a.download = 'etiquetas.pdf';
@@ -197,7 +198,6 @@ export const useZplConversion = () => {
                 duration: 3000,
               });
               
-              // Set processing complete to show the completion UI
               setIsProcessingComplete(true);
             } catch (uploadError) {
               console.error('Error uploading to storage:', uploadError);
@@ -226,12 +226,12 @@ export const useZplConversion = () => {
       toast({
         variant: "destructive",
         title: t('error'),
-        description: t('errorMessage'),
+        description: `Erro na conversão: ${error.message}`,
         duration: 5000,
       });
     } finally {
       setIsConverting(false);
-      setProgress(100); // Ensure progress is complete even if there was an error
+      setProgress(100);
     }
   };
 
