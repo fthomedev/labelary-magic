@@ -19,9 +19,8 @@ export const useZplApiConversion = () => {
         const blockLabels = labels.slice(i, i + LABELS_PER_REQUEST);
         const blockZPL = blockLabels.join('');
 
-        console.log(`Processing PDF block ${i / LABELS_PER_REQUEST + 1}, labels: ${blockLabels.length}, ZPL length: ${blockZPL.length}`);
+        console.log(`Processing PDF block ${i / LABELS_PER_REQUEST + 1}, labels: ${blockLabels.length}`);
 
-        // URL corrigida para a API Labelary - usando o formato correto
         const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
           method: 'POST',
           headers: {
@@ -31,9 +30,6 @@ export const useZplApiConversion = () => {
           body: blockZPL,
         });
 
-        console.log('API Response status:', response.status);
-        console.log('API Response headers:', Object.fromEntries(response.headers.entries()));
-
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`API Error: ${response.status} - ${errorText}`);
@@ -41,7 +37,6 @@ export const useZplApiConversion = () => {
         }
 
         const blob = await response.blob();
-        console.log('PDF blob size:', blob.size, 'bytes');
         pdfs.push(blob);
 
         onProgress(((i + blockLabels.length) / labels.length) * 100);
@@ -82,10 +77,6 @@ export const useZplApiConversion = () => {
     // Garantir que não tenha espaços extras
     cleanZpl = cleanZpl.replace(/\s+/g, ' ').trim();
     
-    console.log('ZPL original length:', zplContent.length);
-    console.log('ZPL limpo length:', cleanZpl.length);
-    console.log('ZPL limpo preview:', cleanZpl.substring(0, 100));
-    
     return cleanZpl;
   };
 
@@ -94,104 +85,67 @@ export const useZplApiConversion = () => {
     onProgress: (progress: number) => void
   ): Promise<Blob[]> => {
     const pngs: Blob[] = [];
+    const BATCH_SIZE = 3; // Processar 3 etiquetas em paralelo
+    const MAX_RETRIES = 2;
     
-    console.log('Starting PNG conversion for', labels.length, 'labels');
+    console.log(`Starting optimized PNG conversion for ${labels.length} labels`);
     
-    for (let i = 0; i < labels.length; i++) {
-      try {
-        const rawLabel = labels[i];
-        const cleanLabel = validateAndCleanZpl(rawLabel);
+    for (let i = 0; i < labels.length; i += BATCH_SIZE) {
+      const batchLabels = labels.slice(i, i + BATCH_SIZE);
+      const batchPromises = batchLabels.map(async (rawLabel, batchIndex) => {
+        const globalIndex = i + batchIndex;
+        let retries = 0;
         
-        console.log(`Processing PNG label ${i + 1}/${labels.length}`);
-        console.log(`Raw ZPL for label ${i + 1}:`, rawLabel.substring(0, 200));
-        console.log(`Clean ZPL for label ${i + 1}:`, cleanLabel.substring(0, 200));
-
-        // Verificação mais rigorosa do ZPL
-        if (!cleanLabel || cleanLabel.length < 10) {
-          console.error(`Label ${i + 1} is too short after cleaning:`, cleanLabel);
-          throw new Error(`Etiqueta ${i + 1} está vazia ou muito curta após limpeza`);
-        }
-
-        if (!cleanLabel.includes('^XA') || !cleanLabel.includes('^XZ')) {
-          console.error(`Label ${i + 1} missing required ZPL markers:`, cleanLabel);
-          throw new Error(`Etiqueta ${i + 1} não possui marcadores ZPL obrigatórios`);
-        }
-
-        // URL corrigida para a API Labelary
-        const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
-          method: 'POST',
-          headers: {
-            'Accept': 'image/png',
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: cleanLabel,
-        });
-
-        console.log(`PNG API Response for label ${i + 1}:`, {
-          status: response.status,
-          statusText: response.statusText,
-          url: response.url,
-          contentType: response.headers.get('content-type')
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`API Error for label ${i + 1}:`, {
-            status: response.status,
-            statusText: response.statusText,
-            error: errorText,
-            rawZplContent: rawLabel.substring(0, 200),
-            cleanZplContent: cleanLabel.substring(0, 200)
-          });
-          
-          // Tentar novamente com uma versão ainda mais simplificada do ZPL
-          if (response.status === 404 && errorText.includes('no labels')) {
-            console.log(`Tentando ZPL simplificado para label ${i + 1}`);
-            const simplifiedZpl = `^XA^FO50,50^ADN,36,20^FDLabel ${i + 1}^FS^XZ`;
+        while (retries <= MAX_RETRIES) {
+          try {
+            const cleanLabel = validateAndCleanZpl(rawLabel);
             
-            const retryResponse = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
-              method: 'POST',
-              headers: {
-                'Accept': 'image/png',
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-              body: simplifiedZpl,
-            });
-            
-            if (retryResponse.ok) {
-              const retryBlob = await retryResponse.blob();
-              console.log(`Successfully converted simplified label ${i + 1} to PNG, size: ${retryBlob.size} bytes`);
-              pngs.push(retryBlob);
-              onProgress(((i + 1) / labels.length) * 100);
-              continue;
+            // Verificação básica do ZPL
+            if (!cleanLabel || cleanLabel.length < 10 || !cleanLabel.includes('^XA') || !cleanLabel.includes('^XZ')) {
+              console.warn(`Label ${globalIndex + 1} invalid, using fallback`);
+              const fallbackZpl = `^XA^FO50,50^ADN,36,20^FDLabel ${globalIndex + 1}^FS^XZ`;
+              return await convertSingleLabelToPng(fallbackZpl, globalIndex + 1);
             }
+
+            return await convertSingleLabelToPng(cleanLabel, globalIndex + 1);
+          } catch (error) {
+            retries++;
+            console.warn(`Retry ${retries}/${MAX_RETRIES} for label ${globalIndex + 1}:`, error);
+            
+            if (retries > MAX_RETRIES) {
+              // Usar fallback após esgotar tentativas
+              const fallbackZpl = `^XA^FO50,50^ADN,36,20^FDError Label ${globalIndex + 1}^FS^XZ`;
+              try {
+                return await convertSingleLabelToPng(fallbackZpl, globalIndex + 1);
+              } catch (fallbackError) {
+                console.error(`Failed to create fallback for label ${globalIndex + 1}:`, fallbackError);
+                return null;
+              }
+            }
+            
+            // Delay antes de retry
+            await delay(200);
           }
-          
-          throw new Error(`Erro da API (${response.status}): ${errorText || 'Erro desconhecido'}`);
         }
+        return null;
+      });
 
-        const blob = await response.blob();
-        console.log(`Successfully converted label ${i + 1} to PNG, size: ${blob.size} bytes, type: ${blob.type}`);
-        
-        if (blob.size === 0) {
-          throw new Error(`API retornou imagem vazia para etiqueta ${i + 1}`);
+      // Aguardar o lote atual
+      const batchResults = await Promise.all(batchPromises);
+      
+      // Filtrar resultados válidos
+      batchResults.forEach(result => {
+        if (result) {
+          pngs.push(result);
         }
-        
-        pngs.push(blob);
-        onProgress(((i + 1) / labels.length) * 100);
+      });
 
-        // Delay entre requisições
-        if (i < labels.length - 1) {
-          await delay(500);
-        }
-      } catch (error) {
-        console.error(`Erro ao converter etiqueta ${i + 1} para PNG:`, error);
-        toast({
-          variant: "destructive",
-          title: `Erro na etiqueta ${i + 1}`,
-          description: `${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-          duration: 6000,
-        });
+      // Atualizar progresso
+      onProgress(((i + batchLabels.length) / labels.length) * 100);
+
+      // Delay reduzido entre lotes
+      if (i + BATCH_SIZE < labels.length) {
+        await delay(150); // Reduzido de 500ms para 150ms
       }
     }
     
@@ -199,24 +153,39 @@ export const useZplApiConversion = () => {
     return pngs;
   };
 
-  const parseLabelsFromZpl = (zplContent: string) => {
-    console.log('Parsing ZPL content, length:', zplContent.length);
-    const labels = splitZPLIntoBlocks(zplContent);
-    console.log('Parsed labels count:', labels.length);
-    
-    // Log das primeiras etiquetas para debug
-    labels.slice(0, 2).forEach((label, index) => {
-      console.log(`Label ${index + 1} preview (first 200 chars):`, label.substring(0, 200));
-      console.log(`Label ${index + 1} preview (last 50 chars):`, label.slice(-50));
+  const convertSingleLabelToPng = async (zplContent: string, labelNumber: number): Promise<Blob> => {
+    const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
+      method: 'POST',
+      headers: {
+        'Accept': 'image/png',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: zplContent,
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API Error for label ${labelNumber}: ${response.status} - ${errorText}`);
+    }
+
+    const blob = await response.blob();
     
+    if (blob.size === 0) {
+      throw new Error(`Empty image returned for label ${labelNumber}`);
+    }
+    
+    return blob;
+  };
+
+  const parseLabelsFromZpl = (zplContent: string) => {
+    const labels = splitZPLIntoBlocks(zplContent);
+    console.log(`Parsed ${labels.length} labels from ZPL content`);
     return labels;
   };
 
   const countLabelsInZpl = (zplContent: string): number => {
     const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
     const count = Math.ceil(countXAMarkers / 2);
-    console.log('XA markers found:', countXAMarkers, 'Calculated label count:', count);
     return count;
   };
 

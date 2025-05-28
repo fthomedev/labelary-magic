@@ -7,16 +7,11 @@ export const generateSheetFromPngs = async (
   pngBlobs: Blob[],
   config: SheetConfig
 ): Promise<Blob> => {
-  console.log('=== STARTING SHEET GENERATION ===');
-  console.log('PNG count:', pngBlobs.length);
-  console.log('Config:', config);
+  console.log(`Starting sheet generation for ${pngBlobs.length} labels`);
   
   try {
     const layouts = calculateSheetLayout(config, pngBlobs.length);
     const sheet = SHEET_DIMENSIONS[config.sheetSize];
-    
-    console.log('Calculated layouts:', layouts.length);
-    console.log('Sheet dimensions:', sheet);
     
     if (layouts.length === 0) {
       throw new Error('Nenhum layout calculado para as etiquetas');
@@ -27,8 +22,6 @@ export const generateSheetFromPngs = async (
     
     const canvasWidth = mmToPixels(sheet.width);
     const canvasHeight = mmToPixels(sheet.height);
-    
-    console.log('Canvas dimensions (pixels):', canvasWidth, 'x', canvasHeight);
     
     const canvas = document.createElement('canvas');
     canvas.width = canvasWidth;
@@ -43,53 +36,24 @@ export const generateSheetFromPngs = async (
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
     
-    console.log('Processing', Math.min(pngBlobs.length, layouts.length), 'labels for sheet');
-    
-    // Processar cada PNG
     const labelsToProcess = Math.min(pngBlobs.length, layouts.length);
+    console.log(`Processing ${labelsToProcess} labels for ${config.sheetSize} sheet`);
     
-    for (let i = 0; i < labelsToProcess; i++) {
+    // Processar todas as imagens em paralelo
+    const imagePromises = pngBlobs.slice(0, labelsToProcess).map(async (pngBlob, i) => {
       const layout = layouts[i];
-      const pngBlob = pngBlobs[i];
-      
-      console.log(`Processing label ${i + 1}/${labelsToProcess}:`, {
-        layoutPosition: `(${layout.x}, ${layout.y})`,
-        layoutSize: `${layout.width}x${layout.height}mm`,
-        blobSize: pngBlob.size
-      });
       
       try {
         const img = new Image();
         const imageUrl = URL.createObjectURL(pngBlob);
         
-        await new Promise<void>((resolve, reject) => {
+        return new Promise<{ img: HTMLImageElement; layout: typeof layout; index: number }>((resolve, reject) => {
           img.onload = () => {
-            try {
-              const x = mmToPixels(layout.x);
-              const y = mmToPixels(layout.y);
-              const width = mmToPixels(layout.width);
-              const height = mmToPixels(layout.height);
-              
-              console.log(`Drawing label ${i + 1}:`, { 
-                pixelPos: `(${x}, ${y})`,
-                pixelSize: `${width}x${height}`,
-                imageNaturalSize: `${img.naturalWidth}x${img.naturalHeight}`
-              });
-              
-              // Desenhar a imagem mantendo a proporção
-              ctx.drawImage(img, x, y, width, height);
-              URL.revokeObjectURL(imageUrl);
-              console.log(`Successfully drew label ${i + 1}`);
-              resolve();
-            } catch (error) {
-              console.error(`Error drawing label ${i + 1}:`, error);
-              URL.revokeObjectURL(imageUrl);
-              reject(error);
-            }
+            URL.revokeObjectURL(imageUrl);
+            resolve({ img, layout, index: i });
           };
           
           img.onerror = (error) => {
-            console.error(`Error loading image ${i + 1}:`, error);
             URL.revokeObjectURL(imageUrl);
             reject(new Error(`Falha ao carregar imagem da etiqueta ${i + 1}`));
           };
@@ -98,35 +62,50 @@ export const generateSheetFromPngs = async (
         });
       } catch (error) {
         console.error(`Failed to process label ${i + 1}:`, error);
-        // Continue com as outras etiquetas mesmo se uma falhar
+        throw error;
       }
-    }
+    });
+
+    // Aguardar carregamento de todas as imagens
+    const loadedImages = await Promise.allSettled(imagePromises);
     
-    console.log('All labels processed, converting canvas to blob');
+    // Desenhar imagens carregadas com sucesso
+    let successCount = 0;
+    loadedImages.forEach((result) => {
+      if (result.status === 'fulfilled') {
+        const { img, layout } = result.value;
+        
+        const x = mmToPixels(layout.x);
+        const y = mmToPixels(layout.y);
+        const width = mmToPixels(layout.width);
+        const height = mmToPixels(layout.height);
+        
+        ctx.drawImage(img, x, y, width, height);
+        successCount++;
+      }
+    });
+    
+    console.log(`Successfully placed ${successCount}/${labelsToProcess} labels on sheet`);
     
     // Converter canvas para PNG
     return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
         if (blob) {
-          console.log('=== SHEET GENERATION COMPLETED ===');
-          console.log('Final blob size:', blob.size, 'bytes');
-          console.log('Labels successfully placed on sheet:', labelsToProcess);
+          console.log(`Sheet generation completed. Final size: ${(blob.size / 1024).toFixed(1)}KB`);
           resolve(blob);
         } else {
-          console.error('=== SHEET GENERATION FAILED ===');
           reject(new Error('Falha ao gerar PNG da folha'));
         }
       }, 'image/png', 1.0);
     });
   } catch (error) {
-    console.error('=== SHEET GENERATION ERROR ===', error);
+    console.error('Sheet generation error:', error);
     throw error;
   }
 };
 
 export const convertPngToPdf = async (pngBlob: Blob): Promise<Blob> => {
-  console.log('=== STARTING PNG TO PDF CONVERSION ===');
-  console.log('PNG size:', pngBlob.size, 'bytes');
+  console.log(`Converting sheet PNG to PDF (${(pngBlob.size / 1024).toFixed(1)}KB)`);
   
   try {
     const pdf = new jsPDF({
@@ -148,14 +127,11 @@ export const convertPngToPdf = async (pngBlob: Blob): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       img.onload = () => {
         try {
-          console.log('Image loaded for PDF conversion:', img.width, 'x', img.height);
-          
           canvas.width = img.width;
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0);
           
           const dataUrl = canvas.toDataURL('image/png');
-          console.log('Data URL created, length:', dataUrl.length);
           
           // Dimensões A4
           const pageWidth = 210;
@@ -179,25 +155,20 @@ export const convertPngToPdf = async (pngBlob: Blob): Promise<Blob> => {
           const x = (pageWidth - finalWidth) / 2;
           const y = (pageHeight - finalHeight) / 2;
           
-          console.log('Adding image to PDF:', { x, y, finalWidth, finalHeight });
-          
           pdf.addImage(dataUrl, 'PNG', x, y, finalWidth, finalHeight);
           
           const pdfBlob = pdf.output('blob');
-          console.log('=== PDF CONVERSION COMPLETED ===');
-          console.log('PDF size:', pdfBlob.size, 'bytes');
+          console.log(`PDF conversion completed. Final size: ${(pdfBlob.size / 1024).toFixed(1)}KB`);
           
           URL.revokeObjectURL(imageUrl);
           resolve(pdfBlob);
         } catch (error) {
-          console.error('=== PDF CONVERSION ERROR ===', error);
           URL.revokeObjectURL(imageUrl);
           reject(error);
         }
       };
       
       img.onerror = (error) => {
-        console.error('=== IMAGE LOAD ERROR FOR PDF ===', error);
         URL.revokeObjectURL(imageUrl);
         reject(new Error('Falha ao carregar imagem para conversão PDF'));
       };
@@ -205,7 +176,7 @@ export const convertPngToPdf = async (pngBlob: Blob): Promise<Blob> => {
       img.src = imageUrl;
     });
   } catch (error) {
-    console.error('=== PNG TO PDF CONVERSION FAILED ===', error);
+    console.error('PNG to PDF conversion failed:', error);
     throw error;
   }
 };
