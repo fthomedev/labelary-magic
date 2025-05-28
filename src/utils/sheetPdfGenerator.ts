@@ -13,25 +13,28 @@ export const generateSheetZPL = (
   const layouts = calculateSheetLayout(config, labels.length);
   const sheet = SHEET_DIMENSIONS[config.sheetSize];
   
-  // Conversão de mm para dots (assumindo 8 dpmm como no Labelary)
+  // Conversão de mm para dots (8 dpmm como no Labelary)
   const mmToDots = (mm: number) => Math.round(mm * 8);
   
-  let sheetZPL = `^XA`;
+  let sheetZPL = `^XA\n`;
   
   // Configurar tamanho da página
-  sheetZPL += `^PW${mmToDots(sheet.width)}`;
-  sheetZPL += `^LL${mmToDots(sheet.height)}`;
+  sheetZPL += `^PW${mmToDots(sheet.width)}\n`;
+  sheetZPL += `^LL${mmToDots(sheet.height)}\n`;
   
   // Adicionar cada etiqueta na posição calculada
   layouts.forEach((layout, index) => {
     if (index < labels.length) {
-      const labelContent = labels[index]
-        .replace(/^\^XA/, '') // Remove ^XA inicial
-        .replace(/\^XZ$/, ''); // Remove ^XZ final
+      let labelContent = labels[index]
+        .replace(/^\^XA\s*/, '') // Remove ^XA inicial
+        .replace(/\^XZ\s*$/, '') // Remove ^XZ final
+        .trim();
       
-      // Posicionar a etiqueta
-      sheetZPL += `^FO${mmToDots(layout.x)},${mmToDots(layout.y)}`;
-      sheetZPL += labelContent;
+      // Posicionar a etiqueta usando ^FO (Field Origin)
+      sheetZPL += `^FO${mmToDots(layout.x)},${mmToDots(layout.y)}\n`;
+      
+      // Adicionar o conteúdo da etiqueta
+      sheetZPL += labelContent + '\n';
     }
   });
   
