@@ -2,12 +2,14 @@
 import PDFMerger from 'pdf-merger-js';
 
 export const splitZPLIntoBlocks = (zpl: string): string[] => {
-  console.log('Splitting ZPL into blocks, original length:', zpl.length);
+  console.log('=== SPLITTING ZPL INTO BLOCKS ===');
+  console.log('Original ZPL length:', zpl.length);
+  console.log('ZPL preview (first 500 chars):', zpl.substring(0, 500));
   
-  // Clean up the ZPL content
+  // Limpar ZPL
   const cleanZpl = zpl.trim();
   
-  // Split by end marker ^XZ and filter for blocks that contain start marker ^XA
+  // Dividir por ^XZ e filtrar blocos válidos
   const rawBlocks = cleanZpl.split('^XZ');
   console.log('Raw blocks after split by ^XZ:', rawBlocks.length);
   
@@ -16,18 +18,25 @@ export const splitZPLIntoBlocks = (zpl: string): string[] => {
   for (let i = 0; i < rawBlocks.length; i++) {
     const block = rawBlocks[i].trim();
     
-    // Skip empty blocks
-    if (!block) continue;
+    // Pular blocos vazios
+    if (!block) {
+      console.log(`Skipping empty block ${i}`);
+      continue;
+    }
     
-    // Check if block contains ^XA (start of label)
+    // Verificar se contém ^XA
     if (block.includes('^XA')) {
-      // Ensure the block ends with ^XZ
+      // Garantir que termina com ^XZ
       const completeLabel = block.endsWith('^XZ') ? block : `${block}^XZ`;
       labels.push(completeLabel);
-      console.log(`Label ${labels.length}: length=${completeLabel.length}, starts with: ${completeLabel.substring(0, 50)}`);
+      console.log(`Label ${labels.length}: length=${completeLabel.length}`);
+      console.log(`Label ${labels.length} preview: ${completeLabel.substring(0, 100)}...`);
+    } else {
+      console.log(`Block ${i} doesn't contain ^XA, skipping:`, block.substring(0, 100));
     }
   }
   
+  console.log('=== ZPL SPLITTING COMPLETED ===');
   console.log('Final processed labels count:', labels.length);
   return labels;
 };
