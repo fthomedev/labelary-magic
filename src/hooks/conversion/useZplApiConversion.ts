@@ -1,4 +1,3 @@
-
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { splitZPLIntoBlocks, delay } from '@/utils/pdfUtils';
@@ -21,7 +20,8 @@ export const useZplApiConversion = () => {
 
         console.log(`Processing PDF block ${i / LABELS_PER_REQUEST + 1}, labels: ${blockLabels.length}, ZPL length: ${blockZPL.length}`);
 
-        const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
+        // URL corrigida para a API Labelary - usando o formato correto
+        const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
           method: 'POST',
           headers: {
             'Accept': 'application/pdf',
@@ -30,11 +30,17 @@ export const useZplApiConversion = () => {
           body: blockZPL,
         });
 
+        console.log('API Response status:', response.status);
+        console.log('API Response headers:', Object.fromEntries(response.headers.entries()));
+
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          console.error(`API Error: ${response.status} - ${errorText}`);
+          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
 
         const blob = await response.blob();
+        console.log('PDF blob size:', blob.size, 'bytes');
         pdfs.push(blob);
 
         onProgress(((i + blockLabels.length) / labels.length) * 100);
@@ -69,21 +75,28 @@ export const useZplApiConversion = () => {
         const label = labels[i];
         
         console.log(`Processing PNG label ${i + 1}/${labels.length}`);
-        console.log(`ZPL content for label ${i + 1}:`, label.substring(0, 300));
+        console.log(`ZPL content for label ${i + 1}:`, label.substring(0, 200));
 
-        // Validação mais simples - apenas verificar se tem conteúdo
-        if (!label || label.trim().length < 10) {
+        // Verificação básica do ZPL
+        if (!label || label.trim().length < 5) {
           console.error(`Label ${i + 1} is too short or empty:`, label);
           throw new Error(`Etiqueta ${i + 1} está vazia ou muito curta`);
         }
 
-        const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
+        // URL corrigida para a API Labelary - adicionando o "/0/" no final
+        const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
           method: 'POST',
           headers: {
             'Accept': 'image/png',
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           body: label,
+        });
+
+        console.log(`PNG API Response for label ${i + 1}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url
         });
 
         if (!response.ok) {
@@ -110,7 +123,7 @@ export const useZplApiConversion = () => {
 
         // Delay menor entre requisições
         if (i < labels.length - 1) {
-          await delay(300);
+          await delay(500);
         }
       } catch (error) {
         console.error(`Erro ao converter etiqueta ${i + 1} para PNG:`, error);
