@@ -19,6 +19,8 @@ export const useZplApiConversion = () => {
         const blockLabels = labels.slice(i, i + LABELS_PER_REQUEST);
         const blockZPL = blockLabels.join('');
 
+        console.log(`Processing PDF block ${i / LABELS_PER_REQUEST + 1}, labels: ${blockLabels.length}, ZPL length: ${blockZPL.length}`);
+
         const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
           method: 'POST',
           headers: {
@@ -63,6 +65,15 @@ export const useZplApiConversion = () => {
     for (let i = 0; i < labels.length; i++) {
       try {
         const label = labels[i];
+        
+        // Validate ZPL format
+        if (!label.includes('^XA') || !label.includes('^XZ')) {
+          console.error(`Invalid ZPL format for label ${i + 1}:`, label.substring(0, 100));
+          throw new Error(`Formato ZPL inválido para etiqueta ${i + 1}`);
+        }
+
+        console.log(`Processing PNG label ${i + 1}, ZPL length: ${label.length}`);
+        console.log(`ZPL preview:`, label.substring(0, 200));
 
         const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
           method: 'POST',
@@ -74,10 +85,13 @@ export const useZplApiConversion = () => {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          console.error(`API Error for label ${i + 1}:`, response.status, errorText);
+          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
 
         const blob = await response.blob();
+        console.log(`Successfully converted label ${i + 1} to PNG, size: ${blob.size} bytes`);
         pngs.push(blob);
 
         onProgress(((i + 1) / labels.length) * 100);
@@ -94,6 +108,9 @@ export const useZplApiConversion = () => {
           description: t('blockErrorMessage', { block: i + 1 }),
           duration: 4000,
         });
+        
+        // Continue processing other labels even if one fails
+        continue;
       }
     }
     
@@ -101,12 +118,23 @@ export const useZplApiConversion = () => {
   };
 
   const parseLabelsFromZpl = (zplContent: string) => {
-    return splitZPLIntoBlocks(zplContent);
+    console.log('Parsing ZPL content, length:', zplContent.length);
+    const labels = splitZPLIntoBlocks(zplContent);
+    console.log('Parsed labels count:', labels.length);
+    
+    // Log first few labels for debugging
+    labels.slice(0, 3).forEach((label, index) => {
+      console.log(`Label ${index + 1} preview:`, label.substring(0, 150));
+    });
+    
+    return labels;
   };
 
   const countLabelsInZpl = (zplContent: string): number => {
     const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
-    return Math.ceil(countXAMarkers / 2);
+    const count = Math.ceil(countXAMarkers / 2);
+    console.log('XA markers found:', countXAMarkers, 'Calculated label count:', count);
+    return count;
   };
 
   return {

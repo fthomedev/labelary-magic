@@ -50,12 +50,18 @@ export const useZplConversion = () => {
       setPdfUrls([]);
       setIsProcessingComplete(false);
 
+      console.log('Starting conversion with sheet config:', sheetConfig);
+
       const labels = parseLabelsFromZpl(zplContent);
       const actualLabelCount = countLabelsInZpl(zplContent);
       
+      console.log('Labels parsed:', labels.length, 'Actual count:', actualLabelCount);
+
       if (sheetConfig?.enabled) {
         // Modo folha: converter para PNG e combinar
         const maxLabelsPerSheet = getMaxLabelsPerSheet(sheetConfig);
+        console.log('Max labels per sheet:', maxLabelsPerSheet);
+        
         const sheets: Blob[] = [];
         
         toast({
@@ -67,6 +73,7 @@ export const useZplConversion = () => {
         // Processar etiquetas em lotes por folha
         for (let i = 0; i < labels.length; i += maxLabelsPerSheet) {
           const sheetLabels = labels.slice(i, i + maxLabelsPerSheet);
+          console.log(`Processing sheet ${Math.floor(i / maxLabelsPerSheet) + 1}, labels: ${sheetLabels.length}`);
           
           // Converter etiquetas para PNG
           const pngs = await convertZplBlocksToPngs(sheetLabels, (progressValue) => {
@@ -75,12 +82,16 @@ export const useZplConversion = () => {
             setProgress(sheetProgress + currentProgress);
           });
 
+          console.log(`Converted ${pngs.length} labels to PNG for sheet ${Math.floor(i / maxLabelsPerSheet) + 1}`);
+
           if (pngs.length > 0) {
             // Combinar PNGs em uma folha
             const sheetPng = await generateSheetFromPngs(pngs, sheetConfig);
+            console.log('Generated sheet PNG, size:', sheetPng.size, 'bytes');
             
             // Converter PNG da folha para PDF
             const sheetPdf = await convertPngToPdf(sheetPng);
+            console.log('Converted sheet to PDF, size:', sheetPdf.size, 'bytes');
             sheets.push(sheetPdf);
           }
         }
@@ -90,6 +101,7 @@ export const useZplConversion = () => {
           
           // Merge all sheet PDFs
           const mergedPdf = sheets.length > 1 ? await mergePDFs(sheets) : sheets[0];
+          console.log('Final merged PDF size:', mergedPdf.size, 'bytes');
           
           // Continue with upload and download...
           await ensurePdfBucketExists();
