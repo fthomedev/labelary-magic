@@ -62,17 +62,20 @@ export const useZplApiConversion = () => {
   ): Promise<Blob[]> => {
     const pngs: Blob[] = [];
     
+    console.log('Starting PNG conversion for', labels.length, 'labels');
+    
     for (let i = 0; i < labels.length; i++) {
       try {
         const label = labels[i];
         
-        // Validate ZPL format
-        if (!label.includes('^XA') || !label.includes('^XZ')) {
-          console.error(`Invalid ZPL format for label ${i + 1}:`, label.substring(0, 100));
-          throw new Error(`Formato ZPL inválido para etiqueta ${i + 1}`);
+        // Validação ZPL mais flexível - apenas verificar se tem conteúdo ZPL básico
+        const hasZplMarkers = label.includes('^XA') || label.includes('^XZ') || label.includes('^FD') || label.includes('^BY');
+        if (!hasZplMarkers) {
+          console.error(`Label ${i + 1} doesn't appear to contain ZPL commands:`, label.substring(0, 100));
+          throw new Error(`Etiqueta ${i + 1} não contém comandos ZPL válidos`);
         }
 
-        console.log(`Processing PNG label ${i + 1}, ZPL length: ${label.length}`);
+        console.log(`Processing PNG label ${i + 1}/${labels.length}, ZPL length: ${label.length}`);
         console.log(`ZPL preview:`, label.substring(0, 200));
 
         const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
@@ -87,25 +90,37 @@ export const useZplApiConversion = () => {
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`API Error for label ${i + 1}:`, response.status, errorText);
+          
+          // Log mais detalhes sobre o erro da API
+          if (response.status === 400) {
+            console.error(`Invalid ZPL for label ${i + 1}:`, label);
+          }
+          
           throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
 
         const blob = await response.blob();
         console.log(`Successfully converted label ${i + 1} to PNG, size: ${blob.size} bytes`);
+        
+        // Verificar se o blob realmente contém uma imagem válida
+        if (blob.size === 0) {
+          throw new Error(`API retornou imagem vazia para etiqueta ${i + 1}`);
+        }
+        
         pngs.push(blob);
 
         onProgress(((i + 1) / labels.length) * 100);
 
-        // Delay entre requisições para evitar rate limiting
+        // Delay menor entre requisições para PNG
         if (i < labels.length - 1) {
-          await delay(1000);
+          await delay(500);
         }
       } catch (error) {
-        console.error(`${t('blockError')} ${i + 1}:`, error);
+        console.error(`Erro ao converter etiqueta ${i + 1} para PNG:`, error);
         toast({
           variant: "destructive",
-          title: t('blockError'),
-          description: t('blockErrorMessage', { block: i + 1 }),
+          title: `Erro na etiqueta ${i + 1}`,
+          description: `Falha ao converter etiqueta: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
           duration: 4000,
         });
         
@@ -114,6 +129,7 @@ export const useZplApiConversion = () => {
       }
     }
     
+    console.log(`PNG conversion completed. Successfully converted ${pngs.length}/${labels.length} labels`);
     return pngs;
   };
 
