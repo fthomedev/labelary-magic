@@ -11,12 +11,22 @@ import { ProcessingHistory } from '@/components/ProcessingHistory';
 import { useZplConversion } from '@/hooks/useZplConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
+import { SheetConfig } from '@/components/sheet/SheetSettings';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
   const [fileCount, setFileCount] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [sheetConfig, setSheetConfig] = useState<SheetConfig>({
+    enabled: false,
+    sheetSize: 'A4',
+    marginTop: 10,
+    marginBottom: 10,
+    marginLeft: 10,
+    marginRight: 10,
+    labelSpacing: 5
+  });
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
@@ -55,14 +65,14 @@ const Index = () => {
   };
 
   const handleConvert = async () => {
-    await convertToPDF(zplContent);
+    await convertToPDF(zplContent, sheetConfig);
   };
 
   const handleDownload = () => {
     if (lastPdfUrl) {
       const a = document.createElement('a');
       a.href = lastPdfUrl;
-      a.download = 'etiquetas.pdf';
+      a.download = sheetConfig.enabled ? `etiquetas-folha-${sheetConfig.sheetSize}.pdf` : 'etiquetas.pdf';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -125,6 +135,8 @@ const Index = () => {
                         isProcessingComplete={isProcessingComplete}
                         lastPdfUrl={lastPdfUrl}
                         onDownload={handleDownload}
+                        sheetConfig={sheetConfig}
+                        onSheetConfigChange={setSheetConfig}
                       />
                     </div>
                   </div>

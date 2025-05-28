@@ -167,6 +167,20 @@ const translations = {
   successMessage: 'Conversion completed successfully',
   errorMessage: 'Error processing the file',
   mergePdfError: 'Error merging PDF files',
-};
+  
+  // New translations for sheet settings
+  "sheetPrintingSettings": "Sheet Printing Settings",
+  "combineLabelsInSheet": "Combine labels in A4/A5 sheet",
+  "sheetSize": "Sheet size",
+  "marginTop": "Top margin",
+  "marginBottom": "Bottom margin",
+  "marginLeft": "Left margin", 
+  "marginRight": "Right margin",
+  "labelSpacing": "Label spacing",
+  "sheetPrintingDescription": "Ideal for regular laser printers. Labels will be organized on the sheet respecting the configured margins.",
+  "sheetModeEnabled": "Sheet mode enabled",
+  "labelsOrganizedInSheets": "{{count}} labels organized in {{sheets}} {{sheetSize}} sheet(s)",
+  "sheetSuccessMessage": "Labels organized in sheet and PDF generated successfully!"
+} as const;
 
 export default translations;

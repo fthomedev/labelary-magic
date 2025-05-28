@@ -7,6 +7,8 @@ import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
 import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
+import { SheetConfig } from '@/components/sheet/SheetSettings';
+import { splitLabelsIntoSheets } from '@/utils/sheetPdfGenerator';
 
 export interface ProcessingRecord {
   id: string;
@@ -38,7 +40,7 @@ export const useZplConversion = () => {
     setProgress(0);
   };
 
-  const convertToPDF = async (zplContent: string) => {
+  const convertToPDF = async (zplContent: string, sheetConfig?: SheetConfig) => {
     if (!zplContent) return;
     
     try {
@@ -47,7 +49,23 @@ export const useZplConversion = () => {
       setPdfUrls([]);
       setIsProcessingComplete(false);
 
-      const labels = parseLabelsFromZpl(zplContent);
+      let labels = parseLabelsFromZpl(zplContent);
+      
+      // Se a configuração de folha estiver habilitada, reorganizar as etiquetas
+      if (sheetConfig?.enabled) {
+        const sheets = splitLabelsIntoSheets(labels, sheetConfig);
+        labels = sheets;
+        
+        toast({
+          title: t('sheetModeEnabled'),
+          description: t('labelsOrganizedInSheets', { 
+            sheets: sheets.length,
+            sheetSize: sheetConfig.sheetSize 
+          }),
+          duration: 3000,
+        });
+      }
+
       const newPdfUrls: string[] = [];
 
       const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
@@ -90,14 +108,14 @@ export const useZplConversion = () => {
             // Download the file
             const a = document.createElement('a');
             a.href = blobUrl;
-            a.download = 'etiquetas.pdf';
+            a.download = sheetConfig?.enabled ? `etiquetas-folha-${sheetConfig.sheetSize}.pdf` : 'etiquetas.pdf';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
 
             toast({
               title: t('success'),
-              description: t('successMessage'),
+              description: sheetConfig?.enabled ? t('sheetSuccessMessage') : t('successMessage'),
               duration: 3000,
             });
             
@@ -147,6 +165,6 @@ export const useZplConversion = () => {
     lastPdfPath,
     convertToPDF,
     historyRefreshTrigger,
-    resetProcessingStatus,  // Expose the new function
+    resetProcessingStatus,
   };
 };
