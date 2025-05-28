@@ -19,32 +19,47 @@ export const SHEET_DIMENSIONS: Record<'A4' | 'A5', SheetDimensions> = {
   A5: { width: 148, height: 210 }
 };
 
-// Dimensões padrão de etiquetas ZPL (4x6 polegadas = ~102x152mm)
-export const DEFAULT_LABEL_SIZE = {
-  width: 102, // 4 inches in mm
-  height: 152 // 6 inches in mm
+// Dimensões das etiquetas ZPL (4x6 polegadas = ~102x152mm)
+// Vamos usar dimensões menores para permitir mais etiquetas por folha
+export const LABEL_SIZE = {
+  width: 85,  // Reduzido de 102 para permitir mais etiquetas
+  height: 120 // Reduzido de 152 para permitir mais etiquetas
 };
 
 export const calculateSheetLayout = (
   config: SheetConfig,
   labelCount: number
 ): LabelLayout[] => {
+  console.log('=== CALCULATING SHEET LAYOUT ===');
+  console.log('Config:', config);
+  console.log('Label count:', labelCount);
+  
   const sheet = SHEET_DIMENSIONS[config.sheetSize];
   
   // Área útil da folha (descontando margens)
   const usableWidth = sheet.width - config.marginLeft - config.marginRight;
   const usableHeight = sheet.height - config.marginTop - config.marginBottom;
   
+  console.log('Sheet dimensions:', sheet);
+  console.log('Usable area:', usableWidth, 'x', usableHeight);
+  console.log('Label size:', LABEL_SIZE);
+  
   // Quantas etiquetas cabem por linha e coluna
   const labelsPerRow = Math.floor(
-    (usableWidth + config.labelSpacing) / (DEFAULT_LABEL_SIZE.width + config.labelSpacing)
+    (usableWidth + config.labelSpacing) / (LABEL_SIZE.width + config.labelSpacing)
   );
   const labelsPerColumn = Math.floor(
-    (usableHeight + config.labelSpacing) / (DEFAULT_LABEL_SIZE.height + config.labelSpacing)
+    (usableHeight + config.labelSpacing) / (LABEL_SIZE.height + config.labelSpacing)
   );
+  
+  console.log('Labels per row:', labelsPerRow);
+  console.log('Labels per column:', labelsPerColumn);
   
   const maxLabelsPerSheet = labelsPerRow * labelsPerColumn;
   const actualLabelCount = Math.min(labelCount, maxLabelsPerSheet);
+  
+  console.log('Max labels per sheet:', maxLabelsPerSheet);
+  console.log('Actual labels to place:', actualLabelCount);
   
   const layouts: LabelLayout[] = [];
   
@@ -52,17 +67,21 @@ export const calculateSheetLayout = (
     const row = Math.floor(i / labelsPerRow);
     const col = i % labelsPerRow;
     
-    const x = config.marginLeft + col * (DEFAULT_LABEL_SIZE.width + config.labelSpacing);
-    const y = config.marginTop + row * (DEFAULT_LABEL_SIZE.height + config.labelSpacing);
+    const x = config.marginLeft + col * (LABEL_SIZE.width + config.labelSpacing);
+    const y = config.marginTop + row * (LABEL_SIZE.height + config.labelSpacing);
+    
+    console.log(`Label ${i + 1} position: (${x}, ${y})`);
     
     layouts.push({
       x,
       y,
-      width: DEFAULT_LABEL_SIZE.width,
-      height: DEFAULT_LABEL_SIZE.height
+      width: LABEL_SIZE.width,
+      height: LABEL_SIZE.height
     });
   }
   
+  console.log('=== LAYOUT CALCULATION COMPLETED ===');
+  console.log('Generated layouts:', layouts.length);
   return layouts;
 };
 
@@ -73,11 +92,21 @@ export const getMaxLabelsPerSheet = (config: SheetConfig): number => {
   const usableHeight = sheet.height - config.marginTop - config.marginBottom;
   
   const labelsPerRow = Math.floor(
-    (usableWidth + config.labelSpacing) / (DEFAULT_LABEL_SIZE.width + config.labelSpacing)
+    (usableWidth + config.labelSpacing) / (LABEL_SIZE.width + config.labelSpacing)
   );
   const labelsPerColumn = Math.floor(
-    (usableHeight + config.labelSpacing) / (DEFAULT_LABEL_SIZE.height + config.labelSpacing)
+    (usableHeight + config.labelSpacing) / (LABEL_SIZE.height + config.labelSpacing)
   );
   
-  return labelsPerRow * labelsPerColumn;
+  const maxLabels = labelsPerRow * labelsPerColumn;
+  console.log('Max labels per sheet calculation:', {
+    sheetSize: config.sheetSize,
+    usableWidth,
+    usableHeight,
+    labelsPerRow,
+    labelsPerColumn,
+    maxLabels
+  });
+  
+  return maxLabels;
 };

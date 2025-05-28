@@ -18,7 +18,11 @@ export const generateSheetFromPngs = async (
     console.log('Calculated layouts:', layouts.length);
     console.log('Sheet dimensions:', sheet);
     
-    // Conversão de mm para pixels (300 DPI)
+    if (layouts.length === 0) {
+      throw new Error('Nenhum layout calculado para as etiquetas');
+    }
+    
+    // Conversão de mm para pixels (300 DPI para alta qualidade)
     const mmToPixels = (mm: number) => Math.round(mm * 11.811);
     
     const canvasWidth = mmToPixels(sheet.width);
@@ -42,12 +46,15 @@ export const generateSheetFromPngs = async (
     console.log('Processing', Math.min(pngBlobs.length, layouts.length), 'labels for sheet');
     
     // Processar cada PNG
-    for (let i = 0; i < Math.min(pngBlobs.length, layouts.length); i++) {
+    const labelsToProcess = Math.min(pngBlobs.length, layouts.length);
+    
+    for (let i = 0; i < labelsToProcess; i++) {
       const layout = layouts[i];
       const pngBlob = pngBlobs[i];
       
-      console.log(`Processing label ${i + 1}:`, {
-        layoutPosition: layout,
+      console.log(`Processing label ${i + 1}/${labelsToProcess}:`, {
+        layoutPosition: `(${layout.x}, ${layout.y})`,
+        layoutSize: `${layout.width}x${layout.height}mm`,
         blobSize: pngBlob.size
       });
       
@@ -63,9 +70,13 @@ export const generateSheetFromPngs = async (
               const width = mmToPixels(layout.width);
               const height = mmToPixels(layout.height);
               
-              console.log(`Drawing label ${i + 1}:`, { x, y, width, height });
-              console.log(`Image natural size:`, img.naturalWidth, 'x', img.naturalHeight);
+              console.log(`Drawing label ${i + 1}:`, { 
+                pixelPos: `(${x}, ${y})`,
+                pixelSize: `${width}x${height}`,
+                imageNaturalSize: `${img.naturalWidth}x${img.naturalHeight}`
+              });
               
+              // Desenhar a imagem mantendo a proporção
               ctx.drawImage(img, x, y, width, height);
               URL.revokeObjectURL(imageUrl);
               console.log(`Successfully drew label ${i + 1}`);
@@ -87,7 +98,7 @@ export const generateSheetFromPngs = async (
         });
       } catch (error) {
         console.error(`Failed to process label ${i + 1}:`, error);
-        throw error;
+        // Continue com as outras etiquetas mesmo se uma falhar
       }
     }
     
@@ -99,6 +110,7 @@ export const generateSheetFromPngs = async (
         if (blob) {
           console.log('=== SHEET GENERATION COMPLETED ===');
           console.log('Final blob size:', blob.size, 'bytes');
+          console.log('Labels successfully placed on sheet:', labelsToProcess);
           resolve(blob);
         } else {
           console.error('=== SHEET GENERATION FAILED ===');

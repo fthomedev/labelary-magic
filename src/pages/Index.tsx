@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -21,11 +20,11 @@ const Index = () => {
   const [sheetConfig, setSheetConfig] = useState<SheetConfig>({
     enabled: false,
     sheetSize: 'A4',
-    marginTop: 10,
-    marginBottom: 10,
-    marginLeft: 10,
-    marginRight: 10,
-    labelSpacing: 5
+    marginTop: 5,      // Reduzido de 10 para 5
+    marginBottom: 5,   // Reduzido de 10 para 5
+    marginLeft: 5,     // Reduzido de 10 para 5
+    marginRight: 5,    // Reduzido de 10 para 5
+    labelSpacing: 2    // Reduzido de 5 para 2
   });
   const { t } = useTranslation();
   const isMobile = useIsMobile();

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Printer } from 'lucide-react';
+import { getMaxLabelsPerSheet } from '@/utils/sheetLayout';
 
 export interface SheetConfig {
   enabled: boolean;
@@ -30,6 +31,9 @@ export function SheetSettings({ config, onChange }: SheetSettingsProps) {
     onChange({ ...config, ...updates });
   };
 
+  // Calcular quantas etiquetas cabem na configuração atual
+  const maxLabels = getMaxLabelsPerSheet(config);
+
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
@@ -52,6 +56,10 @@ export function SheetSettings({ config, onChange }: SheetSettingsProps) {
 
         {config.enabled && (
           <div className="space-y-3 pl-6 border-l-2 border-gray-100">
+            <div className="text-xs bg-blue-50 p-2 rounded border">
+              <strong>Capacidade:</strong> {maxLabels} etiquetas por folha {config.sheetSize}
+            </div>
+            
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-gray-600">{t('sheetSize')}</Label>
