@@ -66,5 +66,7 @@ export default {
   "sheetModeEnabled": "Modo folha ativado",
   "labelsOrganizedInSheets": "{{count}} etiquetas organizadas em {{sheets}} folha(s) {{sheetSize}}",
   "sheetSuccessMessage": "Etiquetas organizadas em folha e PDF gerado com sucesso!",
-  "processingLabelsForSheet": "Processando etiquetas para organização em folha..."
+  "processingLabelsForSheet": "Processando etiquetas para organização em folha...",
+  "process": "Processar",
+  "labelsProcessed": "{{count}} etiquetas processadas"
 } as const;

@@ -17,10 +17,17 @@ export const generateSheetFromPngs = async (
       throw new Error('No layout calculated for labels');
     }
     
-    const mmToPixels = (mm: number) => Math.round(mm * 11.811);
+    // Reduzir resolução para evitar erro de tamanho máximo
+    const mmToPixels = (mm: number) => Math.round(mm * 3.779); // Reduzido de 11.811 para 3.779 (96 DPI)
     
     const canvasWidth = mmToPixels(sheet.width);
     const canvasHeight = mmToPixels(sheet.height);
+    
+    // Verificar se o canvas não excede limites do navegador
+    const maxCanvasSize = 16384; // Limite típico do navegador
+    if (canvasWidth > maxCanvasSize || canvasHeight > maxCanvasSize) {
+      throw new Error(`Canvas size too large: ${canvasWidth}x${canvasHeight}. Max: ${maxCanvasSize}x${maxCanvasSize}`);
+    }
     
     const canvas = document.createElement('canvas');
     canvas.width = canvasWidth;
@@ -31,51 +38,75 @@ export const generateSheetFromPngs = async (
       throw new Error('Could not create canvas context');
     }
     
+    // Configurar qualidade do canvas
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
     
     const labelsToProcess = Math.min(pngBlobs.length, layouts.length);
-    console.log(`Processing ${labelsToProcess} labels for ${config.sheetSize} sheet`);
+    console.log(`Processing ${labelsToProcess} labels for ${config.sheetSize} sheet (${canvasWidth}x${canvasHeight}px)`);
     
-    // Carregar todas as imagens em paralelo com Promise.allSettled para melhor controle
-    const imagePromises = pngBlobs.slice(0, labelsToProcess).map(async (pngBlob, i) => {
-      const layout = layouts[i];
+    // Processar imagens em lotes menores para evitar sobrecarga de memória
+    const BATCH_SIZE = 5;
+    const imagePromises = [];
+    
+    for (let i = 0; i < labelsToProcess; i += BATCH_SIZE) {
+      const batchEnd = Math.min(i + BATCH_SIZE, labelsToProcess);
+      const batchPromises = [];
       
-      try {
-        const img = new Image();
-        const imageUrl = URL.createObjectURL(pngBlob);
+      for (let j = i; j < batchEnd; j++) {
+        const pngBlob = pngBlobs[j];
+        const layout = layouts[j];
         
-        return new Promise<{ img: HTMLImageElement; layout: typeof layout; index: number }>((resolve, reject) => {
-          const timeoutId = setTimeout(() => {
-            URL.revokeObjectURL(imageUrl);
-            reject(new Error(`Timeout loading image ${i + 1}`));
-          }, 5000); // 5 segundos de timeout por imagem
+        batchPromises.push(
+          new Promise<{ img: HTMLImageElement; layout: typeof layout; index: number } | null>((resolve) => {
+            try {
+              const img = new Image();
+              const imageUrl = URL.createObjectURL(pngBlob);
+              
+              const timeoutId = setTimeout(() => {
+                URL.revokeObjectURL(imageUrl);
+                console.warn(`Timeout loading image ${j + 1}`);
+                resolve(null);
+              }, 3000); // Reduzido timeout para 3 segundos
 
-          img.onload = () => {
-            clearTimeout(timeoutId);
-            URL.revokeObjectURL(imageUrl);
-            resolve({ img, layout, index: i });
-          };
-          
-          img.onerror = () => {
-            clearTimeout(timeoutId);
-            URL.revokeObjectURL(imageUrl);
-            reject(new Error(`Failed to load image ${i + 1}`));
-          };
-          
-          img.src = imageUrl;
-        });
-      } catch (error) {
-        console.error(`Failed to process label ${i + 1}:`, error);
-        throw error;
+              img.onload = () => {
+                clearTimeout(timeoutId);
+                URL.revokeObjectURL(imageUrl);
+                resolve({ img, layout, index: j });
+              };
+              
+              img.onerror = () => {
+                clearTimeout(timeoutId);
+                URL.revokeObjectURL(imageUrl);
+                console.warn(`Failed to load image ${j + 1}`);
+                resolve(null);
+              };
+              
+              img.src = imageUrl;
+            } catch (error) {
+              console.error(`Error processing label ${j + 1}:`, error);
+              resolve(null);
+            }
+          })
+        );
       }
-    });
+      
+      imagePromises.push(...batchPromises);
+      
+      // Pequena pausa entre lotes para evitar sobrecarga
+      if (batchEnd < labelsToProcess) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
 
     const loadedImages = await Promise.allSettled(imagePromises);
     
     let successCount = 0;
     loadedImages.forEach((result) => {
-      if (result.status === 'fulfilled') {
+      if (result.status === 'fulfilled' && result.value) {
         const { img, layout } = result.value;
         
         const x = mmToPixels(layout.x);
@@ -89,8 +120,6 @@ export const generateSheetFromPngs = async (
         } catch (drawError) {
           console.error(`Error drawing image ${result.value.index + 1}:`, drawError);
         }
-      } else {
-        console.error('Failed to load image:', result.reason);
       }
     });
     
@@ -98,6 +127,7 @@ export const generateSheetFromPngs = async (
     
     return new Promise((resolve, reject) => {
       try {
+        // Usar qualidade reduzida para diminuir tamanho do arquivo
         canvas.toBlob((blob) => {
           if (blob) {
             console.log(`Sheet generation completed. Final size: ${(blob.size / 1024).toFixed(1)}KB`);
@@ -105,7 +135,7 @@ export const generateSheetFromPngs = async (
           } else {
             reject(new Error('Failed to generate sheet PNG'));
           }
-        }, 'image/png', 1.0);
+        }, 'image/png', 0.8); // Qualidade reduzida de 1.0 para 0.8
       } catch (error) {
         reject(new Error(`Canvas conversion failed: ${error.message}`));
       }

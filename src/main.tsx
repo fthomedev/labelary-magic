@@ -1,49 +1,65 @@
 
-import React from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
+import { initializeI18n } from '@/i18n/config';
+import App from './App';
+import './index.css';
 
-// Split App and i18n into separate chunks
-const App = React.lazy(() => import('./App.tsx'));
-const loadI18n = () => import('./i18n/config');
+// Criar cliente de query global
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutos
+    },
+  },
+});
 
-// Create loading component for better user experience
-const LoadingFallback = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="h-32 w-32 animate-pulse bg-primary/10 rounded-full" />
-  </div>
-);
-
-// Initialize app with better error handling and code splitting
-const initializeApp = async () => {
-  const rootElement = document.getElementById('root');
-  if (!rootElement) {
-    console.error('Root element not found');
-    return;
-  }
-
+// Inicializar aplicação de forma otimizada
+const startApp = async () => {
   try {
-    // Initialize i18n first but don't block rendering
-    loadI18n().catch(console.error);
+    // Inicializar i18n antes de renderizar a aplicação
+    await initializeI18n();
+    
+    const rootElement = document.getElementById('root');
+    if (!rootElement) {
+      throw new Error('Root element not found');
+    }
 
-    createRoot(rootElement).render(
-      <React.StrictMode>
-        <BrowserRouter>
-          <React.Suspense fallback={<LoadingFallback />}>
+    const root = createRoot(rootElement);
+    
+    root.render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
             <App />
-          </React.Suspense>
-        </BrowserRouter>
-      </React.StrictMode>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </StrictMode>
     );
   } catch (error) {
-    console.error('Failed to initialize app:', error);
-    document.getElementById('critical-content')?.classList.remove('opacity-0');
+    console.error('Failed to start application:', error);
+    
+    // Fallback em caso de erro
+    const rootElement = document.getElementById('root');
+    if (rootElement) {
+      rootElement.innerHTML = `
+        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif;">
+          <div style="text-align: center;">
+            <h1>Erro ao carregar aplicação</h1>
+            <p>Por favor, recarregue a página.</p>
+            <button onclick="window.location.reload()" style="padding: 10px 20px; margin-top: 10px;">
+              Recarregar
+            </button>
+          </div>
+        </div>
+      `;
+    }
   }
 };
 
-// Start app when document is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-  initializeApp();
-}
+// Inicializar aplicação
+startApp();

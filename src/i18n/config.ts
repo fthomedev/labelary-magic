@@ -1,4 +1,3 @@
-
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { translations } from './locales';
@@ -20,32 +19,44 @@ const detectUserLanguage = () => {
   return 'pt-BR'; // Idioma padrão
 };
 
-// Inicializar i18n com a preferência de idioma salva ou padrão
-const savedLanguage = detectUserLanguage();
+// Configuração otimizada para carregamento global
+const initI18n = async () => {
+  const savedLanguage = detectUserLanguage();
 
-i18n
-  .use(LanguageDetector) // Adiciona detector de idioma do navegador
-  .use(initReactI18next)
-  .init({
-    resources: {
-      en: { translation: translations.en },
-      'pt-BR': { translation: translations['pt-BR'] },
-    },
-    lng: savedLanguage,
-    fallbackLng: 'pt-BR', // Fallback para português
-    interpolation: {
-      escapeValue: false,
-    },
-    react: {
-      useSuspense: false,
-    },
-    detection: {
-      order: ['localStorage', 'navigator'],
-      lookupLocalStorage: 'i18nextLng',
-      caches: ['localStorage'],
-    },
-    debug: process.env.NODE_ENV === 'development',
-  });
+  await i18n
+    .use(LanguageDetector)
+    .use(initReactI18next)
+    .init({
+      resources: {
+        en: { translation: translations.en },
+        'pt-BR': { translation: translations['pt-BR'] },
+      },
+      lng: savedLanguage,
+      fallbackLng: 'pt-BR',
+      interpolation: {
+        escapeValue: false,
+      },
+      react: {
+        useSuspense: false,
+        bindI18n: 'languageChanged',
+        bindI18nStore: 'added removed',
+        transEmptyNodeValue: '',
+        transSupportBasicHtmlNodes: true,
+        transKeepBasicHtmlNodesFor: ['br', 'strong', 'i'],
+      },
+      detection: {
+        order: ['localStorage', 'navigator'],
+        lookupLocalStorage: 'i18nextLng',
+        caches: ['localStorage'],
+      },
+      debug: false, // Desabilitar debug em produção
+    });
+
+  // Configurar atributo lang do HTML no carregamento inicial
+  document.documentElement.lang = i18n.language;
+  
+  return i18n;
+};
 
 // Armazenar preferência de idioma e atualizar atributo lang do HTML
 i18n.on('languageChanged', (lng) => {
@@ -55,6 +66,11 @@ i18n.on('languageChanged', (lng) => {
   // Disparar um evento personalizado que os componentes podem escutar
   document.dispatchEvent(new CustomEvent('i18n-language-changed', { detail: lng }));
 });
+
+// Função para inicialização global (chamada no main.tsx)
+export const initializeI18n = () => {
+  return initI18n();
+};
 
 // Adicionar uma função para obter o idioma atual
 export const getCurrentLanguage = () => i18n.language;
