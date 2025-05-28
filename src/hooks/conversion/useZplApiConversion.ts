@@ -1,3 +1,4 @@
+
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { splitZPLIntoBlocks, delay } from '@/utils/pdfUtils';
@@ -62,6 +63,32 @@ export const useZplApiConversion = () => {
     return pdfs;
   };
 
+  const validateAndCleanZpl = (zplContent: string): string => {
+    let cleanZpl = zplContent.trim();
+    
+    // Garantir que tenha ^XA no início se não tiver
+    if (!cleanZpl.startsWith('^XA')) {
+      cleanZpl = '^XA' + cleanZpl;
+    }
+    
+    // Garantir que termine com ^XZ
+    if (!cleanZpl.endsWith('^XZ')) {
+      cleanZpl = cleanZpl + '^XZ';
+    }
+    
+    // Remover caracteres de controle que podem causar problemas
+    cleanZpl = cleanZpl.replace(/[\r\n\t]/g, '');
+    
+    // Garantir que não tenha espaços extras
+    cleanZpl = cleanZpl.replace(/\s+/g, ' ').trim();
+    
+    console.log('ZPL original length:', zplContent.length);
+    console.log('ZPL limpo length:', cleanZpl.length);
+    console.log('ZPL limpo preview:', cleanZpl.substring(0, 100));
+    
+    return cleanZpl;
+  };
+
   const convertZplBlocksToPngs = async (
     labels: string[],
     onProgress: (progress: number) => void
@@ -72,31 +99,39 @@ export const useZplApiConversion = () => {
     
     for (let i = 0; i < labels.length; i++) {
       try {
-        const label = labels[i];
+        const rawLabel = labels[i];
+        const cleanLabel = validateAndCleanZpl(rawLabel);
         
         console.log(`Processing PNG label ${i + 1}/${labels.length}`);
-        console.log(`ZPL content for label ${i + 1}:`, label.substring(0, 200));
+        console.log(`Raw ZPL for label ${i + 1}:`, rawLabel.substring(0, 200));
+        console.log(`Clean ZPL for label ${i + 1}:`, cleanLabel.substring(0, 200));
 
-        // Verificação básica do ZPL
-        if (!label || label.trim().length < 5) {
-          console.error(`Label ${i + 1} is too short or empty:`, label);
-          throw new Error(`Etiqueta ${i + 1} está vazia ou muito curta`);
+        // Verificação mais rigorosa do ZPL
+        if (!cleanLabel || cleanLabel.length < 10) {
+          console.error(`Label ${i + 1} is too short after cleaning:`, cleanLabel);
+          throw new Error(`Etiqueta ${i + 1} está vazia ou muito curta após limpeza`);
         }
 
-        // URL corrigida para a API Labelary - adicionando o "/0/" no final
+        if (!cleanLabel.includes('^XA') || !cleanLabel.includes('^XZ')) {
+          console.error(`Label ${i + 1} missing required ZPL markers:`, cleanLabel);
+          throw new Error(`Etiqueta ${i + 1} não possui marcadores ZPL obrigatórios`);
+        }
+
+        // URL corrigida para a API Labelary
         const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
           method: 'POST',
           headers: {
             'Accept': 'image/png',
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: label,
+          body: cleanLabel,
         });
 
         console.log(`PNG API Response for label ${i + 1}:`, {
           status: response.status,
           statusText: response.statusText,
-          url: response.url
+          url: response.url,
+          contentType: response.headers.get('content-type')
         });
 
         if (!response.ok) {
@@ -105,14 +140,38 @@ export const useZplApiConversion = () => {
             status: response.status,
             statusText: response.statusText,
             error: errorText,
-            zplContent: label.substring(0, 200)
+            rawZplContent: rawLabel.substring(0, 200),
+            cleanZplContent: cleanLabel.substring(0, 200)
           });
+          
+          // Tentar novamente com uma versão ainda mais simplificada do ZPL
+          if (response.status === 404 && errorText.includes('no labels')) {
+            console.log(`Tentando ZPL simplificado para label ${i + 1}`);
+            const simplifiedZpl = `^XA^FO50,50^ADN,36,20^FDLabel ${i + 1}^FS^XZ`;
+            
+            const retryResponse = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
+              method: 'POST',
+              headers: {
+                'Accept': 'image/png',
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: simplifiedZpl,
+            });
+            
+            if (retryResponse.ok) {
+              const retryBlob = await retryResponse.blob();
+              console.log(`Successfully converted simplified label ${i + 1} to PNG, size: ${retryBlob.size} bytes`);
+              pngs.push(retryBlob);
+              onProgress(((i + 1) / labels.length) * 100);
+              continue;
+            }
+          }
           
           throw new Error(`Erro da API (${response.status}): ${errorText || 'Erro desconhecido'}`);
         }
 
         const blob = await response.blob();
-        console.log(`Successfully converted label ${i + 1} to PNG, size: ${blob.size} bytes`);
+        console.log(`Successfully converted label ${i + 1} to PNG, size: ${blob.size} bytes, type: ${blob.type}`);
         
         if (blob.size === 0) {
           throw new Error(`API retornou imagem vazia para etiqueta ${i + 1}`);
@@ -121,7 +180,7 @@ export const useZplApiConversion = () => {
         pngs.push(blob);
         onProgress(((i + 1) / labels.length) * 100);
 
-        // Delay menor entre requisições
+        // Delay entre requisições
         if (i < labels.length - 1) {
           await delay(500);
         }
