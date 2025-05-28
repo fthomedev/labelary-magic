@@ -1,3 +1,4 @@
+
 export default {
   "title": "ZPL Easy – Conversor ZPL Online",
   "subtitle": "Cole seu código ZPL e baixe o PDF instantâneo. Sem instalar drivers.",
@@ -64,5 +65,6 @@ export default {
   "sheetPrintingDescription": "Ideal para impressoras laser comuns. As etiquetas serão organizadas na folha respeitando as margens configuradas.",
   "sheetModeEnabled": "Modo folha ativado",
   "labelsOrganizedInSheets": "{{count}} etiquetas organizadas em {{sheets}} folha(s) {{sheetSize}}",
-  "sheetSuccessMessage": "Etiquetas organizadas em folha e PDF gerado com sucesso!"
+  "sheetSuccessMessage": "Etiquetas organizadas em folha e PDF gerado com sucesso!",
+  "processingLabelsForSheet": "Processando etiquetas para organização em folha..."
 } as const;

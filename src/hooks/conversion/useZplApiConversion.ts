@@ -54,6 +54,52 @@ export const useZplApiConversion = () => {
     return pdfs;
   };
 
+  const convertZplBlocksToPngs = async (
+    labels: string[],
+    onProgress: (progress: number) => void
+  ): Promise<Blob[]> => {
+    const pngs: Blob[] = [];
+    
+    for (let i = 0; i < labels.length; i++) {
+      try {
+        const label = labels[i];
+
+        const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
+          method: 'POST',
+          headers: {
+            'Accept': 'image/png',
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: label,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        pngs.push(blob);
+
+        onProgress(((i + 1) / labels.length) * 100);
+
+        // Delay entre requisições para evitar rate limiting
+        if (i < labels.length - 1) {
+          await delay(1000);
+        }
+      } catch (error) {
+        console.error(`${t('blockError')} ${i + 1}:`, error);
+        toast({
+          variant: "destructive",
+          title: t('blockError'),
+          description: t('blockErrorMessage', { block: i + 1 }),
+          duration: 4000,
+        });
+      }
+    }
+    
+    return pngs;
+  };
+
   const parseLabelsFromZpl = (zplContent: string) => {
     return splitZPLIntoBlocks(zplContent);
   };
@@ -65,6 +111,7 @@ export const useZplApiConversion = () => {
 
   return {
     convertZplBlocksToPdfs,
+    convertZplBlocksToPngs,
     parseLabelsFromZpl,
     countLabelsInZpl
   };
