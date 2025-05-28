@@ -34,6 +34,7 @@ export const useZplConversion = () => {
   const { convertZplBlocksToPdfs, parseLabelsFromZpl, countLabelsInZpl } = useZplApiConversion();
   const { ensurePdfBucketExists } = useStorageOperations();
 
+  // New function to reset processing status
   const resetProcessingStatus = () => {
     setIsProcessingComplete(false);
     setProgress(0);
@@ -49,15 +50,11 @@ export const useZplConversion = () => {
       setIsProcessingComplete(false);
 
       let labels = parseLabelsFromZpl(zplContent);
-      console.log(`Original labels count: ${labels.length}`);
       
       // Se a configuração de folha estiver habilitada, reorganizar as etiquetas
       if (sheetConfig?.enabled) {
         const sheets = splitLabelsIntoSheets(labels, sheetConfig);
         labels = sheets;
-        
-        console.log(`Generated ${sheets.length} sheets from ${parseLabelsFromZpl(zplContent).length} labels`);
-        console.log('First sheet ZPL:', sheets[0]?.substring(0, 200) + '...');
         
         toast({
           title: t('sheetModeEnabled'),
@@ -155,7 +152,7 @@ export const useZplConversion = () => {
       });
     } finally {
       setIsConverting(false);
-      setProgress(100);
+      setProgress(100); // Ensure progress is complete even if there was an error
     }
   };
 
