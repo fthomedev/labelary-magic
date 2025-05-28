@@ -1,179 +1,20 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ZPL Easy – Gerador de ZPL em PDF</title>
-    
-    <!-- Preconnect para domínios externos -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <!-- Critical CSS inlined -->
-    <style>
-      /* Critical styles needed for above-the-fold content */
-      :root {
-        --background: 0 0% 100%;
-        --foreground: 240 10% 3.9%;
-        --primary: 240 5.9% 10%;
-        --primary-foreground: 0 0% 98%;
-        --primary: 142.1 76.2% 36.3%;
-        --primary-foreground: 355.7 100% 97.3%;
-      }
-      
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        background-color: hsl(var(--background));
-        color: hsl(var(--foreground));
-      }
-      
-      .header {
-        position: sticky;
-        top: 0;
-        z-index: 50;
-        width: 100%;
-        border-bottom: 1px solid rgba(0,0,0,0.1);
-        background-color: rgba(255,255,255,0.95);
-        backdrop-filter: blur(8px);
-      }
-
-      /* Adicionando estilo específico para o elemento LCP */
-      #lcp-element {
-        font-size: 1.25rem;
-        margin-bottom: 2rem;
-        color: rgba(107, 114, 128, 1);
-        max-width: 48rem;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      /* Estilos críticos para o hero-section */
-      #hero-section {
-        position: relative;
-        padding-top: 4rem;
-        padding-bottom: 4rem;
-        overflow: hidden;
-      }
-
-      /* Estilos adicionais para o elemento h1 */
-      .hero-heading {
-        font-size: 2.25rem;
-        line-height: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 1.5rem;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-image: linear-gradient(to right, #22c55e, #4ade80);
-      }
-
-      /* Estilização básica para botões quebrados */
-      button, .button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 0.375rem;
-        padding: 0.5rem 1rem;
-        font-weight: 500;
-        background-color: #22c55e;
-        color: white;
-        text-decoration: none;
-        transition: background-color 0.2s;
-        border: none;
-        cursor: pointer;
-      }
-      
-      button:hover, .button:hover {
-        background-color: #16a34a;
-      }
-      
-      /* Removido preloads desnecessários e adicionado apenas o crítico */
-      @font-face {
-        font-family: 'Inter';
-        font-style: normal;
-        font-weight: 400;
-        font-display: swap;
-        src: url(https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2) format('woff2');
-        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-      }
-    </style>
-
-    <!-- Carregamento otimizado de fontes -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"></noscript>
-    
-    <!-- Meta tags e Schema.org markup -->
-    <meta name="description" content="Converta ZPL em PDF, crie etiquetas em lote e integre via API. Teste grátis." />
-    <meta name="author" content="Lovable" />
-    <link rel="canonical" href="https://zpleasy.com" />
-    <meta property="og:image" content="/og-image.png" />
-    <meta property="og:title" content="ZPL Easy – Gerador de ZPL em PDF" />
-    <meta property="og:description" content="Converta ZPL em PDF, crie etiquetas em lote e integre via API. Teste grátis." />
-    <meta property="og:url" content="https://zpleasy.com" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="ZPL Easy – Gerador de ZPL em PDF" />
-    <meta name="twitter:description" content="Converta ZPL em PDF, crie etiquetas em lote e integre via API. Teste grátis." />
-    <meta name="robots" content="index, follow" />
-
-    <!-- Schema.org markup -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "ZPL Easy",
-        "description": "Converta ZPL em PDF, crie etiquetas em lote e integre via API. Teste grátis.",
-        "applicationCategory": "WebApplication",
-        "operatingSystem": "Any",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "BRL",
-          "availability": "https://schema.org/InStock"
-        },
-        "provider": {
-          "@type": "Organization",
-          "name": "ZPL Easy",
-          "url": "https://zpleasy.com"
-        },
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.8",
-          "ratingCount": "156"
-        }
-      }
-    </script>
-
-    <!-- Defer non-critical CSS -->
-    <link rel="stylesheet" href="/src/index.css" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
+    <title>ZPL to PDF Converter</title>
+    <meta name="description" content="Convert ZPL labels to PDF format quickly and easily. Professional label conversion tool." />
   </head>
-
   <body>
-    <!-- Pre-rendered critical content -->
-    <div id="critical-content" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 1rem; text-align: center;">
-      <h1 class="hero-heading">Converta ZPL para PDF de Forma Rápida e Segura com ZPL Easy</h1>
-      <p id="lcp-element">Simplifique o seu fluxo de impressão de etiquetas e ganhe tempo com a nossa solução online confiável</p>
-    </div>
-    
     <div id="root"></div>
-    
-    <!-- Remove critical content após o carregamento principal -->
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-          const criticalContent = document.getElementById('critical-content');
-          if (criticalContent) {
-            criticalContent.style.opacity = '0';
-            criticalContent.style.transition = 'opacity 0.3s ease';
-            setTimeout(() => criticalContent.style.display = 'none', 300);
-          }
-        }, 300); // Reduzido para 300ms
-      });
-    </script>
-    
-    <!-- Carregamento assíncrono de scripts com performance optimization -->
-    <script type="module" src="/src/main.tsx" async></script>
+    <div id="critical-content" class="opacity-0">
+      <h1>ZPL to PDF Converter</h1>
+      <p>Convert your ZPL labels to PDF format with ease.</p>
+    </div>
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
