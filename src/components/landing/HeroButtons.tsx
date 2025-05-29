@@ -10,7 +10,7 @@ interface HeroButtonsProps {
 }
 
 export const HeroButtons: React.FC<HeroButtonsProps> = ({ isLoggedIn }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
@@ -31,11 +31,9 @@ export const HeroButtons: React.FC<HeroButtonsProps> = ({ isLoggedIn }) => {
         size="lg" 
         onClick={handleGetStarted} 
         className="px-8 py-6 text-lg rounded-full w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white"
-        aria-label={isLoggedIn ? 'Access Application' : 'Create Free Account'}
+        aria-label={isLoggedIn ? t('accessApp') : t('createAccount')}
       >
-        {isLoggedIn 
-          ? (i18n.language === 'pt-BR' ? 'Acessar Aplicativo' : 'Access Application') 
-          : (i18n.language === 'pt-BR' ? 'Crie sua Conta Gratuitamente' : 'Create Your Free Account')}
+        {isLoggedIn ? t('accessApp') : t('createAccount')}
         <ArrowRight className="ml-2 h-5 w-5" />
       </Button>
       {!isLoggedIn && (
@@ -44,10 +42,10 @@ export const HeroButtons: React.FC<HeroButtonsProps> = ({ isLoggedIn }) => {
           variant="outline" 
           onClick={handleLogin} 
           className="px-8 py-6 text-lg rounded-full w-full sm:w-auto border-emerald-600 text-emerald-600 hover:bg-emerald-50"
-          aria-label="Log In"
+          aria-label={t('loginAccount')}
         >
           <LogIn className="mr-2 h-5 w-5" />
-          {i18n.language === 'pt-BR' ? 'Entrar na Conta' : 'Log In'}
+          {t('loginAccount')}
         </Button>
       )}
     </div>

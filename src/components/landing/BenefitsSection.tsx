@@ -4,13 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Zap, FileText, Check, Lock, BarChart } from 'lucide-react';
 
 export const BenefitsSection: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t } = useTranslation();
   
   return (
     <section className="py-20 bg-gray-50 dark:bg-gray-800" id="beneficios">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
-          {i18n.language === 'pt-BR' ? 'Por que Escolher Nossa Ferramenta?' : 'Why Choose Our Tool?'}
+          {t('benefitsTitle')}
         </h2>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -19,12 +19,10 @@ export const BenefitsSection: React.FC = () => {
               <Zap className="h-8 w-8" />
             </div>
             <h3 className="text-xl font-semibold mb-2">
-              {i18n.language === 'pt-BR' ? 'Conversão Instantânea' : 'Instant Conversion'}
+              {t('instantConversion')}
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              {i18n.language === 'pt-BR' 
-                ? 'Processamento em nuvem, sem necessidade de instalar softwares adicionais.' 
-                : 'Cloud processing, no need to install additional software.'}
+              {t('instantConversionDesc')}
             </p>
           </div>
           
@@ -33,12 +31,10 @@ export const BenefitsSection: React.FC = () => {
               <FileText className="h-8 w-8" />
             </div>
             <h3 className="text-xl font-semibold mb-2">
-              {i18n.language === 'pt-BR' ? 'Suporte a Múltiplos Formatos' : 'Support for Multiple Formats'}
+              {t('multipleFormats')}
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              {i18n.language === 'pt-BR' 
-                ? 'Compatível com versões diferentes de ZPL e gera PDFs de alta qualidade.' 
-                : 'Compatible with different ZPL versions and generates high-quality PDFs.'}
+              {t('multipleFormatsDesc')}
             </p>
           </div>
           
@@ -47,12 +43,10 @@ export const BenefitsSection: React.FC = () => {
               <Check className="h-8 w-8" />
             </div>
             <h3 className="text-xl font-semibold mb-2">
-              {i18n.language === 'pt-BR' ? 'Interface Intuitiva' : 'Intuitive Interface'}
+              {t('intuitiveInterface')}
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              {i18n.language === 'pt-BR' 
-                ? 'Basta arrastar, soltar e converter. Sem curva de aprendizado.' 
-                : 'Just drag, drop and convert. No learning curve.'}
+              {t('intuitiveInterfaceDesc')}
             </p>
           </div>
           
@@ -61,12 +55,10 @@ export const BenefitsSection: React.FC = () => {
               <Lock className="h-8 w-8" />
             </div>
             <h3 className="text-xl font-semibold mb-2">
-              {i18n.language === 'pt-BR' ? 'Segurança Garantida' : 'Guaranteed Security'}
+              {t('guaranteedSecurity')}
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              {i18n.language === 'pt-BR' 
-                ? 'Proteção dos seus dados e arquivos, com infraestrutura segura e confiável.' 
-                : 'Protection of your data and files, with secure and reliable infrastructure.'}
+              {t('guaranteedSecurityDesc')}
             </p>
           </div>
           
@@ -75,12 +67,10 @@ export const BenefitsSection: React.FC = () => {
               <BarChart className="h-8 w-8" />
             </div>
             <h3 className="text-xl font-semibold mb-2">
-              {i18n.language === 'pt-BR' ? 'Escalabilidade' : 'Scalability'}
+              {t('scalability')}
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              {i18n.language === 'pt-BR' 
-                ? 'Perfeito para uso individual ou em grandes volumes de etiquetas.' 
-                : 'Perfect for individual use or large volumes of labels.'}
+              {t('scalabilityDesc')}
             </p>
           </div>
         </div>
