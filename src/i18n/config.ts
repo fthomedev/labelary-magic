@@ -7,29 +7,11 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 // Configuração global otimizada para carregamento
 let isInitialized = false;
 
-// Função para detectar o idioma preferido do usuário
-const detectUserLanguage = () => {
-  const savedLanguage = localStorage.getItem('i18nextLng');
-  if (savedLanguage && ['en', 'pt-BR'].includes(savedLanguage)) {
-    return savedLanguage;
-  }
-  
-  // Verificar idioma do navegador
-  const browserLang = navigator.language;
-  if (browserLang && browserLang.startsWith('pt')) {
-    return 'pt-BR';
-  }
-  
-  return 'pt-BR'; // Idioma padrão
-};
-
 // Configuração centralizada e otimizada para performance
 const initI18n = async () => {
   if (isInitialized) {
     return i18n;
   }
-
-  const savedLanguage = detectUserLanguage();
 
   await i18n
     .use(LanguageDetector)
@@ -39,8 +21,7 @@ const initI18n = async () => {
         en: { translation: translations.en },
         'pt-BR': { translation: translations['pt-BR'] },
       },
-      lng: savedLanguage,
-      fallbackLng: 'pt-BR',
+      fallbackLng: 'en',
       interpolation: {
         escapeValue: false,
       },
@@ -63,19 +44,9 @@ const initI18n = async () => {
       load: 'languageOnly',
       cleanCode: true,
       
-      // Configurações de carregamento global
-      preload: ['pt-BR', 'en'],
-      
       // Configurações de cache otimizadas
       updateMissing: false,
       saveMissing: false,
-      
-      // Configurações para carregamento assíncrono
-      initImmediate: false,
-      
-      // Configurar keySeparator e nsSeparator para melhor performance
-      keySeparator: false,
-      nsSeparator: false,
     });
 
   // Configurar atributo lang do HTML no carregamento inicial

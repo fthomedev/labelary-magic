@@ -6,7 +6,7 @@ import { Check, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const LanguageSelector = () => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export const LanguageSelector = () => {
         <Button 
           variant="outline" 
           size="icon"
-          aria-label={i18n.language === 'pt-BR' ? 'Selecionar idioma' : 'Select language'}
+          aria-label={t('language')}
         >
           <Globe className="h-4 w-4" aria-hidden="true" />
         </Button>
@@ -45,7 +45,7 @@ export const LanguageSelector = () => {
           role="menuitem"
         >
           <div className="flex items-center justify-between w-full">
-            <span>Português</span>
+            <span>{t('languages.pt-BR')}</span>
             {i18n.language === 'pt-BR' && <Check className="h-4 w-4 ml-2" aria-hidden="true" />}
           </div>
         </DropdownMenuItem>
@@ -55,7 +55,7 @@ export const LanguageSelector = () => {
           role="menuitem"
         >
           <div className="flex items-center justify-between w-full">
-            <span>English</span>
+            <span>{t('languages.en')}</span>
             {i18n.language === 'en' && <Check className="h-4 w-4 ml-2" aria-hidden="true" />}
           </div>
         </DropdownMenuItem>
