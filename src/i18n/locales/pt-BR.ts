@@ -1,4 +1,3 @@
-
 const translations = {
   // Geral
   home: 'Início',
@@ -92,10 +91,8 @@ const translations = {
   totalLabels: 'Total de Etiquetas',
   downloadAgain: 'Baixar Novamente',
   language: 'Idioma',
-  languages: {
-    'pt-BR': 'Português',
-    en: 'Inglês'
-  },
+  'languages.pt-BR': 'Português',
+  'languages.en': 'Inglês',
   
   // Conta
   deleteAccount: 'Deletar Conta',
