@@ -73,6 +73,8 @@ const translations = {
   deleteAccountConfirm: 'Are you sure you want to delete your account? This action cannot be undone.',
   deleteAccountSuccess: 'Account deleted successfully!',
   deleteAccountError: 'Error deleting your account.',
+  myAccount: 'My Account',
+  unnamed: 'Unnamed',
   
   // Sheet settings
   sheetPrintingSettings: 'Sheet Printing Settings',
@@ -89,7 +91,16 @@ const translations = {
   sheetSuccessMessage: 'Labels organized in sheet and PDF generated successfully!',
   processingLabelsForSheet: 'Processing labels for sheet organization...',
   process: 'Process',
-  labelsProcessed: '{{count}} labels processed'
+  labelsProcessed: '{{count}} labels processed',
+  
+  // Assinatura
+  subscriptionPage: 'Subscription Page',
+  availablePlans: 'Available Plans',
+  yourSubscription: 'Your Subscription',
+  subscriptionSuccess: 'Subscription Successful',
+  subscriptionSuccessMessage: 'Your subscription has been activated successfully!',
+  subscriptionThankYou: 'Thank you for subscribing to our service!',
+  viewSubscription: 'View Subscription'
 } as const;
 
 export default translations;

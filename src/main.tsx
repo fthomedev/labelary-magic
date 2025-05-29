@@ -3,17 +3,21 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
-import { initializeI18n } from '@/i18n/config';
+import { initializeI18n, logMissingTranslations } from '@/i18n/config';
 import App from './App';
 import './index.css';
 
-// Criar cliente de query global
+// Criar cliente de query global com configurações otimizadas
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutos
+      gcTime: 10 * 60 * 1000, // 10 minutos (anteriormente cacheTime)
+    },
+    mutations: {
+      retry: 1,
     },
   },
 });
@@ -23,6 +27,9 @@ const startApp = async () => {
   try {
     // Inicializar i18n antes de renderizar a aplicação
     await initializeI18n();
+    
+    // Log de validação de traduções em desenvolvimento
+    logMissingTranslations();
     
     const rootElement = document.getElementById('root');
     if (!rootElement) {

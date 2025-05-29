@@ -1,3 +1,4 @@
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { translations } from './locales';
@@ -49,7 +50,18 @@ const initI18n = async () => {
         lookupLocalStorage: 'i18nextLng',
         caches: ['localStorage'],
       },
-      debug: false, // Desabilitar debug em produção
+      debug: process.env.NODE_ENV === 'development', // Debug apenas em desenvolvimento
+      
+      // Configurações de performance
+      load: 'languageOnly',
+      cleanCode: true,
+      
+      // Configurações de carregamento
+      preload: ['pt-BR', 'en'],
+      
+      // Configurações de cache
+      updateMissing: false,
+      saveMissing: false,
     });
 
   // Configurar atributo lang do HTML no carregamento inicial
@@ -113,6 +125,19 @@ export const validateTranslations = (): { missingInEn: string[], missingInPtBR: 
   const missingInPtBR = [...enKeys].filter(key => !ptBRKeys.has(key));
   
   return { missingInEn, missingInPtBR };
+};
+
+// Função para log de chaves ausentes em desenvolvimento
+export const logMissingTranslations = () => {
+  if (process.env.NODE_ENV === 'development') {
+    const validation = validateTranslations();
+    if (validation.missingInEn.length > 0) {
+      console.warn('Chaves faltantes em inglês:', validation.missingInEn);
+    }
+    if (validation.missingInPtBR.length > 0) {
+      console.warn('Chaves faltantes em português:', validation.missingInPtBR);
+    }
+  }
 };
 
 export default i18n;
