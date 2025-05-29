@@ -43,15 +43,15 @@ export function SheetSettings({ config, onChange }: SheetSettingsProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="sheet-enabled" className="text-sm flex-1">
+            {t('combineLabelsInSheet')}
+          </Label>
           <Switch
             id="sheet-enabled"
             checked={config.enabled}
             onCheckedChange={(enabled) => updateConfig({ enabled })}
           />
-          <Label htmlFor="sheet-enabled" className="text-sm">
-            {t('combineLabelsInSheet')}
-          </Label>
         </div>
 
         {config.enabled && (
