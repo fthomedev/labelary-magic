@@ -12,17 +12,27 @@ export const LanguageSelector = () => {
   useEffect(() => {
     setMounted(true);
     
+    // Verificar se há idioma salvo no localStorage
     const savedLanguage = localStorage.getItem('i18nextLng');
+    console.log('Saved language:', savedLanguage);
+    console.log('Current language:', i18n.language);
+    
     if (savedLanguage && savedLanguage !== i18n.language) {
       i18n.changeLanguage(savedLanguage);
     }
   }, [i18n]);
 
-  const handleLanguageChange = (value: string) => {
+  const handleLanguageChange = async (value: string) => {
+    console.log('Changing language to:', value);
     if (i18n.language === value) return;
     
-    i18n.changeLanguage(value);
-    localStorage.setItem('i18nextLng', value);
+    try {
+      await i18n.changeLanguage(value);
+      localStorage.setItem('i18nextLng', value);
+      console.log('Language changed successfully to:', value);
+    } catch (error) {
+      console.error('Error changing language:', error);
+    }
   };
 
   if (!mounted) return null;
