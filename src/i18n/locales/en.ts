@@ -17,6 +17,7 @@ const translations = {
   close: 'Close',
   view: 'View',
   allRightsReserved: 'All rights reserved',
+  comingSoon: 'Coming Soon',
   
   // Auth
   email: 'Email',
@@ -58,6 +59,7 @@ const translations = {
   selectFile: 'Select File',
   dropHere: 'Drop files here',
   processingZip: 'Processing ZIP file',
+  processingLabels: 'Processing labels...',
   
   // Histórico
   historyTitle: 'Processing History',
