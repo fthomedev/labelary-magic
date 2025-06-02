@@ -156,7 +156,12 @@ const translations = {
   faqPrinterCompatibility: 'Minha impressora térmica Zebra é compatível com a conversão ZPL?',
   faqPrinterCompatibilityAnswer: 'Sim! Toda impressora que suporte o padrão ZPL II (como os modelos GK420t, ZD220, ZT230, entre outros) é compatível com as etiquetas geradas por nossa ferramenta. Basta colar ou enviar o conteúdo ZPL e imprimir.\n\nVocê também pode ajustar o tamanho, margens e resolução antes de imprimir, garantindo que a etiqueta fique perfeita.',
   faqHowConversionWorks: 'Como funciona a conversão de etiquetas para ZPL?',
-  faqHowConversionWorksAnswer: 'Com nossa ferramenta, você faz o upload de arquivos PDF, imagens ou até códigos ZPL brutos e recebe a versão otimizada para impressão. Você pode:\n\nVisualizar a etiqueta antes de imprimir\n\nAjustar configurações de tamanho e resolução\n\nSalvar etiquetas para reimpressão futura\n\nExportar lotes inteiros em ZPL\n\nIdeal para sellers de marketplaces e operadores logísticos que precisam imprimir em massa.'
+  faqHowConversionWorksAnswer: 'Com nossa ferramenta, você faz o upload de arquivos PDF, imagens ou até códigos ZPL brutos e recebe a versão otimizada para impressão. Você pode:\n\nVisualizar a etiqueta antes de imprimir\n\nAjustar configurações de tamanho e resolução\n\nSalvar etiquetas para reimpressão futura\n\nExportar lotes inteiros em ZPL\n\nIdeal para sellers de marketplaces e operadores logísticos que precisam imprimir em massa.',
+  
+  // Adicionar nova tradução
+  comingSoon: 'Em Breve',
+  convertingDirectlyToPdf: 'Convertendo diretamente para PDF...',
+  processingStarted: 'Processamento Iniciado',
 } as const;
 
 export default translations;
