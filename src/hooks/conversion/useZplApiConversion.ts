@@ -14,12 +14,15 @@ export const useZplApiConversion = () => {
     const pdfs: Blob[] = [];
     const LABELS_PER_REQUEST = 20; // Aumentado de 14 para 20
     
+    console.log(`Starting PDF conversion for ${labels.length} labels`);
+    
     for (let i = 0; i < labels.length; i += LABELS_PER_REQUEST) {
       try {
         const blockLabels = labels.slice(i, i + LABELS_PER_REQUEST);
         const blockZPL = blockLabels.join('');
 
         console.log(`Processing PDF block ${i / LABELS_PER_REQUEST + 1}, labels: ${blockLabels.length}`);
+        console.log(`Block ZPL preview: ${blockZPL.substring(0, 200)}...`);
 
         const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
           method: 'POST',
@@ -37,6 +40,7 @@ export const useZplApiConversion = () => {
         }
 
         const blob = await response.blob();
+        console.log(`Block ${i / LABELS_PER_REQUEST + 1} PDF size: ${blob.size} bytes`);
         pdfs.push(blob);
 
         onProgress(((i + blockLabels.length) / labels.length) * 100);
@@ -56,6 +60,7 @@ export const useZplApiConversion = () => {
       }
     }
     
+    console.log(`PDF conversion completed. Generated ${pdfs.length} PDF blocks from ${labels.length} labels`);
     return pdfs;
   };
 
@@ -190,15 +195,36 @@ export const useZplApiConversion = () => {
   };
 
   const parseLabelsFromZpl = (zplContent: string) => {
+    console.log('=== PARSING LABELS FROM ZPL ===');
+    console.log('Input ZPL length:', zplContent.length);
+    
     const labels = splitZPLIntoBlocks(zplContent);
     console.log(`Parsed ${labels.length} labels from ZPL content`);
-    return labels;
+    
+    // Validação adicional - verificar se cada label é válida
+    const validLabels = labels.filter(label => {
+      const isValid = label.includes('^XA') && label.includes('^XZ') && label.length > 10;
+      if (!isValid) {
+        console.warn('Invalid label found:', label.substring(0, 100));
+      }
+      return isValid;
+    });
+    
+    console.log(`Valid labels after filtering: ${validLabels.length}`);
+    return validLabels;
   };
 
   const countLabelsInZpl = (zplContent: string): number => {
-    const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
-    const count = Math.ceil(countXAMarkers / 2);
-    return count;
+    // Método mais preciso de contagem
+    const xaMatches = (zplContent.match(/\^XA/g) || []).length;
+    const parsedLabels = parseLabelsFromZpl(zplContent);
+    
+    console.log('Label count comparison:');
+    console.log('- ^XA markers found:', xaMatches);
+    console.log('- Successfully parsed labels:', parsedLabels.length);
+    
+    // Retornar o número de labels realmente parseadas
+    return parsedLabels.length;
   };
 
   return {
