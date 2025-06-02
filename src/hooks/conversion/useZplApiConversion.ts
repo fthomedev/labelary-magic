@@ -12,7 +12,7 @@ export const useZplApiConversion = () => {
     onProgress: (progress: number) => void
   ): Promise<Blob[]> => {
     const pdfs: Blob[] = [];
-    const LABELS_PER_REQUEST = 14;
+    const LABELS_PER_REQUEST = 20; // Aumentado de 14 para 20
     
     for (let i = 0; i < labels.length; i += LABELS_PER_REQUEST) {
       try {
@@ -41,8 +41,9 @@ export const useZplApiConversion = () => {
 
         onProgress(((i + blockLabels.length) / labels.length) * 100);
 
+        // Rate limit da Labelary: 10 requests/segundo = 100ms entre requests
         if (i + LABELS_PER_REQUEST < labels.length) {
-          await delay(3000);
+          await delay(100); // Reduzido de 3000ms para 100ms
         }
       } catch (error) {
         console.error(`${t('blockError')} ${i / LABELS_PER_REQUEST + 1}:`, error);
@@ -80,9 +81,9 @@ export const useZplApiConversion = () => {
     onProgress: (progress: number) => void
   ): Promise<Blob[]> => {
     const pngs: Blob[] = [];
-    const BATCH_SIZE = 5; // Aumentado para melhor throughput
-    const MAX_RETRIES = 3;
-    const TIMEOUT_MS = 10000; // 10 segundos de timeout
+    const BATCH_SIZE = 10; // Aumentado de 5 para 10
+    const MAX_RETRIES = 2; // Reduzido de 3 para 2
+    const TIMEOUT_MS = 5000; // Reduzido de 10000ms para 5000ms
     
     console.log(`Starting PNG conversion for ${labels.length} labels with ${BATCH_SIZE} parallel batches`);
     
@@ -117,7 +118,7 @@ export const useZplApiConversion = () => {
               }
             }
             
-            await delay(100 * retries); // Backoff exponencial
+            await delay(50 * retries); // Backoff reduzido
           }
         }
         return null;
@@ -132,27 +133,25 @@ export const useZplApiConversion = () => {
           }
         });
 
-        // Atualizar progresso de forma mais granular
-        const currentProgress = Math.min(((i + batchLabels.length) / labels.length) * 95, 95); // Máximo 95% aqui
+        const currentProgress = Math.min(((i + batchLabels.length) / labels.length) * 95, 95);
         onProgress(currentProgress);
 
-        // Delay menor entre lotes
+        // Rate limit: 100ms entre lotes (respeitando 10 req/sec)
         if (i + BATCH_SIZE < labels.length) {
-          await delay(50);
+          await delay(100); // Aumentado de 50ms para 100ms para respeitar rate limit
         }
       } catch (error) {
         console.error(`Batch error at index ${i}:`, error);
       }
     }
     
-    // Garantir que chegamos a 100%
     onProgress(100);
     
     console.log(`PNG conversion completed. Successfully converted ${pngs.length}/${labels.length} labels`);
     return pngs;
   };
 
-  const convertSingleLabelToPng = async (zplContent: string, labelNumber: number, timeoutMs: number = 10000): Promise<Blob> => {
+  const convertSingleLabelToPng = async (zplContent: string, labelNumber: number, timeoutMs: number = 5000): Promise<Blob> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
