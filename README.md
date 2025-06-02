@@ -1,69 +1,141 @@
-# Welcome to your Lovable project
 
-## Project info
+# ZPL Easy - Online ZPL Converter
 
-**URL**: https://lovable.dev/projects/0ce38eaf-cc67-4899-a6a7-d27807967375
+A powerful online tool for converting ZPL (Zebra Programming Language) files to PDF format. Built with React, TypeScript, and modern web technologies.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- 🚀 **Instant Conversion**: Cloud-based ZPL to PDF conversion
+- 📁 **Multiple Formats**: Support for .txt, .zpl, and .zip files
+- 🌍 **Internationalization**: Multi-language support (English, Portuguese)
+- 📊 **Processing History**: Track your conversion history
+- 🖨️ **Sheet Organization**: Organize labels on A4/A5 sheets for regular printers
+- 🔒 **Secure**: Data protection and secure file handling
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0ce38eaf-cc67-4899-a6a7-d27807967375) and start prompting.
+- **Frontend**: React 18 + TypeScript + Vite
+- **UI**: shadcn/ui + Tailwind CSS
+- **Authentication**: Supabase Auth
+- **Database**: Supabase
+- **Internationalization**: i18next + react-i18next
+- **PDF Generation**: jsPDF
+- **File Handling**: JSZip
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting Started
 
-**Use your preferred IDE**
+### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Node.js 18+ 
+- npm or yarn or bun
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Installation
 
-Follow these steps:
+1. Clone the repository:
+```bash
+git clone https://github.com/fthomedev/labelary-magic.git
+cd labelary-magic
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+2. Install dependencies:
+```bash
+npm install
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+4. Start the development server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Internationalization (i18n)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+This project supports multiple languages using i18next. Currently supported languages:
+- English (`en`)
+- Portuguese Brazil (`pt-BR`)
 
-**Use GitHub Codespaces**
+### Adding New Translations
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Add your translation keys to both `src/i18n/locales/en.ts` and `src/i18n/locales/pt-BR.ts`
+2. Run the i18n validation script to check for missing keys:
 
-## What technologies are used for this project?
+```bash
+npx tsx scripts/check-i18n.ts
+```
 
-This project is built with .
+### Language Detection
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The application automatically detects user language based on:
+1. Previously saved language preference (localStorage)
+2. Browser language settings
+3. Falls back to English if no match is found
 
-## How can I deploy this project?
+### Translation Keys
 
-Simply open [Lovable](https://lovable.dev/projects/0ce38eaf-cc67-4899-a6a7-d27807967375) and click on Share -> Publish.
+Use the `useTranslation` hook to access translations:
 
-## I want to use a custom domain - is that possible?
+```tsx
+import { useTranslation } from 'react-i18next';
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+function MyComponent() {
+  const { t } = useTranslation();
+  
+  return <h1>{t('heroTitle')}</h1>;
+}
+```
+
+### Validating Translations
+
+Run the i18n check script to ensure all translation keys are properly defined:
+
+```bash
+npx tsx scripts/check-i18n.ts
+```
+
+This script will:
+- Parse all TypeScript files for `t('key')` usage
+- Compare used keys with available translations
+- Report missing or unused keys
+- Exit with code 1 if issues are found (useful for CI)
+
+## Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+├── hooks/              # Custom React hooks
+├── i18n/               # Internationalization
+│   ├── config.ts       # i18next configuration
+│   └── locales/        # Translation files
+├── integrations/       # Third-party integrations
+├── lib/                # Utility libraries
+├── pages/              # Page components
+└── utils/              # Utility functions
+
+scripts/
+└── check-i18n.ts      # Translation validation script
+```
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npx tsx scripts/check-i18n.ts` - Validate translations
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run the i18n validation script
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.

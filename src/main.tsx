@@ -3,7 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
-import { initializeI18n, logMissingTranslations } from '@/i18n/config';
+import { initializeI18n } from '@/i18n/config';
 import App from './App';
 import './index.css';
 
@@ -27,11 +27,6 @@ const startApp = async () => {
   try {
     // Inicializar i18n de forma global e otimizada
     await initializeI18n();
-    
-    // Log de validação de traduções apenas em desenvolvimento
-    if (process.env.NODE_ENV === 'development') {
-      logMissingTranslations();
-    }
     
     const rootElement = document.getElementById('root');
     if (!rootElement) {

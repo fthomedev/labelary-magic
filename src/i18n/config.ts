@@ -7,29 +7,11 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 // Configuração global otimizada para carregamento
 let isInitialized = false;
 
-// Função para detectar o idioma preferido do usuário
-const detectUserLanguage = () => {
-  const savedLanguage = localStorage.getItem('i18nextLng');
-  if (savedLanguage && ['en', 'pt-BR'].includes(savedLanguage)) {
-    return savedLanguage;
-  }
-  
-  // Verificar idioma do navegador
-  const browserLang = navigator.language;
-  if (browserLang && browserLang.startsWith('pt')) {
-    return 'pt-BR';
-  }
-  
-  return 'pt-BR'; // Idioma padrão
-};
-
 // Configuração centralizada e otimizada para performance
 const initI18n = async () => {
   if (isInitialized) {
     return i18n;
   }
-
-  const savedLanguage = detectUserLanguage();
 
   await i18n
     .use(LanguageDetector)
@@ -39,8 +21,7 @@ const initI18n = async () => {
         en: { translation: translations.en },
         'pt-BR': { translation: translations['pt-BR'] },
       },
-      lng: savedLanguage,
-      fallbackLng: 'pt-BR',
+      fallbackLng: 'en',
       interpolation: {
         escapeValue: false,
       },
@@ -62,20 +43,6 @@ const initI18n = async () => {
       // Configurações de performance
       load: 'languageOnly',
       cleanCode: true,
-      
-      // Configurações de carregamento global
-      preload: ['pt-BR', 'en'],
-      
-      // Configurações de cache otimizadas
-      updateMissing: false,
-      saveMissing: false,
-      
-      // Configurações para carregamento assíncrono
-      initImmediate: false,
-      
-      // Configurar keySeparator e nsSeparator para melhor performance
-      keySeparator: false,
-      nsSeparator: false,
     });
 
   // Configurar atributo lang do HTML no carregamento inicial
@@ -122,54 +89,6 @@ export const getTranslation = (key: string, options?: Record<string, any>) => {
 // Verificar se uma chave de tradução existe
 export const hasTranslation = (key: string): boolean => {
   return i18n.exists(key);
-};
-
-// Função para encontrar chaves de tradução ausentes (útil para desenvolvimento)
-export const findMissingKeys = (): string[] => {
-  if (process.env.NODE_ENV !== 'development') return [];
-  
-  const missingKeys: string[] = [];
-  const allKeys = new Set([
-    ...Object.keys(translations.en),
-    ...Object.keys(translations['pt-BR'])
-  ]);
-  
-  for (const key of allKeys) {
-    if (!i18n.exists(key)) {
-      missingKeys.push(key);
-    }
-  }
-  
-  return missingKeys;
-};
-
-// Função para validar a consistência das traduções entre idiomas
-export const validateTranslations = (): { missingInEn: string[], missingInPtBR: string[] } => {
-  const enKeys = new Set(Object.keys(translations.en));
-  const ptBRKeys = new Set(Object.keys(translations['pt-BR']));
-  
-  const missingInEn = [...ptBRKeys].filter(key => !enKeys.has(key));
-  const missingInPtBR = [...enKeys].filter(key => !ptBRKeys.has(key));
-  
-  return { missingInEn, missingInPtBR };
-};
-
-// Função para log de chaves ausentes em desenvolvimento
-export const logMissingTranslations = () => {
-  if (process.env.NODE_ENV === 'development') {
-    const validation = validateTranslations();
-    if (validation.missingInEn.length > 0) {
-      console.warn('Missing keys in English:', validation.missingInEn);
-    }
-    if (validation.missingInPtBR.length > 0) {
-      console.warn('Missing keys in Portuguese:', validation.missingInPtBR);
-    }
-    
-    const missingKeys = findMissingKeys();
-    if (missingKeys.length > 0) {
-      console.warn('Missing translation keys:', missingKeys);
-    }
-  }
 };
 
 // Função para mudança de idioma com callback
