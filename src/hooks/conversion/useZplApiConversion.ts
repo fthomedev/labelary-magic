@@ -12,9 +12,7 @@ export const useZplApiConversion = () => {
     onProgress: (progress: number) => void
   ): Promise<Blob[]> => {
     const pdfs: Blob[] = [];
-    const LABELS_PER_REQUEST = 20; // Aumentado de 14 para 20
-    
-    console.log(`Starting PDF conversion for ${labels.length} labels`);
+    const LABELS_PER_REQUEST = 14;
     
     for (let i = 0; i < labels.length; i += LABELS_PER_REQUEST) {
       try {
@@ -22,7 +20,6 @@ export const useZplApiConversion = () => {
         const blockZPL = blockLabels.join('');
 
         console.log(`Processing PDF block ${i / LABELS_PER_REQUEST + 1}, labels: ${blockLabels.length}`);
-        console.log(`Block ZPL preview: ${blockZPL.substring(0, 200)}...`);
 
         const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
           method: 'POST',
@@ -40,14 +37,12 @@ export const useZplApiConversion = () => {
         }
 
         const blob = await response.blob();
-        console.log(`Block ${i / LABELS_PER_REQUEST + 1} PDF size: ${blob.size} bytes`);
         pdfs.push(blob);
 
         onProgress(((i + blockLabels.length) / labels.length) * 100);
 
-        // Rate limit da Labelary: 10 requests/segundo = 100ms entre requests
         if (i + LABELS_PER_REQUEST < labels.length) {
-          await delay(100); // Reduzido de 3000ms para 100ms
+          await delay(3000);
         }
       } catch (error) {
         console.error(`${t('blockError')} ${i / LABELS_PER_REQUEST + 1}:`, error);
@@ -60,7 +55,6 @@ export const useZplApiConversion = () => {
       }
     }
     
-    console.log(`PDF conversion completed. Generated ${pdfs.length} PDF blocks from ${labels.length} labels`);
     return pdfs;
   };
 
@@ -86,9 +80,9 @@ export const useZplApiConversion = () => {
     onProgress: (progress: number) => void
   ): Promise<Blob[]> => {
     const pngs: Blob[] = [];
-    const BATCH_SIZE = 10; // Aumentado de 5 para 10
-    const MAX_RETRIES = 2; // Reduzido de 3 para 2
-    const TIMEOUT_MS = 5000; // Reduzido de 10000ms para 5000ms
+    const BATCH_SIZE = 5; // Aumentado para melhor throughput
+    const MAX_RETRIES = 3;
+    const TIMEOUT_MS = 10000; // 10 segundos de timeout
     
     console.log(`Starting PNG conversion for ${labels.length} labels with ${BATCH_SIZE} parallel batches`);
     
@@ -123,7 +117,7 @@ export const useZplApiConversion = () => {
               }
             }
             
-            await delay(50 * retries); // Backoff reduzido
+            await delay(100 * retries); // Backoff exponencial
           }
         }
         return null;
@@ -138,25 +132,27 @@ export const useZplApiConversion = () => {
           }
         });
 
-        const currentProgress = Math.min(((i + batchLabels.length) / labels.length) * 95, 95);
+        // Atualizar progresso de forma mais granular
+        const currentProgress = Math.min(((i + batchLabels.length) / labels.length) * 95, 95); // Máximo 95% aqui
         onProgress(currentProgress);
 
-        // Rate limit: 100ms entre lotes (respeitando 10 req/sec)
+        // Delay menor entre lotes
         if (i + BATCH_SIZE < labels.length) {
-          await delay(100); // Aumentado de 50ms para 100ms para respeitar rate limit
+          await delay(50);
         }
       } catch (error) {
         console.error(`Batch error at index ${i}:`, error);
       }
     }
     
+    // Garantir que chegamos a 100%
     onProgress(100);
     
     console.log(`PNG conversion completed. Successfully converted ${pngs.length}/${labels.length} labels`);
     return pngs;
   };
 
-  const convertSingleLabelToPng = async (zplContent: string, labelNumber: number, timeoutMs: number = 5000): Promise<Blob> => {
+  const convertSingleLabelToPng = async (zplContent: string, labelNumber: number, timeoutMs: number = 10000): Promise<Blob> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -195,36 +191,15 @@ export const useZplApiConversion = () => {
   };
 
   const parseLabelsFromZpl = (zplContent: string) => {
-    console.log('=== PARSING LABELS FROM ZPL ===');
-    console.log('Input ZPL length:', zplContent.length);
-    
     const labels = splitZPLIntoBlocks(zplContent);
     console.log(`Parsed ${labels.length} labels from ZPL content`);
-    
-    // Validação adicional - verificar se cada label é válida
-    const validLabels = labels.filter(label => {
-      const isValid = label.includes('^XA') && label.includes('^XZ') && label.length > 10;
-      if (!isValid) {
-        console.warn('Invalid label found:', label.substring(0, 100));
-      }
-      return isValid;
-    });
-    
-    console.log(`Valid labels after filtering: ${validLabels.length}`);
-    return validLabels;
+    return labels;
   };
 
   const countLabelsInZpl = (zplContent: string): number => {
-    // Método mais preciso de contagem
-    const xaMatches = (zplContent.match(/\^XA/g) || []).length;
-    const parsedLabels = parseLabelsFromZpl(zplContent);
-    
-    console.log('Label count comparison:');
-    console.log('- ^XA markers found:', xaMatches);
-    console.log('- Successfully parsed labels:', parsedLabels.length);
-    
-    // Retornar o número de labels realmente parseadas
-    return parsedLabels.length;
+    const countXAMarkers = (zplContent.match(/\^XA/g) || []).length;
+    const count = Math.ceil(countXAMarkers / 2);
+    return count;
   };
 
   return {

@@ -9,19 +9,14 @@ export const splitZPLIntoBlocks = (zpl: string): string[] => {
   // Limpar ZPL
   const cleanZpl = zpl.trim();
   
-  // Contar ^XA para verificar quantas etiquetas esperamos
-  const expectedLabels = (cleanZpl.match(/\^XA/g) || []).length;
-  console.log('Expected labels based on ^XA count:', expectedLabels);
-  
-  // Método mais robusto: dividir por ^XA e reconstruir cada etiqueta
-  const blocks = cleanZpl.split(/\^XA/);
-  console.log('Blocks after split by ^XA:', blocks.length);
+  // Dividir por ^XZ e filtrar blocos válidos
+  const rawBlocks = cleanZpl.split('^XZ');
+  console.log('Raw blocks after split by ^XZ:', rawBlocks.length);
   
   const labels: string[] = [];
   
-  // O primeiro bloco geralmente está vazio, então começamos do índice 1
-  for (let i = 1; i < blocks.length; i++) {
-    let block = blocks[i].trim();
+  for (let i = 0; i < rawBlocks.length; i++) {
+    const block = rawBlocks[i].trim();
     
     // Pular blocos vazios
     if (!block) {
@@ -29,58 +24,20 @@ export const splitZPLIntoBlocks = (zpl: string): string[] => {
       continue;
     }
     
-    // Garantir que a etiqueta comece com ^XA e termine com ^XZ
-    let completeLabel = '^XA' + block;
-    
-    // Se não termina com ^XZ, adicionar
-    if (!completeLabel.endsWith('^XZ')) {
-      // Verificar se há ^XZ em algum lugar e cortar após ele
-      const xzIndex = completeLabel.indexOf('^XZ');
-      if (xzIndex !== -1) {
-        completeLabel = completeLabel.substring(0, xzIndex + 3);
-      } else {
-        completeLabel = completeLabel + '^XZ';
-      }
+    // Verificar se contém ^XA
+    if (block.includes('^XA')) {
+      // Garantir que termina com ^XZ
+      const completeLabel = block.endsWith('^XZ') ? block : `${block}^XZ`;
+      labels.push(completeLabel);
+      console.log(`Label ${labels.length}: length=${completeLabel.length}`);
+      console.log(`Label ${labels.length} preview: ${completeLabel.substring(0, 100)}...`);
+    } else {
+      console.log(`Block ${i} doesn't contain ^XA, skipping:`, block.substring(0, 100));
     }
-    
-    // Limpar possíveis ^XZ duplicados
-    completeLabel = completeLabel.replace(/\^XZ\^XZ/g, '^XZ');
-    
-    labels.push(completeLabel);
-    console.log(`Label ${labels.length}: length=${completeLabel.length}`);
-    console.log(`Label ${labels.length} preview: ${completeLabel.substring(0, 150)}...`);
   }
   
   console.log('=== ZPL SPLITTING COMPLETED ===');
   console.log('Final processed labels count:', labels.length);
-  console.log('Expected vs Actual:', expectedLabels, 'vs', labels.length);
-  
-  // Se não conseguimos extrair etiquetas suficientes, tentar método alternativo
-  if (labels.length < expectedLabels * 0.8) {
-    console.log('WARNING: Label count mismatch, trying alternative method...');
-    return splitZPLAlternativeMethod(cleanZpl);
-  }
-  
-  return labels;
-};
-
-// Método alternativo de divisão mais agressivo
-const splitZPLAlternativeMethod = (zpl: string): string[] => {
-  console.log('=== USING ALTERNATIVE SPLITTING METHOD ===');
-  
-  const labels: string[] = [];
-  const regex = /\^XA.*?\^XZ/gs;
-  let match;
-  
-  while ((match = regex.exec(zpl)) !== null) {
-    const label = match[0].trim();
-    if (label && label.length > 10) {
-      labels.push(label);
-      console.log(`Alternative method - Label ${labels.length}: ${label.substring(0, 100)}...`);
-    }
-  }
-  
-  console.log('Alternative method extracted labels:', labels.length);
   return labels;
 };
 
