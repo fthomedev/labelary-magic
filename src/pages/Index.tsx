@@ -64,7 +64,7 @@ const Index = () => {
   };
 
   const handleConvert = async () => {
-    await convertToPDF(zplContent, sheetConfig);
+    await convertToPDF(zplContent);
   };
 
   const handleDownload = () => {
