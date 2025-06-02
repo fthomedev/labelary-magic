@@ -6,33 +6,23 @@ import { Check, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const LanguageSelector = () => {
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     
-    // Verificar se há idioma salvo no localStorage
     const savedLanguage = localStorage.getItem('i18nextLng');
-    console.log('Saved language:', savedLanguage);
-    console.log('Current language:', i18n.language);
-    
     if (savedLanguage && savedLanguage !== i18n.language) {
       i18n.changeLanguage(savedLanguage);
     }
   }, [i18n]);
 
-  const handleLanguageChange = async (value: string) => {
-    console.log('Changing language to:', value);
+  const handleLanguageChange = (value: string) => {
     if (i18n.language === value) return;
     
-    try {
-      await i18n.changeLanguage(value);
-      localStorage.setItem('i18nextLng', value);
-      console.log('Language changed successfully to:', value);
-    } catch (error) {
-      console.error('Error changing language:', error);
-    }
+    i18n.changeLanguage(value);
+    localStorage.setItem('i18nextLng', value);
   };
 
   if (!mounted) return null;
@@ -43,7 +33,7 @@ export const LanguageSelector = () => {
         <Button 
           variant="outline" 
           size="icon"
-          aria-label={t('language')}
+          aria-label={i18n.language === 'pt-BR' ? 'Selecionar idioma' : 'Select language'}
         >
           <Globe className="h-4 w-4" aria-hidden="true" />
         </Button>
@@ -55,7 +45,7 @@ export const LanguageSelector = () => {
           role="menuitem"
         >
           <div className="flex items-center justify-between w-full">
-            <span>{t('languages.pt-BR')}</span>
+            <span>Português</span>
             {i18n.language === 'pt-BR' && <Check className="h-4 w-4 ml-2" aria-hidden="true" />}
           </div>
         </DropdownMenuItem>
@@ -65,7 +55,7 @@ export const LanguageSelector = () => {
           role="menuitem"
         >
           <div className="flex items-center justify-between w-full">
-            <span>{t('languages.en')}</span>
+            <span>English</span>
             {i18n.language === 'en' && <Check className="h-4 w-4 ml-2" aria-hidden="true" />}
           </div>
         </DropdownMenuItem>

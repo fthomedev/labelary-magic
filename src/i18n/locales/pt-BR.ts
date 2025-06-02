@@ -14,26 +14,7 @@ const translations = {
   save: 'Salvar',
   delete: 'Deletar',
   back: 'Voltar',
-  close: 'Fechar',
-  view: 'Visualizar',
   allRightsReserved: 'Todos os direitos reservados',
-  comingSoon: 'Em Breve',
-  
-  // Auth
-  email: 'Email',
-  password: 'Senha',
-  name: 'Nome',
-  rememberMe: 'Lembrar de mim',
-  signUp: 'Cadastrar',
-  alreadyHaveAccount: 'Já tem uma conta?',
-  needAccount: 'Precisa de uma conta?',
-  forgotPassword: 'Esqueceu a senha?',
-  passwordTooShort: 'A senha deve ter pelo menos 6 caracteres',
-  resetPasswordEmailSent: 'Email de redefinição de senha enviado',
-  checkYourEmail: 'Verifique seu email para instruções de redefinição',
-  signUpSuccess: 'Conta criada com sucesso',
-  sendResetLink: 'Enviar link de redefinição',
-  backToLogin: 'Voltar ao login',
   
   // ZPL específicas
   title: 'ZPL Easy – Conversor ZPL Online',
@@ -59,27 +40,20 @@ const translations = {
   selectFile: 'Selecionar Arquivo',
   dropHere: 'Solte os arquivos aqui',
   processingZip: 'Processando arquivo ZIP',
-  processingLabels: 'Processando etiquetas...',
   
   // Histórico
   historyTitle: 'Histórico de Processamento',
-  processingHistory: 'Histórico de Processamento',
-  loadingHistory: 'Carregando histórico...',
-  noHistory: 'Nenhum histórico de processamento encontrado',
   historyEmpty: 'Nenhum histórico de processamento encontrado',
   historyLabelCount: 'Quantidade de Etiquetas',
   labelCount: 'Quantidade de Etiquetas',
   historyDate: 'Data',
   date: 'Data',
-  totalRecords: 'Total de Registros',
   clearHistory: 'Limpar Histórico',
   clearHistoryConfirm: 'Tem certeza que deseja limpar o histórico?',
   clearHistorySuccess: 'Histórico limpo com sucesso!',
   clearHistoryError: 'Erro ao limpar histórico.',
   deleteRecordConfirm: 'Excluir Registro',
   deleteRecordWarning: 'Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.',
-  downloadUnavailableAfterRefresh: 'Download indisponível após atualização da página',
-  viewPdf: 'Visualizar PDF',
   
   downloadStarted: 'Download Iniciado',
   downloadStartedDesc: 'O download do seu arquivo foi iniciado',
@@ -93,8 +67,10 @@ const translations = {
   totalLabels: 'Total de Etiquetas',
   downloadAgain: 'Baixar Novamente',
   language: 'Idioma',
-  'languages.pt-BR': 'Português',
-  'languages.en': 'Inglês',
+  languages: {
+    'pt-BR': 'Português',
+    en: 'Inglês'
+  },
   
   // Conta
   deleteAccount: 'Deletar Conta',
@@ -102,7 +78,6 @@ const translations = {
   deleteAccountSuccess: 'Conta deletada com sucesso!',
   deleteAccountError: 'Erro ao deletar sua conta.',
   myAccount: 'Minha Conta',
-  userMenu: 'Menu do Usuário',
   unnamed: 'Sem nome',
   
   // Configurações de folha
@@ -122,7 +97,7 @@ const translations = {
   process: 'Processar',
   labelsProcessed: '{{count}} etiquetas processadas',
   
-  // Assinatura e Planos
+  // Assinatura
   subscriptionPage: 'Página de Assinatura',
   availablePlans: 'Planos Disponíveis',
   yourSubscription: 'Sua Assinatura',
@@ -130,41 +105,6 @@ const translations = {
   subscriptionSuccessMessage: 'Sua assinatura foi ativada com sucesso!',
   subscriptionThankYou: 'Obrigado por assinar nosso serviço!',
   viewSubscription: 'Ver Assinatura',
-  currentPlan: 'Plano Atual',
-  planExpired: 'Plano Expirado',
-  upgradePlan: 'Fazer Upgrade',
-  processingLimits: 'Limites de Processamento',
-  labelsPerDay: 'Etiquetas por dia',
-  noLimit: 'Sem limite',
-  month: 'mês',
-  popularTag: 'Popular',
-  
-  // Planos específicos
-  freePlan: 'Plano Gratuito',
-  freePlanDescription: 'Perfeito para começar',
-  freeFeature1: '50 etiquetas por dia',
-  freeFeature2: 'Conversão ZPL básica',
-  freeFeature3: 'Suporte padrão',
-  
-  basicPlan: 'Plano Básico',
-  basicPlanDescription: 'Ótimo para pequenas empresas',
-  basicFeature1: '500 etiquetas por dia',
-  basicFeature2: 'Processamento prioritário',
-  basicFeature3: 'Suporte por email',
-  
-  advancedPlan: 'Plano Avançado',
-  advancedPlanDescription: 'Perfeito para empresas em crescimento',
-  advancedFeature1: '2.000 etiquetas por dia',
-  advancedFeature2: 'Processamento em lote',
-  advancedFeature3: 'Suporte prioritário',
-  advancedFeature4: 'Recursos avançados',
-  
-  unlimitedPlan: 'Plano Ilimitado',
-  unlimitedPlanDescription: 'Para necessidades empresariais',
-  unlimitedLabels: 'Etiquetas ilimitadas',
-  unlimitedFeature1: 'Processamento ilimitado',
-  unlimitedFeature2: 'Suporte 24/7 prioritário',
-  unlimitedFeature3: 'Integrações personalizadas',
   
   // Landing Page
   heroTitle: 'Converta ZPL para PDF de Forma Rápida e Segura com ZPL Easy',
@@ -216,12 +156,7 @@ const translations = {
   faqPrinterCompatibility: 'Minha impressora térmica Zebra é compatível com a conversão ZPL?',
   faqPrinterCompatibilityAnswer: 'Sim! Toda impressora que suporte o padrão ZPL II (como os modelos GK420t, ZD220, ZT230, entre outros) é compatível com as etiquetas geradas por nossa ferramenta. Basta colar ou enviar o conteúdo ZPL e imprimir.\n\nVocê também pode ajustar o tamanho, margens e resolução antes de imprimir, garantindo que a etiqueta fique perfeita.',
   faqHowConversionWorks: 'Como funciona a conversão de etiquetas para ZPL?',
-  faqHowConversionWorksAnswer: 'Com nossa ferramenta, você faz o upload de arquivos PDF, imagens ou até códigos ZPL brutos e recebe a versão otimizada para impressão. Você pode:\n\nVisualizar a etiqueta antes de imprimir\n\nAjustar configurações de tamanho e resolução\n\nSalvar etiquetas para reimpressão futura\n\nExportar lotes inteiros em ZPL\n\nIdeal para sellers de marketplaces e operadores logísticos que precisam imprimir em massa.',
-  
-  // Meta e outros
-  meta: 'Meta',
-  link: 'Link',
-  'pt-BR': 'Português'
+  faqHowConversionWorksAnswer: 'Com nossa ferramenta, você faz o upload de arquivos PDF, imagens ou até códigos ZPL brutos e recebe a versão otimizada para impressão. Você pode:\n\nVisualizar a etiqueta antes de imprimir\n\nAjustar configurações de tamanho e resolução\n\nSalvar etiquetas para reimpressão futura\n\nExportar lotes inteiros em ZPL\n\nIdeal para sellers de marketplaces e operadores logísticos que precisam imprimir em massa.'
 } as const;
 
 export default translations;
