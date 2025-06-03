@@ -1,3 +1,4 @@
+
 const translations = {
   // Geral
   home: 'Home',
@@ -185,7 +186,6 @@ const translations = {
   feedbackThankYou: 'Thank you for your feedback. We will get back to you soon.',
   errorSendingFeedback: 'Error sending feedback',
   tryAgainLater: 'Try again later or contact us directly.',
-  sending: 'Sending...',
   sendFeedbackButton: 'Send Feedback',
 };
 

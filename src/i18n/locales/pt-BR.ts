@@ -1,3 +1,4 @@
+
 const translations = {
   // Geral
   home: 'Início',
@@ -185,7 +186,6 @@ const translations = {
   feedbackThankYou: 'Obrigado pelo seu feedback. Entraremos em contato em breve.',
   errorSendingFeedback: 'Erro ao enviar feedback',
   tryAgainLater: 'Tente novamente mais tarde ou entre em contato diretamente.',
-  sending: 'Enviando...',
   sendFeedbackButton: 'Enviar Feedback',
 };
 
