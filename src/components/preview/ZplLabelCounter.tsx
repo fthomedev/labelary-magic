@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { splitZPLIntoBlocks } from '@/utils/pdfUtils';
 
 export function countLabels(zplContent: string): number {
-  // Use the same logic as the conversion system to ensure consistency
-  const labels = splitZPLIntoBlocks(zplContent);
-  console.log(`🏷️ ZplLabelCounter: Counted ${labels.length} labels (using splitZPLIntoBlocks)`);
-  return labels.length;
+  // Count by looking only for "^XA" markers in the ZPL content
+  const regex = /\^XA/g;
+  const matches = zplContent.match(regex);
+  const xaCount = matches ? matches.length : 0;
+  // Divide by 2 and round up
+  return Math.ceil(xaCount / 2);
 }
