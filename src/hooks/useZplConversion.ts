@@ -7,6 +7,9 @@ import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
 import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
+import { SheetConfig } from '@/components/sheet/SheetSettings';
+import { generateSheetFromPngs, convertPngToPdf } from '@/utils/sheetPngGenerator';
+import { getMaxLabelsPerSheet } from '@/utils/sheetLayout';
 
 export interface ProcessingRecord {
   id: string;
@@ -27,9 +30,9 @@ export const useZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  const { uploadPDFToStorage } = useUploadPdf();
+  const { uploadPDFToStorage, getPdfPublicUrl } = useUploadPdf();
   const { addToProcessingHistory } = useHistoryRecords();
-  const { convertZplBlocksToPdfs, parseLabelsFromZpl, countLabelsInZpl } = useZplApiConversion();
+  const { convertZplBlocksToPdfs, convertZplBlocksToPngs, parseLabelsFromZpl, countLabelsInZpl } = useZplApiConversion();
   const { ensurePdfBucketExists } = useStorageOperations();
 
   const resetProcessingStatus = () => {
@@ -37,108 +40,186 @@ export const useZplConversion = () => {
     setProgress(0);
   };
 
-  const convertToPDF = async (zplContent: string) => {
+  const convertToPDF = async (zplContent: string, sheetConfig?: SheetConfig) => {
     if (!zplContent) return;
     
     try {
-      console.log('=== STARTING ZPL TO PDF CONVERSION ===');
       setIsConverting(true);
       setProgress(0);
       setPdfUrls([]);
       setIsProcessingComplete(false);
 
-      // Parse labels e count
+      console.log('Starting conversion with sheet config:', sheetConfig);
+
       const labels = parseLabelsFromZpl(zplContent);
       const actualLabelCount = countLabelsInZpl(zplContent);
       
-      console.log('Labels parsed:', labels.length);
-      console.log('Actual label count:', actualLabelCount);
-      
-      if (labels.length === 0) {
-        throw new Error('Nenhuma etiqueta válida encontrada no conteúdo ZPL');
-      }
+      console.log('Labels parsed:', labels.length, 'Actual count:', actualLabelCount);
 
-      // Converter labels para PDFs
-      console.log('Starting PDF conversion for', labels.length, 'labels');
-      const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
-        setProgress(progressValue);
-      });
-
-      console.log('PDF conversion completed, generated PDFs:', pdfs.length);
-
-      if (pdfs.length === 0) {
-        throw new Error("Nenhum PDF foi gerado com sucesso.");
-      }
-
-      // Atualizar progresso para merge
-      setProgress(90);
-      console.log('Starting PDF merge process...');
-
-      // Merge dos PDFs
-      const mergedPdf = await mergePDFs(pdfs);
-      console.log('PDF merge completed, final size:', mergedPdf.size, 'bytes');
-      
-      setProgress(95);
-
-      // Upload para storage
-      console.log('Uploading merged PDF to storage...');
-      await ensurePdfBucketExists();
-      
-      try {
-        const pdfPath = await uploadPDFToStorage(mergedPdf);
-        console.log('Successfully uploaded PDF to storage:', pdfPath);
-        setLastPdfPath(pdfPath);
+      if (sheetConfig?.enabled) {
+        const maxLabelsPerSheet = getMaxLabelsPerSheet(sheetConfig);
+        console.log('Max labels per sheet:', maxLabelsPerSheet);
         
-        // Criar blob URL para download imediato
-        const blobUrl = window.URL.createObjectURL(mergedPdf);
-        setLastPdfUrl(blobUrl);
+        const sheets: Blob[] = [];
         
-        // Salvar no histórico
-        if (pdfPath) {
-          await addToProcessingHistory(actualLabelCount, pdfPath);
-          setHistoryRefreshTrigger(prev => prev + 1);
-          console.log('Processing history updated');
+        toast({
+          title: t('sheetModeEnabled'),
+          description: t('processingLabelsForSheet'),
+          duration: 3000,
+        });
+
+        for (let i = 0; i < labels.length; i += maxLabelsPerSheet) {
+          const sheetLabels = labels.slice(i, i + maxLabelsPerSheet);
+          const sheetNumber = Math.floor(i / maxLabelsPerSheet) + 1;
+          console.log(`Processing sheet ${sheetNumber}, labels: ${sheetLabels.length}`);
+          
+          try {
+            // Converter etiquetas para PNG com progresso mais granular
+            const baseProgress = (i / labels.length) * 85; // 85% para conversão PNG
+            const pngs = await convertZplBlocksToPngs(sheetLabels, (progressValue) => {
+              const currentProgress = baseProgress + (progressValue / 100) * (85 / Math.ceil(labels.length / maxLabelsPerSheet));
+              setProgress(Math.min(currentProgress, 85));
+            });
+
+            console.log(`Converted ${pngs.length} labels to PNG for sheet ${sheetNumber}`);
+
+            if (pngs.length > 0) {
+              setProgress(85 + ((sheetNumber - 1) / Math.ceil(labels.length / maxLabelsPerSheet)) * 10); // 85-95% para geração da folha
+              
+              const sheetPng = await generateSheetFromPngs(pngs, sheetConfig);
+              console.log('Generated sheet PNG, size:', sheetPng.size, 'bytes');
+              
+              const sheetPdf = await convertPngToPdf(sheetPng);
+              console.log('Converted sheet to PDF, size:', sheetPdf.size, 'bytes');
+              sheets.push(sheetPdf);
+            }
+          } catch (sheetError) {
+            console.error(`Error processing sheet ${sheetNumber}:`, sheetError);
+            toast({
+              variant: "destructive",
+              title: t('error'),
+              description: `Erro na folha ${sheetNumber}: ${sheetError.message}`,
+              duration: 5000,
+            });
+          }
         }
-        
-        // Download automático
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = 'etiquetas.pdf';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
 
-        setProgress(100);
-        setIsProcessingComplete(true);
+        if (sheets.length > 0) {
+          setProgress(95); // 95% para merge dos PDFs
+          
+          try {
+            const mergedPdf = sheets.length > 1 ? await mergePDFs(sheets) : sheets[0];
+            console.log('Final merged PDF size:', mergedPdf.size, 'bytes');
+            
+            setProgress(98); // 98% para upload
+            
+            await ensurePdfBucketExists();
+            
+            const pdfPath = await uploadPDFToStorage(mergedPdf);
+            console.log('Successfully uploaded PDF to storage:', pdfPath);
+            setLastPdfPath(pdfPath);
+            
+            const blobUrl = window.URL.createObjectURL(mergedPdf);
+            setLastPdfUrl(blobUrl);
+            
+            if (pdfPath) {
+              await addToProcessingHistory(actualLabelCount, pdfPath);
+              setHistoryRefreshTrigger(prev => prev + 1);
+            }
+            
+            // Download automatico
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = `etiquetas-folha-${sheetConfig.sheetSize}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
 
-        toast({
-          title: t('success'),
-          description: t('successMessage'),
-          duration: 3000,
+            setProgress(100); // 100% completo
+
+            toast({
+              title: t('success'),
+              description: t('sheetSuccessMessage'),
+              duration: 3000,
+            });
+            
+            setIsProcessingComplete(true);
+          } catch (finalError) {
+            console.error('Error in final processing:', finalError);
+            throw finalError;
+          }
+        } else {
+          throw new Error("No sheets were generated successfully.");
+        }
+      } else {
+        // Modo normal: converter para PDF diretamente
+        const newPdfUrls: string[] = [];
+
+        const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
+          setProgress(progressValue);
         });
-        
-      } catch (uploadError) {
-        console.error('Error uploading to storage:', uploadError);
-        
-        // Mesmo com erro de upload, criar blob URL para download
-        const blobUrl = window.URL.createObjectURL(mergedPdf);
-        setLastPdfUrl(blobUrl);
-        
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = 'etiquetas.pdf';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
 
-        setProgress(100);
-        setIsProcessingComplete(true);
-
-        toast({
-          title: t('success'),
-          description: 'PDF gerado com sucesso (erro no upload para histórico)',
-          duration: 3000,
+        pdfs.forEach(blob => {
+          const blockUrl = window.URL.createObjectURL(blob);
+          newPdfUrls.push(blockUrl);
         });
+        setPdfUrls(newPdfUrls);
+
+        if (pdfs.length > 0) {
+          try {
+            const mergedPdf = await mergePDFs(pdfs);
+            
+            await ensurePdfBucketExists();
+            
+            let pdfPath;
+            try {
+              pdfPath = await uploadPDFToStorage(mergedPdf);
+              console.log('Successfully uploaded PDF to storage:', pdfPath);
+              setLastPdfPath(pdfPath);
+              
+              const blobUrl = window.URL.createObjectURL(mergedPdf);
+              setLastPdfUrl(blobUrl);
+              
+              if (pdfPath) {
+                await addToProcessingHistory(actualLabelCount, pdfPath);
+                setHistoryRefreshTrigger(prev => prev + 1);
+              }
+              
+              const a = document.createElement('a');
+              a.href = blobUrl;
+              a.download = 'etiquetas.pdf';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+
+              toast({
+                title: t('success'),
+                description: t('successMessage'),
+                duration: 3000,
+              });
+              
+              setIsProcessingComplete(true);
+            } catch (uploadError) {
+              console.error('Error uploading to storage:', uploadError);
+              toast({
+                variant: "destructive",
+                title: t('error'),
+                description: t('errorMessage'),
+                duration: 5000,
+              });
+            }
+          } catch (error) {
+            console.error('Error merging PDFs:', error);
+            toast({
+              variant: "destructive",
+              title: t('error'),
+              description: t('mergePdfError'),
+              duration: 5000,
+            });
+          }
+        } else {
+          throw new Error("No PDFs were generated successfully.");
+        }
       }
     } catch (error) {
       console.error('Conversion error:', error);
@@ -150,6 +231,7 @@ export const useZplConversion = () => {
       });
     } finally {
       setIsConverting(false);
+      setProgress(100);
     }
   };
 
