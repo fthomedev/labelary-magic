@@ -115,11 +115,9 @@ export const useZplConversion = () => {
             const blobUrl = window.URL.createObjectURL(mergedPdf);
             setLastPdfUrl(blobUrl);
             
-            const actualLabelCount = countLabelsInZpl(zplContent);
-            
-            // Only add to history if we have a valid path
+            // Use the consistent label count from the parsed labels
             if (pdfPath) {
-              await addToProcessingHistory(actualLabelCount, pdfPath);
+              await addToProcessingHistory(labelCount, pdfPath);
               setHistoryRefreshTrigger(prev => prev + 1);
             }
             
@@ -140,14 +138,14 @@ export const useZplConversion = () => {
               conversionTimeMs: conversionPhaseTime,
               mergeTimeMs: mergeTime,
               uploadTimeMs: uploadTime,
-              labelsProcessed: actualLabelCount,
-              averageTimePerLabel: actualLabelCount > 0 ? totalTime / actualLabelCount : 0,
-              labelsPerSecond: actualLabelCount > 0 ? (actualLabelCount / (totalTime / 1000)).toFixed(2) : 0,
+              labelsProcessed: labelCount,
+              averageTimePerLabel: labelCount > 0 ? totalTime / labelCount : 0,
+              labelsPerSecond: labelCount > 0 ? (labelCount / (totalTime / 1000)).toFixed(2) : 0,
             });
 
             toast({
               title: t('success'),
-              description: `${t('successMessage')} (${totalTime}ms, ${actualLabelCount} etiquetas)`,
+              description: `${t('successMessage')} (${totalTime}ms, ${labelCount} etiquetas)`,
               duration: 5000,
             });
             
