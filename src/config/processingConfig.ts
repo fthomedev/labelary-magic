@@ -1,4 +1,3 @@
-
 export interface ProcessingConfig {
   delayBetweenBatches: number;
   labelsPerBatch: number;
@@ -14,10 +13,10 @@ export interface ProcessingMetrics {
   errorCount: number;
 }
 
-// Conservative starting configuration - 50% faster than original
+// Cenário 2: Moderado (Delay: 1000ms + Batch: 20)
 export const DEFAULT_CONFIG: ProcessingConfig = {
-  delayBetweenBatches: 1500, // Reduced from 3000ms
-  labelsPerBatch: 14,
+  delayBetweenBatches: 1000, // Cenário 2: 1000ms
+  labelsPerBatch: 20, // Cenário 2: 20 labels per batch
   maxRetries: 3,
   fallbackDelay: 3000, // Original delay for fallback
 };
