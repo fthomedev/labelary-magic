@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import emailjs from '@emailjs/browser';
 
 interface FeedbackData {
   type: string;
@@ -68,28 +67,34 @@ export const FeedbackModal = () => {
         userEmail,
       };
 
-      // Send email using EmailJS
-      await emailjs.send(
-        'service_zpl_feedback', // Service ID (will need to be configured)
-        'template_feedback', // Template ID (will need to be configured)
-        {
-          feedback_type: feedbackData.type,
-          message: feedbackData.message,
-          user_email: feedbackData.userEmail,
-          to_email: 'fernandothome@gmail.com',
-        },
-        'YOUR_PUBLIC_KEY' // Public key (will need to be configured)
-      );
+      // Create form data for FormSubmit
+      const formData = new FormData();
+      formData.append('_subject', `Feedback ZPL Easy - ${feedbackData.type}`);
+      formData.append('_next', window.location.href); // Redirect back to current page
+      formData.append('_captcha', 'false'); // Disable captcha
+      formData.append('tipo', feedbackData.type);
+      formData.append('mensagem', feedbackData.message);
+      formData.append('email_usuario', feedbackData.userEmail);
 
-      toast({
-        title: 'Feedback enviado!',
-        description: 'Obrigado pelo seu feedback. Entraremos em contato em breve.',
+      // Send to FormSubmit.co
+      const response = await fetch('https://formsubmit.co/fernandothome@gmail.com', {
+        method: 'POST',
+        body: formData
       });
 
-      // Reset form and close modal
-      setFeedbackType('');
-      setMessage('');
-      setIsOpen(false);
+      if (response.ok) {
+        toast({
+          title: 'Feedback enviado!',
+          description: 'Obrigado pelo seu feedback. Entraremos em contato em breve.',
+        });
+
+        // Reset form and close modal
+        setFeedbackType('');
+        setMessage('');
+        setIsOpen(false);
+      } else {
+        throw new Error('Erro no envio');
+      }
     } catch (error) {
       console.error('Error sending feedback:', error);
       toast({
