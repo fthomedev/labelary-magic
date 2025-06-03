@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -11,6 +10,7 @@ import { ProcessingHistory } from '@/components/ProcessingHistory';
 import { useZplConversion } from '@/hooks/useZplConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
+import { FeedbackModal } from '@/components/FeedbackModal';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -91,6 +91,7 @@ const Index = () => {
               {t('title')}
             </h1>
             <div className="flex items-center gap-1 sm:gap-2">
+              <FeedbackModal />
               <LanguageSelector />
               <UserMenu />
             </div>
