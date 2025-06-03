@@ -18,9 +18,11 @@ export const useZplApiConversion = () => {
     const totalStartTime = Date.now();
     
     console.log(`🏁 Starting conversion of ${labels.length} labels with config:`, config);
+    console.log(`🔢 Input labels array length: ${labels.length}`);
     
     let currentConfig = { ...config };
     let consecutiveErrors = 0;
+    let successfulBatches = 0;
     
     for (let i = 0; i < labels.length; i += currentConfig.labelsPerBatch) {
       const blockLabels = labels.slice(i, i + currentConfig.labelsPerBatch);
@@ -59,6 +61,7 @@ export const useZplApiConversion = () => {
           
           pdfs.push(blob);
           batchSuccess = true;
+          successfulBatches++;
           consecutiveErrors = 0;
 
           const progressValue = ((i + blockLabels.length) / labels.length) * 100;
@@ -113,9 +116,12 @@ export const useZplApiConversion = () => {
     const stats = metricsTracker.getProcessingStats();
     
     console.log(`🏆 Conversion completed in ${totalTime}ms`);
-    console.log(`📊 Final stats:`, {
+    console.log(`📊 Final conversion stats:`, {
       ...stats,
       totalTimeMs: totalTime,
+      inputLabels: labels.length,
+      successfulBatches: successfulBatches,
+      outputPdfs: pdfs.length,
       averageTimePerLabel: labels.length > 0 ? totalTime / labels.length : 0,
       labelsPerSecond: labels.length > 0 ? (labels.length / (totalTime / 1000)).toFixed(2) : 0,
     });
@@ -126,12 +132,14 @@ export const useZplApiConversion = () => {
   };
 
   const parseLabelsFromZpl = (zplContent: string) => {
-    return splitZPLIntoBlocks(zplContent);
+    const labels = splitZPLIntoBlocks(zplContent);
+    console.log(`🔍 parseLabelsFromZpl: Found ${labels.length} labels in ZPL content`);
+    return labels;
   };
 
   const countLabelsInZpl = (zplContent: string): number => {
     const labels = splitZPLIntoBlocks(zplContent);
-    console.log(`🔢 Counted ${labels.length} labels in ZPL content`);
+    console.log(`🔢 countLabelsInZpl: Counted ${labels.length} labels in ZPL content`);
     return labels.length;
   };
 

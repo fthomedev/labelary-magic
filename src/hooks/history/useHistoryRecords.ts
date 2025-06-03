@@ -6,7 +6,8 @@ export const useHistoryRecords = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        console.log('Saving processing history for user:', user.id);
+        console.log(`📝 Saving processing history for user: ${user.id}`);
+        console.log(`🏷️ Label count being saved: ${labelCount}`);
         
         // Get the public URL for the PDF from Supabase storage
         const { data: publicUrlData } = await supabase.storage
@@ -31,7 +32,7 @@ export const useHistoryRecords = () => {
         if (error) {
           console.error('Error saving processing history:', error);
         } else {
-          console.log('Processing history saved successfully');
+          console.log(`✅ Processing history saved successfully with ${labelCount} labels`);
         }
       } else {
         console.log('No authenticated user found');

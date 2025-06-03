@@ -55,11 +55,11 @@ export const useZplConversion = () => {
       startConversion();
       setPdfUrls([]);
 
-      // Parse labels once and use this count throughout the entire process
+      // Parse labels ONCE at the beginning and use this count throughout
       const labels = parseLabelsFromZpl(zplContent);
       const finalLabelCount = labels.length;
       
-      console.log(`🎯 Starting conversion of ${finalLabelCount} labels`);
+      console.log(`🎯 Starting conversion of ${finalLabelCount} labels (FINAL COUNT)`);
       console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
       
       // Choose configuration based on label count and user preference
@@ -86,9 +86,9 @@ export const useZplConversion = () => {
       try {
         const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, setProgress);
         
-        // Save to history using the consistent final label count
+        // Save to history using the EXACT same finalLabelCount from the beginning
         if (pdfPath) {
-          console.log(`💾 Saving to history: ${finalLabelCount} labels processed`);
+          console.log(`💾 Saving to history: ${finalLabelCount} labels processed (CONSISTENT COUNT)`);
           await addToProcessingHistory(finalLabelCount, pdfPath);
           triggerHistoryRefresh();
         }
