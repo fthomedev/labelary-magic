@@ -87,10 +87,13 @@ export const useZplConversion = () => {
       try {
         const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, setProgress);
         
-        // Save to history using the EXACT same finalLabelCount from the beginning
+        // Calculate total processing time
+        const totalTime = Date.now() - conversionStartTime;
+        
+        // Save to history using the EXACT same finalLabelCount from the beginning and include processing time
         if (pdfPath) {
-          console.log(`💾 Saving to history: ${finalLabelCount} labels processed (CONSISTENT CORRECTED COUNT)`);
-          await addToProcessingHistory(finalLabelCount, pdfPath);
+          console.log(`💾 Saving to history: ${finalLabelCount} labels processed in ${totalTime}ms (CONSISTENT CORRECTED COUNT)`);
+          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime);
           triggerHistoryRefresh();
         }
         
@@ -99,7 +102,6 @@ export const useZplConversion = () => {
         // Download the file
         downloadPdf(blobUrl);
 
-        const totalTime = Date.now() - conversionStartTime;
         logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount);
 
         toast({

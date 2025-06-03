@@ -16,6 +16,7 @@ export type Database = {
           label_count: number
           pdf_path: string | null
           pdf_url: string
+          processing_time: number | null
           user_id: string
         }
         Insert: {
@@ -24,6 +25,7 @@ export type Database = {
           label_count: number
           pdf_path?: string | null
           pdf_url: string
+          processing_time?: number | null
           user_id: string
         }
         Update: {
@@ -32,6 +34,7 @@ export type Database = {
           label_count?: number
           pdf_path?: string | null
           pdf_url?: string
+          processing_time?: number | null
           user_id?: string
         }
         Relationships: []

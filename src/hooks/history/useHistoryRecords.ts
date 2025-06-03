@@ -2,12 +2,13 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export const useHistoryRecords = () => {
-  const addToProcessingHistory = async (labelCount: number, pdfPath: string) => {
+  const addToProcessingHistory = async (labelCount: number, pdfPath: string, processingTime?: number) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         console.log(`📝 Saving processing history for user: ${user.id}`);
         console.log(`🏷️ Label count being saved: ${labelCount}`);
+        console.log(`⏱️ Processing time being saved: ${processingTime}ms`);
         
         // Get the public URL for the PDF from Supabase storage
         const { data: publicUrlData } = await supabase.storage
@@ -26,13 +27,14 @@ export const useHistoryRecords = () => {
           user_id: user.id,
           label_count: labelCount,
           pdf_url: pdfUrl,
-          pdf_path: pdfPath
+          pdf_path: pdfPath,
+          processing_time: processingTime
         });
         
         if (error) {
           console.error('Error saving processing history:', error);
         } else {
-          console.log(`✅ Processing history saved successfully with ${labelCount} labels`);
+          console.log(`✅ Processing history saved successfully with ${labelCount} labels and ${processingTime}ms processing time`);
         }
       } else {
         console.log('No authenticated user found');
