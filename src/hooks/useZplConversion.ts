@@ -57,9 +57,10 @@ export const useZplConversion = () => {
 
       // Parse labels ONCE at the beginning and use this count throughout
       const labels = parseLabelsFromZpl(zplContent);
-      const finalLabelCount = labels.length;
+      // Divide by 2 to get the correct final count as each label has 2 ^XA markers
+      const finalLabelCount = Math.ceil(labels.length / 2);
       
-      console.log(`🎯 Starting conversion of ${finalLabelCount} labels (FINAL COUNT)`);
+      console.log(`🎯 Starting conversion of ${finalLabelCount} labels (FINAL COUNT CORRECTED - ${labels.length} blocks / 2)`);
       console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
       
       // Choose configuration based on label count and user preference
@@ -88,7 +89,7 @@ export const useZplConversion = () => {
         
         // Save to history using the EXACT same finalLabelCount from the beginning
         if (pdfPath) {
-          console.log(`💾 Saving to history: ${finalLabelCount} labels processed (CONSISTENT COUNT)`);
+          console.log(`💾 Saving to history: ${finalLabelCount} labels processed (CONSISTENT CORRECTED COUNT)`);
           await addToProcessingHistory(finalLabelCount, pdfPath);
           triggerHistoryRefresh();
         }

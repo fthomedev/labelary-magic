@@ -139,8 +139,10 @@ export const useZplApiConversion = () => {
 
   const countLabelsInZpl = (zplContent: string): number => {
     const labels = splitZPLIntoBlocks(zplContent);
-    console.log(`🔢 countLabelsInZpl: Counted ${labels.length} labels in ZPL content`);
-    return labels.length;
+    // Divide by 2 to get the correct count as each label has 2 ^XA markers
+    const correctCount = Math.ceil(labels.length / 2);
+    console.log(`🔢 countLabelsInZpl: Counted ${correctCount} labels in ZPL content (${labels.length} blocks / 2)`);
+    return correctCount;
   };
 
   return {

@@ -6,6 +6,6 @@ export function countLabels(zplContent: string): number {
   const regex = /\^XA/g;
   const matches = zplContent.match(regex);
   const xaCount = matches ? matches.length : 0;
-  // Divide by 2 and round up
-  return Math.ceil(xaCount / 2);
+  // Divide by 2 and round up, then divide by 2 again to get the correct count
+  return Math.ceil(xaCount / 4);
 }
