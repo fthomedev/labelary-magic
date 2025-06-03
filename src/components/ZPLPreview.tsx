@@ -14,8 +14,8 @@ interface ZPLPreviewProps {
   isProcessingComplete?: boolean;
   lastPdfUrl?: string;
   onDownload?: () => void;
-  onFormatSelected?: (format: PrintFormat) => void;
-  showFormatSelector?: boolean;
+  selectedFormat: PrintFormat;
+  onFormatChange: (format: PrintFormat) => void;
 }
 
 export function ZPLPreview({ 
@@ -25,36 +25,17 @@ export function ZPLPreview({
   isProcessingComplete = false,
   lastPdfUrl,
   onDownload,
-  onFormatSelected,
-  showFormatSelector = false
+  selectedFormat,
+  onFormatChange
 }: ZPLPreviewProps) {
   const isMobile = useIsMobile();
   const totalLabels = countLabels(content);
-  const [selectedFormat, setSelectedFormat] = useState<PrintFormat>('standard');
-
-  const handleFormatConfirm = () => {
-    if (onFormatSelected) {
-      onFormatSelected(selectedFormat);
-    }
-  };
-
-  if (showFormatSelector) {
-    return (
-      <div className="rounded-xl overflow-hidden gradient-border">
-        <FormatSelector
-          selectedFormat={selectedFormat}
-          onFormatChange={setSelectedFormat}
-          onConfirm={handleFormatConfirm}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="rounded-xl overflow-hidden gradient-border">
       <Card className="border-0 shadow-none bg-gradient-to-r from-white to-gray-50">
-        <CardContent className="p-3">
-          <div className={`flex flex-${isMobile ? 'col' : 'row'} items-${isMobile ? 'start' : 'center'} justify-between gap-3 mb-2`}>
+        <CardContent className="p-3 space-y-3">
+          <div className={`flex flex-${isMobile ? 'col' : 'row'} items-${isMobile ? 'start' : 'center'} justify-between gap-3`}>
             <PreviewHeader 
               isProcessingComplete={isProcessingComplete} 
               totalLabels={totalLabels} 
@@ -65,6 +46,13 @@ export function ZPLPreview({
             sourceType={sourceType} 
             fileCount={fileCount} 
           />
+
+          <div className="border-t pt-3">
+            <FormatSelector 
+              selectedFormat={selectedFormat}
+              onFormatChange={onFormatChange}
+            />
+          </div>
         </CardContent>
       </Card>
     </div>

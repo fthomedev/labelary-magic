@@ -20,7 +20,6 @@ const Index = () => {
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
   const [fileCount, setFileCount] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [showFormatSelector, setShowFormatSelector] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState<PrintFormat>('standard');
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -74,15 +73,13 @@ const Index = () => {
     setZplContent(content);
     setSourceType(type);
     setFileCount(count);
-    setShowFormatSelector(true);
     // Reset both processing statuses when a new file is selected
     resetStandardStatus();
     resetA4Status();
   };
 
-  const handleFormatSelected = (format: PrintFormat) => {
+  const handleFormatChange = (format: PrintFormat) => {
     setSelectedFormat(format);
-    setShowFormatSelector(false);
   };
 
   const handleConvert = async () => {
@@ -161,25 +158,23 @@ const Index = () => {
                         isProcessingComplete={isProcessingComplete}
                         lastPdfUrl={lastPdfUrl}
                         onDownload={handleDownload}
-                        showFormatSelector={showFormatSelector}
-                        onFormatSelected={handleFormatSelected}
+                        selectedFormat={selectedFormat}
+                        onFormatChange={handleFormatChange}
                       />
                     </div>
                   </div>
                   
-                  {!showFormatSelector && (
-                    <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
-                      <div className="p-3">
-                        <ConversionProgress 
-                          isConverting={isConverting}
-                          progress={progress}
-                          onConvert={handleConvert}
-                          isProcessingComplete={isProcessingComplete}
-                          onDownload={handleDownload}
-                        />
-                      </div>
+                  <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
+                    <div className="p-3">
+                      <ConversionProgress 
+                        isConverting={isConverting}
+                        progress={progress}
+                        onConvert={handleConvert}
+                        isProcessingComplete={isProcessingComplete}
+                        onDownload={handleDownload}
+                      />
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
             </div>
