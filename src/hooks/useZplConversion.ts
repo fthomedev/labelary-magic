@@ -49,17 +49,18 @@ export const useZplConversion = () => {
       setPdfUrls([]);
       setIsProcessingComplete(false);
 
+      // Parse labels once and use this count throughout the entire process
       const labels = parseLabelsFromZpl(zplContent);
-      const labelCount = labels.length;
+      const finalLabelCount = labels.length;
       
-      console.log(`🎯 Starting conversion of ${labelCount} labels`);
+      console.log(`🎯 Starting conversion of ${finalLabelCount} labels`);
       console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
       
       // Choose configuration based on label count and user preference
       let config: ProcessingConfig;
       if (!useOptimizedTiming) {
         config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 }; // Original conservative timing
-      } else if (labelCount > 100) {
+      } else if (finalLabelCount > 100) {
         config = DEFAULT_CONFIG; // Moderate optimization for large batches
       } else {
         config = FAST_CONFIG; // Aggressive optimization for smaller batches
@@ -115,9 +116,10 @@ export const useZplConversion = () => {
             const blobUrl = window.URL.createObjectURL(mergedPdf);
             setLastPdfUrl(blobUrl);
             
-            // Use the consistent label count from the parsed labels
+            // Save to history using the consistent final label count
             if (pdfPath) {
-              await addToProcessingHistory(labelCount, pdfPath);
+              console.log(`💾 Saving to history: ${finalLabelCount} labels processed`);
+              await addToProcessingHistory(finalLabelCount, pdfPath);
               setHistoryRefreshTrigger(prev => prev + 1);
             }
             
@@ -138,14 +140,14 @@ export const useZplConversion = () => {
               conversionTimeMs: conversionPhaseTime,
               mergeTimeMs: mergeTime,
               uploadTimeMs: uploadTime,
-              labelsProcessed: labelCount,
-              averageTimePerLabel: labelCount > 0 ? totalTime / labelCount : 0,
-              labelsPerSecond: labelCount > 0 ? (labelCount / (totalTime / 1000)).toFixed(2) : 0,
+              labelsProcessed: finalLabelCount,
+              averageTimePerLabel: finalLabelCount > 0 ? totalTime / finalLabelCount : 0,
+              labelsPerSecond: finalLabelCount > 0 ? (finalLabelCount / (totalTime / 1000)).toFixed(2) : 0,
             });
 
             toast({
               title: t('success'),
-              description: `${t('successMessage')} (${totalTime}ms, ${labelCount} etiquetas)`,
+              description: `${t('successMessage')} (${totalTime}ms, ${finalLabelCount} etiquetas)`,
               duration: 5000,
             });
             
