@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -8,28 +9,51 @@ import { UserMenu } from '@/components/UserMenu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ProcessingHistory } from '@/components/ProcessingHistory';
 import { useZplConversion } from '@/hooks/useZplConversion';
+import { useA4ZplConversion } from '@/hooks/conversion/useA4ZplConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
 import { FeedbackModal } from '@/components/FeedbackModal';
+import { PrintFormat } from '@/components/format/FormatSelector';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
   const [fileCount, setFileCount] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [showFormatSelector, setShowFormatSelector] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState<PrintFormat>('standard');
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
   
+  // Standard conversion hook
   const {
-    isConverting,
-    progress,
-    isProcessingComplete,
-    lastPdfUrl,
+    isConverting: isStandardConverting,
+    progress: standardProgress,
+    isProcessingComplete: isStandardComplete,
+    lastPdfUrl: standardPdfUrl,
     convertToPDF,
-    historyRefreshTrigger,
-    resetProcessingStatus
+    historyRefreshTrigger: standardHistoryRefresh,
+    resetProcessingStatus: resetStandardStatus
   } = useZplConversion();
+
+  // A4 conversion hook
+  const {
+    isConverting: isA4Converting,
+    progress: a4Progress,
+    isProcessingComplete: isA4Complete,
+    lastPdfUrl: a4PdfUrl,
+    convertToA4PDF,
+    historyRefreshTrigger: a4HistoryRefresh,
+    resetProcessingStatus: resetA4Status
+  } = useA4ZplConversion();
+
+  // Determine which conversion is active
+  const isConverting = isStandardConverting || isA4Converting;
+  const progress = isStandardConverting ? standardProgress : a4Progress;
+  const isProcessingComplete = isStandardComplete || isA4Complete;
+  const lastPdfUrl = standardPdfUrl || a4PdfUrl;
+  const historyRefreshTrigger = Math.max(standardHistoryRefresh, a4HistoryRefresh);
 
   useEffect(() => {
     // Check if user is logged in
@@ -50,19 +74,30 @@ const Index = () => {
     setZplContent(content);
     setSourceType(type);
     setFileCount(count);
-    // Reset processing status when a new file is selected
-    resetProcessingStatus();
+    setShowFormatSelector(true);
+    // Reset both processing statuses when a new file is selected
+    resetStandardStatus();
+    resetA4Status();
+  };
+
+  const handleFormatSelected = (format: PrintFormat) => {
+    setSelectedFormat(format);
+    setShowFormatSelector(false);
   };
 
   const handleConvert = async () => {
-    await convertToPDF(zplContent);
+    if (selectedFormat === 'a4') {
+      await convertToA4PDF(zplContent);
+    } else {
+      await convertToPDF(zplContent);
+    }
   };
 
   const handleDownload = () => {
     if (lastPdfUrl) {
       const a = document.createElement('a');
       a.href = lastPdfUrl;
-      a.download = 'etiquetas.pdf';
+      a.download = selectedFormat === 'a4' ? 'etiquetas-a4.pdf' : 'etiquetas.pdf';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -126,21 +161,25 @@ const Index = () => {
                         isProcessingComplete={isProcessingComplete}
                         lastPdfUrl={lastPdfUrl}
                         onDownload={handleDownload}
+                        showFormatSelector={showFormatSelector}
+                        onFormatSelected={handleFormatSelected}
                       />
                     </div>
                   </div>
                   
-                  <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
-                    <div className="p-3">
-                      <ConversionProgress 
-                        isConverting={isConverting}
-                        progress={progress}
-                        onConvert={handleConvert}
-                        isProcessingComplete={isProcessingComplete}
-                        onDownload={handleDownload}
-                      />
+                  {!showFormatSelector && (
+                    <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
+                      <div className="p-3">
+                        <ConversionProgress 
+                          isConverting={isConverting}
+                          progress={progress}
+                          onConvert={handleConvert}
+                          isProcessingComplete={isProcessingComplete}
+                          onDownload={handleDownload}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>

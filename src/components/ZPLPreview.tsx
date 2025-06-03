@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PreviewHeader } from './preview/PreviewHeader';
 import { ArchiveInfo } from './preview/ArchiveInfo';
 import { countLabels } from './preview/ZplLabelCounter';
+import { FormatSelector, PrintFormat } from './format/FormatSelector';
 
 interface ZPLPreviewProps {
   content: string;
@@ -13,6 +14,8 @@ interface ZPLPreviewProps {
   isProcessingComplete?: boolean;
   lastPdfUrl?: string;
   onDownload?: () => void;
+  onFormatSelected?: (format: PrintFormat) => void;
+  showFormatSelector?: boolean;
 }
 
 export function ZPLPreview({ 
@@ -21,10 +24,31 @@ export function ZPLPreview({
   fileCount = 1, 
   isProcessingComplete = false,
   lastPdfUrl,
-  onDownload
+  onDownload,
+  onFormatSelected,
+  showFormatSelector = false
 }: ZPLPreviewProps) {
   const isMobile = useIsMobile();
   const totalLabels = countLabels(content);
+  const [selectedFormat, setSelectedFormat] = useState<PrintFormat>('standard');
+
+  const handleFormatConfirm = () => {
+    if (onFormatSelected) {
+      onFormatSelected(selectedFormat);
+    }
+  };
+
+  if (showFormatSelector) {
+    return (
+      <div className="rounded-xl overflow-hidden gradient-border">
+        <FormatSelector
+          selectedFormat={selectedFormat}
+          onFormatChange={setSelectedFormat}
+          onConfirm={handleFormatConfirm}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl overflow-hidden gradient-border">

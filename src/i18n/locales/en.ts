@@ -1,4 +1,3 @@
-
 const translations = {
   // Geral
   home: 'Home',
@@ -186,6 +185,16 @@ const translations = {
   feedbackThankYou: 'Thank you for your feedback. We will get back to you soon.',
   errorSendingFeedback: 'Error sending feedback',
   tryAgainLater: 'Try again later or contact us directly.',
+  sendFeedbackButton: 'Send Feedback',
+  
+  // Formato de impressão
+  printFormat: 'Print Format',
+  standardFormat: 'Standard (Individual Labels)',
+  a4Format: 'A4 Sheet (4 labels per page)',
+  selectPrintFormat: 'Select how you want to print your labels',
+  formatDescription: 'Choose the format that best suits your printer',
+  a4FormatDescription: '4 labels organized on A4 sheet',
+  standardFormatDescription: 'Individual labels in sequence',
   sendFeedbackButton: 'Send Feedback',
 };
 

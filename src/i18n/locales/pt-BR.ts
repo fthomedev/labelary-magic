@@ -1,4 +1,3 @@
-
 const translations = {
   // Geral
   home: 'Início',
@@ -186,6 +185,16 @@ const translations = {
   feedbackThankYou: 'Obrigado pelo seu feedback. Entraremos em contato em breve.',
   errorSendingFeedback: 'Erro ao enviar feedback',
   tryAgainLater: 'Tente novamente mais tarde ou entre em contato diretamente.',
+  sendFeedbackButton: 'Enviar Feedback',
+  
+  // Formato de impressão
+  printFormat: 'Formato de Impressão',
+  standardFormat: 'Padrão (Etiquetas Individuais)',
+  a4Format: 'Folha A4 (4 etiquetas por página)',
+  selectPrintFormat: 'Selecione como deseja imprimir suas etiquetas',
+  formatDescription: 'Escolha o formato que melhor se adapta à sua impressora',
+  a4FormatDescription: '4 etiquetas organizadas em folha A4',
+  standardFormatDescription: 'Etiquetas individuais em sequência',
   sendFeedbackButton: 'Enviar Feedback',
 };
 
