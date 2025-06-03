@@ -7,6 +7,7 @@ import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
 import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
+import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export interface ProcessingRecord {
   id: string;
@@ -32,14 +33,15 @@ export const useZplConversion = () => {
   const { convertZplBlocksToPdfs, parseLabelsFromZpl, countLabelsInZpl } = useZplApiConversion();
   const { ensurePdfBucketExists } = useStorageOperations();
 
-  // New function to reset processing status
   const resetProcessingStatus = () => {
     setIsProcessingComplete(false);
     setProgress(0);
   };
 
-  const convertToPDF = async (zplContent: string) => {
+  const convertToPDF = async (zplContent: string, useOptimizedTiming: boolean = true) => {
     if (!zplContent) return;
+    
+    const conversionStartTime = Date.now();
     
     try {
       setIsConverting(true);
@@ -48,11 +50,32 @@ export const useZplConversion = () => {
       setIsProcessingComplete(false);
 
       const labels = parseLabelsFromZpl(zplContent);
+      const labelCount = labels.length;
+      
+      console.log(`🎯 Starting conversion of ${labelCount} labels`);
+      console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
+      
+      // Choose configuration based on label count and user preference
+      let config: ProcessingConfig;
+      if (!useOptimizedTiming) {
+        config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 }; // Original conservative timing
+      } else if (labelCount > 100) {
+        config = DEFAULT_CONFIG; // Moderate optimization for large batches
+      } else {
+        config = FAST_CONFIG; // Aggressive optimization for smaller batches
+      }
+      
+      console.log(`📋 Using configuration:`, config);
+      
       const newPdfUrls: string[] = [];
+      const conversionPhaseStart = Date.now();
 
       const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
-        setProgress(progressValue);
-      });
+        setProgress(progressValue * 0.8); // Reserve 20% for merging and upload
+      }, config);
+
+      const conversionPhaseTime = Date.now() - conversionPhaseStart;
+      console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
 
       // Create temporary blob URLs for the current session
       pdfs.forEach(blob => {
@@ -63,16 +86,29 @@ export const useZplConversion = () => {
 
       if (pdfs.length > 0) {
         try {
+          setProgress(85);
+          const mergeStartTime = Date.now();
+          
+          console.log(`🔄 Starting PDF merge of ${pdfs.length} files...`);
           const mergedPdf = await mergePDFs(pdfs);
+          
+          const mergeTime = Date.now() - mergeStartTime;
+          console.log(`✅ PDF merge completed in ${mergeTime}ms (${mergedPdf.size} bytes)`);
+          
+          setProgress(90);
           
           // Ensure bucket exists
           await ensurePdfBucketExists();
+          
+          setProgress(95);
+          const uploadStartTime = Date.now();
           
           // Upload PDF to storage
           let pdfPath;
           try {
             pdfPath = await uploadPDFToStorage(mergedPdf);
-            console.log('Successfully uploaded PDF to storage:', pdfPath);
+            const uploadTime = Date.now() - uploadStartTime;
+            console.log(`☁️ PDF upload completed in ${uploadTime}ms:`, pdfPath);
             setLastPdfPath(pdfPath);
             
             // Get the temporary blob URL for the current session
@@ -87,6 +123,8 @@ export const useZplConversion = () => {
               setHistoryRefreshTrigger(prev => prev + 1);
             }
             
+            setProgress(100);
+            
             // Download the file
             const a = document.createElement('a');
             a.href = blobUrl;
@@ -95,10 +133,22 @@ export const useZplConversion = () => {
             a.click();
             document.body.removeChild(a);
 
+            const totalTime = Date.now() - conversionStartTime;
+            console.log(`🏁 Total conversion process completed in ${totalTime}ms`);
+            console.log(`📊 Performance breakdown:`, {
+              totalTimeMs: totalTime,
+              conversionTimeMs: conversionPhaseTime,
+              mergeTimeMs: mergeTime,
+              uploadTimeMs: uploadTime,
+              labelsProcessed: actualLabelCount,
+              averageTimePerLabel: actualLabelCount > 0 ? totalTime / actualLabelCount : 0,
+              labelsPerSecond: actualLabelCount > 0 ? (actualLabelCount / (totalTime / 1000)).toFixed(2) : 0,
+            });
+
             toast({
               title: t('success'),
-              description: t('successMessage'),
-              duration: 3000,
+              description: `${t('successMessage')} (${totalTime}ms, ${actualLabelCount} etiquetas)`,
+              duration: 5000,
             });
             
             // Set processing complete to show the completion UI
@@ -134,7 +184,7 @@ export const useZplConversion = () => {
       });
     } finally {
       setIsConverting(false);
-      setProgress(100); // Ensure progress is complete even if there was an error
+      setProgress(100);
     }
   };
 
@@ -147,6 +197,6 @@ export const useZplConversion = () => {
     lastPdfPath,
     convertToPDF,
     historyRefreshTrigger,
-    resetProcessingStatus,  // Expose the new function
+    resetProcessingStatus,
   };
 };
