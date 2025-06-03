@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useZplValidator } from './useZplValidator';
 
 interface ProcessingResult {
   labelNumber: number;
@@ -10,6 +11,7 @@ interface ProcessingResult {
   error?: string;
   pngUrl?: string;
   size?: number;
+  validationWarnings?: string[];
 }
 
 export const useZplLabelProcessor = () => {
@@ -17,6 +19,7 @@ export const useZplLabelProcessor = () => {
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { validateZplLabel, validateAllLabels } = useZplValidator();
 
   const splitZplIntoLabels = (zplContent: string): string[] => {
     console.log('🔍 Starting ZPL label splitting...');
@@ -48,6 +51,19 @@ export const useZplLabelProcessor = () => {
   ): Promise<ProcessingResult> => {
     console.log(`🖼️ Processing label ${labelNumber}...`);
     
+    // Validate ZPL before processing
+    const validation = validateZplLabel(labelContent);
+    
+    if (!validation.isValid) {
+      console.error(`❌ Label ${labelNumber} failed validation:`, validation.errors);
+      return {
+        labelNumber,
+        success: false,
+        error: `Validation failed: ${validation.errors.join(', ')}`,
+        validationWarnings: validation.warnings
+      };
+    }
+    
     try {
       const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
         method: 'POST',
@@ -65,7 +81,8 @@ export const useZplLabelProcessor = () => {
         return {
           labelNumber,
           success: false,
-          error: `HTTP ${response.status}: ${errorText.substring(0, 100)}...`
+          error: `HTTP ${response.status}: ${errorText.substring(0, 100)}...`,
+          validationWarnings: validation.warnings
         };
       }
 
@@ -76,7 +93,8 @@ export const useZplLabelProcessor = () => {
         return {
           labelNumber,
           success: false,
-          error: 'Empty PNG received from API'
+          error: 'Empty PNG received from API',
+          validationWarnings: validation.warnings
         };
       }
 
@@ -89,11 +107,16 @@ export const useZplLabelProcessor = () => {
       
       console.log(`✅ Label ${labelNumber} processed successfully: ${pngBlob.size} bytes -> ${pngUrl}`);
       
+      if (validation.warnings.length > 0) {
+        console.log(`⚠️ Label ${labelNumber} has warnings:`, validation.warnings);
+      }
+      
       return {
         labelNumber,
         success: true,
         pngUrl,
-        size: pngBlob.size
+        size: pngBlob.size,
+        validationWarnings: validation.warnings
       };
       
     } catch (error) {
@@ -101,7 +124,8 @@ export const useZplLabelProcessor = () => {
       return {
         labelNumber,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        validationWarnings: validation.warnings
       };
     }
   };
@@ -160,7 +184,24 @@ export const useZplLabelProcessor = () => {
         throw new Error('No valid ZPL labels found in content');
       }
 
-      // Step 2: Process each label individually
+      // Step 2: Validate all labels first
+      console.log('🔍 Pre-validating all labels...');
+      const validationResults = validateAllLabels(labels);
+      
+      const validLabels = validationResults.filter(r => r.isValid);
+      const invalidLabels = validationResults.filter(r => !r.isValid);
+      
+      if (invalidLabels.length > 0) {
+        console.log(`⚠️ Found ${invalidLabels.length} invalid labels that will be skipped`);
+        toast({
+          variant: "destructive",
+          title: 'Validação ZPL',
+          description: `${invalidLabels.length} etiquetas inválidas serão ignoradas`,
+          duration: 5000,
+        });
+      }
+
+      // Step 3: Process each valid label individually
       const processingResults: ProcessingResult[] = [];
       
       for (let i = 0; i < labels.length; i++) {
@@ -189,8 +230,9 @@ export const useZplLabelProcessor = () => {
       // Summary logging
       const successful = processingResults.filter(r => r.success).length;
       const failed = processingResults.filter(r => !r.success).length;
+      const withWarnings = processingResults.filter(r => r.validationWarnings && r.validationWarnings.length > 0).length;
       
-      console.log(`📊 Processing complete: ${successful} successful, ${failed} failed`);
+      console.log(`📊 Processing complete: ${successful} successful, ${failed} failed, ${withWarnings} with warnings`);
       
       if (failed > 0) {
         console.log('❌ Failed labels:');
@@ -201,7 +243,7 @@ export const useZplLabelProcessor = () => {
       
       toast({
         title: 'Processamento Concluído',
-        description: `${successful} etiquetas processadas com sucesso${failed > 0 ? `, ${failed} falharam` : ''}`,
+        description: `${successful} etiquetas processadas com sucesso${failed > 0 ? `, ${failed} falharam` : ''}${withWarnings > 0 ? `, ${withWarnings} com avisos` : ''}`,
         duration: 5000,
       });
       
@@ -218,6 +260,43 @@ export const useZplLabelProcessor = () => {
       throw error;
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const uploadPngToStorage = async (pngBlob: Blob, fileName: string): Promise<string> => {
+    try {
+      // Ensure PNG bucket exists
+      const { error: bucketError } = await supabase.storage.getBucket('pngs');
+      if (bucketError && bucketError.message.includes('The resource was not found')) {
+        await supabase.storage.createBucket('pngs', {
+          public: true,
+          fileSizeLimit: 5242880 // 5MB
+        });
+        console.log('📁 Created PNG bucket');
+      }
+
+      const { data, error } = await supabase.storage
+        .from('pngs')
+        .upload(fileName, pngBlob, {
+          contentType: 'image/png',
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Storage upload error:', error);
+        throw error;
+      }
+
+      // Get public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('pngs')
+        .getPublicUrl(fileName);
+
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error('Failed to upload PNG to storage:', error);
+      throw error;
     }
   };
 
