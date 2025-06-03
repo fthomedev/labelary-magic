@@ -167,6 +167,26 @@ const translations = {
   successMessage: 'Conversion completed successfully',
   errorMessage: 'Error processing the file',
   mergePdfError: 'Error merging PDF files',
+  
+  // Feedback
+  feedback: 'Feedback',
+  sendFeedback: 'Send Feedback',
+  feedbackType: 'Feedback Type',
+  selectFeedbackType: 'Select feedback type',
+  feedbackMessage: 'Message',
+  feedbackMessagePlaceholder: 'Describe your feedback in detail...',
+  feedbackSuggestion: 'Suggestion',
+  feedbackBug: 'Bug',
+  feedbackComplaint: 'Complaint',
+  feedbackOther: 'Other',
+  requiredFields: 'Required Fields',
+  fillAllFields: 'Please fill in all fields.',
+  feedbackSent: 'Feedback Sent!',
+  feedbackThankYou: 'Thank you for your feedback. We will get back to you soon.',
+  errorSendingFeedback: 'Error sending feedback',
+  tryAgainLater: 'Try again later or contact us directly.',
+  sending: 'Sending...',
+  sendFeedbackButton: 'Send Feedback',
 };
 
 export default translations;

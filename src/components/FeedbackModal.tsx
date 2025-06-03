@@ -36,10 +36,10 @@ export const FeedbackModal = () => {
   const [message, setMessage] = useState('');
 
   const feedbackTypes = [
-    { value: 'suggestion', label: 'Sugestão' },
-    { value: 'bug', label: 'Erro' },
-    { value: 'complaint', label: 'Reclamação' },
-    { value: 'other', label: 'Outro' },
+    { value: 'suggestion', label: t('feedbackSuggestion') },
+    { value: 'bug', label: t('feedbackBug') },
+    { value: 'complaint', label: t('feedbackComplaint') },
+    { value: 'other', label: t('feedbackOther') },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,8 +47,8 @@ export const FeedbackModal = () => {
     
     if (!feedbackType || !message.trim()) {
       toast({
-        title: 'Campos obrigatórios',
-        description: 'Por favor, preencha todos os campos.',
+        title: t('requiredFields'),
+        description: t('fillAllFields'),
         variant: 'destructive',
       });
       return;
@@ -84,8 +84,8 @@ export const FeedbackModal = () => {
 
       if (response.ok) {
         toast({
-          title: 'Feedback enviado!',
-          description: 'Obrigado pelo seu feedback. Entraremos em contato em breve.',
+          title: t('feedbackSent'),
+          description: t('feedbackThankYou'),
         });
 
         // Reset form and close modal
@@ -98,8 +98,8 @@ export const FeedbackModal = () => {
     } catch (error) {
       console.error('Error sending feedback:', error);
       toast({
-        title: 'Erro ao enviar feedback',
-        description: 'Tente novamente mais tarde ou entre em contato diretamente.',
+        title: t('errorSendingFeedback'),
+        description: t('tryAgainLater'),
         variant: 'destructive',
       });
     } finally {
@@ -114,27 +114,27 @@ export const FeedbackModal = () => {
           variant="outline"
           size="sm"
           className="flex items-center gap-2"
-          aria-label="Enviar feedback"
+          aria-label={t('sendFeedback')}
         >
           <MessageCircle size={16} />
-          <span className="hidden sm:inline">Feedback</span>
+          <span className="hidden sm:inline">{t('feedback')}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle size={20} />
-            Enviar Feedback
+            {t('sendFeedback')}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="feedback-type" className="text-sm font-medium">
-              Tipo de feedback *
+              {t('feedbackType')} *
             </label>
             <Select value={feedbackType} onValueChange={setFeedbackType}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo de feedback" />
+                <SelectValue placeholder={t('selectFeedbackType')} />
               </SelectTrigger>
               <SelectContent>
                 {feedbackTypes.map((type) => (
@@ -148,11 +148,11 @@ export const FeedbackModal = () => {
 
           <div className="space-y-2">
             <label htmlFor="message" className="text-sm font-medium">
-              Mensagem *
+              {t('feedbackMessage')} *
             </label>
             <Textarea
               id="message"
-              placeholder="Descreva seu feedback detalhadamente..."
+              placeholder={t('feedbackMessagePlaceholder')}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
@@ -167,7 +167,7 @@ export const FeedbackModal = () => {
               onClick={() => setIsOpen(false)}
               disabled={isSubmitting}
             >
-              Cancelar
+              {t('cancel')}
             </Button>
             <Button
               type="submit"
@@ -177,12 +177,12 @@ export const FeedbackModal = () => {
               {isSubmitting ? (
                 <>
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                  Enviando...
+                  {t('sending')}
                 </>
               ) : (
                 <>
                   <Send size={16} />
-                  Enviar Feedback
+                  {t('sendFeedbackButton')}
                 </>
               )}
             </Button>

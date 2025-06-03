@@ -167,6 +167,26 @@ const translations = {
   successMessage: 'Conversão concluída com sucesso',
   errorMessage: 'Erro ao processar o arquivo',
   mergePdfError: 'Erro ao mesclar arquivos PDF',
+  
+  // Feedback
+  feedback: 'Feedback',
+  sendFeedback: 'Enviar Feedback',
+  feedbackType: 'Tipo de feedback',
+  selectFeedbackType: 'Selecione o tipo de feedback',
+  feedbackMessage: 'Mensagem',
+  feedbackMessagePlaceholder: 'Descreva seu feedback detalhadamente...',
+  feedbackSuggestion: 'Sugestão',
+  feedbackBug: 'Erro',
+  feedbackComplaint: 'Reclamação',
+  feedbackOther: 'Outro',
+  requiredFields: 'Campos obrigatórios',
+  fillAllFields: 'Por favor, preencha todos os campos.',
+  feedbackSent: 'Feedback enviado!',
+  feedbackThankYou: 'Obrigado pelo seu feedback. Entraremos em contato em breve.',
+  errorSendingFeedback: 'Erro ao enviar feedback',
+  tryAgainLater: 'Tente novamente mais tarde ou entre em contato diretamente.',
+  sending: 'Enviando...',
+  sendFeedbackButton: 'Enviar Feedback',
 };
 
 export default translations;
