@@ -8,7 +8,7 @@ export function useHistoryData(
   localRecords?: ProcessingRecord[], 
   localOnly = false, 
   currentPage = 1, 
-  recordsPerPage = 10
+  recordsPerPage = 8 // Changed from 10 to 8
 ) {
   const [dbRecords, setDbRecords] = useState<ProcessingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(!localOnly);

@@ -18,7 +18,7 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     downloadCurrentPdf
   } = useHistoryDownload();
   
-  const pagination = usePagination(0, 10); // Default values before fetching data
+  const pagination = usePagination(0, 8); // Changed from 10 to 8 records per page
   const { 
     currentPage, 
     handlePageChange, 
