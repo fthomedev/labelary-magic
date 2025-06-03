@@ -75,6 +75,8 @@ export const usePdfOperations = () => {
     setPdfUrls,
     lastPdfUrl,
     lastPdfPath,
+    setLastPdfUrl,
+    setLastPdfPath,
     processPdfs,
     downloadPdf
   };

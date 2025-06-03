@@ -1,3 +1,4 @@
+
 const translations = {
   // Geral
   home: 'Início',
@@ -195,7 +196,6 @@ const translations = {
   formatDescription: 'Escolha o formato que melhor se adapta à sua impressora',
   a4FormatDescription: '4 etiquetas organizadas em folha A4',
   standardFormatDescription: 'Etiquetas individuais em sequência',
-  sendFeedbackButton: 'Enviar Feedback',
 };
 
 export default translations;
