@@ -2,12 +2,10 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import App from './App.tsx';
 
-// Import i18n config directly instead of lazy loading
+// Import i18n config directly
 import './i18n/config';
-
-// Split App into separate chunk
-const App = React.lazy(() => import('./App.tsx'));
 
 // Create loading component for better user experience
 const LoadingFallback = () => (
