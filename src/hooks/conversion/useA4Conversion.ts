@@ -1,14 +1,13 @@
 
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
-import { useZplLabelProcessor } from './useZplLabelProcessor';
+import { splitZplIntoLabels } from '@/utils/zplSplitter';
 import { useZplValidator } from './useZplValidator';
 import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export const useA4Conversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { splitZplIntoLabels } = useZplLabelProcessor();
   const { validateAllLabels } = useZplValidator();
 
   const convertZplToA4Images = async (
