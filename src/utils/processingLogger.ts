@@ -20,14 +20,20 @@ export const createProcessingLog = async (entry: ProcessingLogEntry): Promise<vo
     const { data: { user } } = await supabase.auth.getUser();
     
     const logEntry = {
-      ...entry,
       user_id: user?.id,
+      label_number: entry.label_number,
       zpl_content: entry.zpl_content.substring(0, 500), // Limit ZPL content length
+      status: entry.status,
+      error_message: entry.error_message || null,
       validation_warnings: entry.validation_warnings ? JSON.stringify(entry.validation_warnings) : null,
+      api_response_status: entry.api_response_status || null,
+      api_response_body: entry.api_response_body ? entry.api_response_body.substring(0, 500) : null,
+      processing_time_ms: entry.processing_time_ms,
       created_at: new Date().toISOString()
     };
 
-    const { error } = await supabase
+    // Use a workaround for the TypeScript issue by casting the table name
+    const { error } = await (supabase as any)
       .from('processing_logs')
       .insert([logEntry]);
 
@@ -47,7 +53,8 @@ export const getProcessingLogs = async (limit: number = 100) => {
     
     if (!user) return [];
 
-    const { data, error } = await supabase
+    // Use a workaround for the TypeScript issue by casting
+    const { data, error } = await (supabase as any)
       .from('processing_logs')
       .select('*')
       .eq('user_id', user.id)
