@@ -12,20 +12,30 @@ export const LanguageSelector = () => {
   useEffect(() => {
     setMounted(true);
     
-    const savedLanguage = localStorage.getItem('i18nextLng');
-    if (savedLanguage && savedLanguage !== i18n.language) {
-      i18n.changeLanguage(savedLanguage);
+    // Only proceed if i18n is properly initialized
+    if (i18n && typeof i18n.changeLanguage === 'function') {
+      const savedLanguage = localStorage.getItem('i18nextLng');
+      if (savedLanguage && savedLanguage !== i18n.language) {
+        i18n.changeLanguage(savedLanguage);
+      }
     }
   }, [i18n]);
 
   const handleLanguageChange = (value: string) => {
+    // Safety check to ensure i18n is available and has changeLanguage method
+    if (!i18n || typeof i18n.changeLanguage !== 'function') {
+      console.error('i18n not properly initialized');
+      return;
+    }
+    
     if (i18n.language === value) return;
     
     i18n.changeLanguage(value);
     localStorage.setItem('i18nextLng', value);
   };
 
-  if (!mounted) return null;
+  // Don't render if not mounted or i18n is not ready
+  if (!mounted || !i18n || typeof i18n.changeLanguage !== 'function') return null;
 
   return (
     <DropdownMenu>

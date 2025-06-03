@@ -3,9 +3,11 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
-// Split App and i18n into separate chunks
+// Import i18n config directly instead of lazy loading
+import './i18n/config';
+
+// Split App into separate chunk
 const App = React.lazy(() => import('./App.tsx'));
-const loadI18n = () => import('./i18n/config');
 
 // Create loading component for better user experience
 const LoadingFallback = () => (
@@ -14,7 +16,7 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Initialize app with better error handling and code splitting
+// Initialize app with better error handling
 const initializeApp = async () => {
   const rootElement = document.getElementById('root');
   if (!rootElement) {
@@ -23,9 +25,6 @@ const initializeApp = async () => {
   }
 
   try {
-    // Initialize i18n first but don't block rendering
-    loadI18n().catch(console.error);
-
     createRoot(rootElement).render(
       <React.StrictMode>
         <BrowserRouter>
