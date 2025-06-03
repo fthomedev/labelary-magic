@@ -35,12 +35,12 @@ export function ZPLPreview({
   return (
     <div className="space-y-3">
       <PreviewHeader 
-        isProcessingComplete={isProcessingComplete}
-        totalLabels={labelCount}
+        sourceType={sourceType}
+        fileCount={fileCount}
       />
       
       {sourceType === 'zip' && (
-        <ArchiveInfo sourceType={sourceType} fileCount={fileCount} />
+        <ArchiveInfo fileCount={fileCount} />
       )}
       
       <div className="bg-green-50 border border-green-200 rounded-lg p-3">
