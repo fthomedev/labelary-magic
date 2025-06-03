@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -10,22 +11,12 @@ import { ProcessingHistory } from '@/components/ProcessingHistory';
 import { useZplConversion } from '@/hooks/useZplConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
-import { SheetConfig } from '@/components/sheet/SheetSettings';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
   const [fileCount, setFileCount] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [sheetConfig, setSheetConfig] = useState<SheetConfig>({
-    enabled: false,
-    sheetSize: 'A4',
-    marginTop: 5,      // Reduzido de 10 para 5
-    marginBottom: 5,   // Reduzido de 10 para 5
-    marginLeft: 5,     // Reduzido de 10 para 5
-    marginRight: 5,    // Reduzido de 10 para 5
-    labelSpacing: 2    // Reduzido de 5 para 2
-  });
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
@@ -64,14 +55,14 @@ const Index = () => {
   };
 
   const handleConvert = async () => {
-    await convertToPDF(zplContent, sheetConfig);
+    await convertToPDF(zplContent);
   };
 
   const handleDownload = () => {
     if (lastPdfUrl) {
       const a = document.createElement('a');
       a.href = lastPdfUrl;
-      a.download = sheetConfig.enabled ? `etiquetas-folha-${sheetConfig.sheetSize}.pdf` : 'etiquetas.pdf';
+      a.download = 'etiquetas.pdf';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -134,8 +125,6 @@ const Index = () => {
                         isProcessingComplete={isProcessingComplete}
                         lastPdfUrl={lastPdfUrl}
                         onDownload={handleDownload}
-                        sheetConfig={sheetConfig}
-                        onSheetConfigChange={setSheetConfig}
                       />
                     </div>
                   </div>

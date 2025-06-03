@@ -9,7 +9,7 @@ interface CallToActionSectionProps {
 }
 
 export const CallToActionSection: React.FC<CallToActionSectionProps> = ({ isLoggedIn }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
@@ -25,17 +25,27 @@ export const CallToActionSection: React.FC<CallToActionSectionProps> = ({ isLogg
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            {isLoggedIn ? t('ctaTitleLoggedIn') : t('ctaTitle')}
+            {isLoggedIn 
+              ? (i18n.language === 'pt-BR' ? 'Acesse Seu Painel de Controle' : 'Access Your Dashboard')
+              : (i18n.language === 'pt-BR' ? 'Crie Sua Conta Agora Mesmo' : 'Create Your Account Right Now')}
           </h2>
           <p className="text-xl mb-10 text-gray-600 dark:text-gray-300">
-            {isLoggedIn ? t('ctaSubtitleLoggedIn') : t('ctaSubtitle')}
+            {isLoggedIn
+              ? (i18n.language === 'pt-BR' 
+                  ? 'Continue convertendo ZPL para PDF com facilidade no seu painel de controle.' 
+                  : 'Continue converting ZPL to PDF easily in your dashboard.')
+              : (i18n.language === 'pt-BR' 
+                  ? 'Faça parte de uma comunidade que já converteu milhares de etiquetas ZPL com apenas alguns cliques.' 
+                  : 'Join a community that has already converted thousands of ZPL labels with just a few clicks.')}
           </p>
           <Button 
             size="lg" 
             onClick={handleGetStarted}
             className="px-8 py-6 text-lg"
           >
-            {isLoggedIn ? t('ctaButtonLoggedIn') : t('ctaButton')}
+            {isLoggedIn
+              ? (i18n.language === 'pt-BR' ? 'Ir para o Dashboard' : 'Go to Dashboard')
+              : (i18n.language === 'pt-BR' ? 'Cadastrar / Login' : 'Register / Login')}
           </Button>
         </div>
       </div>

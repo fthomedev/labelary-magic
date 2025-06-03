@@ -1,89 +1,49 @@
 
-import { StrictMode } from 'react';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
-import { initializeI18n } from '@/i18n/config';
-import App from './App';
-import './index.css';
 
-// Criar cliente de query global com configurações otimizadas
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutos
-      gcTime: 10 * 60 * 1000, // 10 minutos
-    },
-    mutations: {
-      retry: 1,
-    },
-  },
-});
+// Split App and i18n into separate chunks
+const App = React.lazy(() => import('./App.tsx'));
+const loadI18n = () => import('./i18n/config');
 
-// Função de inicialização global otimizada
-const startApp = async () => {
+// Create loading component for better user experience
+const LoadingFallback = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="h-32 w-32 animate-pulse bg-primary/10 rounded-full" />
+  </div>
+);
+
+// Initialize app with better error handling and code splitting
+const initializeApp = async () => {
+  const rootElement = document.getElementById('root');
+  if (!rootElement) {
+    console.error('Root element not found');
+    return;
+  }
+
   try {
-    // Inicializar i18n de forma global e otimizada
-    await initializeI18n();
-    
-    const rootElement = document.getElementById('root');
-    if (!rootElement) {
-      throw new Error('Root element not found');
-    }
+    // Initialize i18n first but don't block rendering
+    loadI18n().catch(console.error);
 
-    const root = createRoot(rootElement);
-    
-    root.render(
-      <StrictMode>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
+    createRoot(rootElement).render(
+      <React.StrictMode>
+        <BrowserRouter>
+          <React.Suspense fallback={<LoadingFallback />}>
             <App />
-          </BrowserRouter>
-        </QueryClientProvider>
-      </StrictMode>
+          </React.Suspense>
+        </BrowserRouter>
+      </React.StrictMode>
     );
-    
-    // Log de sucesso na inicialização
-    console.log('Application started successfully');
-    
   } catch (error) {
-    console.error('Failed to start application:', error);
-    
-    // Fallback melhorado em caso de erro
-    const rootElement = document.getElementById('root');
-    if (rootElement) {
-      rootElement.innerHTML = `
-        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif; background: #f5f5f5;">
-          <div style="text-align: center; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <h1 style="color: #dc2626; margin-bottom: 1rem;">Erro ao carregar aplicação</h1>
-            <p style="color: #6b7280; margin-bottom: 1.5rem;">Por favor, recarregue a página ou tente novamente.</p>
-            <button 
-              onclick="window.location.reload()" 
-              style="
-                padding: 12px 24px; 
-                background: #059669; 
-                color: white; 
-                border: none; 
-                border-radius: 6px; 
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 500;
-              "
-            >
-              Recarregar Página
-            </button>
-          </div>
-        </div>
-      `;
-    }
+    console.error('Failed to initialize app:', error);
+    document.getElementById('critical-content')?.classList.remove('opacity-0');
   }
 };
 
-// Verificar se o DOM está carregado antes de inicializar
+// Start app when document is ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', startApp);
+  document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
-  startApp();
+  initializeApp();
 }
