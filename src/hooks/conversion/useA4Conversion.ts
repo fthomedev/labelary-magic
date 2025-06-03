@@ -1,12 +1,13 @@
 
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
-import { splitZPLIntoBlocks, delay } from '@/utils/pdfUtils';
+import { useZplLabelProcessor } from './useZplLabelProcessor';
 import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export const useA4Conversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { splitZplIntoLabels, processLabelToPng } = useZplLabelProcessor();
 
   const convertZplToA4Images = async (
     labels: string[],
@@ -15,16 +16,21 @@ export const useA4Conversion = () => {
   ): Promise<Blob[]> => {
     const images: Blob[] = [];
     
-    console.log(`🖼️ Starting A4 PNG conversion of ${labels.length} labels`);
+    console.log(`🖼️ Starting A4 PNG conversion of ${labels.length} labels with detailed logging`);
     
     for (let i = 0; i < labels.length; i++) {
       const label = labels[i];
+      const labelNumber = i + 1;
+      
+      console.log(`🔄 Processing label ${labelNumber}/${labels.length}...`);
+      console.log(`📝 ZPL content (${label.length} chars): ${label.substring(0, 100)}...`);
+      
       let retryCount = 0;
       let success = false;
       
       while (!success && retryCount < config.maxRetries) {
         try {
-          const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
+          const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
             method: 'POST',
             headers: {
               'Accept': 'image/png',
@@ -33,14 +39,27 @@ export const useA4Conversion = () => {
             body: label,
           });
 
+          console.log(`📡 API Response for label ${labelNumber}: ${response.status} ${response.statusText}`);
+
           if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error(`❌ Label ${labelNumber} HTTP error:`, {
+              status: response.status,
+              statusText: response.statusText,
+              headers: Object.fromEntries(response.headers.entries()),
+              body: errorText.substring(0, 200)
+            });
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
           }
 
           const blob = await response.blob();
+          console.log(`📦 Received blob for label ${labelNumber}:`, {
+            size: blob.size,
+            type: blob.type
+          });
           
           if (blob.size === 0) {
-            throw new Error('Empty PNG received');
+            throw new Error('Empty PNG received from API');
           }
           
           images.push(blob);
@@ -49,20 +68,24 @@ export const useA4Conversion = () => {
           const progressValue = ((i + 1) / labels.length) * 80; // Reserve 20% for PDF generation
           onProgress(progressValue);
           
-          console.log(`✅ Label ${i + 1}/${labels.length} converted to PNG`);
+          console.log(`✅ Label ${labelNumber}/${labels.length} converted successfully (${blob.size} bytes)`);
           
         } catch (error) {
           retryCount++;
-          console.error(`❌ Label ${i + 1} attempt ${retryCount} failed:`, error);
+          console.error(`💥 Label ${labelNumber} attempt ${retryCount}/${config.maxRetries} failed:`, {
+            error: error instanceof Error ? error.message : error,
+            stack: error instanceof Error ? error.stack : undefined
+          });
           
           if (retryCount < config.maxRetries) {
-            await delay(config.delayBetweenBatches);
+            console.log(`⏳ Retrying label ${labelNumber} in ${config.delayBetweenBatches}ms...`);
+            await new Promise(resolve => setTimeout(resolve, config.delayBetweenBatches));
           } else {
-            console.error(`💥 Label ${i + 1} failed after ${config.maxRetries} attempts`);
+            console.error(`💀 Label ${labelNumber} permanently failed after ${config.maxRetries} attempts`);
             toast({
               variant: "destructive",
               title: t('error'),
-              description: `Error converting label ${i + 1}`,
+              description: `Erro na etiqueta ${labelNumber}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
               duration: 4000,
             });
           }
@@ -71,17 +94,25 @@ export const useA4Conversion = () => {
       
       // Add delay between requests (except for the last one)
       if (i < labels.length - 1) {
-        await delay(config.delayBetweenBatches);
+        console.log(`⏸️ Waiting ${config.delayBetweenBatches}ms before next request...`);
+        await new Promise(resolve => setTimeout(resolve, config.delayBetweenBatches));
       }
     }
     
-    console.log(`🖼️ PNG conversion completed: ${images.length} images generated`);
+    console.log(`🎯 PNG conversion summary: ${images.length}/${labels.length} images generated successfully`);
     return images;
   };
 
   const parseLabelsFromZpl = (zplContent: string) => {
-    const labels = splitZPLIntoBlocks(zplContent);
-    console.log(`🔍 parseLabelsFromZpl for A4: Found ${labels.length} labels`);
+    console.log('🔍 Parsing ZPL content for A4 processing...');
+    const labels = splitZplIntoLabels(zplContent);
+    console.log(`📋 parseLabelsFromZpl for A4: Found ${labels.length} labels`);
+    
+    // Log first few characters of each label for debugging
+    labels.forEach((label, index) => {
+      console.log(`📄 Label ${index + 1}: ${label.substring(0, 50)}...`);
+    });
+    
     return labels;
   };
 
