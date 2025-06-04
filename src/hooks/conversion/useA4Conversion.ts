@@ -23,15 +23,6 @@ export const useA4Conversion = () => {
       throw new Error('Nenhuma etiqueta válida encontrada para processamento');
     }
 
-    if (validLabels.length !== labels.length) {
-      const skippedCount = labels.length - validLabels.length;
-      toast({
-        title: 'Etiquetas Filtradas',
-        description: `${skippedCount} etiquetas inválidas foram ignoradas. Processando ${validLabels.length} etiquetas válidas.`,
-        duration: 4000,
-      });
-    }
-
     const images: Blob[] = [];
     
     console.log(`🖼️ Starting A4 PNG conversion of ${validLabels.length} valid labels with batch processing`);
