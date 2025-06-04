@@ -87,7 +87,7 @@ export function HistoryPagination({
               aria-disabled={currentPage === 1}
             >
               <ChevronLeft className="h-3 w-3 md:h-4 md:w-4" />
-              <span className="hidden sm:inline ml-1">Anterior</span>
+              <span className="hidden sm:inline ml-1">{t('previous')}</span>
             </PaginationPrevious>
           </PaginationItem>
           
@@ -102,7 +102,7 @@ export function HistoryPagination({
               `}
               aria-disabled={currentPage === totalPages}
             >
-              <span className="hidden sm:inline mr-1">Próximo</span>
+              <span className="hidden sm:inline mr-1">{t('next')}</span>
               <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
             </PaginationNext>
           </PaginationItem>

@@ -1,4 +1,3 @@
-
 const translations = {
   // Geral
   home: 'Home',
@@ -196,6 +195,10 @@ const translations = {
   formatDescription: 'Choose the format that best suits your printer',
   a4FormatDescription: '4 labels organized on A4 sheet',
   standardFormatDescription: 'Individual labels in sequence',
+  
+  // Pagination
+  previous: 'Previous',
+  next: 'Next',
 };
 
 export default translations;
