@@ -17,10 +17,24 @@ export interface ProcessingLogEntry {
 
 export const createProcessingLog = async (entry: ProcessingLogEntry): Promise<void> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    console.log(`🔍 Attempting to create processing log for label ${entry.label_number}...`);
+    
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('❌ Error getting user for logging:', userError);
+      return;
+    }
+    
+    if (!user) {
+      console.warn('⚠️ No authenticated user found, skipping log creation');
+      return;
+    }
+    
+    console.log(`👤 User authenticated: ${user.id}`);
     
     const logEntry = {
-      user_id: user?.id,
+      user_id: user.id,
       label_number: entry.label_number,
       zpl_content: entry.zpl_content.substring(0, 500), // Limit ZPL content length
       status: entry.status,
@@ -32,29 +46,52 @@ export const createProcessingLog = async (entry: ProcessingLogEntry): Promise<vo
       created_at: new Date().toISOString()
     };
 
-    // Use a workaround for the TypeScript issue by casting the table name
-    const { error } = await (supabase as any)
+    console.log('📋 Log entry to be inserted:', {
+      ...logEntry,
+      zpl_content: logEntry.zpl_content.substring(0, 50) + '...',
+      validation_warnings: logEntry.validation_warnings ? 'present' : 'null'
+    });
+
+    // Insert the log entry
+    const { data, error } = await supabase
       .from('processing_logs')
-      .insert([logEntry]);
+      .insert([logEntry])
+      .select();
 
     if (error) {
-      console.error('Failed to save processing log:', error);
+      console.error('❌ Failed to save processing log:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
     } else {
-      console.log(`📝 Processing log saved for label ${entry.label_number}`);
+      console.log(`✅ Processing log saved successfully for label ${entry.label_number}`);
+      console.log('✅ Inserted data:', data);
     }
   } catch (error) {
-    console.error('Error creating processing log:', error);
+    console.error('💥 Exception in createProcessingLog:', error);
   }
 };
 
 export const getProcessingLogs = async (limit: number = 100) => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    console.log('🔍 Fetching processing logs...');
     
-    if (!user) return [];
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('❌ Error getting user for log retrieval:', userError);
+      return [];
+    }
+    
+    if (!user) {
+      console.warn('⚠️ No authenticated user found for log retrieval');
+      return [];
+    }
 
-    // Use a workaround for the TypeScript issue by casting
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('processing_logs')
       .select('*')
       .eq('user_id', user.id)
@@ -62,13 +99,14 @@ export const getProcessingLogs = async (limit: number = 100) => {
       .limit(limit);
 
     if (error) {
-      console.error('Failed to fetch processing logs:', error);
+      console.error('❌ Failed to fetch processing logs:', error);
       return [];
     }
 
+    console.log(`✅ Retrieved ${data?.length || 0} processing logs`);
     return data || [];
   } catch (error) {
-    console.error('Error fetching processing logs:', error);
+    console.error('💥 Exception in getProcessingLogs:', error);
     return [];
   }
 };

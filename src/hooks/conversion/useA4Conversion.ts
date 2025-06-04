@@ -1,4 +1,3 @@
-
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { splitZplIntoLabels } from '@/utils/zplSplitter';
@@ -18,7 +17,7 @@ export const useA4Conversion = () => {
   ): Promise<Blob[]> => {
     const images: Blob[] = [];
     
-    console.log(`🖼️ Starting A4 PNG conversion of ${labels.length} labels with enhanced validation`);
+    console.log(`🖼️ Starting A4 PNG conversion of ${labels.length} labels with enhanced validation and logging`);
     
     // Pre-validate all labels with detailed logging
     const validationResults = validateAllLabels(labels);
@@ -63,15 +62,21 @@ export const useA4Conversion = () => {
         
         console.log(`⏭️ Skipping label ${labelNumber} (validation failed): ${validationResult?.errors.join(', ')}`);
         
-        // Log the skipped label
-        await createProcessingLog({
-          label_number: labelNumber,
-          zpl_content: label,
-          status: 'skipped',
-          error_message: `Validation failed: ${validationResult?.errors.join(', ')}`,
-          validation_warnings: validationResult?.warnings || [],
-          processing_time_ms: processingTime
-        });
+        // Log the skipped label with enhanced debugging
+        console.log(`📝 About to log skipped label ${labelNumber}...`);
+        try {
+          await createProcessingLog({
+            label_number: labelNumber,
+            zpl_content: label,
+            status: 'skipped',
+            error_message: `Validation failed: ${validationResult?.errors.join(', ')}`,
+            validation_warnings: validationResult?.warnings || [],
+            processing_time_ms: processingTime
+          });
+          console.log(`✅ Successfully logged skipped label ${labelNumber}`);
+        } catch (logError) {
+          console.error(`❌ Failed to log skipped label ${labelNumber}:`, logError);
+        }
         
         skipCount++;
         const progressValue = ((i + 1) / labels.length) * 80;
@@ -107,16 +112,22 @@ export const useA4Conversion = () => {
             
             const processingTime = Date.now() - startTime;
             
-            // Log the failed attempt
-            await createProcessingLog({
-              label_number: labelNumber,
-              zpl_content: label,
-              status: 'failed',
-              error_message: `HTTP ${response.status}: ${errorText}`,
-              api_response_status: response.status,
-              api_response_body: errorText,
-              processing_time_ms: processingTime
-            });
+            // Log the failed attempt with enhanced debugging
+            console.log(`📝 About to log failed label ${labelNumber}...`);
+            try {
+              await createProcessingLog({
+                label_number: labelNumber,
+                zpl_content: label,
+                status: 'failed',
+                error_message: `HTTP ${response.status}: ${errorText}`,
+                api_response_status: response.status,
+                api_response_body: errorText,
+                processing_time_ms: processingTime
+              });
+              console.log(`✅ Successfully logged failed label ${labelNumber}`);
+            } catch (logError) {
+              console.error(`❌ Failed to log failed label ${labelNumber}:`, logError);
+            }
             
             throw new Error(`Falha na API (Etiqueta ${labelNumber}): HTTP ${response.status}`);
           }
@@ -134,14 +145,20 @@ export const useA4Conversion = () => {
           
           const processingTime = Date.now() - startTime;
           
-          // Log successful processing
-          await createProcessingLog({
-            label_number: labelNumber,
-            zpl_content: label,
-            status: 'success',
-            api_response_status: response.status,
-            processing_time_ms: processingTime
-          });
+          // Log successful processing with enhanced debugging
+          console.log(`📝 About to log successful label ${labelNumber}...`);
+          try {
+            await createProcessingLog({
+              label_number: labelNumber,
+              zpl_content: label,
+              status: 'success',
+              api_response_status: response.status,
+              processing_time_ms: processingTime
+            });
+            console.log(`✅ Successfully logged successful label ${labelNumber}`);
+          } catch (logError) {
+            console.error(`❌ Failed to log successful label ${labelNumber}:`, logError);
+          }
           
           const progressValue = ((i + 1) / labels.length) * 80;
           onProgress(progressValue);
@@ -162,14 +179,20 @@ export const useA4Conversion = () => {
             console.error(`💀 Label ${labelNumber} permanently failed after ${config.maxRetries} attempts`);
             failureCount++;
             
-            // Log the permanently failed label
-            await createProcessingLog({
-              label_number: labelNumber,
-              zpl_content: label,
-              status: 'failed',
-              error_message: errorMessage,
-              processing_time_ms: processingTime
-            });
+            // Log the permanently failed label with enhanced debugging
+            console.log(`📝 About to log permanently failed label ${labelNumber}...`);
+            try {
+              await createProcessingLog({
+                label_number: labelNumber,
+                zpl_content: label,
+                status: 'failed',
+                error_message: errorMessage,
+                processing_time_ms: processingTime
+              });
+              console.log(`✅ Successfully logged permanently failed label ${labelNumber}`);
+            } catch (logError) {
+              console.error(`❌ Failed to log permanently failed label ${labelNumber}:`, logError);
+            }
             
             // Don't show individual toast for each failure, we'll show summary
             console.warn(`Etiqueta ${labelNumber} falhou permanentemente: ${errorMessage}`);

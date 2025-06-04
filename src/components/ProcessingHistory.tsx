@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, History } from 'lucide-react';
 import { CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { useProcessingHistory } from '@/hooks/useProcessingHistory';
 import { HistoryTable } from './history/HistoryTable';
 import { HistoryPagination } from './history/HistoryPagination';
 import { PdfViewerModal } from './history/PdfViewerModal';
+import { getProcessingLogs } from '@/utils/processingLogger';
 
 interface ProcessingHistoryProps {
   records?: ProcessingRecord[];
@@ -33,6 +33,21 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     closePdfModal,
     downloadCurrentPdf
   } = useProcessingHistory(localRecords, localOnly);
+
+  // Test database access for processing logs
+  useEffect(() => {
+    const testDatabaseAccess = async () => {
+      try {
+        console.log('🧪 Testing database access for processing_logs table...');
+        const logs = await getProcessingLogs(1);
+        console.log('✅ Database access test successful, logs count:', logs.length);
+      } catch (error) {
+        console.error('❌ Database access test failed:', error);
+      }
+    };
+    
+    testDatabaseAccess();
+  }, []);
 
   if (isLoading) {
     return (
