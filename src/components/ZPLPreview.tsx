@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PreviewHeader } from './preview/PreviewHeader';
-import { ArchiveInfo } from './preview/ArchiveInfo';
 import { countLabels } from './preview/ZplLabelCounter';
 import { FormatSelector, PrintFormat } from './format/FormatSelector';
 
@@ -41,11 +40,6 @@ export function ZPLPreview({
               totalLabels={totalLabels} 
             />
           </div>
-          
-          <ArchiveInfo 
-            sourceType={sourceType} 
-            fileCount={fileCount} 
-          />
 
           <div className="border-t pt-3">
             <FormatSelector 
