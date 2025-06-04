@@ -1,4 +1,3 @@
-
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card } from '@/components/ui/card';
@@ -32,7 +31,8 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
       onFileSelect,
       setError,
       setIsProcessing,
-      t
+      t,
+      true // showToast = true for new uploads
     );
   }, [selectedFiles, onFileSelect, t]);
 
@@ -44,13 +44,14 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
       // Reset if no files left
       onFileSelect('', 'file', 0);
     } else {
-      // Reprocess remaining files
+      // Reprocess remaining files without showing toast
       processMultipleFiles(
         newFiles,
         onFileSelect,
         setError,
         setIsProcessing,
-        t
+        t,
+        false // showToast = false for file removal
       );
     }
   };

@@ -1,4 +1,3 @@
-
 import { toast } from '@/hooks/use-toast';
 import JSZip from 'jszip';
 
@@ -119,7 +118,8 @@ export const processMultipleFiles = async (
   onContentExtracted: (content: string, type: 'file' | 'zip', count: number) => void,
   onError: (message: string) => void,
   onProcessingChange: (isProcessing: boolean) => void,
-  t: (key: string, options?: any) => string
+  t: (key: string, options?: any) => string,
+  showToast: boolean = true
 ) => {
   if (files.length === 0) return;
   
@@ -186,14 +186,17 @@ export const processMultipleFiles = async (
     
     onContentExtracted(combinedContent, sourceType, totalFiles);
     
-    toast({
-      title: t('filesProcessed'),
-      description: t('multipleFilesExtracted', { 
-        fileCount: files.length, 
-        labelCount: totalFiles 
-      }),
-      duration: 3000,
-    });
+    // Only show toast if showToast is true
+    if (showToast) {
+      toast({
+        title: t('filesProcessed'),
+        description: t('multipleFilesExtracted', { 
+          fileCount: files.length, 
+          labelCount: totalFiles 
+        }),
+        duration: 3000,
+      });
+    }
     
   } catch (error) {
     console.error('Error processing multiple files:', error);
