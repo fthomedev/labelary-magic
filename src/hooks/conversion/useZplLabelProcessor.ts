@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
@@ -49,7 +48,7 @@ export const useZplLabelProcessor = () => {
     console.log(`🖼️ Processing label ${labelNumber}...`);
     
     try {
-      const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
+      const response = await fetch('https://api.labelary.com/v1/printers/12dpmm/labels/4x6/0/', {
         method: 'POST',
         headers: {
           'Accept': 'image/png',
