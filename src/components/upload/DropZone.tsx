@@ -67,7 +67,10 @@ export function DropZone({
               </div>
               {onRemoveFile && (
                 <button
-                  onClick={() => onRemoveFile(index)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemoveFile(index);
+                  }}
                   className="text-red-500 hover:text-red-700 p-1"
                   type="button"
                 >
