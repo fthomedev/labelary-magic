@@ -113,3 +113,107 @@ export const processTextFile = (
   };
   reader.readAsText(file);
 };
+
+export const processMultipleFiles = async (
+  files: File[],
+  onContentExtracted: (content: string, type: 'file' | 'zip', count: number) => void,
+  onError: (message: string) => void,
+  onProcessingChange: (isProcessing: boolean) => void,
+  t: (key: string, options?: any) => string
+) => {
+  if (files.length === 0) return;
+  
+  onProcessingChange(true);
+  
+  try {
+    const allContents: string[] = [];
+    let totalFiles = 0;
+    let hasZipFiles = false;
+    
+    for (const file of files) {
+      if (file.name.toLowerCase().endsWith('.zip')) {
+        hasZipFiles = true;
+        try {
+          const zip = new JSZip();
+          const zipContents = await zip.loadAsync(file);
+          
+          const zplFiles = Object.keys(zipContents.files).filter(
+            filename => filename.endsWith('.txt') || filename.endsWith('.zpl')
+          );
+          
+          for (const filename of zplFiles) {
+            const content = await zipContents.files[filename].async('text');
+            if (content.includes('^XA') && content.includes('^XZ')) {
+              allContents.push(content);
+              totalFiles++;
+            }
+          }
+        } catch (zipError) {
+          console.error(`Error processing ZIP file ${file.name}:`, zipError);
+          onError(t('zipProcessingError'));
+          return;
+        }
+      } else {
+        // Process text file
+        try {
+          const content = await readFileAsText(file);
+          if (content.includes('^XA') && content.includes('^XZ')) {
+            allContents.push(content);
+            totalFiles++;
+          }
+        } catch (textError) {
+          console.error(`Error processing text file ${file.name}:`, textError);
+          onError(t('readErrorMessage'));
+          return;
+        }
+      }
+    }
+    
+    if (allContents.length === 0) {
+      const errorMessage = t('noValidZplContent');
+      onError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: errorMessage,
+        duration: 4000,
+      });
+      return;
+    }
+    
+    const combinedContent = allContents.join('\n');
+    const sourceType = hasZipFiles ? 'zip' : 'file';
+    
+    onContentExtracted(combinedContent, sourceType, totalFiles);
+    
+    toast({
+      title: t('filesProcessed'),
+      description: t('multipleFilesExtracted', { 
+        fileCount: files.length, 
+        labelCount: totalFiles 
+      }),
+      duration: 3000,
+    });
+    
+  } catch (error) {
+    console.error('Error processing multiple files:', error);
+    onError(t('errorProcessingFiles'));
+    toast({
+      variant: "destructive",
+      title: t('error'),
+      description: t('errorProcessingFiles'),
+      duration: 4000,
+    });
+  } finally {
+    onProcessingChange(false);
+  }
+};
+
+const readFileAsText = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target?.result as string);
+    reader.onerror = () => reject(new Error('Error reading file'));
+    reader.readAsText(file);
+  });
+};

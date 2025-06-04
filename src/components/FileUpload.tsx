@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 import { DropZone } from './upload/DropZone';
 import { ErrorMessage } from './upload/ErrorMessage';
-import { processZipFile, processTextFile } from './upload/fileProcessors';
+import { processMultipleFiles } from './upload/fileProcessors';
 
 interface FileUploadProps {
   onFileSelect: (content: string, type?: 'file' | 'zip', count?: number) => void;
@@ -14,31 +14,46 @@ interface FileUploadProps {
 export function FileUpload({ onFileSelect }: FileUploadProps) {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const { t } = useTranslation();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setError(null);
-    const file = acceptedFiles[0];
     
-    if (!file) return;
+    if (acceptedFiles.length === 0) return;
     
-    if (file.name.toLowerCase().endsWith('.zip')) {
-      processZipFile(
-        file,
+    // Add new files to existing selection
+    const newFiles = [...selectedFiles, ...acceptedFiles];
+    setSelectedFiles(newFiles);
+    
+    // Process all files together
+    processMultipleFiles(
+      newFiles,
+      onFileSelect,
+      setError,
+      setIsProcessing,
+      t
+    );
+  }, [selectedFiles, onFileSelect, t]);
+
+  const removeFile = (index: number) => {
+    const newFiles = selectedFiles.filter((_, i) => i !== index);
+    setSelectedFiles(newFiles);
+    
+    if (newFiles.length === 0) {
+      // Reset if no files left
+      onFileSelect('', 'file', 0);
+    } else {
+      // Reprocess remaining files
+      processMultipleFiles(
+        newFiles,
         onFileSelect,
         setError,
         setIsProcessing,
         t
       );
-    } else {
-      processTextFile(
-        file,
-        onFileSelect,
-        setError,
-        t
-      );
     }
-  }, [onFileSelect, t]);
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -47,7 +62,7 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
       'application/zip': ['.zip'],
       'application/x-zip-compressed': ['.zip'],
     },
-    maxFiles: 1,
+    multiple: true, // Enable multiple file selection
   });
 
   return (
@@ -65,6 +80,8 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
             isProcessing={isProcessing}
             getInputProps={getInputProps}
             getRootProps={getRootProps}
+            selectedFiles={selectedFiles}
+            onRemoveFile={removeFile}
           />
         </div>
       </div>

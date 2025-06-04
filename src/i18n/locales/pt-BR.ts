@@ -1,3 +1,4 @@
+
 const translations = {
   // Geral
   home: 'Início',
@@ -199,6 +200,16 @@ const translations = {
   // Pagination
   previous: 'Anterior',
   next: 'Próximo',
+  
+  // Multiple file upload
+  dragAndDropMultiple: 'Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)',
+  selectFiles: 'Selecionar Arquivos',
+  selectMoreFiles: 'Selecionar Mais Arquivos',
+  filesSelected: '{{count}} arquivos selecionados',
+  processingFiles: 'Processando arquivos...',
+  filesProcessed: 'Arquivos Processados',
+  multipleFilesExtracted: '{{fileCount}} arquivos processados, {{labelCount}} etiquetas extraídas',
+  errorProcessingFiles: 'Erro ao processar um ou mais arquivos',
 };
 
 export default translations;

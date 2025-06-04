@@ -1,3 +1,4 @@
+
 const translations = {
   // Geral
   home: 'Home',
@@ -199,6 +200,16 @@ const translations = {
   // Pagination
   previous: 'Previous',
   next: 'Next',
+  
+  // Multiple file upload
+  dragAndDropMultiple: 'Drag and drop your files here (multiple files supported)',
+  selectFiles: 'Select Files',
+  selectMoreFiles: 'Select More Files',
+  filesSelected: '{{count}} files selected',
+  processingFiles: 'Processing files...',
+  filesProcessed: 'Files Processed',
+  multipleFilesExtracted: '{{fileCount}} files processed, {{labelCount}} labels extracted',
+  errorProcessingFiles: 'Error processing one or more files',
 };
 
 export default translations;
