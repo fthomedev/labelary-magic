@@ -52,7 +52,7 @@ export const useA4Conversion = () => {
             
             console.log(`🔄 Processing A4 label ${labelNumber}/${validLabels.length} in batch ${batchNumber}...`);
             
-            const response = await fetch('https://api.labelary.com/v1/printers/24dpmm/labels/4x6/0/', {
+            const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
               method: 'POST',
               headers: {
                 'Accept': 'image/png',
