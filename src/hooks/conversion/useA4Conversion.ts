@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { splitZplIntoLabels } from '@/utils/zplSplitter';
 import { useZplValidator } from './useZplValidator';
+import { createProcessingLog } from '@/utils/processingLogger';
 import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export const useA4Conversion = () => {
@@ -17,7 +18,7 @@ export const useA4Conversion = () => {
   ): Promise<Blob[]> => {
     const images: Blob[] = [];
     
-    console.log(`🖼️ Starting A4 PNG conversion of ${labels.length} labels with pre-validation`);
+    console.log(`🖼️ Starting A4 PNG conversion of ${labels.length} labels with pre-validation and logging`);
     
     // Pre-validate all labels
     const validationResults = validateAllLabels(labels);
@@ -34,12 +35,27 @@ export const useA4Conversion = () => {
     for (let i = 0; i < labels.length; i++) {
       const label = labels[i];
       const labelNumber = i + 1;
+      const startTime = Date.now();
       
       console.log(`🔄 Processing label ${labelNumber}/${labels.length}...`);
       
-      // Skip invalid labels
+      // Skip invalid labels and log them
       if (!validLabelIndices.includes(i)) {
-        console.log(`⏭️ Skipping label ${labelNumber} (failed validation)`);
+        const processingTime = Date.now() - startTime;
+        const validationResult = validationResults.find(r => r.labelNumber === labelNumber);
+        
+        console.log(`⏭️ Skipping label ${labelNumber} (failed validation): ${validationResult?.errors.join(', ')}`);
+        
+        // Log the skipped label
+        await createProcessingLog({
+          label_number: labelNumber,
+          zpl_content: label,
+          status: 'skipped',
+          error_message: `Validation failed: ${validationResult?.errors.join(', ')}`,
+          validation_warnings: validationResult?.warnings || [],
+          processing_time_ms: processingTime
+        });
+        
         const progressValue = ((i + 1) / labels.length) * 80;
         onProgress(progressValue);
         continue;
@@ -71,6 +87,20 @@ export const useA4Conversion = () => {
               headers: Object.fromEntries(response.headers.entries()),
               body: errorText.substring(0, 200)
             });
+            
+            const processingTime = Date.now() - startTime;
+            
+            // Log the failed attempt
+            await createProcessingLog({
+              label_number: labelNumber,
+              zpl_content: label,
+              status: 'failed',
+              error_message: `HTTP ${response.status}: ${errorText}`,
+              api_response_status: response.status,
+              api_response_body: errorText,
+              processing_time_ms: processingTime
+            });
+            
             throw new Error(`HTTP ${response.status}: ${errorText}`);
           }
 
@@ -87,6 +117,17 @@ export const useA4Conversion = () => {
           images.push(blob);
           success = true;
           
+          const processingTime = Date.now() - startTime;
+          
+          // Log successful processing
+          await createProcessingLog({
+            label_number: labelNumber,
+            zpl_content: label,
+            status: 'success',
+            api_response_status: response.status,
+            processing_time_ms: processingTime
+          });
+          
           const progressValue = ((i + 1) / labels.length) * 80; // Reserve 20% for PDF generation
           onProgress(progressValue);
           
@@ -94,6 +135,8 @@ export const useA4Conversion = () => {
           
         } catch (error) {
           retryCount++;
+          const processingTime = Date.now() - startTime;
+          
           console.error(`💥 Label ${labelNumber} attempt ${retryCount}/${config.maxRetries} failed:`, {
             error: error instanceof Error ? error.message : error,
             stack: error instanceof Error ? error.stack : undefined
@@ -104,6 +147,16 @@ export const useA4Conversion = () => {
             await new Promise(resolve => setTimeout(resolve, config.delayBetweenBatches));
           } else {
             console.error(`💀 Label ${labelNumber} permanently failed after ${config.maxRetries} attempts`);
+            
+            // Log the permanently failed label
+            await createProcessingLog({
+              label_number: labelNumber,
+              zpl_content: label,
+              status: 'failed',
+              error_message: error instanceof Error ? error.message : 'Unknown error',
+              processing_time_ms: processingTime
+            });
+            
             toast({
               variant: "destructive",
               title: t('error'),

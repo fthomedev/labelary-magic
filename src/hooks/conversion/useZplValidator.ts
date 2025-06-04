@@ -25,6 +25,11 @@ export const useZplValidator = () => {
       errors.push('Missing ^XZ (End Format) command');
     }
     
+    // Check for very short content - often these are invalid
+    if (zplContent.length < 30) {
+      errors.push(`Label too short (${zplContent.length} chars) - likely invalid or incomplete`);
+    }
+    
     // Check for problematic patterns that cause 404 errors
     const problematicPatterns = [
       {
