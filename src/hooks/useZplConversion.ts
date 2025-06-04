@@ -1,9 +1,10 @@
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useZplApiConversion } from './conversion/useZplApiConversion';
-import { usePdfMerge } from './pdf/usePdfMerge';
-import { useSupabase } from './useSupabase';
+import { usePdfMerger } from './pdf/usePdfMerger';
+import { useUploadPdf } from './pdf/useUploadPdf';
 import { useHistoryRecords } from './history/useHistoryRecords';
 
 export interface ProcessingRecord {
@@ -23,8 +24,8 @@ export const useZplConversion = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { convertZplBlocksToPdfs, parseLabelsFromZpl } = useZplApiConversion();
-  const { mergePDFs } = usePdfMerge();
-  const { uploadPdf } = useSupabase();
+  const { mergePDFs } = usePdfMerger();
+  const { uploadPDFToStorage, getPdfPublicUrl } = useUploadPdf();
   const { addToProcessingHistory } = useHistoryRecords();
 
   const resetProcessingStatus = () => {
@@ -74,7 +75,7 @@ export const useZplConversion = () => {
 
       setProgress(95);
       const fileName = `etiquetas-${Date.now()}.pdf`;
-      const pdfPath = await uploadPdf(mergedPdf, fileName);
+      const pdfPath = await uploadPDFToStorage(mergedPdf);
       console.log(`☁️ Uploaded PDF to: ${pdfPath}`);
 
       const endTime = Date.now();
@@ -83,22 +84,17 @@ export const useZplConversion = () => {
 
       await addToProcessingHistory(labels.length, pdfPath, processingTime, 'standard');
 
-      const { data: publicUrlData } = await supabase.storage
-        .from('pdfs')
-        .getPublicUrl(pdfPath);
+      const publicUrl = await getPdfPublicUrl(pdfPath);
+      setLastPdfUrl(publicUrl);
+      setProgress(100);
+      setIsProcessingComplete(true);
+      setHistoryRefreshTrigger(prev => prev + 1);
 
-      if (publicUrlData?.publicUrl) {
-        setLastPdfUrl(publicUrlData.publicUrl);
-        setProgress(100);
-        setIsProcessingComplete(true);
-        setHistoryRefreshTrigger(prev => prev + 1);
-
-        toast({
-          title: t('conversionComplete'),
-          description: t('conversionCompleteDesc', { count: labels.length }),
-          duration: 5000,
-        });
-      }
+      toast({
+        title: t('conversionComplete'),
+        description: t('conversionCompleteDesc', { count: labels.length }),
+        duration: 5000,
+      });
     } catch (error) {
       console.error('Standard conversion failed:', error);
       

@@ -1,9 +1,10 @@
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useA4Conversion } from './useA4Conversion';
 import { usePdfMerger } from '../pdf/usePdfMerger';
-import { useSupabase } from '../supabase/useSupabase';
+import { useUploadPdf } from '../pdf/useUploadPdf';
 import { useZplLabelProcessor } from './useZplLabelProcessor';
 import { useHistoryRecords } from '../history/useHistoryRecords';
 
@@ -17,8 +18,8 @@ export const useA4ZplConversion = () => {
   const { t } = useTranslation();
   const { convertZplToA4Images } = useA4Conversion();
   const { mergePDFs } = usePdfMerger();
-  const { uploadPdf } = useSupabase();
-  const { parseLabelsFromZpl } = useZplLabelProcessor();
+  const { uploadPDFToStorage, getPdfPublicUrl } = useUploadPdf();
+  const { splitZplIntoLabels } = useZplLabelProcessor();
   const { addToProcessingHistory } = useHistoryRecords();
 
   const convertImagesToA4PDF = async (images: Blob[]): Promise<Blob> => {
@@ -61,7 +62,9 @@ export const useA4ZplConversion = () => {
     }
 
     return new Promise<Blob>((resolve) => {
-      doc.output('blob', resolve);
+      const pdfOutput = doc.output('arraybuffer');
+      const blob = new Blob([pdfOutput], { type: 'application/pdf' });
+      resolve(blob);
     });
   };
 
@@ -85,7 +88,7 @@ export const useA4ZplConversion = () => {
     console.log('🚀 Starting A4 PDF conversion process...');
 
     try {
-      const labels = parseLabelsFromZpl(zplContent);
+      const labels = splitZplIntoLabels(zplContent);
       console.log(`📊 Converting ${labels.length} labels to A4 PDF format`);
 
       if (labels.length === 0) {
@@ -109,8 +112,7 @@ export const useA4ZplConversion = () => {
       setProgress(90);
       
       // Upload PDF
-      const fileName = `etiquetas-a4-${Date.now()}.pdf`;
-      const pdfPath = await uploadPdf(a4Pdf, fileName);
+      const pdfPath = await uploadPDFToStorage(a4Pdf);
       console.log(`☁️ Uploaded A4 PDF to: ${pdfPath}`);
 
       const endTime = Date.now();
@@ -120,22 +122,17 @@ export const useA4ZplConversion = () => {
       // Save to history with A4 type
       await addToProcessingHistory(labels.length, pdfPath, processingTime, 'a4');
 
-      const { data: publicUrlData } = await supabase.storage
-        .from('pdfs')
-        .getPublicUrl(pdfPath);
+      const publicUrl = await getPdfPublicUrl(pdfPath);
+      setLastPdfUrl(publicUrl);
+      setProgress(100);
+      setIsProcessingComplete(true);
+      setHistoryRefreshTrigger(prev => prev + 1);
 
-      if (publicUrlData?.publicUrl) {
-        setLastPdfUrl(publicUrlData.publicUrl);
-        setProgress(100);
-        setIsProcessingComplete(true);
-        setHistoryRefreshTrigger(prev => prev + 1);
-
-        toast({
-          title: t('a4ConversionComplete'),
-          description: t('a4ConversionCompleteDesc', { count: labels.length }),
-          duration: 5000,
-        });
-      }
+      toast({
+        title: t('a4ConversionComplete'),
+        description: t('a4ConversionCompleteDesc', { count: labels.length }),
+        duration: 5000,
+      });
     } catch (error) {
       console.error('A4 conversion failed:', error);
       
