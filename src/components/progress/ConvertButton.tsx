@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -37,7 +36,7 @@ export function ConvertButton({
         <Button
           size={isMobile ? "sm" : "default"}
           onClick={onProcessAgain}
-          className={`${isMobile ? 'w-full' : 'min-w-[160px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-blue-500 text-blue-600 hover:bg-blue-50`}
+          className={`${isMobile ? 'w-full' : 'min-w-[160px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-green-500 text-green-600 hover:bg-green-50`}
         >
           <RotateCcw className="mr-2 h-4 w-4" />
           {t('processAgain')}
