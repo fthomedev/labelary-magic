@@ -9,7 +9,7 @@ import { useConversionMetrics } from './useConversionMetrics';
 import { organizeImagesInA4PDF } from '@/utils/a4Utils';
 import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
-import { DEFAULT_CONFIG } from '@/config/processingConfig';
+import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export const useA4ZplConversion = () => {
   const { toast } = useToast();
@@ -41,7 +41,7 @@ export const useA4ZplConversion = () => {
     downloadPdf
   } = usePdfOperations();
 
-  const convertToA4PDF = async (zplContent: string) => {
+  const convertToA4PDF = async (zplContent: string, useOptimizedTiming: boolean = true) => {
     if (!zplContent) return;
     
     const conversionStartTime = Date.now();
@@ -53,14 +53,27 @@ export const useA4ZplConversion = () => {
       const labels = parseLabelsFromZpl(zplContent);
       const finalLabelCount = Math.ceil(labels.length / 2);
       
-      console.log(`🎯 Starting A4 conversion of ${finalLabelCount} labels`);
+      console.log(`🎯 Starting A4 conversion of ${finalLabelCount} labels with optimized batch processing`);
+      console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration for A4`);
+      
+      // Choose configuration based on label count and user preference (same logic as standard)
+      let config: ProcessingConfig;
+      if (!useOptimizedTiming) {
+        config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 }; // Original conservative timing
+      } else if (finalLabelCount > 100) {
+        config = DEFAULT_CONFIG; // Moderate optimization for large batches
+      } else {
+        config = FAST_CONFIG; // Aggressive optimization for smaller batches
+      }
+      
+      console.log(`📋 A4 using configuration:`, config);
       
       const conversionPhaseStart = Date.now();
 
-      // Convert to PNG images
+      // Convert to PNG images with batch processing
       const images = await convertZplToA4Images(labels, (progressValue) => {
         setProgress(progressValue); // 0-80%
-      }, DEFAULT_CONFIG);
+      }, config);
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ A4 image conversion phase completed in ${conversionPhaseTime}ms`);
