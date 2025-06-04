@@ -1,4 +1,3 @@
-
 const translations = {
   // Geral
   home: 'Início',
@@ -210,6 +209,9 @@ const translations = {
   filesProcessed: 'Arquivos Processados',
   multipleFilesExtracted: '{{fileCount}} arquivos processados, {{labelCount}} etiquetas extraídas',
   errorProcessingFiles: 'Erro ao processar um ou mais arquivos',
+  
+  // Process Again
+  processAgain: 'Processar Novamente',
 };
 
 export default translations;

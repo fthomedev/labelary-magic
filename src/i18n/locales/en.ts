@@ -1,4 +1,3 @@
-
 const translations = {
   // Geral
   home: 'Home',
@@ -210,6 +209,9 @@ const translations = {
   filesProcessed: 'Files Processed',
   multipleFilesExtracted: '{{fileCount}} files processed, {{labelCount}} labels extracted',
   errorProcessingFiles: 'Error processing one or more files',
+  
+  // Process Again
+  processAgain: 'Process Again',
 };
 
 export default translations;
