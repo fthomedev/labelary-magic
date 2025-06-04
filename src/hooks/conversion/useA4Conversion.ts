@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useZplLabelProcessor } from './useZplLabelProcessor';
 import { useZplValidator } from './useZplValidator';
-import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
+import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export const useA4Conversion = () => {
   const { toast } = useToast();
@@ -14,7 +14,7 @@ export const useA4Conversion = () => {
   const convertZplToA4Images = async (
     labels: string[],
     onProgress: (progress: number) => void,
-    config: ProcessingConfig = DEFAULT_CONFIG
+    config: ProcessingConfig = A4_CONFIG
   ): Promise<Blob[]> => {
     // Filter out invalid labels before processing
     const validLabels = filterValidLabels(labels);
@@ -25,20 +25,20 @@ export const useA4Conversion = () => {
 
     const images: Blob[] = [];
     
-    console.log(`🖼️ Starting A4 PNG conversion of ${validLabels.length} valid labels with batch processing`);
-    console.log(`⚡ Using batch configuration:`, config);
+    console.log(`🖼️ Starting A4 PNG conversion of ${validLabels.length} valid labels with Cenário 2 batch processing`);
+    console.log(`⚡ Using A4 Cenário 2 configuration:`, config);
     
     let currentConfig = { ...config };
     let consecutiveErrors = 0;
     let successfulBatches = 0;
     
-    // Process labels in batches like the standard system
+    // Process labels in batches with Cenário 2 settings
     for (let i = 0; i < validLabels.length; i += currentConfig.labelsPerBatch) {
       const batchLabels = validLabels.slice(i, i + currentConfig.labelsPerBatch);
       const batchNumber = Math.floor(i / currentConfig.labelsPerBatch) + 1;
       const totalBatches = Math.ceil(validLabels.length / currentConfig.labelsPerBatch);
       
-      console.log(`📦 Processing A4 batch ${batchNumber}/${totalBatches} (${batchLabels.length} labels)`);
+      console.log(`📦 Processing A4 batch ${batchNumber}/${totalBatches} (${batchLabels.length} labels) - Cenário 2`);
       
       let batchSuccess = false;
       let retryCount = 0;
@@ -88,7 +88,7 @@ export const useA4Conversion = () => {
             
             // Add small delay between individual labels within a batch
             if (j < batchLabels.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 100));
+              await new Promise(resolve => setTimeout(resolve, 150)); // Slightly increased delay
             }
           }
           
@@ -99,7 +99,7 @@ export const useA4Conversion = () => {
           const progressValue = ((i + batchLabels.length) / validLabels.length) * 80; // Reserve 20% for PDF generation
           onProgress(progressValue);
           
-          console.log(`✅ A4 Batch ${batchNumber} completed successfully (${batchLabels.length} labels)`);
+          console.log(`✅ A4 Batch ${batchNumber} completed successfully (${batchLabels.length} labels) - Cenário 2`);
           
         } catch (error) {
           retryCount++;
@@ -116,12 +116,7 @@ export const useA4Conversion = () => {
             await new Promise(resolve => setTimeout(resolve, retryDelay));
           } else {
             console.error(`💀 A4 Batch ${batchNumber} permanently failed after ${currentConfig.maxRetries} attempts`);
-            toast({
-              variant: "destructive",
-              title: t('error'),
-              description: `Erro no lote A4 ${batchNumber}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-              duration: 4000,
-            });
+            // Continue with next batch instead of throwing
           }
         }
       }
@@ -132,20 +127,20 @@ export const useA4Conversion = () => {
         currentConfig = {
           ...currentConfig,
           delayBetweenBatches: currentConfig.fallbackDelay,
-          labelsPerBatch: Math.max(currentConfig.labelsPerBatch - 2, 5),
+          labelsPerBatch: Math.max(currentConfig.labelsPerBatch - 5, 10), // More conservative fallback
         };
         consecutiveErrors = 0;
       }
       
-      // Add delay between batches (except for the last batch)
+      // Add delay between batches (Cenário 2: 1000ms)
       if (i + currentConfig.labelsPerBatch < validLabels.length) {
-        console.log(`⏱️ A4 waiting ${currentConfig.delayBetweenBatches}ms before next batch...`);
+        console.log(`⏱️ A4 waiting ${currentConfig.delayBetweenBatches}ms before next batch (Cenário 2)...`);
         await new Promise(resolve => setTimeout(resolve, currentConfig.delayBetweenBatches));
       }
     }
     
     console.log(`🎯 A4 PNG conversion summary: ${images.length}/${validLabels.length} images generated successfully`);
-    console.log(`📊 A4 batch processing stats: ${successfulBatches} successful batches`);
+    console.log(`📊 A4 batch processing stats: ${successfulBatches} successful batches with Cenário 2`);
     
     return images;
   };

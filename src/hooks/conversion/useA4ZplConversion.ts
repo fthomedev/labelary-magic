@@ -9,7 +9,7 @@ import { useConversionMetrics } from './useConversionMetrics';
 import { organizeImagesInA4PDF } from '@/utils/a4Utils';
 import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
-import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
+import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export const useA4ZplConversion = () => {
   const { toast } = useToast();
@@ -53,20 +53,12 @@ export const useA4ZplConversion = () => {
       const labels = parseLabelsFromZpl(zplContent);
       const finalLabelCount = Math.ceil(labels.length / 2);
       
-      console.log(`🎯 Starting A4 conversion of ${finalLabelCount} labels with optimized batch processing`);
-      console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration for A4`);
+      console.log(`🎯 Starting A4 conversion of ${finalLabelCount} labels with Cenário 2 (Moderate) configuration`);
       
-      // Choose configuration based on label count and user preference (same logic as standard)
-      let config: ProcessingConfig;
-      if (!useOptimizedTiming) {
-        config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 }; // Original conservative timing
-      } else if (finalLabelCount > 100) {
-        config = DEFAULT_CONFIG; // Moderate optimization for large batches
-      } else {
-        config = FAST_CONFIG; // Aggressive optimization for smaller batches
-      }
+      // Sempre usar A4_CONFIG (Cenário 2) para processamento A4
+      const config: ProcessingConfig = A4_CONFIG;
       
-      console.log(`📋 A4 using configuration:`, config);
+      console.log(`📋 A4 using Cenário 2 configuration:`, config);
       
       const conversionPhaseStart = Date.now();
 
