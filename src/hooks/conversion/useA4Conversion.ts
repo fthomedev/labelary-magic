@@ -18,19 +18,36 @@ export const useA4Conversion = () => {
   ): Promise<Blob[]> => {
     const images: Blob[] = [];
     
-    console.log(`🖼️ Starting A4 PNG conversion of ${labels.length} labels with pre-validation and logging`);
+    console.log(`🖼️ Starting A4 PNG conversion of ${labels.length} labels with enhanced validation`);
     
-    // Pre-validate all labels
+    // Pre-validate all labels with detailed logging
     const validationResults = validateAllLabels(labels);
     const validLabelIndices = validationResults
       .filter(r => r.isValid)
       .map(r => r.labelNumber - 1);
     
-    console.log(`✅ Pre-validation complete: ${validLabelIndices.length}/${labels.length} labels are valid`);
+    const invalidCount = labels.length - validLabelIndices.length;
+    console.log(`✅ Pre-validation complete: ${validLabelIndices.length}/${labels.length} labels are valid (${invalidCount} invalid/skipped)`);
     
     if (validLabelIndices.length === 0) {
-      throw new Error('No valid ZPL labels found after validation');
+      console.error('❌ No valid ZPL labels found after validation');
+      throw new Error('Nenhuma etiqueta ZPL válida encontrada. Verifique o conteúdo do arquivo.');
     }
+    
+    // Show warning if many labels are invalid
+    if (invalidCount > 0) {
+      console.warn(`⚠️ ${invalidCount} etiquetas serão ignoradas por serem inválidas ou muito curtas`);
+      toast({
+        variant: "destructive",
+        title: "Aviso de Validação",
+        description: `${invalidCount} etiquetas inválidas foram ignoradas automaticamente`,
+        duration: 5000,
+      });
+    }
+    
+    let successCount = 0;
+    let skipCount = 0;
+    let failureCount = 0;
     
     for (let i = 0; i < labels.length; i++) {
       const label = labels[i];
@@ -44,7 +61,7 @@ export const useA4Conversion = () => {
         const processingTime = Date.now() - startTime;
         const validationResult = validationResults.find(r => r.labelNumber === labelNumber);
         
-        console.log(`⏭️ Skipping label ${labelNumber} (failed validation): ${validationResult?.errors.join(', ')}`);
+        console.log(`⏭️ Skipping label ${labelNumber} (validation failed): ${validationResult?.errors.join(', ')}`);
         
         // Log the skipped label
         await createProcessingLog({
@@ -56,12 +73,13 @@ export const useA4Conversion = () => {
           processing_time_ms: processingTime
         });
         
+        skipCount++;
         const progressValue = ((i + 1) / labels.length) * 80;
         onProgress(progressValue);
         continue;
       }
       
-      console.log(`📝 ZPL content (${label.length} chars): ${label.substring(0, 100)}...`);
+      console.log(`📝 Processing valid ZPL (${label.length} chars)`);
       
       let retryCount = 0;
       let success = false;
@@ -84,8 +102,7 @@ export const useA4Conversion = () => {
             console.error(`❌ Label ${labelNumber} HTTP error:`, {
               status: response.status,
               statusText: response.statusText,
-              headers: Object.fromEntries(response.headers.entries()),
-              body: errorText.substring(0, 200)
+              errorBody: errorText.substring(0, 200)
             });
             
             const processingTime = Date.now() - startTime;
@@ -101,21 +118,19 @@ export const useA4Conversion = () => {
               processing_time_ms: processingTime
             });
             
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
+            throw new Error(`Falha na API (Etiqueta ${labelNumber}): HTTP ${response.status}`);
           }
 
           const blob = await response.blob();
-          console.log(`📦 Received blob for label ${labelNumber}:`, {
-            size: blob.size,
-            type: blob.type
-          });
+          console.log(`📦 Received blob for label ${labelNumber}: ${blob.size} bytes`);
           
           if (blob.size === 0) {
-            throw new Error('Empty PNG received from API');
+            throw new Error(`PNG vazio recebido da API para etiqueta ${labelNumber}`);
           }
           
           images.push(blob);
           success = true;
+          successCount++;
           
           const processingTime = Date.now() - startTime;
           
@@ -128,53 +143,62 @@ export const useA4Conversion = () => {
             processing_time_ms: processingTime
           });
           
-          const progressValue = ((i + 1) / labels.length) * 80; // Reserve 20% for PDF generation
+          const progressValue = ((i + 1) / labels.length) * 80;
           onProgress(progressValue);
           
-          console.log(`✅ Label ${labelNumber}/${labels.length} converted successfully (${blob.size} bytes)`);
+          console.log(`✅ Label ${labelNumber}/${labels.length} converted successfully`);
           
         } catch (error) {
           retryCount++;
           const processingTime = Date.now() - startTime;
+          const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
           
-          console.error(`💥 Label ${labelNumber} attempt ${retryCount}/${config.maxRetries} failed:`, {
-            error: error instanceof Error ? error.message : error,
-            stack: error instanceof Error ? error.stack : undefined
-          });
+          console.error(`💥 Label ${labelNumber} attempt ${retryCount}/${config.maxRetries} failed:`, errorMessage);
           
           if (retryCount < config.maxRetries) {
             console.log(`⏳ Retrying label ${labelNumber} in ${config.delayBetweenBatches}ms...`);
             await new Promise(resolve => setTimeout(resolve, config.delayBetweenBatches));
           } else {
             console.error(`💀 Label ${labelNumber} permanently failed after ${config.maxRetries} attempts`);
+            failureCount++;
             
             // Log the permanently failed label
             await createProcessingLog({
               label_number: labelNumber,
               zpl_content: label,
               status: 'failed',
-              error_message: error instanceof Error ? error.message : 'Unknown error',
+              error_message: errorMessage,
               processing_time_ms: processingTime
             });
             
-            toast({
-              variant: "destructive",
-              title: t('error'),
-              description: `Erro na etiqueta ${labelNumber}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-              duration: 4000,
-            });
+            // Don't show individual toast for each failure, we'll show summary
+            console.warn(`Etiqueta ${labelNumber} falhou permanentemente: ${errorMessage}`);
           }
         }
       }
       
       // Add delay between requests (except for the last one)
       if (i < labels.length - 1) {
-        console.log(`⏸️ Waiting ${config.delayBetweenBatches}ms before next request...`);
         await new Promise(resolve => setTimeout(resolve, config.delayBetweenBatches));
       }
     }
     
-    console.log(`🎯 PNG conversion summary: ${images.length}/${labels.length} images generated successfully`);
+    // Show summary results
+    console.log(`🎯 A4 conversion summary: ${successCount} success, ${skipCount} skipped, ${failureCount} failed`);
+    
+    if (images.length === 0) {
+      throw new Error('Nenhuma imagem foi gerada com sucesso. Verifique o conteúdo ZPL.');
+    }
+    
+    if (failureCount > 0) {
+      toast({
+        variant: "destructive",
+        title: "Aviso de Processamento",
+        description: `${failureCount} etiquetas falharam durante o processamento`,
+        duration: 4000,
+      });
+    }
+    
     return images;
   };
 
@@ -185,7 +209,8 @@ export const useA4Conversion = () => {
     
     // Log first few characters of each label for debugging
     labels.forEach((label, index) => {
-      console.log(`📄 Label ${index + 1}: ${label.substring(0, 50)}...`);
+      const preview = label.substring(0, 50).replace(/\s+/g, ' ');
+      console.log(`📄 Label ${index + 1}: ${preview}...`);
     });
     
     return labels;
