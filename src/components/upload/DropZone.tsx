@@ -44,25 +44,25 @@ export function DropZone({
     );
   }
 
-  // Show selected files if any
+  // Show selected files if any - reduced padding
   if (selectedFiles.length > 0) {
     return (
-      <div className="py-6">
-        <div className="flex justify-center space-x-4 mb-4">
-          <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-            <FileText className="h-6 w-6 text-green-600" />
+      <div className="py-3">
+        <div className="flex justify-center space-x-4 mb-3">
+          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+            <FileText className="h-5 w-5 text-green-600" />
           </div>
         </div>
-        <p className="text-base font-medium text-foreground mb-4">
+        <p className="text-sm font-medium text-foreground mb-3">
           {t('filesSelected', { count: selectedFiles.length })}
         </p>
         
-        <div className="space-y-2 mb-4 max-h-32 overflow-y-auto">
+        <div className="space-y-2 mb-3 max-h-24 overflow-y-auto">
           {selectedFiles.map((file, index) => (
-            <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-2 text-sm">
+            <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-2 text-xs">
               <div className="flex items-center space-x-2">
-                <FileText className="h-4 w-4 text-gray-500" />
-                <span className="truncate max-w-[200px]">{file.name}</span>
+                <FileText className="h-3 w-3 text-gray-500" />
+                <span className="truncate max-w-[180px]">{file.name}</span>
                 <span className="text-gray-400">({(file.size / 1024).toFixed(1)} KB)</span>
               </div>
               {onRemoveFile && (
@@ -71,7 +71,7 @@ export function DropZone({
                   className="text-red-500 hover:text-red-700 p-1"
                   type="button"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3 w-3" />
                 </button>
               )}
             </div>
@@ -81,9 +81,9 @@ export function DropZone({
         <Button 
           variant="outline" 
           size="sm" 
-          className="text-sm bg-white hover:bg-primary/5 hover:text-primary hover-lift btn-effect"
+          className="text-xs bg-white hover:bg-primary/5 hover:text-primary hover-lift btn-effect"
         >
-          <Upload className="mr-2 h-4 w-4" />
+          <Upload className="mr-2 h-3 w-3" />
           {t('selectMoreFiles')}
         </Button>
       </div>
