@@ -25,6 +25,10 @@ export const ConversionProgress = ({
       onConvert();
     }
   };
+
+  const handleProcessAgain = () => {
+    onConvert();
+  };
   
   return (
     <div className="space-y-4">
@@ -38,6 +42,7 @@ export const ConversionProgress = ({
           isConverting={isConverting}
           isProcessingComplete={isProcessingComplete}
           onClick={handleButtonClick}
+          onProcessAgain={isProcessingComplete ? handleProcessAgain : undefined}
         />
       </div>
     </div>
