@@ -1,149 +1,125 @@
-
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
-import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
-import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
-import { usePdfOperations } from '@/hooks/conversion/usePdfOperations';
-import { useConversionState } from '@/hooks/conversion/useConversionState';
-import { useConversionMetrics } from '@/hooks/conversion/useConversionMetrics';
-import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
+import { useZplApiConversion } from './conversion/useZplApiConversion';
+import { usePdfMerge } from './pdf/usePdfMerge';
+import { useSupabase } from './useSupabase';
+import { useHistoryRecords } from './history/useHistoryRecords';
 
 export interface ProcessingRecord {
   id: string;
   date: Date;
   labelCount: number;
   pdfUrl: string;
-  pdfPath?: string;
+  pdfPath: string;
 }
 
 export const useZplConversion = () => {
-  const { toast } = useToast();
+  const [isConverting, setIsConverting] = useState<boolean>(false);
+  const [progress, setProgress] = useState<number>(0);
+  const [isProcessingComplete, setIsProcessingComplete] = useState<boolean>(false);
+  const [lastPdfUrl, setLastPdfUrl] = useState<string | null>(null);
+  const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const { t } = useTranslation();
-
-  const { addToProcessingHistory } = useHistoryRecords();
+  const { toast } = useToast();
   const { convertZplBlocksToPdfs, parseLabelsFromZpl } = useZplApiConversion();
-  const { logPerformanceMetrics } = useConversionMetrics();
-  
-  const {
-    isConverting,
-    setIsConverting,
-    progress,
-    setProgress,
-    isProcessingComplete,
-    historyRefreshTrigger,
-    resetProcessingStatus,
-    startConversion,
-    finishConversion,
-    triggerHistoryRefresh
-  } = useConversionState();
+  const { mergePDFs } = usePdfMerge();
+  const { uploadPdf } = useSupabase();
+  const { addToProcessingHistory } = useHistoryRecords();
 
-  const {
-    pdfUrls,
-    setPdfUrls,
-    lastPdfUrl,
-    lastPdfPath,
-    processPdfs,
-    downloadPdf
-  } = usePdfOperations();
+  const resetProcessingStatus = () => {
+    setIsConverting(false);
+    setProgress(0);
+    setIsProcessingComplete(false);
+    setLastPdfUrl(null);
+  };
 
-  const convertToPDF = async (zplContent: string, useOptimizedTiming: boolean = true) => {
-    if (!zplContent) return;
+  const convertToPDF = async (zplContent: string) => {
+    if (!zplContent.trim()) {
+      toast({
+        variant: "destructive",
+        title: t('emptyContent'),
+        description: t('emptyContentDesc'),
+        duration: 3000,
+      });
+      return;
+    }
+
+    setIsConverting(true);
+    setProgress(0);
+    setIsProcessingComplete(false);
+    setLastPdfUrl(null);
     
-    const conversionStartTime = Date.now();
-    
+    const startTime = Date.now();
+    console.log('🚀 Starting standard PDF conversion process...');
+
     try {
-      startConversion();
-      setPdfUrls([]);
-
-      // Parse labels ONCE at the beginning and use this count throughout
       const labels = parseLabelsFromZpl(zplContent);
-      // Divide by 2 to get the correct final count as each label has 2 ^XA markers
-      const finalLabelCount = Math.ceil(labels.length / 2);
-      
-      console.log(`🎯 Starting conversion of ${finalLabelCount} labels (FINAL COUNT CORRECTED - ${labels.length} blocks / 2)`);
-      console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
-      
-      // Choose configuration based on label count and user preference
-      let config: ProcessingConfig;
-      if (!useOptimizedTiming) {
-        config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 }; // Original conservative timing
-      } else if (finalLabelCount > 100) {
-        config = DEFAULT_CONFIG; // Moderate optimization for large batches
-      } else {
-        config = FAST_CONFIG; // Aggressive optimization for smaller batches
+      console.log(`📊 Converting ${labels.length} labels to PDF (standard format)`);
+
+      if (labels.length === 0) {
+        throw new Error(t('noValidLabels'));
       }
-      
-      console.log(`📋 Using configuration:`, config);
-      
-      const conversionPhaseStart = Date.now();
 
-      const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
-        setProgress(progressValue * 0.8); // Reserve 20% for merging and upload
-      }, config);
+      const pdfs = await convertZplBlocksToPdfs(labels, setProgress);
+      console.log(`✅ Generated ${pdfs.length} PDF blocks`);
 
-      const conversionPhaseTime = Date.now() - conversionPhaseStart;
-      console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
+      if (pdfs.length === 0) {
+        throw new Error(t('noPdfsGenerated'));
+      }
 
-      try {
-        const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, setProgress);
-        
-        // Calculate total processing time
-        const totalTime = Date.now() - conversionStartTime;
-        
-        // Save to history using the EXACT same finalLabelCount from the beginning and include processing time
-        if (pdfPath) {
-          console.log(`💾 Saving to history: ${finalLabelCount} labels processed in ${totalTime}ms (CONSISTENT CORRECTED COUNT)`);
-          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime);
-          triggerHistoryRefresh();
-        }
-        
+      setProgress(85);
+      const mergedPdf = await mergePDFs(pdfs);
+      console.log(`📄 Merged PDF size: ${mergedPdf.size} bytes`);
+
+      setProgress(95);
+      const fileName = `etiquetas-${Date.now()}.pdf`;
+      const pdfPath = await uploadPdf(mergedPdf, fileName);
+      console.log(`☁️ Uploaded PDF to: ${pdfPath}`);
+
+      const endTime = Date.now();
+      const processingTime = endTime - startTime;
+      console.log(`⏱️ Standard conversion completed in ${processingTime}ms`);
+
+      await addToProcessingHistory(labels.length, pdfPath, processingTime, 'standard');
+
+      const { data: publicUrlData } = await supabase.storage
+        .from('pdfs')
+        .getPublicUrl(pdfPath);
+
+      if (publicUrlData?.publicUrl) {
+        setLastPdfUrl(publicUrlData.publicUrl);
         setProgress(100);
-        
-        // Download the file
-        downloadPdf(blobUrl);
-
-        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount);
+        setIsProcessingComplete(true);
+        setHistoryRefreshTrigger(prev => prev + 1);
 
         toast({
-          title: t('success'),
-          description: `${t('successMessage')} (${totalTime}ms, ${finalLabelCount} etiquetas)`,
-          duration: 5000,
-        });
-        
-        // Set processing complete to show the completion UI
-        finishConversion();
-      } catch (uploadError) {
-        console.error('Error uploading to storage:', uploadError);
-        toast({
-          variant: "destructive",
-          title: t('error'),
-          description: t('errorMessage'),
+          title: t('conversionComplete'),
+          description: t('conversionCompleteDesc', { count: labels.length }),
           duration: 5000,
         });
       }
     } catch (error) {
-      console.error('Conversion error:', error);
+      console.error('Standard conversion failed:', error);
+      
       toast({
         variant: "destructive",
-        title: t('error'),
-        description: t('errorMessage'),
+        title: t('conversionError'),
+        description: error instanceof Error ? error.message : t('unknownError'),
         duration: 5000,
       });
     } finally {
       setIsConverting(false);
-      setProgress(100);
     }
   };
 
   return {
     isConverting,
     progress,
-    pdfUrls,
     isProcessingComplete,
     lastPdfUrl,
-    lastPdfPath,
     convertToPDF,
-    historyRefreshTrigger,
     resetProcessingStatus,
+    historyRefreshTrigger,
   };
 };
