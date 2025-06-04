@@ -1,6 +1,6 @@
 
-import enTranslations from './en';
-import ptBRTranslations from './pt-BR';
+import { en as enTranslations } from './en';
+import { ptBR as ptBRTranslations } from './pt-BR';
 
 // Define a base type using Record (dictionary) type
 // This allows each language to have its own string values while sharing keys
