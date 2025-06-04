@@ -2,9 +2,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
-import { useZplValidator } from './useZplValidator';
-import { useLabelProcessor } from './useLabelProcessor';
-import { splitZplIntoLabels } from '@/utils/zplSplitter';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProcessingResult {
   labelNumber: number;
@@ -12,8 +10,6 @@ interface ProcessingResult {
   error?: string;
   pngUrl?: string;
   size?: number;
-  validationWarnings?: string[];
-  skipped?: boolean;
 }
 
 export const useZplLabelProcessor = () => {
@@ -21,8 +17,131 @@ export const useZplLabelProcessor = () => {
   const [results, setResults] = useState<ProcessingResult[]>([]);
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { validateAllLabels } = useZplValidator();
-  const { processLabelToPng } = useLabelProcessor();
+
+  const splitZplIntoLabels = (zplContent: string): string[] => {
+    console.log('🔍 Starting ZPL label splitting...');
+    
+    // Remove extra whitespace and normalize line endings
+    const normalizedContent = zplContent.trim().replace(/\r\n/g, '\n');
+    
+    // Split by ^XZ and filter for blocks that contain ^XA
+    const rawBlocks = normalizedContent.split('^XZ');
+    const labels: string[] = [];
+    
+    rawBlocks.forEach((block, index) => {
+      const trimmedBlock = block.trim();
+      if (trimmedBlock.includes('^XA')) {
+        // Add back the ^XZ marker
+        const completeLabel = `${trimmedBlock}^XZ`;
+        labels.push(completeLabel);
+        console.log(`📋 Label ${index + 1} extracted: ${completeLabel.length} characters`);
+      }
+    });
+    
+    console.log(`✅ Found ${labels.length} valid ZPL labels`);
+    return labels;
+  };
+
+  const processLabelToPng = async (
+    labelContent: string, 
+    labelNumber: number
+  ): Promise<ProcessingResult> => {
+    console.log(`🖼️ Processing label ${labelNumber}...`);
+    
+    try {
+      const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
+        method: 'POST',
+        headers: {
+          'Accept': 'image/png',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: labelContent,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ Label ${labelNumber} failed with HTTP ${response.status}: ${errorText}`);
+        
+        return {
+          labelNumber,
+          success: false,
+          error: `HTTP ${response.status}: ${errorText.substring(0, 100)}...`
+        };
+      }
+
+      const pngBlob = await response.blob();
+      
+      if (pngBlob.size === 0) {
+        console.error(`❌ Label ${labelNumber} returned empty PNG`);
+        return {
+          labelNumber,
+          success: false,
+          error: 'Empty PNG received from API'
+        };
+      }
+
+      // Generate timestamp-based filename
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const fileName = `label-${timestamp}-${labelNumber.toString().padStart(3, '0')}.png`;
+      
+      // Upload to Supabase storage
+      const pngUrl = await uploadPngToStorage(pngBlob, fileName);
+      
+      console.log(`✅ Label ${labelNumber} processed successfully: ${pngBlob.size} bytes -> ${pngUrl}`);
+      
+      return {
+        labelNumber,
+        success: true,
+        pngUrl,
+        size: pngBlob.size
+      };
+      
+    } catch (error) {
+      console.error(`💥 Label ${labelNumber} processing error:`, error);
+      return {
+        labelNumber,
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  };
+
+  const uploadPngToStorage = async (pngBlob: Blob, fileName: string): Promise<string> => {
+    try {
+      // Ensure PNG bucket exists
+      const { error: bucketError } = await supabase.storage.getBucket('pngs');
+      if (bucketError && bucketError.message.includes('The resource was not found')) {
+        await supabase.storage.createBucket('pngs', {
+          public: true,
+          fileSizeLimit: 5242880 // 5MB
+        });
+        console.log('📁 Created PNG bucket');
+      }
+
+      const { data, error } = await supabase.storage
+        .from('pngs')
+        .upload(fileName, pngBlob, {
+          contentType: 'image/png',
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Storage upload error:', error);
+        throw error;
+      }
+
+      // Get public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('pngs')
+        .getPublicUrl(fileName);
+
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error('Failed to upload PNG to storage:', error);
+      throw error;
+    }
+  };
 
   const processAllLabels = async (
     zplContent: string,
@@ -41,39 +160,12 @@ export const useZplLabelProcessor = () => {
         throw new Error('No valid ZPL labels found in content');
       }
 
-      console.log(`📋 Found ${labels.length} potential ZPL labels to process`);
-
-      // Step 2: Validate all labels first
-      console.log('🔍 Pre-validating all labels...');
-      const validationResults = validateAllLabels(labels);
-      
-      const validLabels = validationResults.filter(r => r.isValid);
-      const invalidLabels = validationResults.filter(r => !r.isValid);
-      
-      console.log(`📊 Validation results: ${validLabels.length} valid, ${invalidLabels.length} invalid`);
-      
-      if (invalidLabels.length > 0) {
-        console.log(`⚠️ Found ${invalidLabels.length} invalid labels that will be skipped`);
-        invalidLabels.forEach(invalid => {
-          console.log(`❌ Label ${invalid.labelNumber} errors:`, invalid.errors);
-        });
-        
-        toast({
-          variant: "destructive",
-          title: 'Validação ZPL',
-          description: `${invalidLabels.length} etiquetas inválidas serão ignoradas (verifique os logs para detalhes)`,
-          duration: 7000,
-        });
-      }
-
-      // Step 3: Process each label individually
+      // Step 2: Process each label individually
       const processingResults: ProcessingResult[] = [];
       
       for (let i = 0; i < labels.length; i++) {
         const labelContent = labels[i];
         const labelNumber = i + 1;
-        
-        console.log(`\n🔄 Processing label ${labelNumber}/${labels.length}...`);
         
         onProgress?.(
           ((i) / labels.length) * 100,
@@ -96,34 +188,21 @@ export const useZplLabelProcessor = () => {
       
       // Summary logging
       const successful = processingResults.filter(r => r.success).length;
-      const failed = processingResults.filter(r => !r.success && !r.skipped).length;
-      const skipped = processingResults.filter(r => r.skipped).length;
-      const withWarnings = processingResults.filter(r => r.validationWarnings && r.validationWarnings.length > 0).length;
+      const failed = processingResults.filter(r => !r.success).length;
       
-      console.log(`\n📊 Processing complete:`);
-      console.log(`  ✅ ${successful} successful`);
-      console.log(`  ❌ ${failed} failed`);
-      console.log(`  ⏭️ ${skipped} skipped`);
-      console.log(`  ⚠️ ${withWarnings} with warnings`);
+      console.log(`📊 Processing complete: ${successful} successful, ${failed} failed`);
       
       if (failed > 0) {
-        console.log('\n❌ Failed labels:');
+        console.log('❌ Failed labels:');
         processingResults
-          .filter(r => !r.success && !r.skipped)
-          .forEach(r => console.log(`  - Label ${r.labelNumber}: ${r.error}`));
-      }
-      
-      if (skipped > 0) {
-        console.log('\n⏭️ Skipped labels:');
-        processingResults
-          .filter(r => r.skipped)
+          .filter(r => !r.success)
           .forEach(r => console.log(`  - Label ${r.labelNumber}: ${r.error}`));
       }
       
       toast({
         title: 'Processamento Concluído',
-        description: `${successful} etiquetas processadas com sucesso${failed > 0 ? `, ${failed} falharam` : ''}${skipped > 0 ? `, ${skipped} ignoradas` : ''}${withWarnings > 0 ? `, ${withWarnings} com avisos` : ''}`,
-        duration: 7000,
+        description: `${successful} etiquetas processadas com sucesso${failed > 0 ? `, ${failed} falharam` : ''}`,
+        duration: 5000,
       });
       
       return processingResults;

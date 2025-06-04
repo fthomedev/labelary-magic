@@ -1,14 +1,13 @@
 
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
-import { splitZplIntoLabels } from '@/utils/zplSplitter';
-import { useZplValidator } from './useZplValidator';
+import { useZplLabelProcessor } from './useZplLabelProcessor';
 import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export const useA4Conversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { validateAllLabels } = useZplValidator();
+  const { splitZplIntoLabels, processLabelToPng } = useZplLabelProcessor();
 
   const convertZplToA4Images = async (
     labels: string[],
@@ -17,34 +16,13 @@ export const useA4Conversion = () => {
   ): Promise<Blob[]> => {
     const images: Blob[] = [];
     
-    console.log(`🖼️ Starting A4 PNG conversion of ${labels.length} labels with pre-validation`);
-    
-    // Pre-validate all labels
-    const validationResults = validateAllLabels(labels);
-    const validLabelIndices = validationResults
-      .filter(r => r.isValid)
-      .map(r => r.labelNumber - 1);
-    
-    console.log(`✅ Pre-validation complete: ${validLabelIndices.length}/${labels.length} labels are valid`);
-    
-    if (validLabelIndices.length === 0) {
-      throw new Error('No valid ZPL labels found after validation');
-    }
+    console.log(`🖼️ Starting A4 PNG conversion of ${labels.length} labels with detailed logging`);
     
     for (let i = 0; i < labels.length; i++) {
       const label = labels[i];
       const labelNumber = i + 1;
       
       console.log(`🔄 Processing label ${labelNumber}/${labels.length}...`);
-      
-      // Skip invalid labels
-      if (!validLabelIndices.includes(i)) {
-        console.log(`⏭️ Skipping label ${labelNumber} (failed validation)`);
-        const progressValue = ((i + 1) / labels.length) * 80;
-        onProgress(progressValue);
-        continue;
-      }
-      
       console.log(`📝 ZPL content (${label.length} chars): ${label.substring(0, 100)}...`);
       
       let retryCount = 0;
