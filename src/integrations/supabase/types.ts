@@ -39,48 +39,6 @@ export type Database = {
         }
         Relationships: []
       }
-      processing_logs: {
-        Row: {
-          api_response_body: string | null
-          api_response_status: number | null
-          created_at: string
-          error_message: string | null
-          id: string
-          label_number: number
-          processing_time_ms: number
-          status: string
-          user_id: string | null
-          validation_warnings: Json | null
-          zpl_content: string
-        }
-        Insert: {
-          api_response_body?: string | null
-          api_response_status?: number | null
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          label_number: number
-          processing_time_ms: number
-          status: string
-          user_id?: string | null
-          validation_warnings?: Json | null
-          zpl_content: string
-        }
-        Update: {
-          api_response_body?: string | null
-          api_response_status?: number | null
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          label_number?: number
-          processing_time_ms?: number
-          status?: string
-          user_id?: string | null
-          validation_warnings?: Json | null
-          zpl_content?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           created_at: string

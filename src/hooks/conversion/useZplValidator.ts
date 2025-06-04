@@ -16,100 +16,84 @@ export const useZplValidator = () => {
     
     console.log(`🔍 Validating ZPL label (${zplContent.length} chars)...`);
     
-    // Trim whitespace and normalize
-    const normalizedContent = zplContent.trim();
-    
     // Basic structure validation
-    if (!normalizedContent.includes('^XA')) {
-      errors.push('Comando ^XA (Start Format) não encontrado');
+    if (!zplContent.includes('^XA')) {
+      errors.push('Missing ^XA (Start Format) command');
     }
     
-    if (!normalizedContent.includes('^XZ')) {
-      errors.push('Comando ^XZ (End Format) não encontrado');
+    if (!zplContent.includes('^XZ')) {
+      errors.push('Missing ^XZ (End Format) command');
     }
     
-    // Check for very short content - these are usually invalid
-    if (normalizedContent.length < 30) {
-      errors.push(`Conteúdo muito curto (${normalizedContent.length} chars) - provavelmente inválido`);
-    }
-    
-    // Check for problematic patterns that cause API failures
+    // Check for problematic patterns that cause 404 errors
     const problematicPatterns = [
       {
         pattern: /\^ID[A-Z]:.*\.GRF/gi,
-        message: 'Referência a arquivo gráfico externo que pode não existir'
+        message: 'References external graphic files that may not exist'
       },
       {
         pattern: /\^XG[A-Z]:.*\.GRF/gi,
-        message: 'Comando de recall gráfico que pode não existir'
+        message: 'References recall graphic that may not exist'
       },
       {
         pattern: /\^DF[A-Z]:/gi,
-        message: 'Comando download format - pode referenciar recursos inexistentes'
+        message: 'Download format command - may reference missing resources'
       },
       {
         pattern: /\^IL[A-Z]:/gi,
-        message: 'Comando image load - pode referenciar imagens inexistentes'
-      },
-      {
-        pattern: /DEMO\.GRF/gi,
-        message: 'Referência a arquivo demo que não está disponível'
-      },
-      {
-        pattern: /~DG[A-Z]:DEMO/gi,
-        message: 'Download gráfico demo que pode não funcionar'
+        message: 'Image Load command - may reference missing images'
       }
     ];
     
     problematicPatterns.forEach(({ pattern, message }) => {
-      const matches = normalizedContent.match(pattern);
+      const matches = zplContent.match(pattern);
       if (matches) {
-        errors.push(`${message} (encontrado: ${matches.join(', ')})`);
-        console.log(`❌ Padrão problemático encontrado: ${matches.join(', ')}`);
+        // These patterns often cause 404 errors, so mark as invalid
+        errors.push(`${message} (found: ${matches.join(', ')})`);
+        console.log(`❌ Found problematic pattern in ZPL: ${matches.join(', ')}`);
       }
     });
     
     // Check for empty content between ^XA and ^XZ
-    const contentMatch = normalizedContent.match(/\^XA(.*?)\^XZ/s);
+    const contentMatch = zplContent.match(/\^XA(.*?)\^XZ/s);
     if (contentMatch) {
       const innerContent = contentMatch[1].trim();
       if (innerContent.length < 5) {
-        errors.push('Conteúdo vazio ou muito curto entre ^XA e ^XZ');
-      } else if (innerContent.length < 20) {
-        warnings.push('Conteúdo muito curto entre ^XA e ^XZ - pode ser etiqueta incompleta');
+        errors.push('Very short or empty content between ^XA and ^XZ');
+      } else if (innerContent.length < 15) {
+        warnings.push('Very short content between ^XA and ^XZ - may be incomplete label');
       }
     }
     
-    // Check for labels that are just graphic references without content
-    const isOnlyGraphicReference = /^\^XA\s*\^ID[A-Z]:.*\.GRF\s*\^FS\s*\^XZ\s*$/i.test(normalizedContent);
-    if (isOnlyGraphicReference) {
-      errors.push('Etiqueta contém apenas referência gráfica sem conteúdo adicional');
-    }
-    
     // Check for invalid characters or encoding issues
-    if (/[^\x20-\x7E\r\n\t]/g.test(normalizedContent)) {
-      warnings.push('Contém caracteres não-ASCII que podem causar problemas');
+    if (/[^\x20-\x7E\r\n\t]/g.test(zplContent)) {
+      warnings.push('Contains non-ASCII characters that may cause issues');
     }
     
     // Check for missing field commands but don't mark as invalid
-    if (!normalizedContent.includes('^FO') && !normalizedContent.includes('^FT') && !normalizedContent.includes('^ID')) {
-      warnings.push('Nenhum comando de campo (^FO) ou typeset (^FT) encontrado');
+    if (!zplContent.includes('^FO') && !zplContent.includes('^FT')) {
+      warnings.push('No field origin (^FO) or field typeset (^FT) commands found');
+    }
+    
+    // Check for common demo patterns that might not work
+    if (zplContent.includes('DEMO.GRF') || zplContent.includes(':DEMO')) {
+      errors.push('Contains demo graphic references that are not available');
     }
     
     // Check for incomplete ZPL commands
-    const incompleteCommands = normalizedContent.match(/\^[A-Z]{1,2}$/gm);
+    const incompleteCommands = zplContent.match(/\^[A-Z]{1,2}$/gm);
     if (incompleteCommands) {
-      warnings.push(`Possíveis comandos incompletos: ${incompleteCommands.join(', ')}`);
+      warnings.push(`Possible incomplete commands: ${incompleteCommands.join(', ')}`);
     }
     
     const isValid = errors.length === 0;
     
-    console.log(`${isValid ? '✅' : '❌'} ZPL validation: ${isValid ? 'VÁLIDO' : 'INVÁLIDO'}`);
+    console.log(`✅ ZPL validation complete: ${isValid ? 'VALID' : 'INVALID'}`);
     if (errors.length > 0) {
-      console.log(`❌ Erros (${errors.length}):`, errors);
+      console.log(`❌ Errors (${errors.length}):`, errors);
     }
     if (warnings.length > 0) {
-      console.log(`⚠️ Avisos (${warnings.length}):`, warnings);
+      console.log(`⚠️ Warnings (${warnings.length}):`, warnings);
     }
     
     return {
@@ -120,7 +104,7 @@ export const useZplValidator = () => {
   };
 
   const validateAllLabels = (labels: string[]) => {
-    console.log(`🔍 Iniciando validação de ${labels.length} etiquetas ZPL...`);
+    console.log(`🔍 Starting validation of ${labels.length} ZPL labels...`);
     
     const results = labels.map((label, index) => {
       const result = validateZplLabel(label);
@@ -133,15 +117,15 @@ export const useZplValidator = () => {
     const validLabels = results.filter(r => r.isValid).length;
     const invalidLabels = results.filter(r => !r.isValid).length;
     
-    console.log(`📊 Resumo da validação: ${validLabels} válidas, ${invalidLabels} inválidas`);
+    console.log(`📊 Validation summary: ${validLabels} valid, ${invalidLabels} invalid labels`);
     
     // Log details for invalid labels
     results.forEach(result => {
       if (!result.isValid) {
-        console.log(`❌ Etiqueta ${result.labelNumber} inválida:`, result.errors);
+        console.log(`❌ Label ${result.labelNumber} validation failed:`, result.errors);
       }
       if (result.warnings.length > 0) {
-        console.log(`⚠️ Etiqueta ${result.labelNumber} avisos:`, result.warnings);
+        console.log(`⚠️ Label ${result.labelNumber} warnings:`, result.warnings);
       }
     });
     
