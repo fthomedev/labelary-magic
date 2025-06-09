@@ -28,28 +28,29 @@ export function useHistoryDelete() {
     setIsDeleting(true);
     
     try {
-      // Check if user is authenticated
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !sessionData.session) {
-        console.error('Authentication error:', sessionError);
-        toast({
-          title: t('error'),
-          description: t('authenticationRequired') || 'Authentication required',
-          variant: 'destructive',
-        });
-        return false;
+      // Get current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Authentication error');
+      }
+      
+      if (!session || !session.user) {
+        console.error('No active session found');
+        throw new Error('User not authenticated');
       }
 
-      console.log('User authenticated, proceeding with deletion');
-      console.log('Record to delete:', {
+      console.log('User authenticated:', session.user.id);
+      console.log('Attempting to delete record:', {
         id: recordToDelete.id,
         pdfPath: recordToDelete.pdfPath,
-        userId: sessionData.session.user.id
+        userId: session.user.id
       });
 
-      // Delete the file from storage if it exists
+      // Step 1: Delete the file from storage if it exists
       if (recordToDelete.pdfPath) {
-        console.log('Attempting to delete file from storage:', recordToDelete.pdfPath);
+        console.log('Deleting file from storage:', recordToDelete.pdfPath);
         
         const { error: storageError } = await supabase.storage
           .from('pdfs')
@@ -57,7 +58,7 @@ export function useHistoryDelete() {
         
         if (storageError) {
           console.error('Storage deletion error:', storageError);
-          // Continue with database deletion even if storage deletion fails
+          // Don't throw here, continue with database deletion
         } else {
           console.log('File successfully deleted from storage');
         }
@@ -65,28 +66,30 @@ export function useHistoryDelete() {
         console.log('No pdfPath found, skipping storage deletion');
       }
 
-      // Delete the record from the database
-      console.log('Attempting to delete record from database');
-      const { error: dbError, data: deleteData } = await supabase
+      // Step 2: Delete the record from the database
+      console.log('Deleting record from database...');
+      const { error: dbError, count } = await supabase
         .from('processing_history')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('id', recordToDelete.id)
-        .eq('user_id', sessionData.session.user.id); // Extra security check
+        .eq('user_id', session.user.id);
 
       if (dbError) {
         console.error('Database deletion error:', dbError);
-        toast({
-          title: t('error'),
-          description: t('deleteRecordError') || 'Error deleting record',
-          variant: 'destructive',
-        });
-        return false;
+        throw new Error(`Database error: ${dbError.message}`);
       }
 
-      console.log('Database deletion successful. Deleted data:', deleteData);
+      console.log('Database deletion result - count:', count);
+      
+      if (count === 0) {
+        console.warn('No records were deleted from database');
+        throw new Error('Record not found or access denied');
+      }
+
+      console.log('Record successfully deleted from database');
       
       toast({
-        title: t('success'),
+        title: t('success') || 'Success',
         description: t('recordDeletedSuccessfully') || 'Record deleted successfully',
       });
 
@@ -98,12 +101,16 @@ export function useHistoryDelete() {
       return true;
 
     } catch (error) {
-      console.error('Unexpected error during deletion:', error);
+      console.error('Error during deletion:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
       toast({
-        title: t('error'),
-        description: t('deleteRecordError') || 'Error deleting record',
+        title: t('error') || 'Error',
+        description: t('deleteRecordError') || `Error deleting record: ${errorMessage}`,
         variant: 'destructive',
       });
+      
       return false;
     } finally {
       setIsDeleting(false);
