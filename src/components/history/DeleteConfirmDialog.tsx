@@ -37,8 +37,8 @@ export function DeleteConfirmDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('deleteRecordConfirm')}</DialogTitle>
-          <DialogDescription>{t('deleteRecordWarning')}</DialogDescription>
+          <DialogTitle>{t('deleteRecordConfirm') || 'Confirm deletion'}</DialogTitle>
+          <DialogDescription>{t('deleteRecordWarning') || 'This action cannot be undone.'}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button 
@@ -46,14 +46,14 @@ export function DeleteConfirmDialog({
             onClick={() => onOpenChange(false)}
             disabled={isDeleting}
           >
-            {t('cancel')}
+            {t('cancel') || 'Cancel'}
           </Button>
           <Button 
             variant="destructive" 
             onClick={handleConfirm}
             disabled={isDeleting}
           >
-            {isDeleting ? t('deleting') || 'Deleting...' : t('delete')}
+            {isDeleting ? (t('deleting') || 'Deleting...') : (t('delete') || 'Delete')}
           </Button>
         </DialogFooter>
       </DialogContent>

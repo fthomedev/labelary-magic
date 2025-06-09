@@ -13,84 +13,95 @@ export function useHistoryDelete() {
   const { t } = useTranslation();
 
   const handleDeleteClick = (record: ProcessingRecord) => {
+    console.log('Delete button clicked for record:', record.id);
     setRecordToDelete(record);
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = async (): Promise<boolean> => {
     if (!recordToDelete) {
       console.log('No record to delete');
       return false;
     }
 
+    console.log('Starting deletion process for record:', recordToDelete.id);
     setIsDeleting(true);
     
     try {
       // Check if user is authenticated
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        console.log('No active session found');
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session) {
+        console.error('Authentication error:', sessionError);
         toast({
           title: t('error'),
-          description: t('authenticationRequired'),
+          description: t('authenticationRequired') || 'Authentication required',
           variant: 'destructive',
         });
         return false;
       }
 
-      console.log('Deleting record:', recordToDelete.id);
+      console.log('User authenticated, proceeding with deletion');
+      console.log('Record to delete:', {
+        id: recordToDelete.id,
+        pdfPath: recordToDelete.pdfPath,
+        userId: sessionData.session.user.id
+      });
 
       // Delete the file from storage if it exists
       if (recordToDelete.pdfPath) {
-        console.log('Deleting file from storage:', recordToDelete.pdfPath);
+        console.log('Attempting to delete file from storage:', recordToDelete.pdfPath);
+        
         const { error: storageError } = await supabase.storage
           .from('pdfs')
           .remove([recordToDelete.pdfPath]);
         
         if (storageError) {
-          console.error('Error deleting file from storage:', storageError);
+          console.error('Storage deletion error:', storageError);
           // Continue with database deletion even if storage deletion fails
         } else {
-          console.log('File deleted from storage successfully');
+          console.log('File successfully deleted from storage');
         }
+      } else {
+        console.log('No pdfPath found, skipping storage deletion');
       }
 
       // Delete the record from the database
-      console.log('Deleting record from database with ID:', recordToDelete.id);
-      const { error: dbError, data } = await supabase
+      console.log('Attempting to delete record from database');
+      const { error: dbError, data: deleteData } = await supabase
         .from('processing_history')
         .delete()
         .eq('id', recordToDelete.id)
         .eq('user_id', sessionData.session.user.id); // Extra security check
 
       if (dbError) {
-        console.error('Error deleting record from database:', dbError);
+        console.error('Database deletion error:', dbError);
         toast({
           title: t('error'),
-          description: t('deleteRecordError'),
+          description: t('deleteRecordError') || 'Error deleting record',
           variant: 'destructive',
         });
         return false;
       }
 
-      console.log('Database deletion result:', data);
-      console.log('Record deleted successfully');
+      console.log('Database deletion successful. Deleted data:', deleteData);
       
       toast({
         title: t('success'),
-        description: t('recordDeletedSuccessfully'),
+        description: t('recordDeletedSuccessfully') || 'Record deleted successfully',
       });
 
+      // Close dialog and reset state
       setDeleteDialogOpen(false);
       setRecordToDelete(null);
       
-      // Return success so the parent component can refresh the data
+      console.log('Deletion process completed successfully');
       return true;
+
     } catch (error) {
-      console.error('Failed to delete record:', error);
+      console.error('Unexpected error during deletion:', error);
       toast({
         title: t('error'),
-        description: t('deleteRecordError'),
+        description: t('deleteRecordError') || 'Error deleting record',
         variant: 'destructive',
       });
       return false;
@@ -100,6 +111,7 @@ export function useHistoryDelete() {
   };
 
   const closeDeleteDialog = () => {
+    console.log('Closing delete dialog');
     setDeleteDialogOpen(false);
     setRecordToDelete(null);
   };
