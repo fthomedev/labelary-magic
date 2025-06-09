@@ -6,6 +6,7 @@ import { useHistoryData } from '@/hooks/history/useHistoryData';
 import { useDateFormatter } from '@/hooks/history/useDateFormatter';
 import { useHistoryDownload } from '@/hooks/history/useHistoryDownload';
 import { useHistoryDelete } from '@/hooks/history/useHistoryDelete';
+import { useHistoryDiagnostics } from '@/hooks/history/useHistoryDiagnostics';
 import { usePagination } from '@/hooks/history/usePagination';
 
 export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnly = false) {
@@ -28,6 +29,8 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     closeDeleteDialog,
   } = useHistoryDelete();
   
+  const { diagnoseRecord } = useHistoryDiagnostics();
+  
   const pagination = usePagination(0, 8);
   const { 
     currentPage, 
@@ -45,15 +48,22 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
 
   const handleDeleteWithRefresh = useCallback(async (): Promise<boolean> => {
     console.log('handleDeleteWithRefresh called');
+    
+    // Run diagnostics before deletion
+    if (recordToDelete) {
+      await diagnoseRecord(recordToDelete.id);
+    }
+    
     const success = await handleDeleteConfirm();
     console.log('Delete operation success:', success);
+    
     if (success) {
       console.log('Refreshing data after successful deletion');
-      // Refresh the data after successful deletion
       await refreshData();
     }
+    
     return success;
-  }, [handleDeleteConfirm, refreshData]);
+  }, [handleDeleteConfirm, refreshData, recordToDelete, diagnoseRecord]);
 
   return {
     isLoading,

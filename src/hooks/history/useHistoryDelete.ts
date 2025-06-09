@@ -28,7 +28,7 @@ export function useHistoryDelete() {
     setIsDeleting(true);
     
     try {
-      // Get current session
+      // Step 1: Verify authentication
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -42,31 +42,50 @@ export function useHistoryDelete() {
       }
 
       console.log('User authenticated:', session.user.id);
-      console.log('Attempting to delete record:', {
-        id: recordToDelete.id,
-        pdfPath: recordToDelete.pdfPath,
-        userId: session.user.id
-      });
+      
+      // Step 2: Verify record exists and belongs to user
+      console.log('Verifying record exists in database...');
+      const { data: existingRecord, error: selectError } = await supabase
+        .from('processing_history')
+        .select('id, user_id, pdf_path')
+        .eq('id', recordToDelete.id)
+        .eq('user_id', session.user.id)
+        .single();
 
-      // Step 1: Delete the file from storage if it exists
-      if (recordToDelete.pdfPath) {
-        console.log('Deleting file from storage:', recordToDelete.pdfPath);
+      if (selectError) {
+        console.error('Error checking existing record:', selectError);
+        if (selectError.code === 'PGRST116') {
+          throw new Error('Record not found');
+        }
+        throw new Error(`Database error: ${selectError.message}`);
+      }
+
+      if (!existingRecord) {
+        console.error('Record not found or access denied');
+        throw new Error('Record not found or access denied');
+      }
+
+      console.log('Record found in database:', existingRecord);
+
+      // Step 3: Delete from storage if file exists
+      if (existingRecord.pdf_path) {
+        console.log('Deleting file from storage:', existingRecord.pdf_path);
         
         const { error: storageError } = await supabase.storage
           .from('pdfs')
-          .remove([recordToDelete.pdfPath]);
+          .remove([existingRecord.pdf_path]);
         
         if (storageError) {
           console.error('Storage deletion error:', storageError);
-          // Don't throw here, continue with database deletion
+          // Continue with database deletion even if storage fails
         } else {
           console.log('File successfully deleted from storage');
         }
       } else {
-        console.log('No pdfPath found, skipping storage deletion');
+        console.log('No pdf_path found, skipping storage deletion');
       }
 
-      // Step 2: Delete the record from the database
+      // Step 4: Delete from database
       console.log('Deleting record from database...');
       const { error: dbError, count } = await supabase
         .from('processing_history')
@@ -83,7 +102,7 @@ export function useHistoryDelete() {
       
       if (count === 0) {
         console.warn('No records were deleted from database');
-        throw new Error('Record not found or access denied');
+        throw new Error('Record deletion failed - no rows affected');
       }
 
       console.log('Record successfully deleted from database');
