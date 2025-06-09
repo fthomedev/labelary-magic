@@ -44,11 +44,15 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
   } = useHistoryData(localRecords, localOnly, currentPage, recordsPerPage);
 
   const handleDeleteWithRefresh = useCallback(async () => {
+    console.log('handleDeleteWithRefresh called');
     const success = await handleDeleteConfirm();
+    console.log('Delete operation success:', success);
     if (success) {
+      console.log('Refreshing data after successful deletion');
       // Refresh the data after successful deletion
       refreshData();
     }
+    return success;
   }, [handleDeleteConfirm, refreshData]);
 
   return {

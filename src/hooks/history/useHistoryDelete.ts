@@ -18,7 +18,10 @@ export function useHistoryDelete() {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!recordToDelete) return;
+    if (!recordToDelete) {
+      console.log('No record to delete');
+      return false;
+    }
 
     setIsDeleting(true);
     
@@ -32,8 +35,10 @@ export function useHistoryDelete() {
           description: t('authenticationRequired'),
           variant: 'destructive',
         });
-        return;
+        return false;
       }
+
+      console.log('Deleting record:', recordToDelete.id);
 
       // Delete the file from storage if it exists
       if (recordToDelete.pdfPath) {
@@ -51,7 +56,8 @@ export function useHistoryDelete() {
       }
 
       // Delete the record from the database
-      const { error: dbError } = await supabase
+      console.log('Deleting record from database with ID:', recordToDelete.id);
+      const { error: dbError, data } = await supabase
         .from('processing_history')
         .delete()
         .eq('id', recordToDelete.id)
@@ -64,10 +70,12 @@ export function useHistoryDelete() {
           description: t('deleteRecordError'),
           variant: 'destructive',
         });
-        return;
+        return false;
       }
 
+      console.log('Database deletion result:', data);
       console.log('Record deleted successfully');
+      
       toast({
         title: t('success'),
         description: t('recordDeletedSuccessfully'),
@@ -85,11 +93,10 @@ export function useHistoryDelete() {
         description: t('deleteRecordError'),
         variant: 'destructive',
       });
+      return false;
     } finally {
       setIsDeleting(false);
     }
-
-    return false;
   };
 
   const closeDeleteDialog = () => {

@@ -122,6 +122,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
         open={deleteDialogOpen}
         onOpenChange={closeDeleteDialog}
         onConfirm={handleDeleteConfirm}
+        isDeleting={isDeleting}
       />
     </>
   );
