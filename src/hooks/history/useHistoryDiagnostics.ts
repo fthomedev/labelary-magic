@@ -43,15 +43,14 @@ export function useHistoryDiagnostics() {
       
       console.log('🔍 Records found for current user:', userRecords);
       
-      // Check RLS policies (this might fail if no policies exist)
-      const { data: policies, error: policyError } = await supabase
-        .rpc('get_policies_for_table', { table_name: 'processing_history' })
-        .select();
-        
-      if (policyError) {
-        console.log('⚠️ Could not check RLS policies (this is normal):', policyError);
-      } else {
-        console.log('🔍 RLS policies found:', policies);
+      // Additional diagnostics
+      if (allRecords && allRecords.length > 0) {
+        const record = allRecords[0];
+        if (record.user_id !== session.user.id) {
+          console.log('⚠️ Record belongs to different user:', record.user_id);
+          console.log('⚠️ Current user:', session.user.id);
+          console.log('⚠️ This suggests an RLS policy is correctly blocking access');
+        }
       }
       
     } catch (error) {
