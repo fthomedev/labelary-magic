@@ -63,7 +63,7 @@ export function useHistoryDelete() {
       const { data, error: deleteError } = await supabase
         .rpc('delete_processing_history_record', { 
           record_id: recordToDelete.id 
-        }) as { data: DeleteResult | null; error: any };
+        });
 
       if (deleteError) {
         console.error('RPC deletion error:', deleteError);

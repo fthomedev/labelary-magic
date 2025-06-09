@@ -167,6 +167,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_processing_history_record: {
+        Args: { record_id: string }
+        Returns: Json
+      }
       delete_user: {
         Args: Record<PropertyKey, never>
         Returns: Json
