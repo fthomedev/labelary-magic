@@ -28,7 +28,7 @@ export function useHistoryDelete() {
     setIsDeleting(true);
     
     try {
-      // Step 1: Verify authentication
+      // Step 1: Verificar autenticação
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -43,41 +43,50 @@ export function useHistoryDelete() {
 
       console.log('User authenticated:', session.user.id);
       
-      // Step 2: Verify record exists and belongs to user
-      console.log('Verifying record exists in database...');
-      const { data: existingRecord, error: selectError } = await supabase
-        .from('processing_history')
-        .select('id, user_id, pdf_path')
-        .eq('id', recordToDelete.id)
-        .eq('user_id', session.user.id)
-        .single();
+      // Step 2: Usar a função segura do Supabase para deletar
+      console.log('Calling delete_processing_history_record function...');
+      const { data: deleteResult, error: deleteError } = await supabase
+        .rpc('delete_processing_history_record', { 
+          record_id: recordToDelete.id 
+        });
 
-      if (selectError) {
-        console.error('Error checking existing record:', selectError);
-        if (selectError.code === 'PGRST116') {
-          throw new Error('Record not found');
+      if (deleteError) {
+        console.error('RPC deletion error:', deleteError);
+        throw new Error(`Database function error: ${deleteError.message}`);
+      }
+
+      console.log('Delete function result:', deleteResult);
+      
+      if (!deleteResult) {
+        throw new Error('No result returned from delete function');
+      }
+
+      // Step 3: Verificar o resultado da função
+      if (!deleteResult.success) {
+        console.error('Deletion failed:', deleteResult);
+        
+        // Log diagnósticos para debugging
+        if (deleteResult.diagnostics) {
+          console.log('🔍 Delete diagnostics:', deleteResult.diagnostics);
         }
-        throw new Error(`Database error: ${selectError.message}`);
+        
+        const errorMsg = deleteResult.error || 'Unknown deletion error';
+        throw new Error(errorMsg);
       }
 
-      if (!existingRecord) {
-        console.error('Record not found or access denied');
-        throw new Error('Record not found or access denied');
-      }
+      console.log('Database deletion successful, deleted count:', deleteResult.deleted_count);
 
-      console.log('Record found in database:', existingRecord);
-
-      // Step 3: Delete from storage if file exists
-      if (existingRecord.pdf_path) {
-        console.log('Deleting file from storage:', existingRecord.pdf_path);
+      // Step 4: Deletar arquivo do storage se existir
+      if (deleteResult.pdf_path) {
+        console.log('Deleting file from storage:', deleteResult.pdf_path);
         
         const { error: storageError } = await supabase.storage
           .from('pdfs')
-          .remove([existingRecord.pdf_path]);
+          .remove([deleteResult.pdf_path]);
         
         if (storageError) {
           console.error('Storage deletion error:', storageError);
-          // Continue with database deletion even if storage fails
+          // Não falhar se a deleção do storage falhar
         } else {
           console.log('File successfully deleted from storage');
         }
@@ -85,34 +94,12 @@ export function useHistoryDelete() {
         console.log('No pdf_path found, skipping storage deletion');
       }
 
-      // Step 4: Delete from database
-      console.log('Deleting record from database...');
-      const { error: dbError, count } = await supabase
-        .from('processing_history')
-        .delete({ count: 'exact' })
-        .eq('id', recordToDelete.id)
-        .eq('user_id', session.user.id);
-
-      if (dbError) {
-        console.error('Database deletion error:', dbError);
-        throw new Error(`Database error: ${dbError.message}`);
-      }
-
-      console.log('Database deletion result - count:', count);
-      
-      if (count === 0) {
-        console.warn('No records were deleted from database');
-        throw new Error('Record deletion failed - no rows affected');
-      }
-
-      console.log('Record successfully deleted from database');
-      
       toast({
         title: t('success') || 'Success',
         description: t('recordDeletedSuccessfully') || 'Record deleted successfully',
       });
 
-      // Close dialog and reset state
+      // Fechar dialog e resetar estado
       setDeleteDialogOpen(false);
       setRecordToDelete(null);
       
