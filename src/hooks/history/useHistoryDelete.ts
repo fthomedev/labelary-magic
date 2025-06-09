@@ -5,6 +5,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useToast } from '@/hooks/use-toast';
 
+// Interface para o resultado da função de deleção
+interface DeleteResult {
+  success: boolean;
+  deleted_count: number;
+  pdf_path?: string;
+  error?: string;
+  diagnostics?: {
+    user_authenticated: boolean;
+    user_id: string;
+    record_exists: boolean;
+    record_belongs_to_user: boolean;
+    record_id: string;
+  };
+}
+
 export function useHistoryDelete() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -45,21 +60,23 @@ export function useHistoryDelete() {
       
       // Step 2: Usar a função segura do Supabase para deletar
       console.log('Calling delete_processing_history_record function...');
-      const { data: deleteResult, error: deleteError } = await supabase
+      const { data, error: deleteError } = await supabase
         .rpc('delete_processing_history_record', { 
           record_id: recordToDelete.id 
-        });
+        }) as { data: DeleteResult | null; error: any };
 
       if (deleteError) {
         console.error('RPC deletion error:', deleteError);
         throw new Error(`Database function error: ${deleteError.message}`);
       }
 
-      console.log('Delete function result:', deleteResult);
+      console.log('Delete function result:', data);
       
-      if (!deleteResult) {
+      if (!data) {
         throw new Error('No result returned from delete function');
       }
+
+      const deleteResult = data as DeleteResult;
 
       // Step 3: Verificar o resultado da função
       if (!deleteResult.success) {
