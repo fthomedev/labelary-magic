@@ -76,7 +76,7 @@ export function useHistoryDelete() {
         throw new Error('No result returned from delete function');
       }
 
-      const deleteResult = data as DeleteResult;
+      const deleteResult = data as unknown as DeleteResult;
 
       // Step 3: Verificar o resultado da função
       if (!deleteResult.success) {
