@@ -8,6 +8,7 @@ import { useProcessingHistory } from '@/hooks/useProcessingHistory';
 import { HistoryTable } from './history/HistoryTable';
 import { HistoryPagination } from './history/HistoryPagination';
 import { PdfViewerModal } from './history/PdfViewerModal';
+import { DeleteConfirmDialog } from './history/DeleteConfirmDialog';
 
 interface ProcessingHistoryProps {
   records?: ProcessingRecord[];
@@ -31,7 +32,14 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     isModalOpen,
     currentPdfUrl,
     closePdfModal,
-    downloadCurrentPdf
+    downloadCurrentPdf,
+    // Delete functionality
+    isDeleting,
+    deleteDialogOpen,
+    recordToDelete,
+    handleDeleteClick,
+    handleDeleteConfirm,
+    closeDeleteDialog,
   } = useProcessingHistory(localRecords, localOnly);
 
   if (isLoading) {
@@ -87,6 +95,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           records={records}
           formatDate={formatDate}
           onDownload={handleDownload}
+          onDelete={handleDeleteClick}
           isMobile={isMobile}
         />
       </CardContent>
@@ -106,6 +115,13 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
         isOpen={isModalOpen}
         onClose={closePdfModal}
         onDownload={downloadCurrentPdf}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={closeDeleteDialog}
+        onConfirm={handleDeleteConfirm}
       />
     </>
   );

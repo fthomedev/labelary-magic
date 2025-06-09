@@ -15,6 +15,7 @@ interface HistoryTableProps {
   records: ProcessingRecord[];
   formatDate: (date: Date) => string;
   onDownload: (record: ProcessingRecord) => void;
+  onDelete: (record: ProcessingRecord) => void;
   isMobile: boolean;
 }
 
@@ -22,6 +23,7 @@ export function HistoryTable({
   records, 
   formatDate, 
   onDownload,
+  onDelete,
   isMobile 
 }: HistoryTableProps) {
   const { t } = useTranslation();
@@ -47,6 +49,7 @@ export function HistoryTable({
               record={record}
               formatDate={formatDate}
               onDownload={onDownload}
+              onDelete={onDelete}
             />
           ))}
         </TableBody>

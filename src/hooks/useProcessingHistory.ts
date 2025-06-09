@@ -5,6 +5,7 @@ import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useHistoryData } from '@/hooks/history/useHistoryData';
 import { useDateFormatter } from '@/hooks/history/useDateFormatter';
 import { useHistoryDownload } from '@/hooks/history/useHistoryDownload';
+import { useHistoryDelete } from '@/hooks/history/useHistoryDelete';
 import { usePagination } from '@/hooks/history/usePagination';
 
 export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnly = false) {
@@ -18,7 +19,16 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     downloadCurrentPdf
   } = useHistoryDownload();
   
-  const pagination = usePagination(0, 8); // Changed from 10 to 8 records per page
+  const {
+    isDeleting,
+    deleteDialogOpen,
+    recordToDelete,
+    handleDeleteClick,
+    handleDeleteConfirm,
+    closeDeleteDialog,
+  } = useHistoryDelete();
+  
+  const pagination = usePagination(0, 8);
   const { 
     currentPage, 
     handlePageChange, 
@@ -32,6 +42,14 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     totalRecords, 
     refreshData 
   } = useHistoryData(localRecords, localOnly, currentPage, recordsPerPage);
+
+  const handleDeleteWithRefresh = useCallback(async () => {
+    const success = await handleDeleteConfirm();
+    if (success) {
+      // Refresh the data after successful deletion
+      refreshData();
+    }
+  }, [handleDeleteConfirm, refreshData]);
 
   return {
     isLoading,
@@ -48,6 +66,13 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     isModalOpen,
     currentPdfUrl,
     closePdfModal,
-    downloadCurrentPdf
+    downloadCurrentPdf,
+    // Delete functionality
+    isDeleting,
+    deleteDialogOpen,
+    recordToDelete,
+    handleDeleteClick,
+    handleDeleteConfirm: handleDeleteWithRefresh,
+    closeDeleteDialog,
   };
 }
