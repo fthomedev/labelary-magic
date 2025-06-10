@@ -28,18 +28,18 @@ export function useHistoryDelete() {
   const { t } = useTranslation();
 
   const handleDeleteClick = (record: ProcessingRecord) => {
-    console.log('Delete button clicked for record:', record.id);
+    console.log('🗑️ [DEBUG] Delete button clicked for record:', record.id);
     setRecordToDelete(record);
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async (): Promise<boolean> => {
     if (!recordToDelete) {
-      console.log('No record to delete');
+      console.log('❌ [DEBUG] No record to delete');
       return false;
     }
 
-    console.log('Starting deletion process for record:', recordToDelete.id);
+    console.log('🔄 [DEBUG] Starting deletion process for record:', recordToDelete.id);
     setIsDeleting(true);
     
     try {
@@ -47,30 +47,30 @@ export function useHistoryDelete() {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
-        console.error('Session error:', sessionError);
+        console.error('❌ [DEBUG] Session error:', sessionError);
         throw new Error('Authentication error');
       }
       
       if (!session || !session.user) {
-        console.error('No active session found');
+        console.error('❌ [DEBUG] No active session found');
         throw new Error('User not authenticated');
       }
 
-      console.log('User authenticated:', session.user.id);
+      console.log('✅ [DEBUG] User authenticated:', session.user.id);
       
       // Step 2: Usar a função segura do Supabase para deletar
-      console.log('Calling delete_processing_history_record function...');
+      console.log('📡 [DEBUG] Calling delete_processing_history_record function...');
       const { data, error: deleteError } = await supabase
         .rpc('delete_processing_history_record', { 
           record_id: recordToDelete.id 
         });
 
       if (deleteError) {
-        console.error('RPC deletion error:', deleteError);
+        console.error('❌ [DEBUG] RPC deletion error:', deleteError);
         throw new Error(`Database function error: ${deleteError.message}`);
       }
 
-      console.log('Delete function result:', data);
+      console.log('📊 [DEBUG] Delete function result:', data);
       
       if (!data) {
         throw new Error('No result returned from delete function');
@@ -80,68 +80,74 @@ export function useHistoryDelete() {
 
       // Step 3: Verificar o resultado da função
       if (!deleteResult.success) {
-        console.error('Deletion failed:', deleteResult);
+        console.error('❌ [DEBUG] Deletion failed:', deleteResult);
         
         // Log diagnósticos para debugging
         if (deleteResult.diagnostics) {
-          console.log('🔍 Delete diagnostics:', deleteResult.diagnostics);
+          console.log('🔍 [DEBUG] Delete diagnostics:', deleteResult.diagnostics);
         }
         
         const errorMsg = deleteResult.error || 'Unknown deletion error';
         throw new Error(errorMsg);
       }
 
-      console.log('Database deletion successful, deleted count:', deleteResult.deleted_count);
+      console.log('✅ [DEBUG] Database deletion successful, deleted count:', deleteResult.deleted_count);
 
       // Step 4: Deletar arquivo do storage se existir
       if (deleteResult.pdf_path) {
-        console.log('Deleting file from storage:', deleteResult.pdf_path);
+        console.log('🗄️ [DEBUG] Deleting file from storage:', deleteResult.pdf_path);
         
         const { error: storageError } = await supabase.storage
           .from('pdfs')
           .remove([deleteResult.pdf_path]);
         
         if (storageError) {
-          console.error('Storage deletion error:', storageError);
+          console.error('❌ [DEBUG] Storage deletion error:', storageError);
           // Não falhar se a deleção do storage falhar
         } else {
-          console.log('File successfully deleted from storage');
+          console.log('✅ [DEBUG] File successfully deleted from storage');
         }
       } else {
-        console.log('No pdf_path found, skipping storage deletion');
+        console.log('ℹ️ [DEBUG] No pdf_path found, skipping storage deletion');
       }
 
+      console.log('🎉 [DEBUG] About to show success toast');
       toast({
         title: t('success') || 'Success',
         description: t('recordDeletedSuccessfully') || 'Record deleted successfully',
       });
+      console.log('✅ [DEBUG] Success toast displayed');
 
       // Fechar dialog e resetar estado
+      console.log('🔄 [DEBUG] Closing dialog and resetting state');
       setDeleteDialogOpen(false);
       setRecordToDelete(null);
       
-      console.log('Deletion process completed successfully');
+      console.log('🎯 [DEBUG] Deletion process completed successfully');
       return true;
 
     } catch (error) {
-      console.error('Error during deletion:', error);
+      console.error('💥 [DEBUG] Error during deletion:', error);
       
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       
+      console.log('⚠️ [DEBUG] About to show error toast');
       toast({
         title: t('error') || 'Error',
         description: t('deleteRecordError') || `Error deleting record: ${errorMessage}`,
         variant: 'destructive',
       });
+      console.log('❌ [DEBUG] Error toast displayed');
       
       return false;
     } finally {
+      console.log('🔄 [DEBUG] Setting isDeleting to false');
       setIsDeleting(false);
     }
   };
 
   const closeDeleteDialog = () => {
-    console.log('Closing delete dialog');
+    console.log('❌ [DEBUG] Closing delete dialog');
     setDeleteDialogOpen(false);
     setRecordToDelete(null);
   };

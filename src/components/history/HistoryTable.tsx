@@ -28,6 +28,8 @@ export function HistoryTable({
 }: HistoryTableProps) {
   const { t } = useTranslation();
 
+  console.log('📋 [DEBUG] HistoryTable rendering with records:', records.length);
+
   return (
     <div className="overflow-x-auto max-h-[400px]">
       <Table className="compact-table">
@@ -43,15 +45,18 @@ export function HistoryTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {records.map((record) => (
-            <HistoryTableRow
-              key={record.id}
-              record={record}
-              formatDate={formatDate}
-              onDownload={onDownload}
-              onDelete={onDelete}
-            />
-          ))}
+          {records.map((record) => {
+            console.log('📋 [DEBUG] Rendering table row for record:', record.id);
+            return (
+              <HistoryTableRow
+                key={record.id}
+                record={record}
+                formatDate={formatDate}
+                onDownload={onDownload}
+                onDelete={onDelete}
+              />
+            );
+          })}
         </TableBody>
       </Table>
     </div>

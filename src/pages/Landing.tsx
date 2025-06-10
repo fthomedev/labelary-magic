@@ -13,22 +13,30 @@ const CallToActionSection = lazy(() => import('@/components/landing/CallToAction
 const FAQSection = lazy(() => import('@/components/landing/FAQSection').then(mod => ({ default: mod.FAQSection })));
 
 // Componente de fallback leve para Suspense
-const SectionLoadingFallback = () => <div className="h-40 w-full"></div>;
+const SectionLoadingFallback = () => {
+  console.log('🔄 [DEBUG] SectionLoadingFallback rendering');
+  return <div className="h-40 w-full"></div>;
+};
 
 const Landing = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   
+  console.log('🏠 [DEBUG] Landing component rendering, isLoggedIn:', isLoggedIn, 'isLoaded:', isLoaded);
+  
   // Verificar se o usuário está autenticado
   useEffect(() => {
+    console.log('🔐 [DEBUG] Landing useEffect - checking auth');
     const checkAuth = async () => {
       try {
         const { data } = await supabase.auth.getSession();
+        console.log('✅ [DEBUG] Auth check completed, session exists:', !!data.session);
         setIsLoggedIn(!!data.session);
       } catch (error) {
-        console.error("Auth check failed:", error);
+        console.error("❌ [DEBUG] Auth check failed:", error);
         setIsLoggedIn(false);
       } finally {
+        console.log('🏁 [DEBUG] Setting isLoaded to true');
         setIsLoaded(true);
       }
     };
@@ -36,11 +44,14 @@ const Landing = () => {
     checkAuth();
 
     // Configurar listener para mudanças no estado de autenticação
+    console.log('🔄 [DEBUG] Setting up auth state change listener');
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('🔄 [DEBUG] Auth state changed, session exists:', !!session);
       setIsLoggedIn(!!session);
     });
 
     return () => {
+      console.log('🧹 [DEBUG] Cleaning up auth subscription');
       subscription.unsubscribe();
     };
   }, []);
