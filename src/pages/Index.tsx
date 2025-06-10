@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload } from '@/components/FileUpload';
@@ -14,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
 import { FeedbackModal } from '@/components/FeedbackModal';
 import { PrintFormat } from '@/components/format/FormatSelector';
+import { SharePromoBanner } from '@/components/SharePromoBanner';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -130,6 +130,8 @@ const Index = () => {
           </div>
         </div>
       </header>
+
+      <SharePromoBanner />
 
       <main className="py-3 md:py-5">
         <div className="mx-auto max-w-7xl px-4">
