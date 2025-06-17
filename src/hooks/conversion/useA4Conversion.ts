@@ -1,9 +1,9 @@
-
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useZplLabelProcessor } from './useZplLabelProcessor';
 import { useZplValidator } from './useZplValidator';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
+import { organizeImagesInA4PDF } from '@/utils/a4Utils';
 
 export const useA4Conversion = () => {
   const { toast } = useToast();
@@ -145,6 +145,11 @@ export const useA4Conversion = () => {
     return images;
   };
 
+  const organizeInA4PDF = async (imageBlobs: Blob[]): Promise<Blob> => {
+    console.log(`📄 Organizing ${imageBlobs.length} images into A4 PDF format`);
+    return await organizeImagesInA4PDF(imageBlobs);
+  };
+
   const parseLabelsFromZpl = (zplContent: string) => {
     console.log('🔍 Parsing ZPL content for A4 processing...');
     const labels = splitZplIntoLabels(zplContent);
@@ -160,6 +165,7 @@ export const useA4Conversion = () => {
 
   return {
     convertZplToA4Images,
+    organizeInA4PDF,
     parseLabelsFromZpl
   };
 };
