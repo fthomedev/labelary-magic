@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
@@ -60,25 +61,6 @@ export const usePdfOperations = () => {
     return { pdfPath, blobUrl, mergeTime, uploadTime };
   };
 
-  const uploadPdfToStorage = async (pdfBlob: Blob, type: 'standard' | 'a4' = 'standard') => {
-    // Ensure bucket exists
-    await ensurePdfBucketExists();
-    
-    const uploadStartTime = Date.now();
-    
-    // Upload PDF to storage
-    const pdfPath = await uploadPDFToStorage(pdfBlob);
-    const uploadTime = Date.now() - uploadStartTime;
-    console.log(`☁️ ${type.toUpperCase()} PDF upload completed in ${uploadTime}ms:`, pdfPath);
-    setLastPdfPath(pdfPath);
-    
-    // Get the temporary blob URL for the current session
-    const blobUrl = window.URL.createObjectURL(pdfBlob);
-    setLastPdfUrl(blobUrl);
-    
-    return { pdfPath, blobUrl };
-  };
-
   const downloadPdf = (blobUrl: string, filename: string = 'etiquetas.pdf') => {
     const a = document.createElement('a');
     a.href = blobUrl;
@@ -96,7 +78,6 @@ export const usePdfOperations = () => {
     setLastPdfUrl,
     setLastPdfPath,
     processPdfs,
-    uploadPdfToStorage,
     downloadPdf
   };
 };
