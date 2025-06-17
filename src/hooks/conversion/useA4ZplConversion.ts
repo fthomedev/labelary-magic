@@ -2,23 +2,21 @@
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
-import { useA4Conversion } from './useA4Conversion';
-import { usePdfOperations } from './usePdfOperations';
-import { useConversionState } from './useConversionState';
-import { useConversionMetrics } from './useConversionMetrics';
-import { organizeImagesInA4PDF } from '@/utils/a4Utils';
-import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
-import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
-import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
+import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
+import { usePdfOperations } from '@/hooks/conversion/usePdfOperations';
+import { useConversionState } from '@/hooks/conversion/useConversionState';
+import { useConversionMetrics } from '@/hooks/conversion/useConversionMetrics';
+import { useA4Conversion } from '@/hooks/conversion/useA4Conversion';
+import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export const useA4ZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
+
   const { addToProcessingHistory } = useHistoryRecords();
-  const { convertZplToA4Images, parseLabelsFromZpl } = useA4Conversion();
+  const { convertZplBlocksToPdfs, parseLabelsFromZpl } = useZplApiConversion();
   const { logPerformanceMetrics } = useConversionMetrics();
-  const { uploadPDFToStorage } = useUploadPdf();
-  const { ensurePdfBucketExists } = useStorageOperations();
+  const { organizeInA4PDF } = useA4Conversion();
   
   const {
     isConverting,
@@ -34,10 +32,11 @@ export const useA4ZplConversion = () => {
   } = useConversionState();
 
   const {
+    pdfUrls,
+    setPdfUrls,
     lastPdfUrl,
-    setLastPdfUrl,
     lastPdfPath,
-    setLastPdfPath,
+    uploadPdfToStorage,
     downloadPdf
   } = usePdfOperations();
 
@@ -48,96 +47,93 @@ export const useA4ZplConversion = () => {
     
     try {
       startConversion();
-      
-      // Parse labels
+      setPdfUrls([]);
+
+      // Parse labels ONCE at the beginning and use this count throughout
       const labels = parseLabelsFromZpl(zplContent);
+      // Divide by 2 to get the correct final count as each label has 2 ^XA markers
       const finalLabelCount = Math.ceil(labels.length / 2);
       
-      console.log(`🎯 Starting A4 conversion of ${finalLabelCount} labels with Cenário 2 (Moderate) configuration`);
+      console.log(`🎯 Starting A4 conversion of ${finalLabelCount} labels (FINAL COUNT CORRECTED - ${labels.length} blocks / 2)`);
+      console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
       
-      // Sempre usar A4_CONFIG (Cenário 2) para processamento A4
-      const config: ProcessingConfig = A4_CONFIG;
+      // Choose configuration based on label count and user preference
+      let config: ProcessingConfig;
+      if (!useOptimizedTiming) {
+        config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 }; // Original conservative timing
+      } else if (finalLabelCount > 100) {
+        config = DEFAULT_CONFIG; // Moderate optimization for large batches
+      } else {
+        config = FAST_CONFIG; // Aggressive optimization for smaller batches
+      }
       
-      console.log(`📋 A4 using Cenário 2 configuration:`, config);
+      console.log(`📋 Using configuration for A4:`, config);
       
       const conversionPhaseStart = Date.now();
 
-      // Convert to PNG images with batch processing
-      const images = await convertZplToA4Images(labels, (progressValue) => {
-        setProgress(progressValue); // 0-80%
+      // Convert to individual images first (same as standard)
+      const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
+        setProgress(progressValue * 0.6); // Reserve 40% for A4 organization and upload
       }, config);
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
-      console.log(`⚡ A4 image conversion phase completed in ${conversionPhaseTime}ms`);
+      console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms for A4`);
 
       try {
-        setProgress(85);
+        setProgress(60);
         
-        // Ensure bucket exists
-        await ensurePdfBucketExists();
+        // Organize in A4 format instead of merging
+        const a4OrganizationStart = Date.now();
+        const a4PdfBlob = await organizeInA4PDF(pdfs);
+        const a4OrganizationTime = Date.now() - a4OrganizationStart;
         
-        setProgress(90);
+        setProgress(80);
         
-        // Organize images into A4 PDF
-        const mergeStartTime = Date.now();
-        const a4Pdf = await organizeImagesInA4PDF(images);
-        const mergeTime = Date.now() - mergeStartTime;
-        
-        console.log(`📄 A4 PDF organization completed in ${mergeTime}ms`);
-        
-        setProgress(95);
-        
-        // Upload PDF to storage
-        const uploadStartTime = Date.now();
-        const pdfPath = await uploadPDFToStorage(a4Pdf);
-        const uploadTime = Date.now() - uploadStartTime;
-        
-        console.log(`☁️ A4 PDF upload completed in ${uploadTime}ms:`, pdfPath);
-        setLastPdfPath(pdfPath);
-        
-        // Create blob URL for download
-        const blobUrl = window.URL.createObjectURL(a4Pdf);
-        setLastPdfUrl(blobUrl);
+        // Upload A4 PDF to storage
+        const uploadStart = Date.now();
+        const { pdfPath, blobUrl } = await uploadPdfToStorage(a4PdfBlob, 'a4');
+        const uploadTime = Date.now() - uploadStart;
         
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
         
-        // Save to history
+        // Save to history using the EXACT same finalLabelCount from the beginning and include processing time and type
         if (pdfPath) {
-          console.log(`💾 Saving A4 conversion to history: ${finalLabelCount} labels processed in ${totalTime}ms`);
-          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime);
+          console.log(`💾 Saving to history: ${finalLabelCount} labels processed in ${totalTime}ms (CONSISTENT CORRECTED COUNT) - Type: a4`);
+          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime, 'a4');
           triggerHistoryRefresh();
         }
         
         setProgress(100);
         
         // Download the file
-        downloadPdf(blobUrl, 'etiquetas-a4.pdf');
+        downloadPdf(blobUrl);
 
-        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount);
+        logPerformanceMetrics(totalTime, conversionPhaseTime, a4OrganizationTime, uploadTime, finalLabelCount);
 
         toast({
           title: t('success'),
-          description: `${t('successMessage')} - A4 Format (${totalTime}ms, ${finalLabelCount} etiquetas)`,
+          description: `PDF A4 criado com sucesso! (${totalTime}ms, ${finalLabelCount} etiquetas)`,
           duration: 5000,
         });
         
+        // Set processing complete to show the completion UI
         finishConversion();
       } catch (uploadError) {
         console.error('Error uploading A4 PDF to storage:', uploadError);
         toast({
           variant: "destructive",
           title: t('error'),
-          description: t('errorMessage'),
+          description: 'Erro ao fazer upload do PDF A4',
           duration: 5000,
         });
       }
     } catch (error) {
-      console.error('A4 conversion error:', error);
+      console.error('A4 Conversion error:', error);
       toast({
         variant: "destructive",
         title: t('error'),
-        description: t('errorMessage'),
+        description: 'Erro na conversão A4',
         duration: 5000,
       });
     } finally {
@@ -149,6 +145,7 @@ export const useA4ZplConversion = () => {
   return {
     isConverting,
     progress,
+    pdfUrls,
     isProcessingComplete,
     lastPdfUrl,
     lastPdfPath,
