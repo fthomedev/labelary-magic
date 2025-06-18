@@ -1,4 +1,5 @@
-const translations = {
+
+const ptBR = {
   // Geral
   home: 'Início',
   login: 'Entrar',
@@ -239,4 +240,4 @@ const translations = {
   printUnavailableAfterRefresh: "Impressão indisponível após atualizar a página",
 };
 
-export default translations;
+export default ptBR;

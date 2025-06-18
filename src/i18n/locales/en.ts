@@ -1,4 +1,5 @@
-export const en = {
+
+const en = {
   title: 'ZPL Converter Online – ZPL Easy',
   subtitle: 'Convert ZPL code to PDF online. No need to install drivers.',
   upload: 'Upload ZPL File',
@@ -65,3 +66,5 @@ export const en = {
   printError: "Error printing document",
   printUnavailableAfterRefresh: "Print unavailable after page refresh",
 };
+
+export default en;
