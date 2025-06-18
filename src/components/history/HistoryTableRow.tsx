@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, Calendar, Tag, AlertCircle, Trash2, Share2 } from 'lucide-react';
+import { Download, Calendar, Tag, AlertCircle, Trash2, Share2, Printer } from 'lucide-react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
@@ -13,6 +13,7 @@ interface HistoryTableRowProps {
   onDownload: (record: ProcessingRecord) => void;
   onDelete: (record: ProcessingRecord) => void;
   onShare: (record: ProcessingRecord) => void;
+  onPrint: (record: ProcessingRecord) => void;
 }
 
 export function HistoryTableRow({ 
@@ -20,13 +21,15 @@ export function HistoryTableRow({
   formatDate, 
   onDownload,
   onDelete,
-  onShare
+  onShare,
+  onPrint
 }: HistoryTableRowProps) {
   const { t } = useTranslation();
   const isBlobUrl = record.pdfUrl && record.pdfUrl.startsWith('blob:');
   const hasStoragePath = !!record.pdfPath;
   const hasValidUrl = !isBlobUrl || record.pdfUrl.startsWith('http');
   const canShare = hasStoragePath || hasValidUrl;
+  const canPrint = hasStoragePath || hasValidUrl;
 
   return (
     <TableRow key={record.id} className="hover:bg-accent/30 transition-colors">
@@ -44,6 +47,31 @@ export function HistoryTableRow({
       </TableCell>
       <TableCell className="py-2">
         <div className="flex justify-end items-center gap-1">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`p-0 h-7 w-7 rounded-full flex items-center justify-center ${
+                    canPrint 
+                      ? "text-purple-600 hover:text-purple-foreground hover:bg-purple-600 hover-lift" 
+                      : "text-muted-foreground"
+                  }`}
+                  onClick={() => onPrint(record)}
+                  disabled={!canPrint}
+                  title={t('print')}
+                >
+                  <Printer className="h-3 w-3" />
+                  <span className="sr-only">{t('print')}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {canPrint ? t('print') : t('printUnavailableAfterRefresh')}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>

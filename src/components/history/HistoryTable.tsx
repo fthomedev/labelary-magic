@@ -17,6 +17,7 @@ interface HistoryTableProps {
   onDownload: (record: ProcessingRecord) => void;
   onDelete: (record: ProcessingRecord) => void;
   onShare: (record: ProcessingRecord) => void;
+  onPrint: (record: ProcessingRecord) => void;
   isMobile: boolean;
 }
 
@@ -26,6 +27,7 @@ export function HistoryTable({
   onDownload,
   onDelete,
   onShare,
+  onPrint,
   isMobile 
 }: HistoryTableProps) {
   const { t } = useTranslation();
@@ -57,6 +59,7 @@ export function HistoryTable({
                 onDownload={onDownload}
                 onDelete={onDelete}
                 onShare={onShare}
+                onPrint={onPrint}
               />
             );
           })}
