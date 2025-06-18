@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { supabase } from '@/integrations/supabase/client';
+import { useUrlShortener } from '@/hooks/sharing/useUrlShortener';
+import { useWhatsAppDetection } from '@/hooks/sharing/useWhatsAppDetection';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -24,6 +26,8 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
   const { toast } = useToast();
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
+  const { shortenUrl, isShortening } = useUrlShortener();
+  const { openWhatsApp } = useWhatsAppDetection();
 
   const getFileUrl = async (): Promise<string | null> => {
     if (!record) return null;
@@ -67,15 +71,28 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
       return;
     }
 
-    const message = encodeURIComponent(`Confira este PDF gerado pelo ZPL Easy: ${fileUrl}`);
-    const whatsappUrl = `https://web.whatsapp.com/send?text=${message}`;
-    window.open(whatsappUrl, '_blank');
-    
-    toast({
-      title: "WhatsApp aberto",
-      description: "O WhatsApp Web foi aberto com a mensagem preparada",
-      duration: 3000,
-    });
+    try {
+      // Encurtar a URL para compartilhamento mais amigável
+      const shortUrl = await shortenUrl(fileUrl);
+      const message = `Confira este PDF gerado pelo ZPL Easy: ${shortUrl}`;
+      
+      // Usar o hook de detecção do WhatsApp
+      openWhatsApp(message, true);
+      
+      toast({
+        title: "WhatsApp aberto",
+        description: "Tentando abrir WhatsApp nativo, fallback para Web se necessário",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error sharing to WhatsApp:', error);
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: "Erro ao compartilhar no WhatsApp",
+        duration: 3000,
+      });
+    }
   };
 
   const handleCopyToClipboard = async () => {
@@ -91,13 +108,15 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
     }
 
     try {
-      await navigator.clipboard.writeText(fileUrl);
+      // Encurtar a URL antes de copiar
+      const shortUrl = await shortenUrl(fileUrl);
+      await navigator.clipboard.writeText(shortUrl);
       setCopiedToClipboard(true);
       setTimeout(() => setCopiedToClipboard(false), 2000);
       
       toast({
         title: "Link copiado",
-        description: "O link do arquivo foi copiado para a área de transferência",
+        description: "Link encurtado copiado para a área de transferência",
         duration: 3000,
       });
     } catch (error) {
@@ -134,11 +153,13 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
         throw new Error('Failed to generate public link');
       }
       
-      await navigator.clipboard.writeText(data.signedUrl);
+      // Encurtar a URL pública
+      const shortUrl = await shortenUrl(data.signedUrl);
+      await navigator.clipboard.writeText(shortUrl);
       
       toast({
         title: "Link público gerado",
-        description: "Link temporário (2h) copiado para área de transferência",
+        description: "Link encurtado temporário (2h) copiado para área de transferência",
         duration: 5000,
       });
       
@@ -177,42 +198,51 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
               variant="outline"
               className="w-full justify-start gap-3"
               onClick={handleWhatsAppShare}
+              disabled={isShortening}
             >
-              <MessageCircle className="h-4 w-4 text-green-600" />
-              Compartilhar no WhatsApp Web
+              {isShortening ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <MessageCircle className="h-4 w-4 text-green-600" />
+              )}
+              Compartilhar no WhatsApp
             </Button>
             
             <Button
               variant="outline"
               className="w-full justify-start gap-3"
               onClick={handleCopyToClipboard}
+              disabled={isShortening}
             >
-              {copiedToClipboard ? (
+              {isShortening ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : copiedToClipboard ? (
                 <Check className="h-4 w-4 text-green-600" />
               ) : (
                 <Copy className="h-4 w-4" />
               )}
-              Copiar link para área de transferência
+              Copiar link encurtado
             </Button>
             
             <Button
               variant="outline"
               className="w-full justify-start gap-3"
               onClick={handleGeneratePublicLink}
-              disabled={isGeneratingLink}
+              disabled={isGeneratingLink || isShortening}
             >
-              {isGeneratingLink ? (
+              {isGeneratingLink || isShortening ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Link className="h-4 w-4" />
               )}
-              Gerar link público temporário
+              Gerar link público encurtado
             </Button>
           </div>
           
           <div className="pt-2 border-t">
             <p className="text-xs text-muted-foreground">
-              Os links gerados são temporários e expiram automaticamente por motivos de segurança.
+              Os links são encurtados automaticamente e expiram por motivos de segurança. 
+              O WhatsApp será aberto automaticamente na melhor opção disponível.
             </p>
           </div>
         </div>
