@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Share2, MessageCircle, Copy, Link, Loader2, Check } from 'lucide-react';
@@ -184,7 +183,7 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
         throw new Error('Failed to generate public link');
       }
       
-      // Encurtar a URL pública
+      // Encurtar a URL pública usando o serviço de encurtamento
       const shortUrl = await shortenUrl(data.signedUrl);
       await navigator.clipboard.writeText(shortUrl);
       
