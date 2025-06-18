@@ -1,3 +1,4 @@
+
 const translations = {
   // Geral
   home: 'Início',
@@ -212,6 +213,24 @@ const translations = {
   
   // Process Again
   processAgain: 'Processar Novamente',
+  
+  // Share functionality
+  shareTitle: 'Compartilhar PDF',
+  shareDescription: 'Escolha como deseja compartilhar o arquivo de forma segura:',
+  shareViaWhatsApp: 'Compartilhar no WhatsApp',
+  generatePublicLink: 'Gerar link público seguro',
+  securityNotice: '🔒 Links são gerados com tokens seguros, encurtados automaticamente e <strong>expiram em 24 horas</strong> por motivos de segurança.',
+  fileInfo: '📋 Arquivo: {{count}} {{labelText}} ZPL',
+  convertedOn: 'Convertido em {{date}}',
+  whatsAppOpened: 'WhatsApp aberto',
+  whatsAppOpenedDesc: 'Mensagem preparada com link seguro e informações detalhadas',
+  linkCopied: 'Link copiado!',
+  linkCopiedDesc: 'Link seguro de {{count}} {{labelText}} ZPL copiado (válido por 24h)',
+  errorGeneratingLink: 'Não foi possível gerar link seguro',
+  errorGeneratingPublicLink: 'Não foi possível gerar o link público seguro: {{error}}',
+  whatsAppMessage: '📋 *ZPL Easy* - Arquivo de {{count}} {{labelText}} ZPL convertidas para PDF\n\n🔗 Acesse o arquivo aqui: {{url}}\n\n⏰ *Link válido por 24 horas*\n🔒 Acesso seguro e temporário',
+  label: 'etiqueta',
+  labels: 'etiquetas',
 };
 
 export default translations;

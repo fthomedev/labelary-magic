@@ -1,3 +1,4 @@
+
 const translations = {
   // Geral
   home: 'Home',
@@ -212,6 +213,24 @@ const translations = {
   
   // Process Again
   processAgain: 'Process Again',
+  
+  // Share functionality
+  shareTitle: 'Share PDF',
+  shareDescription: 'Choose how you want to share the file securely:',
+  shareViaWhatsApp: 'Share via WhatsApp',
+  generatePublicLink: 'Generate secure public link',
+  securityNotice: '🔒 Links are generated with secure tokens, automatically shortened and <strong>expire in 24 hours</strong> for security reasons.',
+  fileInfo: '📋 File: {{count}} ZPL {{labelText}}',
+  convertedOn: 'Converted on {{date}}',
+  whatsAppOpened: 'WhatsApp opened',
+  whatsAppOpenedDesc: 'Message prepared with secure link and detailed information',
+  linkCopied: 'Link copied!',
+  linkCopiedDesc: 'Secure link for {{count}} ZPL {{labelText}} copied (valid for 24h)',
+  errorGeneratingLink: 'Could not generate secure link',
+  errorGeneratingPublicLink: 'Could not generate secure public link: {{error}}',
+  whatsAppMessage: '📋 *ZPL Easy* - {{count}} ZPL {{labelText}} converted to PDF\n\n🔗 Access the file here: {{url}}\n\n⏰ *Link valid for 24 hours*\n🔒 Secure and temporary access',
+  label: 'label',
+  labels: 'labels',
 };
 
 export default translations;

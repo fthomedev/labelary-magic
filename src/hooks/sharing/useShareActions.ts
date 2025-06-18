@@ -1,6 +1,6 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useUrlShortener } from './useUrlShortener';
 import { useWhatsAppDetection } from './useWhatsAppDetection';
@@ -9,6 +9,7 @@ import { ProcessingRecord } from '@/hooks/useZplConversion';
 
 export const useShareActions = (record: ProcessingRecord | null, onClose?: () => void) => {
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { shortenUrl, isShortening } = useUrlShortener();
   const { openWhatsApp } = useWhatsAppDetection();
@@ -23,7 +24,7 @@ export const useShareActions = (record: ProcessingRecord | null, onClose?: () =>
       console.error('🚀 [ERROR] No record provided');
       toast({
         variant: "destructive",
-        title: "Erro",
+        title: t('error'),
         description: "Nenhum registro fornecido para compartilhamento",
       });
       return null;
@@ -43,8 +44,8 @@ export const useShareActions = (record: ProcessingRecord | null, onClose?: () =>
       console.error('🚀 [ERROR] Record pdfUrl is:', record.pdfUrl);
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível gerar link seguro - arquivo não encontrado",
+        title: t('error'),
+        description: t('errorGeneratingLink'),
       });
       return null;
     }
@@ -84,21 +85,20 @@ export const useShareActions = (record: ProcessingRecord | null, onClose?: () =>
       
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: `Não foi possível gerar link seguro: ${error?.message || 'Erro desconhecido'}`,
+        title: t('error'),
+        description: t('errorGeneratingPublicLink', { error: error?.message || 'Erro desconhecido' }),
       });
       return null;
     }
   };
 
   const createShareMessage = (shortUrl: string) => {
-    const labelText = record?.labelCount === 1 ? 'etiqueta' : 'etiquetas';
-    return `📋 *ZPL Easy* - Arquivo de ${record?.labelCount} ${labelText} ZPL convertidas para PDF
-
-🔗 Acesse o arquivo aqui: ${shortUrl}
-
-⏰ *Link válido por 24 horas*
-🔒 Acesso seguro e temporário`;
+    const labelText = record?.labelCount === 1 ? t('label') : t('labels');
+    return t('whatsAppMessage', { 
+      count: record?.labelCount, 
+      labelText, 
+      url: shortUrl 
+    });
   };
 
   const handleWhatsAppShare = async () => {
@@ -117,8 +117,8 @@ export const useShareActions = (record: ProcessingRecord | null, onClose?: () =>
     openWhatsApp(message);
     
     toast({
-      title: "WhatsApp aberto",
-      description: "Mensagem preparada com link seguro e informações detalhadas",
+      title: t('whatsAppOpened'),
+      description: t('whatsAppOpenedDesc'),
     });
 
     // Close modal and navigate to app
@@ -146,11 +146,11 @@ export const useShareActions = (record: ProcessingRecord | null, onClose?: () =>
       // Copy to clipboard
       await navigator.clipboard.writeText(shortUrl);
       
-      const labelText = record?.labelCount === 1 ? 'etiqueta' : 'etiquetas';
+      const labelText = record?.labelCount === 1 ? t('label') : t('labels');
       
       toast({
-        title: "Link copiado!",
-        description: `Link seguro de ${record?.labelCount} ${labelText} ZPL copiado (válido por 24h)`,
+        title: t('linkCopied'),
+        description: t('linkCopiedDesc', { count: record?.labelCount, labelText }),
       });
 
       // Close modal and navigate to app
@@ -163,8 +163,8 @@ export const useShareActions = (record: ProcessingRecord | null, onClose?: () =>
       console.error('🔗 [ERROR] Error details:', JSON.stringify(error, null, 2));
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: `Não foi possível gerar o link público seguro: ${error?.message || 'Erro desconhecido'}`,
+        title: t('error'),
+        description: t('errorGeneratingPublicLink', { error: error?.message || 'Erro desconhecido' }),
       });
     } finally {
       setIsGeneratingLink(false);

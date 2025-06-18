@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -9,6 +10,8 @@ interface PublicLinkButtonProps {
 }
 
 export function PublicLinkButton({ onGenerate, isLoading }: PublicLinkButtonProps) {
+  const { t } = useTranslation();
+  
   return (
     <Button
       variant="outline"
@@ -21,7 +24,7 @@ export function PublicLinkButton({ onGenerate, isLoading }: PublicLinkButtonProp
       ) : (
         <Link className="h-4 w-4" />
       )}
-      Gerar link público seguro
+      {t('generatePublicLink')}
     </Button>
   );
 }
