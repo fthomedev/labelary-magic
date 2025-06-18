@@ -13,7 +13,7 @@ export const useShareActions = (record: ProcessingRecord | null) => {
   const { openWhatsApp } = useWhatsAppDetection();
   const { createSecureToken, getSecureFileUrl } = useSecureFileAccess();
 
-  const getSecureFileUrl = async (): Promise<string | null> => {
+  const generateSecureUrl = async (): Promise<string | null> => {
     if (!record || !record.pdfPath) {
       console.error('No valid PDF path available for secure sharing');
       toast({
@@ -51,7 +51,7 @@ export const useShareActions = (record: ProcessingRecord | null) => {
   };
 
   const handleWhatsAppShare = async () => {
-    const secureUrl = await getSecureFileUrl();
+    const secureUrl = await generateSecureUrl();
     if (!secureUrl) return;
     
     console.log('Shortening secure URL for WhatsApp...');
@@ -71,7 +71,7 @@ export const useShareActions = (record: ProcessingRecord | null) => {
     setIsGeneratingLink(true);
     
     try {
-      const secureUrl = await getSecureFileUrl();
+      const secureUrl = await generateSecureUrl();
       if (!secureUrl) return;
       
       console.log('Shortening secure URL for public link...');
