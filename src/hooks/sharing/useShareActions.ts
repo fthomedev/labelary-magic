@@ -1,17 +1,19 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { useUrlShortener } from './useUrlShortener';
 import { useWhatsAppDetection } from './useWhatsAppDetection';
 import { useSecureFileAccess } from './useSecureFileAccess';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 
-export const useShareActions = (record: ProcessingRecord | null) => {
+export const useShareActions = (record: ProcessingRecord | null, onClose?: () => void) => {
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const { toast } = useToast();
   const { shortenUrl, isShortening } = useUrlShortener();
   const { openWhatsApp } = useWhatsAppDetection();
   const { createSecureToken, getSecureFileUrl } = useSecureFileAccess();
+  const navigate = useNavigate();
 
   const generateSecureUrl = async (): Promise<string | null> => {
     console.log('🚀 [DEBUG] ========== STARTING SECURE URL GENERATION ==========');
@@ -89,6 +91,16 @@ export const useShareActions = (record: ProcessingRecord | null) => {
     }
   };
 
+  const createShareMessage = (shortUrl: string) => {
+    const labelText = record?.labelCount === 1 ? 'etiqueta' : 'etiquetas';
+    return `📋 *ZPL Easy* - Arquivo de ${record?.labelCount} ${labelText} ZPL convertidas para PDF
+
+🔗 Acesse o arquivo aqui: ${shortUrl}
+
+⏰ *Link válido por 24 horas*
+🔒 Acesso seguro e temporário`;
+  };
+
   const handleWhatsAppShare = async () => {
     console.log('📱 [DEBUG] Starting WhatsApp share...');
     const secureUrl = await generateSecureUrl();
@@ -101,13 +113,19 @@ export const useShareActions = (record: ProcessingRecord | null) => {
     const shortUrl = await shortenUrl(secureUrl);
     console.log('📱 [DEBUG] Final shortened URL for WhatsApp:', shortUrl);
     
-    const message = `Confira este arquivo PDF: ${shortUrl}`;
+    const message = createShareMessage(shortUrl);
     openWhatsApp(message);
     
     toast({
-      title: "Compartilhamento iniciado",
-      description: "Abrindo WhatsApp com link seguro...",
+      title: "WhatsApp aberto",
+      description: "Mensagem preparada com link seguro e informações detalhadas",
     });
+
+    // Close modal and navigate to app
+    if (onClose) {
+      onClose();
+    }
+    navigate('/app');
   };
 
   const handleGeneratePublicLink = async () => {
@@ -128,10 +146,18 @@ export const useShareActions = (record: ProcessingRecord | null) => {
       // Copy to clipboard
       await navigator.clipboard.writeText(shortUrl);
       
+      const labelText = record?.labelCount === 1 ? 'etiqueta' : 'etiquetas';
+      
       toast({
-        title: "Link seguro copiado!",
-        description: `Link encurtado e seguro copiado (${shortUrl.length} caracteres)`,
+        title: "Link copiado!",
+        description: `Link seguro de ${record?.labelCount} ${labelText} ZPL copiado (válido por 24h)`,
       });
+
+      // Close modal and navigate to app
+      if (onClose) {
+        onClose();
+      }
+      navigate('/app');
     } catch (error) {
       console.error('🔗 [ERROR] Error generating secure public link:', error);
       console.error('🔗 [ERROR] Error details:', JSON.stringify(error, null, 2));

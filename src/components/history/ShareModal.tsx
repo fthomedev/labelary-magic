@@ -24,9 +24,11 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
     handleGeneratePublicLink,
     isGeneratingLink,
     isShortening,
-  } = useShareActions(record);
+  } = useShareActions(record, onClose);
 
   if (!record) return null;
+
+  const labelText = record.labelCount === 1 ? 'etiqueta' : 'etiquetas';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -39,6 +41,15 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
         </DialogHeader>
         
         <div className="space-y-3 py-4">
+          <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+              📋 Arquivo: {record.labelCount} {labelText} ZPL
+            </p>
+            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+              Convertido em {new Date(record.date).toLocaleDateString('pt-BR')}
+            </p>
+          </div>
+          
           <p className="text-sm text-muted-foreground">
             Escolha como deseja compartilhar o arquivo de forma segura:
           </p>
@@ -57,7 +68,7 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
           
           <div className="pt-2 border-t">
             <p className="text-xs text-muted-foreground">
-              Links são gerados com tokens seguros, encurtados automaticamente e expiram em 24 horas por motivos de segurança.
+              🔒 Links são gerados com tokens seguros, encurtados automaticamente e <strong>expiram em 24 horas</strong> por motivos de segurança.
             </p>
           </div>
         </div>
