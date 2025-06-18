@@ -24,6 +24,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     records,
     formatDate,
     handleDownload,
+    handlePrint,
     isMobile,
     currentPage,
     totalPages,
@@ -57,12 +58,12 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
         <CardHeader className="pb-1 pt-3 border-b">
           <CardTitle className="text-base font-medium flex items-center gap-2">
             <History className="h-4 w-4 text-primary" />
-            {t('processingHistory')}
+            {t('history')}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center py-6 flex flex-col items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
-          <span className="text-sm text-muted-foreground">{t('loadingHistory')}</span>
+          <span className="text-sm text-muted-foreground">{t('loading')}</span>
         </CardContent>
       </>
     );
@@ -74,7 +75,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
         <CardHeader className="pb-1 pt-3 border-b">
           <CardTitle className="text-base font-medium flex items-center gap-2">
             <History className="h-4 w-4 text-primary" />
-            {t('processingHistory')}
+            {t('history')}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center py-6 text-sm text-muted-foreground">
@@ -90,11 +91,11 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
         <CardTitle className="text-base font-medium flex justify-between items-center">
           <div className="flex items-center gap-2">
             <History className="h-4 w-4 text-primary" />
-            <span>{t('processingHistory')}</span>
+            <span>{t('history')}</span>
           </div>
           {!localOnly && totalRecords > 0 && (
             <span className="text-xs font-normal text-muted-foreground">
-              {t('totalRecords', { count: totalRecords })}
+              {totalRecords} {t('label', { count: totalRecords })}
             </span>
           )}
         </CardTitle>
@@ -106,6 +107,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           onDownload={handleDownload}
           onDelete={handleDeleteClick}
           onShare={handleShareClick}
+          onPrint={handlePrint}
           isMobile={isMobile}
         />
       </CardContent>
