@@ -11,75 +11,113 @@ export function useHistoryPrint() {
   
   const handlePrint = useCallback(async (record: ProcessingRecord) => {
     try {
-      let pdfUrl: string | null = null;
+      let pdfArrayBuffer: ArrayBuffer | null = null;
 
-      // For records that have a storage path, always use that (more reliable after page refresh)
+      // Para registros que têm um storage path, sempre usar esse (mais confiável após refresh da página)
       if (record.pdfPath) {
-        console.log('Getting PDF for printing from storage path:', record.pdfPath);
+        console.log('Fazendo fetch do PDF para impressão do storage path:', record.pdfPath);
         
-        // Get direct download URL with proper authorization
+        // Fazer download direto do arquivo usando signed URL
         const { data, error } = await supabase.storage
           .from('pdfs')
-          .createSignedUrl(record.pdfPath, 300); // 5 minutes expiration for printing
+          .createSignedUrl(record.pdfPath, 300); // 5 minutos de expiração para impressão
           
         if (error || !data?.signedUrl) {
-          console.error('Error creating signed URL for printing:', error);
-          throw new Error('Failed to create print URL');
+          console.error('Erro ao criar signed URL para impressão:', error);
+          throw new Error('Falha ao criar URL de impressão');
         }
         
-        pdfUrl = data.signedUrl;
-        console.log('Signed URL created successfully for printing:', pdfUrl);
-      } 
-      // If the pdfUrl is a complete URL (not a blob), use that directly
-      else if (record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
-        console.log('Using direct URL from Supabase for printing:', record.pdfUrl);
-        pdfUrl = record.pdfUrl;
-      }
-      // Fallback to blob URL if available (for newly created PDFs)
-      else if (record.pdfUrl && record.pdfUrl.startsWith('blob:')) {
-        console.log('Trying to use blob URL for printing:', record.pdfUrl);
+        console.log('Signed URL criada com sucesso para impressão:', data.signedUrl);
         
-        // Check if the blob URL is still valid
+        // Fazer fetch do PDF
+        const response = await fetch(data.signedUrl);
+        if (!response.ok) {
+          throw new Error('Falha ao fazer download do PDF');
+        }
+        
+        pdfArrayBuffer = await response.arrayBuffer();
+      } 
+      // Se o pdfUrl é uma URL completa (não um blob), usar essa diretamente
+      else if (record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
+        console.log('Fazendo fetch da URL direta do Supabase para impressão:', record.pdfUrl);
+        
+        const response = await fetch(record.pdfUrl);
+        if (!response.ok) {
+          throw new Error('Falha ao fazer download do PDF');
+        }
+        
+        pdfArrayBuffer = await response.arrayBuffer();
+      }
+      // Fallback para blob URL se disponível (para PDFs recém-criados)
+      else if (record.pdfUrl && record.pdfUrl.startsWith('blob:')) {
+        console.log('Tentando usar blob URL para impressão:', record.pdfUrl);
+        
+        // Verificar se a blob URL ainda é válida
         try {
-          const response = await fetch(record.pdfUrl, { method: 'HEAD' });
+          const response = await fetch(record.pdfUrl);
           
           if (!response.ok) {
-            throw new Error('Blob URL is no longer valid');
+            throw new Error('Blob URL não é mais válida');
           }
           
-          pdfUrl = record.pdfUrl;
+          pdfArrayBuffer = await response.arrayBuffer();
         } catch (e) {
-          console.error('Error with blob URL for printing:', e);
-          throw new Error('Blob URL is no longer accessible after page refresh');
+          console.error('Erro com blob URL para impressão:', e);
+          throw new Error('Blob URL não é mais acessível após refresh da página');
         }
       }
 
-      if (!pdfUrl) {
-        throw new Error('No valid PDF URL or path available for printing');
+      if (!pdfArrayBuffer) {
+        throw new Error('Nenhuma URL de PDF válida ou path disponível para impressão');
       }
 
-      // Open the PDF in a new window and trigger print
-      const printWindow = window.open(pdfUrl, '_blank');
+      // Criar blob URL a partir do ArrayBuffer
+      const pdfBlob = new Blob([pdfArrayBuffer], { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(pdfBlob);
+
+      // Criar iframe oculto para impressão
+      const printFrame = document.createElement('iframe');
+      printFrame.style.position = 'fixed';
+      printFrame.style.top = '-1000px';
+      printFrame.style.left = '-1000px';
+      printFrame.style.width = '1px';
+      printFrame.style.height = '1px';
+      printFrame.style.opacity = '0';
+      printFrame.style.border = 'none';
       
-      if (printWindow) {
-        // Wait for the PDF to load and then trigger print
-        printWindow.onload = () => {
-          setTimeout(() => {
-            printWindow.print();
-          }, 1000); // Give some time for the PDF to fully load
-        };
+      document.body.appendChild(printFrame);
+
+      // Configurar evento de load do iframe
+      printFrame.onload = () => {
+        setTimeout(() => {
+          try {
+            // Chamar print() no conteúdo do iframe
+            printFrame.contentWindow?.print();
+            
+            // Limpar após impressão
+            setTimeout(() => {
+              document.body.removeChild(printFrame);
+              URL.revokeObjectURL(blobUrl);
+            }, 1000);
+          } catch (printError) {
+            console.error('Erro ao imprimir:', printError);
+            document.body.removeChild(printFrame);
+            URL.revokeObjectURL(blobUrl);
+          }
+        }, 500); // Aguardar um pouco para o PDF carregar completamente
+      };
+
+      // Definir src do iframe para o blob URL
+      printFrame.src = blobUrl;
         
-        toast({
-          title: t('printStarted'),
-          description: t('printStartedDesc'),
-          duration: 3000,
-        });
-      } else {
-        throw new Error('Unable to open print window');
-      }
+      toast({
+        title: t('printStarted'),
+        description: t('printStartedDesc'),
+        duration: 3000,
+      });
       
     } catch (error) {
-      console.error('Error printing PDF:', error);
+      console.error('Erro ao imprimir PDF:', error);
       toast({
         variant: "destructive",
         title: t('error'),
