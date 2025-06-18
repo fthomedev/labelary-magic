@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Initialize Supabase client with service role for admin access
+    // Initialize Supabase client with service role for admin access (no user session needed)
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -38,7 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('🔍 [DEBUG] Looking up token in database:', token);
 
-    // Look up the token in the database
+    // Look up the token in the database using service role (bypasses RLS)
     const { data: tokenData, error: tokenError } = await supabase
       .from('file_access_tokens')
       .select('*')
@@ -87,7 +87,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('📁 [DEBUG] Fetching file from storage:', tokenData.file_path, 'bucket:', tokenData.bucket_name);
 
-    // Get the file from storage
+    // Get the file from storage using service role (bypasses storage RLS)
     const { data: fileData, error: fileError } = await supabase.storage
       .from(tokenData.bucket_name)
       .download(tokenData.file_path);
@@ -105,7 +105,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('📊 [DEBUG] File downloaded successfully, size:', fileData.size, 'bytes');
 
-    // Update access count (increment by 1)
+    // Update access count (increment by 1) using service role
     const { error: updateError } = await supabase
       .from('file_access_tokens')
       .update({ accessed_count: tokenData.accessed_count + 1 })
@@ -118,7 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('✅ [SUCCESS] File served successfully');
 
-    // Return the file with appropriate headers
+    // Return the file with appropriate headers for immediate viewing
     return new Response(fileData, {
       headers: {
         ...corsHeaders,
