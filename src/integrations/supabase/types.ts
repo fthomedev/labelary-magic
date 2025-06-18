@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      file_access_tokens: {
+        Row: {
+          accessed_count: number
+          bucket_name: string
+          created_at: string
+          expires_at: string
+          file_path: string
+          id: string
+          max_access: number | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          accessed_count?: number
+          bucket_name?: string
+          created_at?: string
+          expires_at?: string
+          file_path: string
+          id?: string
+          max_access?: number | null
+          token: string
+          user_id: string
+        }
+        Update: {
+          accessed_count?: number
+          bucket_name?: string
+          created_at?: string
+          expires_at?: string
+          file_path?: string
+          id?: string
+          max_access?: number | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       processing_history: {
         Row: {
           date: string
@@ -167,6 +203,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_file_access_token: {
+        Args: {
+          p_file_path: string
+          p_bucket_name?: string
+          p_expires_hours?: number
+          p_max_access?: number
+        }
+        Returns: string
+      }
       delete_processing_history_record: {
         Args: { record_id: string }
         Returns: Json
@@ -174,6 +219,10 @@ export type Database = {
       delete_user: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      generate_secure_token: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       insert_processing_history: {
         Args:

@@ -40,7 +40,7 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
         
         <div className="space-y-3 py-4">
           <p className="text-sm text-muted-foreground">
-            Escolha como deseja compartilhar o arquivo:
+            Escolha como deseja compartilhar o arquivo de forma segura:
           </p>
           
           <div className="space-y-2">
@@ -57,7 +57,7 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
           
           <div className="pt-2 border-t">
             <p className="text-xs text-muted-foreground">
-              Links são encurtados automaticamente e expiram por motivos de segurança.
+              Links são gerados com tokens seguros, encurtados automaticamente e expiram em 24 horas por motivos de segurança.
             </p>
           </div>
         </div>

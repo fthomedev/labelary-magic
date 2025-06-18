@@ -21,7 +21,7 @@ export function PublicLinkButton({ onGenerate, isLoading }: PublicLinkButtonProp
       ) : (
         <Link className="h-4 w-4" />
       )}
-      Gerar link público encurtado
+      Gerar link público seguro
     </Button>
   );
 }
