@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 
 export function useHistoryPrint() {
@@ -75,46 +75,45 @@ export function useHistoryPrint() {
       const pdfBlob = new Blob([pdfArrayBuffer], { type: 'application/pdf' });
       const blobUrl = URL.createObjectURL(pdfBlob);
 
-      // Criar iframe oculto para impressão
-      const printFrame = document.createElement('iframe');
-      printFrame.style.position = 'fixed';
-      printFrame.style.top = '-1000px';
-      printFrame.style.left = '-1000px';
-      printFrame.style.width = '1px';
-      printFrame.style.height = '1px';
-      printFrame.style.opacity = '0';
-      printFrame.style.border = 'none';
+      // Abrir PDF em nova janela para impressão (mais seguro e compatível)
+      const printWindow = window.open(blobUrl, '_blank');
       
-      document.body.appendChild(printFrame);
-
-      // Configurar evento de load do iframe
-      printFrame.onload = () => {
-        setTimeout(() => {
-          try {
-            // Chamar print() no conteúdo do iframe
-            printFrame.contentWindow?.print();
-            
-            // Limpar após impressão
-            setTimeout(() => {
-              document.body.removeChild(printFrame);
-              URL.revokeObjectURL(blobUrl);
-            }, 1000);
-          } catch (printError) {
-            console.error('Erro ao imprimir:', printError);
-            document.body.removeChild(printFrame);
-            URL.revokeObjectURL(blobUrl);
-          }
-        }, 500); // Aguardar um pouco para o PDF carregar completamente
-      };
-
-      // Definir src do iframe para o blob URL
-      printFrame.src = blobUrl;
+      if (!printWindow) {
+        // Se popup foi bloqueado, tentar download direto
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `etiquetas-${record.labelCount}-labels.pdf`;
+        link.click();
         
-      toast({
-        title: t('printStarted'),
-        description: t('printStartedDesc'),
-        duration: 3000,
-      });
+        toast({
+          title: t('printStarted'),
+          description: 'PDF baixado - abra o arquivo e imprima manualmente',
+          duration: 4000,
+        });
+      } else {
+        // Aguardar o carregamento do PDF e tentar imprimir
+        printWindow.onload = () => {
+          setTimeout(() => {
+            try {
+              printWindow.print();
+              // Fechar janela após impressão (alguns navegadores)
+              setTimeout(() => {
+                printWindow.close();
+                URL.revokeObjectURL(blobUrl);
+              }, 1000);
+            } catch (printError) {
+              console.error('Erro ao imprimir:', printError);
+              // Se falhar, manter janela aberta para impressão manual
+            }
+          }, 1000);
+        };
+        
+        toast({
+          title: t('printStarted'),
+          description: t('printStartedDesc'),
+          duration: 3000,
+        });
+      }
       
     } catch (error) {
       console.error('Erro ao imprimir PDF:', error);
