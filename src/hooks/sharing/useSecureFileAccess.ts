@@ -5,6 +5,7 @@ export const useSecureFileAccess = () => {
   const createSecureToken = async (filePath: string, expiresHours: number = 24): Promise<string | null> => {
     try {
       console.log('Creating secure token for file:', filePath);
+      console.log('Expires hours:', expiresHours);
       
       const { data, error } = await supabase.rpc('create_file_access_token', {
         p_file_path: filePath,
@@ -15,20 +16,23 @@ export const useSecureFileAccess = () => {
 
       if (error) {
         console.error('Error creating secure token:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         return null;
       }
 
-      console.log('Secure token created:', data);
+      console.log('Secure token created successfully:', data);
       return data;
     } catch (error) {
-      console.error('Error in createSecureToken:', error);
+      console.error('Exception in createSecureToken:', error);
       return null;
     }
   };
 
   const getSecureFileUrl = (token: string): string => {
     const baseUrl = 'https://ekoakbihwprthzjyztwq.supabase.co';
-    return `${baseUrl}/functions/v1/serve-file/${token}`;
+    const secureUrl = `${baseUrl}/functions/v1/serve-file/${token}`;
+    console.log('Generated secure URL:', secureUrl);
+    return secureUrl;
   };
 
   return {

@@ -50,7 +50,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  RETURN encode(gen_random_bytes(32), 'base64url');
+  RETURN encode(gen_random_bytes(32), 'hex');
 END;
 $$;
 

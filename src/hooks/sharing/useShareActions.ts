@@ -16,6 +16,7 @@ export const useShareActions = (record: ProcessingRecord | null) => {
   const generateSecureUrl = async (): Promise<string | null> => {
     if (!record || !record.pdfPath) {
       console.error('No valid PDF path available for secure sharing');
+      console.error('Record:', record);
       toast({
         variant: "destructive",
         title: "Erro",
@@ -25,15 +26,19 @@ export const useShareActions = (record: ProcessingRecord | null) => {
     }
 
     try {
-      console.log('Creating secure token for file:', record.pdfPath);
+      console.log('Starting secure URL generation process...');
+      console.log('Record details:', { id: record.id, pdfPath: record.pdfPath });
       
       // Create a secure token for the file
       const token = await createSecureToken(record.pdfPath, 24); // 24 hours expiration
       
       if (!token) {
+        console.error('Failed to create secure token - token is null or undefined');
         throw new Error('Failed to create secure token');
       }
 
+      console.log('Token created successfully, generating URL...');
+      
       // Generate the secure URL
       const secureUrl = getSecureFileUrl(token);
       console.log('Secure URL created:', secureUrl);
@@ -41,6 +46,7 @@ export const useShareActions = (record: ProcessingRecord | null) => {
       return secureUrl;
     } catch (error) {
       console.error('Error creating secure file URL:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       toast({
         variant: "destructive",
         title: "Erro",
