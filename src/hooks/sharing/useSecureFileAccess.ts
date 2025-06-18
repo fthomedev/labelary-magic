@@ -4,51 +4,78 @@ import { supabase } from '@/integrations/supabase/client';
 export const useSecureFileAccess = () => {
   const createSecureToken = async (filePath: string, expiresHours: number = 24): Promise<string | null> => {
     try {
+      console.log('🔐 [DEBUG] ========== STARTING TOKEN CREATION ==========');
       console.log('🔐 [DEBUG] Creating secure token for file:', filePath);
       console.log('🔐 [DEBUG] Expires hours:', expiresHours);
       console.log('🔐 [DEBUG] Supabase client initialized:', !!supabase);
       
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
+      // Check if user is authenticated first
+      console.log('🔐 [DEBUG] Checking user authentication...');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('🔐 [ERROR] Session error:', sessionError);
+        return null;
+      }
+      
       if (!session) {
-        console.error('🔐 [ERROR] User not authenticated');
+        console.error('🔐 [ERROR] User not authenticated - no session');
         return null;
       }
       
       console.log('🔐 [DEBUG] User authenticated:', !!session.user);
+      console.log('🔐 [DEBUG] User ID:', session.user?.id);
       
-      const { data, error } = await supabase.rpc('create_file_access_token', {
+      // Prepare RPC parameters
+      const rpcParams = {
         p_file_path: filePath,
         p_bucket_name: 'pdfs',
         p_expires_hours: expiresHours,
-        p_max_access: null // Unlimited access for now
-      });
+        p_max_access: null
+      };
+      
+      console.log('🔐 [DEBUG] RPC parameters:', JSON.stringify(rpcParams, null, 2));
+      console.log('🔐 [DEBUG] Making RPC call to create_file_access_token...');
+      
+      const { data, error } = await supabase.rpc('create_file_access_token', rpcParams);
 
-      console.log('🔐 [DEBUG] RPC call completed');
-      console.log('🔐 [DEBUG] Data received:', data);
-      console.log('🔐 [DEBUG] Error received:', error);
-
+      console.log('🔐 [DEBUG] ========== RPC CALL COMPLETED ==========');
+      console.log('🔐 [DEBUG] Raw response data:', data);
+      console.log('🔐 [DEBUG] Raw response error:', error);
+      
       if (error) {
-        console.error('🔐 [ERROR] Error creating secure token:', error);
+        console.error('🔐 [ERROR] ========== DETAILED ERROR ANALYSIS ==========');
+        console.error('🔐 [ERROR] Error object:', error);
         console.error('🔐 [ERROR] Error code:', error.code);
         console.error('🔐 [ERROR] Error message:', error.message);
-        console.error('🔐 [ERROR] Error details:', JSON.stringify(error, null, 2));
+        console.error('🔐 [ERROR] Error details:', error.details);
         console.error('🔐 [ERROR] Error hint:', error.hint);
+        console.error('🔐 [ERROR] Error stringified:', JSON.stringify(error, null, 2));
+        console.error('🔐 [ERROR] =======================================');
         return null;
       }
 
       if (!data) {
         console.error('🔐 [ERROR] No data returned from RPC call');
+        console.error('🔐 [ERROR] Data is:', data);
         return null;
       }
 
-      console.log('🔐 [SUCCESS] Secure token created successfully:', data);
+      console.log('🔐 [SUCCESS] ========== TOKEN CREATED SUCCESSFULLY ==========');
+      console.log('🔐 [SUCCESS] Token created:', data);
+      console.log('🔐 [SUCCESS] Token type:', typeof data);
+      console.log('🔐 [SUCCESS] Token length:', data?.length);
+      console.log('🔐 [SUCCESS] ============================================');
+      
       return data;
     } catch (error) {
+      console.error('🔐 [EXCEPTION] ========== EXCEPTION CAUGHT ==========');
       console.error('🔐 [EXCEPTION] Exception in createSecureToken:', error);
       console.error('🔐 [EXCEPTION] Exception name:', error?.name);
       console.error('🔐 [EXCEPTION] Exception message:', error?.message);
       console.error('🔐 [EXCEPTION] Exception stack:', error?.stack);
+      console.error('🔐 [EXCEPTION] Exception stringified:', JSON.stringify(error, null, 2));
+      console.error('🔐 [EXCEPTION] =====================================');
       return null;
     }
   };

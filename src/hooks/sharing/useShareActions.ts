@@ -14,7 +14,7 @@ export const useShareActions = (record: ProcessingRecord | null) => {
   const { createSecureToken, getSecureFileUrl } = useSecureFileAccess();
 
   const generateSecureUrl = async (): Promise<string | null> => {
-    console.log('🚀 [DEBUG] Starting secure URL generation process...');
+    console.log('🚀 [DEBUG] ========== STARTING SECURE URL GENERATION ==========');
     console.log('🚀 [DEBUG] Record provided:', !!record);
     
     if (!record) {
@@ -48,16 +48,19 @@ export const useShareActions = (record: ProcessingRecord | null) => {
     }
 
     try {
-      console.log('🚀 [DEBUG] About to create secure token...');
+      console.log('🚀 [DEBUG] About to create secure token for path:', record.pdfPath);
       
       // Create a secure token for the file
       const token = await createSecureToken(record.pdfPath, 24); // 24 hours expiration
       
       console.log('🚀 [DEBUG] Token creation result:', token);
+      console.log('🚀 [DEBUG] Token type:', typeof token);
+      console.log('🚀 [DEBUG] Token truthy:', !!token);
       
       if (!token) {
         console.error('🚀 [ERROR] Failed to create secure token - token is null or undefined');
-        throw new Error('Failed to create secure token');
+        console.error('🚀 [ERROR] Token value:', token);
+        throw new Error('Failed to create secure token - received null/undefined');
       }
 
       console.log('🚀 [SUCCESS] Token created successfully, generating URL...');
@@ -68,16 +71,19 @@ export const useShareActions = (record: ProcessingRecord | null) => {
       
       return secureUrl;
     } catch (error) {
+      console.error('🚀 [ERROR] ========== ERROR IN SECURE URL GENERATION ==========');
       console.error('🚀 [ERROR] Error creating secure file URL:', error);
       console.error('🚀 [ERROR] Error type:', typeof error);
       console.error('🚀 [ERROR] Error constructor:', error?.constructor?.name);
       console.error('🚀 [ERROR] Error message:', error?.message);
       console.error('🚀 [ERROR] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      console.error('🚀 [ERROR] Error stringified:', JSON.stringify(error, null, 2));
+      console.error('🚀 [ERROR] ================================================');
       
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível gerar link seguro",
+        description: `Não foi possível gerar link seguro: ${error?.message || 'Erro desconhecido'}`,
       });
       return null;
     }
@@ -132,7 +138,7 @@ export const useShareActions = (record: ProcessingRecord | null) => {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível gerar o link público seguro",
+        description: `Não foi possível gerar o link público seguro: ${error?.message || 'Erro desconhecido'}`,
       });
     } finally {
       setIsGeneratingLink(false);
