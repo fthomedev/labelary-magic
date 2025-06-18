@@ -16,6 +16,7 @@ interface HistoryTableProps {
   formatDate: (date: Date) => string;
   onDownload: (record: ProcessingRecord) => void;
   onDelete: (record: ProcessingRecord) => void;
+  onShare: (record: ProcessingRecord) => void;
   isMobile: boolean;
 }
 
@@ -24,6 +25,7 @@ export function HistoryTable({
   formatDate, 
   onDownload,
   onDelete,
+  onShare,
   isMobile 
 }: HistoryTableProps) {
   const { t } = useTranslation();
@@ -35,13 +37,13 @@ export function HistoryTable({
       <Table className="compact-table">
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
-            <TableHead className="w-[45%] font-medium text-foreground py-1 text-xs">
+            <TableHead className="w-[40%] font-medium text-foreground py-1 text-xs">
               {isMobile ? t('date').substring(0, 4) : t('date')}
             </TableHead>
-            <TableHead className="w-[35%] font-medium text-foreground py-1 text-xs">
+            <TableHead className="w-[30%] font-medium text-foreground py-1 text-xs">
               {isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}
             </TableHead>
-            <TableHead className="w-[20%] py-1"></TableHead>
+            <TableHead className="w-[30%] py-1"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -54,6 +56,7 @@ export function HistoryTable({
                 formatDate={formatDate}
                 onDownload={onDownload}
                 onDelete={onDelete}
+                onShare={onShare}
               />
             );
           })}

@@ -1,0 +1,222 @@
+
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Share2, MessageCircle, Copy, Link, Loader2, Check } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import { ProcessingRecord } from '@/hooks/useZplConversion';
+import { supabase } from '@/integrations/supabase/client';
+
+interface ShareModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  record: ProcessingRecord | null;
+}
+
+export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
+
+  const getFileUrl = async (): Promise<string | null> => {
+    if (!record) return null;
+
+    try {
+      // If we have a storage path, use that to generate a signed URL
+      if (record.pdfPath) {
+        const { data, error } = await supabase.storage
+          .from('pdfs')
+          .createSignedUrl(record.pdfPath, 3600); // 1 hour expiration
+          
+        if (error || !data?.signedUrl) {
+          console.error('Error creating signed URL:', error);
+          return null;
+        }
+        
+        return data.signedUrl;
+      }
+      
+      // If we have a direct URL and it's not a blob, use that
+      if (record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
+        return record.pdfUrl;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting file URL:', error);
+      return null;
+    }
+  };
+
+  const handleWhatsAppShare = async () => {
+    const fileUrl = await getFileUrl();
+    if (!fileUrl) {
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: "Não foi possível obter o link do arquivo",
+        duration: 3000,
+      });
+      return;
+    }
+
+    const message = encodeURIComponent(`Confira este PDF gerado pelo ZPL Easy: ${fileUrl}`);
+    const whatsappUrl = `https://web.whatsapp.com/send?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+    
+    toast({
+      title: "WhatsApp aberto",
+      description: "O WhatsApp Web foi aberto com a mensagem preparada",
+      duration: 3000,
+    });
+  };
+
+  const handleCopyToClipboard = async () => {
+    const fileUrl = await getFileUrl();
+    if (!fileUrl) {
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: "Não foi possível obter o link do arquivo",
+        duration: 3000,
+      });
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(fileUrl);
+      setCopiedToClipboard(true);
+      setTimeout(() => setCopiedToClipboard(false), 2000);
+      
+      toast({
+        title: "Link copiado",
+        description: "O link do arquivo foi copiado para a área de transferência",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: "Erro ao copiar para a área de transferência",
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleGeneratePublicLink = async () => {
+    if (!record?.pdfPath) {
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: "Arquivo não encontrado no armazenamento",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setIsGeneratingLink(true);
+    
+    try {
+      // Generate a signed URL with longer expiration for public sharing
+      const { data, error } = await supabase.storage
+        .from('pdfs')
+        .createSignedUrl(record.pdfPath, 7200); // 2 hours expiration
+        
+      if (error || !data?.signedUrl) {
+        throw new Error('Failed to generate public link');
+      }
+      
+      await navigator.clipboard.writeText(data.signedUrl);
+      
+      toast({
+        title: "Link público gerado",
+        description: "Link temporário (2h) copiado para área de transferência",
+        duration: 5000,
+      });
+      
+    } catch (error) {
+      console.error('Error generating public link:', error);
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: "Erro ao gerar link público",
+        duration: 3000,
+      });
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  };
+
+  if (!record) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Share2 className="h-5 w-5" />
+            Compartilhar PDF
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-3 py-4">
+          <p className="text-sm text-muted-foreground">
+            Escolha como deseja compartilhar o arquivo:
+          </p>
+          
+          <div className="space-y-2">
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3"
+              onClick={handleWhatsAppShare}
+            >
+              <MessageCircle className="h-4 w-4 text-green-600" />
+              Compartilhar no WhatsApp Web
+            </Button>
+            
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3"
+              onClick={handleCopyToClipboard}
+            >
+              {copiedToClipboard ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              Copiar link para área de transferência
+            </Button>
+            
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3"
+              onClick={handleGeneratePublicLink}
+              disabled={isGeneratingLink}
+            >
+              {isGeneratingLink ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Link className="h-4 w-4" />
+              )}
+              Gerar link público temporário
+            </Button>
+          </div>
+          
+          <div className="pt-2 border-t">
+            <p className="text-xs text-muted-foreground">
+              Os links gerados são temporários e expiram automaticamente por motivos de segurança.
+            </p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

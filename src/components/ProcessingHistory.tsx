@@ -5,10 +5,12 @@ import { Loader2, History } from 'lucide-react';
 import { CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useProcessingHistory } from '@/hooks/useProcessingHistory';
+import { useHistoryShare } from '@/hooks/history/useHistoryShare';
 import { HistoryTable } from './history/HistoryTable';
 import { HistoryPagination } from './history/HistoryPagination';
 import { PdfViewerModal } from './history/PdfViewerModal';
 import { DeleteConfirmDialog } from './history/DeleteConfirmDialog';
+import { ShareModal } from './history/ShareModal';
 
 interface ProcessingHistoryProps {
   records?: ProcessingRecord[];
@@ -41,6 +43,13 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     handleDeleteConfirm,
     closeDeleteDialog,
   } = useProcessingHistory(localRecords, localOnly);
+
+  const {
+    isShareModalOpen,
+    recordToShare,
+    handleShareClick,
+    closeShareModal,
+  } = useHistoryShare();
 
   if (isLoading) {
     return (
@@ -96,6 +105,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           formatDate={formatDate}
           onDownload={handleDownload}
           onDelete={handleDeleteClick}
+          onShare={handleShareClick}
           isMobile={isMobile}
         />
       </CardContent>
@@ -123,6 +133,13 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
         onOpenChange={closeDeleteDialog}
         onConfirm={handleDeleteConfirm}
         isDeleting={isDeleting}
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={closeShareModal}
+        record={recordToShare}
       />
     </>
   );
