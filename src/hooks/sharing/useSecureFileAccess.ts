@@ -7,7 +7,6 @@ export const useSecureFileAccess = () => {
       console.log('🔐 [DEBUG] ========== STARTING TOKEN CREATION ==========');
       console.log('🔐 [DEBUG] Creating secure token for file:', filePath);
       console.log('🔐 [DEBUG] Expires hours:', expiresHours);
-      console.log('🔐 [DEBUG] Supabase client initialized:', !!supabase);
       
       // Check if user is authenticated first
       console.log('🔐 [DEBUG] Checking user authentication...');
