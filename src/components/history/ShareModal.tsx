@@ -10,7 +10,6 @@ import {
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useShareActions } from '@/hooks/sharing/useShareActions';
 import { WhatsAppShareButton } from './share/WhatsAppShareButton';
-import { CopyFileButton } from './share/CopyFileButton';
 import { PublicLinkButton } from './share/PublicLinkButton';
 
 interface ShareModalProps {
@@ -22,11 +21,8 @@ interface ShareModalProps {
 export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
   const {
     handleWhatsAppShare,
-    handleCopyFileToClipboard,
     handleGeneratePublicLink,
     isGeneratingLink,
-    copiedToClipboard,
-    copyingFile,
     isShortening,
   } = useShareActions(record);
 
@@ -53,12 +49,6 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
               isLoading={isShortening}
             />
             
-            <CopyFileButton
-              onCopy={handleCopyFileToClipboard}
-              isLoading={copyingFile}
-              isCopied={copiedToClipboard}
-            />
-            
             <PublicLinkButton
               onGenerate={handleGeneratePublicLink}
               isLoading={isGeneratingLink || isShortening}
@@ -67,7 +57,6 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
           
           <div className="pt-2 border-t">
             <p className="text-xs text-muted-foreground">
-              O arquivo PDF será copiado diretamente para sua área de transferência. 
               Links são encurtados automaticamente e expiram por motivos de segurança.
             </p>
           </div>
