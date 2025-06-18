@@ -8,6 +8,15 @@ export const useSecureFileAccess = () => {
       console.log('🔐 [DEBUG] Expires hours:', expiresHours);
       console.log('🔐 [DEBUG] Supabase client initialized:', !!supabase);
       
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('🔐 [ERROR] User not authenticated');
+        return null;
+      }
+      
+      console.log('🔐 [DEBUG] User authenticated:', !!session.user);
+      
       const { data, error } = await supabase.rpc('create_file_access_token', {
         p_file_path: filePath,
         p_bucket_name: 'pdfs',
