@@ -26,6 +26,7 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
   const { toast } = useToast();
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
+  const [copyingFile, setCopyingFile] = useState(false);
   const { shortenUrl, isShortening } = useUrlShortener();
   const { openWhatsApp } = useWhatsAppDetection();
 
@@ -95,7 +96,7 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
     }
   };
 
-  const handleCopyToClipboard = async () => {
+  const handleCopyFileToClipboard = async () => {
     const fileUrl = await getFileUrl();
     if (!fileUrl) {
       toast({
@@ -107,26 +108,56 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
       return;
     }
 
+    setCopyingFile(true);
+
     try {
-      // Encurtar a URL antes de copiar
-      const shortUrl = await shortenUrl(fileUrl);
-      await navigator.clipboard.writeText(shortUrl);
+      // Baixar o arquivo como blob
+      const response = await fetch(fileUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch PDF file');
+      }
+      
+      const blob = await response.blob();
+      
+      // Criar um ClipboardItem com o arquivo PDF
+      const clipboardItem = new ClipboardItem({
+        [blob.type]: blob
+      });
+
+      // Copiar para a área de transferência
+      await navigator.clipboard.write([clipboardItem]);
+      
       setCopiedToClipboard(true);
       setTimeout(() => setCopiedToClipboard(false), 2000);
       
       toast({
-        title: "Link copiado",
-        description: "Link encurtado copiado para a área de transferência",
+        title: "Arquivo copiado",
+        description: "Arquivo PDF copiado para a área de transferência",
         duration: 3000,
       });
     } catch (error) {
-      console.error('Error copying to clipboard:', error);
-      toast({
-        variant: "destructive",
-        title: t('error'),
-        description: "Erro ao copiar para a área de transferência",
-        duration: 3000,
-      });
+      console.error('Error copying file to clipboard:', error);
+      
+      // Fallback: se não conseguir copiar o arquivo, copiar o link
+      try {
+        const shortUrl = await shortenUrl(fileUrl);
+        await navigator.clipboard.writeText(shortUrl);
+        
+        toast({
+          title: "Link copiado",
+          description: "Não foi possível copiar o arquivo. Link copiado como alternativa.",
+          duration: 3000,
+        });
+      } catch (fallbackError) {
+        toast({
+          variant: "destructive",
+          title: t('error'),
+          description: "Erro ao copiar arquivo para a área de transferência",
+          duration: 3000,
+        });
+      }
+    } finally {
+      setCopyingFile(false);
     }
   };
 
@@ -211,17 +242,17 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
             <Button
               variant="outline"
               className="w-full justify-start gap-3"
-              onClick={handleCopyToClipboard}
-              disabled={isShortening}
+              onClick={handleCopyFileToClipboard}
+              disabled={copyingFile}
             >
-              {isShortening ? (
+              {copyingFile ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : copiedToClipboard ? (
                 <Check className="h-4 w-4 text-green-600" />
               ) : (
                 <Copy className="h-4 w-4" />
               )}
-              Copiar link encurtado
+              Copiar arquivo PDF
             </Button>
             
             <Button
@@ -241,8 +272,8 @@ export function ShareModal({ isOpen, onClose, record }: ShareModalProps) {
           
           <div className="pt-2 border-t">
             <p className="text-xs text-muted-foreground">
-              Os links são encurtados automaticamente e expiram por motivos de segurança. 
-              O WhatsApp será aberto automaticamente na melhor opção disponível.
+              O arquivo PDF será copiado diretamente para sua área de transferência. 
+              Links são encurtados automaticamente e expiram por motivos de segurança.
             </p>
           </div>
         </div>
