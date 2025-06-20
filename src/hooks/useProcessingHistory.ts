@@ -8,7 +8,6 @@ import { useHistoryDownload } from '@/hooks/history/useHistoryDownload';
 import { useHistoryDelete } from '@/hooks/history/useHistoryDelete';
 import { useHistoryDiagnostics } from '@/hooks/history/useHistoryDiagnostics';
 import { usePagination } from '@/hooks/history/usePagination';
-import { useHistoryPrint } from '@/hooks/history/useHistoryPrint';
 
 export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnly = false) {
   const { t } = useTranslation();
@@ -20,8 +19,6 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     closePdfModal,
     downloadCurrentPdf
   } = useHistoryDownload();
-  
-  const { handlePrint } = useHistoryPrint();
   
   const {
     isDeleting,
@@ -73,7 +70,6 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     records,
     formatDate,
     handleDownload,
-    handlePrint,
     isMobile,
     currentPage,
     totalPages: Math.ceil(totalRecords / recordsPerPage),

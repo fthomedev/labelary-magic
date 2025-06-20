@@ -24,7 +24,6 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     records,
     formatDate,
     handleDownload,
-    handlePrint,
     isMobile,
     currentPage,
     totalPages,
@@ -107,7 +106,6 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           onDownload={handleDownload}
           onDelete={handleDeleteClick}
           onShare={handleShareClick}
-          onPrint={handlePrint}
           isMobile={isMobile}
         />
       </CardContent>

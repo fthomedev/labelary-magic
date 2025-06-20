@@ -60,11 +60,6 @@ const en = {
   converting: 'Converting',
   downloadAgain: 'Download Again',
   processAgain: 'Process Again',
-  print: "Print",
-  printStarted: "Print started",
-  printStartedDesc: "The document has been sent to print",
-  printError: "Error printing document",
-  printUnavailableAfterRefresh: "Print unavailable after page refresh",
 };
 
 export default en;

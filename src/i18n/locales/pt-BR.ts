@@ -231,13 +231,6 @@ const ptBR = {
   whatsAppMessage: '📋 *ZPL Easy* - Arquivo de {{count}} {{labelText}} ZPL convertidas para PDF\n\n🔗 Acesse o arquivo aqui: {{url}}\n\n⏰ *Link válido por 24 horas*\n🔒 Acesso seguro e temporário',
   label: 'etiqueta',
   labels: 'etiquetas',
-  
-  // Print functionality
-  print: "Imprimir",
-  printStarted: "Impressão iniciada",
-  printStartedDesc: "O documento foi enviado para impressão",
-  printError: "Erro ao imprimir o documento",
-  printUnavailableAfterRefresh: "Impressão indisponível após atualizar a página",
 };
 
 export default ptBR;
