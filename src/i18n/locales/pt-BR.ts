@@ -140,7 +140,7 @@ const ptBR = {
   
   // Histórico
   date: 'Data',
-  labelCount: 'Quantidade de Etiquetas',
+  labelCount: 'Etiquetas',
   view: 'Visualizar',
   download: 'Baixar',
   viewPdf: 'Visualizar PDF',

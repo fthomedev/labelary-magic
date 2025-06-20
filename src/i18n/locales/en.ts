@@ -38,7 +38,7 @@ const en = {
   confirm: 'Confirm',
   deleting: 'Deleting...',
   date: 'Date',
-  labelCount: 'Label Count',
+  labelCount: 'Labels',
   feedbackTitle: 'Send Feedback',
   feedbackDescription: 'Tell us what you think about ZPL Easy or report a bug.',
   feedbackPlaceholder: 'Enter your feedback here...',
