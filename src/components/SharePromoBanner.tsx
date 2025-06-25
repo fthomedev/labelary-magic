@@ -45,9 +45,6 @@ export function SharePromoBanner() {
               <p className="text-sm font-medium text-foreground">
                 Gostou da ferramenta? Compartilhe com seus colegas!
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Ajude outros profissionais a descobrir o ZPL Easy
-              </p>
             </div>
           </div>
           
