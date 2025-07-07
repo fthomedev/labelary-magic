@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { BarChart3, X } from 'lucide-react';
+import { BarChart3, X, Share2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 type SurveyResponse = 'useful' | 'used_once' | 'never_used';
+type BannerMode = 'survey' | 'share' | 'hidden';
 
 export function SharePromoBanner() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [mode, setMode] = useState<BannerMode>('hidden');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { toast } = useToast();
@@ -25,8 +26,8 @@ export function SharePromoBanner() {
           .select('id')
           .single();
 
-        // Only show banner if user hasn't responded yet
-        setIsVisible(!surveyData);
+        // Show survey if user hasn't responded, otherwise show share banner
+        setMode(!surveyData ? 'survey' : 'share');
       }
     };
 
@@ -43,9 +44,9 @@ export function SharePromoBanner() {
           .select('id')
           .single();
 
-        setIsVisible(!surveyData);
+        setMode(!surveyData ? 'survey' : 'share');
       } else {
-        setIsVisible(false);
+        setMode('hidden');
       }
     });
 
@@ -72,7 +73,8 @@ export function SharePromoBanner() {
         duration: 3000,
       });
 
-      setIsVisible(false);
+      // Switch to share mode after successful survey response
+      setMode('share');
     } catch (error) {
       console.error('Error saving survey response:', error);
       toast({
@@ -86,55 +88,100 @@ export function SharePromoBanner() {
     }
   };
 
-  const handleDismiss = () => {
-    setIsVisible(false);
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText('https://www.zpleasy.com');
+      toast({
+        title: 'Link copiado!',
+        description: 'O link foi copiado para sua área de transferência.',
+        duration: 3000,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro ao copiar',
+        description: 'Não foi possível copiar o link.',
+        variant: 'destructive',
+        duration: 3000,
+      });
+    }
   };
 
-  if (!isVisible || !isLoggedIn) return null;
+  const handleDismiss = () => {
+    setMode('hidden');
+  };
+
+  if (mode === 'hidden' || !isLoggedIn) return null;
 
   return (
     <div className="bg-gradient-to-r from-primary/10 to-primary/5 border-b border-primary/20">
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex items-center justify-between py-3">
-          <div className="flex items-center gap-3 flex-1">
-            <BarChart3 className="h-5 w-5 text-primary flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-foreground mb-2">
-                O histórico de conversões é útil para você?
-              </p>
-              <div className="flex flex-wrap gap-2">
+          {mode === 'survey' ? (
+            <>
+              <div className="flex items-center gap-3 flex-1">
+                <BarChart3 className="h-5 w-5 text-primary flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground mb-2">
+                    O histórico de conversões é útil para você?
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={() => handleSurveyResponse('useful')}
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      disabled={isLoading}
+                    >
+                      Muito útil
+                    </Button>
+                    <Button
+                      onClick={() => handleSurveyResponse('used_once')}
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      disabled={isLoading}
+                    >
+                      Usei uma vez
+                    </Button>
+                    <Button
+                      onClick={() => handleSurveyResponse('never_used')}
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      disabled={isLoading}
+                    >
+                      Nunca uso
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 flex-1">
+                <Share2 className="h-5 w-5 text-primary flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    Gostou da ferramenta? Compartilhe com seus colegas!
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
                 <Button
-                  onClick={() => handleSurveyResponse('useful')}
+                  onClick={handleCopyLink}
                   size="sm"
                   variant="outline"
-                  className="text-xs"
-                  disabled={isLoading}
+                  className="gap-2 text-xs"
                 >
-                  Muito útil
-                </Button>
-                <Button
-                  onClick={() => handleSurveyResponse('used_once')}
-                  size="sm"
-                  variant="outline"
-                  className="text-xs"
-                  disabled={isLoading}
-                >
-                  Usei uma vez
-                </Button>
-                <Button
-                  onClick={() => handleSurveyResponse('never_used')}
-                  size="sm"
-                  variant="outline"
-                  className="text-xs"
-                  disabled={isLoading}
-                >
-                  Nunca uso
+                  <Copy className="h-3 w-3" />
+                  Copiar Link
                 </Button>
               </div>
-            </div>
-          </div>
+            </>
+          )}
           
-          <div className="flex items-center">
+          <div className="flex items-center ml-2">
             <Button
               onClick={handleDismiss}
               size="sm"
