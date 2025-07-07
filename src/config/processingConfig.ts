@@ -14,26 +14,26 @@ export interface ProcessingMetrics {
   errorCount: number;
 }
 
-// Cenário 2: Moderado (Delay: 1000ms + Batch: 20) - usado para processamento standard
+// Configuração otimizada com limite máximo da API (50 etiquetas por lote)
 export const DEFAULT_CONFIG: ProcessingConfig = {
-  delayBetweenBatches: 1000, // Cenário 2: 1000ms
-  labelsPerBatch: 20, // Cenário 2: 20 labels per batch
+  delayBetweenBatches: 1000, // 1000ms delay
+  labelsPerBatch: 50, // Máximo permitido pela API
   maxRetries: 3,
   fallbackDelay: 3000, // Original delay for fallback
 };
 
-// Cenário 2: Moderado - específico para A4 (mais conservador para evitar rate limit)
+// Configuração específica para A4 com máximo da API
 export const A4_CONFIG: ProcessingConfig = {
-  delayBetweenBatches: 1000, // Cenário 2: 1000ms delay
-  labelsPerBatch: 20, // Cenário 2: 20 labels per batch
+  delayBetweenBatches: 1000, // 1000ms delay
+  labelsPerBatch: 50, // Máximo permitido pela API
   maxRetries: 3,
   fallbackDelay: 2500, // Slightly faster fallback for A4
 };
 
-// Aggressive configuration for testing (use with caution)
+// Configuração rápida com máximo da API
 export const FAST_CONFIG: ProcessingConfig = {
   delayBetweenBatches: 800,
-  labelsPerBatch: 16,
+  labelsPerBatch: 50, // Máximo permitido pela API
   maxRetries: 2,
   fallbackDelay: 2000,
 };
