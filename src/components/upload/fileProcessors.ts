@@ -29,14 +29,14 @@ export const processZipFile = async (
       throw new Error(errorMessage);
     }
     
-    const fileContents: string[] = [];
-    for (const filename of zplFiles) {
-      const content = await zipContents.files[filename].async('text');
-      if (content.includes('^XA') && content.includes('^XZ')) {
-        fileContents.push(content);
-      }
-    }
-    
+    // Read all candidate ZPL files in parallel for better performance
+    const contents = await Promise.all(
+      zplFiles.map((filename) => zipContents.files[filename].async('text'))
+    );
+    const fileContents = contents.filter(
+      (content) => content.includes('^XA') && content.includes('^XZ')
+    );
+
     if (fileContents.length === 0) {
       const errorMessage = t('noValidZplContent');
       onError(errorMessage);
@@ -126,49 +126,60 @@ export const processMultipleFiles = async (
   onProcessingChange(true);
   
   try {
-    const allContents: string[] = [];
-    let totalFiles = 0;
-    let hasZipFiles = false;
-    
-    for (const file of files) {
+    // Process files in parallel while preserving existing behavior on errors
+    const hasZipFilesRef = { value: false };
+    let errorOccurred = false;
+
+    const filePromises = files.map(async (file) => {
       if (file.name.toLowerCase().endsWith('.zip')) {
-        hasZipFiles = true;
+        hasZipFilesRef.value = true;
         try {
           const zip = new JSZip();
           const zipContents = await zip.loadAsync(file);
           
           const zplFiles = Object.keys(zipContents.files).filter(
-            filename => filename.endsWith('.txt') || filename.endsWith('.zpl')
+            (filename) => filename.endsWith('.txt') || filename.endsWith('.zpl')
           );
-          
-          for (const filename of zplFiles) {
-            const content = await zipContents.files[filename].async('text');
-            if (content.includes('^XA') && content.includes('^XZ')) {
-              allContents.push(content);
-              totalFiles++;
-            }
-          }
+
+          if (zplFiles.length === 0) return [];
+
+          const contents = await Promise.all(
+            zplFiles.map((filename) => zipContents.files[filename].async('text'))
+          );
+
+          return contents.filter(
+            (content) => content.includes('^XA') && content.includes('^XZ')
+          );
         } catch (zipError) {
           console.error(`Error processing ZIP file ${file.name}:`, zipError);
           onError(t('zipProcessingError'));
-          return;
+          errorOccurred = true;
+          return [];
         }
       } else {
         // Process text file
         try {
           const content = await readFileAsText(file);
-          if (content.includes('^XA') && content.includes('^XZ')) {
-            allContents.push(content);
-            totalFiles++;
-          }
+          return content.includes('^XA') && content.includes('^XZ') ? [content] : [];
         } catch (textError) {
           console.error(`Error processing text file ${file.name}:`, textError);
           onError(t('readErrorMessage'));
-          return;
+          errorOccurred = true;
+          return [];
         }
       }
+    });
+
+    const results = await Promise.all(filePromises);
+
+    if (errorOccurred) {
+      return;
     }
-    
+
+    const allContents = results.flat();
+    const totalFiles = allContents.length;
+    const hasZipFiles = hasZipFilesRef.value;
+
     if (allContents.length === 0) {
       const errorMessage = t('noValidZplContent');
       onError(errorMessage);
