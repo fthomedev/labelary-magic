@@ -21,6 +21,7 @@ const Index = () => {
   const [fileCount, setFileCount] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [selectedFormat, setSelectedFormat] = useState<PrintFormat>('standard');
+  const [turboEnabled, setTurboEnabled] = useState<boolean>(false);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
@@ -86,7 +87,7 @@ const Index = () => {
     if (selectedFormat === 'a4') {
       await convertToA4PDF(zplContent);
     } else {
-      await convertToPDF(zplContent);
+      await convertToPDF(zplContent, true, turboEnabled);
     }
   };
 
@@ -174,6 +175,8 @@ const Index = () => {
                         onConvert={handleConvert}
                         isProcessingComplete={isProcessingComplete}
                         onDownload={handleDownload}
+                        turboEnabled={turboEnabled}
+                        onToggleTurbo={setTurboEnabled}
                       />
                     </div>
                   </div>
