@@ -43,12 +43,19 @@ export const ConversionProgress = ({
       />
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Switch id="turbo-mode" checked={turboEnabled} onCheckedChange={onToggleTurbo} disabled={isConverting} />
-          <label htmlFor="turbo-mode" className="text-sm text-gray-700 dark:text-gray-200 select-none">
-            Modo Turbo (mais rápido)
-          </label>
-        </div>
+      <div className="flex items-center gap-2 md:gap-3">
+        <Switch
+          id="turbo-mode"
+          checked={turboEnabled}
+          onCheckedChange={onToggleTurbo}
+          disabled={isConverting}
+          aria-label="Ativar modo turbo"
+          title="Modo Turbo (mais rápido)"
+        />
+        <label htmlFor="turbo-mode" className="text-sm text-muted-foreground select-none">
+          Modo Turbo (mais rápido)
+        </label>
+      </div>
         <div>
           <ConvertButton 
             isConverting={isConverting}
