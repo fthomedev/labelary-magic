@@ -106,14 +106,6 @@ export const useZplConversion = () => {
         
         // Set processing complete to show the completion UI
         finishConversion();
-        console.error('Error uploading to storage:', uploadError);
-        toast({
-          variant: "destructive",
-          title: t('error'),
-          description: t('errorMessage'),
-          duration: 5000,
-        });
-      }
     } catch (error) {
       console.error('Conversion error:', error);
       toast({
