@@ -40,15 +40,47 @@ export function useHistoryDownload() {
         
         console.log('Signed URL created successfully:', data.signedUrl);
         
-        // Open the PDF in modal
-        openPdfModal(data.signedUrl, record);
+        // Direct download instead of opening modal
+        const a = document.createElement('a');
+        a.href = data.signedUrl;
+        a.download = `etiquetas-${new Date(record.date).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        console.log('Download initiated successfully');
+        
+        toast({
+          title: t('downloadStarted'),
+          description: t('downloadStartedDesc'),
+          duration: 3000,
+        });
+        
         return;
-      } 
+      }
       
       // If the pdfUrl is a complete URL (not a blob), use that directly
       if (record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
         console.log('Using direct URL from Supabase:', record.pdfUrl);
-        openPdfModal(record.pdfUrl, record);
+        
+        // Direct download
+        const a = document.createElement('a');
+        a.href = record.pdfUrl;
+        a.download = `etiquetas-${new Date(record.date).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        console.log('Download initiated from direct URL');
+        
+        toast({
+          title: t('downloadStarted'),
+          description: t('downloadStartedDesc'),
+          duration: 3000,
+        });
+        
         return;
       }
       
@@ -66,7 +98,23 @@ export function useHistoryDownload() {
             throw new Error('Blob URL is no longer valid');
           }
           
-          openPdfModal(record.pdfUrl, record);
+          // Direct download from blob URL
+          const a = document.createElement('a');
+          a.href = record.pdfUrl;
+          a.download = `etiquetas-${new Date(record.date).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          console.log('Download initiated from blob URL');
+          
+          toast({
+            title: t('downloadStarted'),
+            description: t('downloadStartedDesc'),
+            duration: 3000,
+          });
+          
           return;
         } catch (e) {
           console.error('Error with blob URL:', e);
