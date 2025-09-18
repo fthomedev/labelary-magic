@@ -55,7 +55,10 @@ export function HistoryTableRow({
                       ? "text-primary hover:text-primary-foreground hover:bg-primary hover-lift" 
                       : "text-muted-foreground"
                   }`}
-                  onClick={() => onDownload(record)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onDownload(record);
+                  }}
                   disabled={isBlobUrl && !hasStoragePath && !hasValidUrl}
                   title={t('view')}
                 >
@@ -107,7 +110,10 @@ export function HistoryTableRow({
                   variant="ghost"
                   size="sm"
                   className="p-0 h-7 w-7 rounded-full flex items-center justify-center text-destructive hover:text-destructive-foreground hover:bg-destructive hover-lift"
-                  onClick={() => onDelete(record)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onDelete(record);
+                  }}
                   title={t('delete')}
                 >
                   <Trash2 className="h-3 w-3" />
