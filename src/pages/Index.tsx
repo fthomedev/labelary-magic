@@ -6,7 +6,7 @@ import { ConversionProgress } from '@/components/ConversionProgress';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { UserMenu } from '@/components/UserMenu';
 import { useIsMobile } from '@/hooks/use-mobile';
-
+import { ProcessingHistory } from '@/components/ProcessingHistory';
 import { useZplConversion } from '@/hooks/useZplConversion';
 import { useA4ZplConversion } from '@/hooks/conversion/useA4ZplConversion';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +24,7 @@ const Index = () => {
   const [turboEnabled, setTurboEnabled] = useState<boolean>(false);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
-  
+  const processingHistoryRef = useRef<HTMLDivElement>(null);
   
   // Standard conversion hook
   const {
@@ -33,6 +33,7 @@ const Index = () => {
     isProcessingComplete: isStandardComplete,
     lastPdfUrl: standardPdfUrl,
     convertToPDF,
+    historyRefreshTrigger: standardHistoryRefresh,
     resetProcessingStatus: resetStandardStatus
   } = useZplConversion();
 
@@ -43,6 +44,7 @@ const Index = () => {
     isProcessingComplete: isA4Complete,
     lastPdfUrl: a4PdfUrl,
     convertToA4PDF,
+    historyRefreshTrigger: a4HistoryRefresh,
     resetProcessingStatus: resetA4Status
   } = useA4ZplConversion();
 
@@ -51,7 +53,7 @@ const Index = () => {
   const progress = isStandardConverting ? standardProgress : a4Progress;
   const isProcessingComplete = isStandardComplete || isA4Complete;
   const lastPdfUrl = standardPdfUrl || a4PdfUrl;
-  
+  const historyRefreshTrigger = Math.max(standardHistoryRefresh, a4HistoryRefresh);
 
   useEffect(() => {
     // Check if user is logged in
@@ -182,6 +184,9 @@ const Index = () => {
               )}
             </div>
 
+            <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow" ref={processingHistoryRef}>
+              <ProcessingHistory key={historyRefreshTrigger} />
+            </div>
           </div>
         </div>
       </main>

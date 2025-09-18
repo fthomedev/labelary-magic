@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { mergePDFs } from '@/utils/pdfUtils';
+import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
+import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 
 export const usePdfOperations = () => {
   const [pdfUrls, setPdfUrls] = useState<string[]>([]);
@@ -10,6 +12,8 @@ export const usePdfOperations = () => {
   const [lastPdfPath, setLastPdfPath] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { uploadPDFToStorage } = useUploadPdf();
+  const { ensurePdfBucketExists } = useStorageOperations();
 
   const processPdfs = async (
     pdfs: Blob[],
@@ -38,13 +42,23 @@ export const usePdfOperations = () => {
     
     onProgress(90);
     
+    // Ensure bucket exists
+    await ensurePdfBucketExists();
+    
     onProgress(95);
-    const uploadTime = 0;
+    const uploadStartTime = Date.now();
+    
+    // Upload PDF to storage
+    const pdfPath = await uploadPDFToStorage(mergedPdf);
+    const uploadTime = Date.now() - uploadStartTime;
+    console.log(`☁️ PDF upload completed in ${uploadTime}ms:`, pdfPath);
+    setLastPdfPath(pdfPath);
+    
+    // Get the temporary blob URL for the current session
     const blobUrl = window.URL.createObjectURL(mergedPdf);
     setLastPdfUrl(blobUrl);
-    setLastPdfPath(undefined);
     
-    return { pdfPath: undefined, blobUrl, mergeTime, uploadTime };
+    return { pdfPath, blobUrl, mergeTime, uploadTime };
   };
 
   const downloadPdf = (blobUrl: string, filename: string = 'etiquetas.pdf') => {

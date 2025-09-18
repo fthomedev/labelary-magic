@@ -1,7 +1,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
-
+import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
 import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
 import { usePdfOperations } from '@/hooks/conversion/usePdfOperations';
 import { useConversionState } from '@/hooks/conversion/useConversionState';
@@ -20,7 +20,7 @@ export const useZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  
+  const { addToProcessingHistory } = useHistoryRecords();
   const { convertZplBlocksToPdfs, parseLabelsFromZpl } = useZplApiConversion();
   const { logPerformanceMetrics } = useConversionMetrics();
   
@@ -86,10 +86,18 @@ export const useZplConversion = () => {
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
 
-        const { blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, setProgress);
+      try {
+        const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, setProgress);
         
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
+        
+        // Save to history using the EXACT same finalLabelCount from the beginning and include processing time
+        if (pdfPath) {
+          console.log(`💾 Saving to history: ${finalLabelCount} labels processed in ${totalTime}ms (CONSISTENT CORRECTED COUNT)`);
+          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime);
+          triggerHistoryRefresh();
+        }
         
         setProgress(100);
         
@@ -106,6 +114,15 @@ export const useZplConversion = () => {
         
         // Set processing complete to show the completion UI
         finishConversion();
+      } catch (uploadError) {
+        console.error('Error uploading to storage:', uploadError);
+        toast({
+          variant: "destructive",
+          title: t('error'),
+          description: t('errorMessage'),
+          duration: 5000,
+        });
+      }
     } catch (error) {
       console.error('Conversion error:', error);
       toast({

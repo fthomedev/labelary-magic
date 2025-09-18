@@ -1,20 +1,24 @@
 
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
-
+import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
 import { useA4Conversion } from './useA4Conversion';
 import { usePdfOperations } from './usePdfOperations';
 import { useConversionState } from './useConversionState';
 import { useConversionMetrics } from './useConversionMetrics';
 import { organizeImagesInA4PDF } from '@/utils/a4Utils';
+import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
+import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export const useA4ZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
-  
+  const { addToProcessingHistory } = useHistoryRecords();
   const { convertZplToA4Images, parseLabelsFromZpl } = useA4Conversion();
   const { logPerformanceMetrics } = useConversionMetrics();
+  const { uploadPDFToStorage } = useUploadPdf();
+  const { ensurePdfBucketExists } = useStorageOperations();
   
   const {
     isConverting,
@@ -67,6 +71,11 @@ export const useA4ZplConversion = () => {
       console.log(`⚡ A4 image conversion phase completed in ${conversionPhaseTime}ms`);
 
       try {
+        setProgress(85);
+        
+        // Ensure bucket exists
+        await ensurePdfBucketExists();
+        
         setProgress(90);
         
         // Organize images into A4 PDF
@@ -76,7 +85,15 @@ export const useA4ZplConversion = () => {
         
         console.log(`📄 A4 PDF organization completed in ${mergeTime}ms`);
         
-        const uploadTime = 0;
+        setProgress(95);
+        
+        // Upload PDF to storage
+        const uploadStartTime = Date.now();
+        const pdfPath = await uploadPDFToStorage(a4Pdf);
+        const uploadTime = Date.now() - uploadStartTime;
+        
+        console.log(`☁️ A4 PDF upload completed in ${uploadTime}ms:`, pdfPath);
+        setLastPdfPath(pdfPath);
         
         // Create blob URL for download
         const blobUrl = window.URL.createObjectURL(a4Pdf);
@@ -84,6 +101,13 @@ export const useA4ZplConversion = () => {
         
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
+        
+        // Save to history
+        if (pdfPath) {
+          console.log(`💾 Saving A4 conversion to history: ${finalLabelCount} labels processed in ${totalTime}ms`);
+          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime);
+          triggerHistoryRefresh();
+        }
         
         setProgress(100);
         
