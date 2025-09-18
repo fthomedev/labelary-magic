@@ -43,7 +43,7 @@ export const ConversionProgress = ({
       />
 
       <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2 md:gap-3">
+      <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
         <Switch
           id="turbo-mode"
           checked={turboEnabled}
@@ -52,7 +52,7 @@ export const ConversionProgress = ({
           aria-label="Ativar modo turbo"
           title="Modo Turbo (mais rápido)"
         />
-        <label htmlFor="turbo-mode" className="text-sm text-muted-foreground select-none">
+        <label htmlFor="turbo-mode" className="text-sm text-muted-foreground select-none whitespace-nowrap">
           Modo Turbo (mais rápido)
         </label>
       </div>
