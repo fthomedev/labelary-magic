@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -234,9 +234,9 @@ export type Database = {
     Functions: {
       create_file_access_token: {
         Args: {
-          p_file_path: string
           p_bucket_name?: string
           p_expires_hours?: number
+          p_file_path: string
           p_max_access?: number
         }
         Returns: string
@@ -266,10 +266,10 @@ export type Database = {
           | Record<PropertyKey, never>
           | { p_file_name: string; p_status: string }
           | {
-              p_user_id: string
               p_label_count: number
-              p_pdf_url: string
               p_pdf_path?: string
+              p_pdf_url: string
+              p_user_id: string
             }
         Returns: undefined
       }
