@@ -139,6 +139,7 @@ const ptBR = {
   readErrorMessage: 'Erro ao ler o arquivo',
   
   // Histórico
+  history: 'Histórico',
   date: 'Data',
   labelCount: 'Etiquetas',
   view: 'Visualizar',
