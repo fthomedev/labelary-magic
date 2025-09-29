@@ -2,7 +2,7 @@
 import React from 'react';
 import { ProgressBar } from './progress/ProgressBar';
 import { ConvertButton } from './progress/ConvertButton';
-import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface ConversionProgressProps {
   isConverting: boolean;
@@ -44,7 +44,7 @@ export const ConversionProgress = ({
 
       <div className="flex items-center justify-between">
       <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-        <Switch
+        <Checkbox
           id="turbo-mode"
           checked={turboEnabled}
           onCheckedChange={onToggleTurbo}
