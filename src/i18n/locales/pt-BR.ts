@@ -160,8 +160,8 @@ const ptBR = {
   downloadStartedDesc: 'O download do seu arquivo foi iniciado',
   
   // Preview & Conversion
-  totalLabels: 'Total de Etiquetas',
-  labelsProcessed: '{{count}} etiquetas processadas',
+  totalLabels: 'Total de Processamentos',
+  labelsProcessed: '{{count}} processamentos processados',
   downloadAgain: 'Baixar Novamente',
   process: 'Processar',
   converting: 'Convertendo...',
@@ -229,8 +229,8 @@ const ptBR = {
   errorGeneratingLink: 'Não foi possível gerar link seguro',
   errorGeneratingPublicLink: 'Não foi possível gerar o link público seguro: {{error}}',
   whatsAppMessage: '📋 *ZPL Easy* - Arquivo de {{count}} {{labelText}} ZPL convertidas para PDF\n\n🔗 Acesse o arquivo aqui: {{url}}\n\n⏰ *Link válido por 24 horas*\n🔒 Acesso seguro e temporário',
-  label: 'etiqueta',
-  labels: 'etiquetas',
+  label: 'processamento',
+  labels: 'processamentos',
 };
 
 export default ptBR;
