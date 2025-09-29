@@ -51,7 +51,7 @@ export const ConversionProgress = ({
           disabled={isConverting}
           aria-label="Ativar modo turbo"
           title="Modo Turbo (mais rápido)"
-          className="h-5 w-5 border-2 border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          className="h-5 w-5 border-2 border-gray-400 bg-background data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground hover:border-primary transition-colors"
         />
         <label 
           htmlFor="turbo-mode" 
