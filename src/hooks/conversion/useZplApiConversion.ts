@@ -7,7 +7,7 @@ import { DEFAULT_CONFIG, ProcessingMetricsTracker, ProcessingConfig } from '@/co
 /**
  * Otimiza o código ZPL para melhor qualidade de impressão
  * Adiciona comandos para melhorar resolução, fontes e códigos de barras
- * Aumenta fontes em 1,5x e usa fontes escaláveis quando possível
+ * Aumenta fontes em 1,5x usando apenas fontes padrão do ZPL
  */
 const optimizeZplForQuality = (zpl: string): string => {
   // Adiciona ^PMB (print mode bold) logo após ^XA para engrossar textos
@@ -17,25 +17,19 @@ const optimizeZplForQuality = (zpl: string): string => {
   // ^BC = Code 128, ^B3 = Code 39, ^BQ = QR Code, ^BY = Bar width (mais largo e alto)
   optimizedZpl = optimizedZpl.replace(/(\^BC|\^B3|\^BQ)/g, '^BY3,3,120$1');
   
-  // Substitui fontes fixas por fonte escalável TrueType quando possível
-  // ^A0 → ^A@ (fonte escalável) com tamanho aumentado em 1,5x
+  // Aumenta fontes em 1,5x - fonte ^A0 (fonte padrão bitmap)
   optimizedZpl = optimizedZpl.replace(/\^A0N,(\d+),(\d+)/g, (match, h, w) => {
     const height = Math.max(Math.round(parseInt(h) * 1.5), 45);
     const width = Math.max(Math.round(parseInt(w) * 1.5), 45);
-    return `^A@N,${height},${width},E:TT0003M_.FNT`;
+    return `^A0N,${height},${width}`;
   });
   
-  // Melhora outras fontes fixas (A-Z) aumentando em 1,5x
+  // Aumenta outras fontes fixas (A-Z) em 1,5x
   optimizedZpl = optimizedZpl.replace(/\^A([A-Z])N,(\d+),(\d+)/g, (match, font, h, w) => {
     const height = Math.max(Math.round(parseInt(h) * 1.5), 38);
     const width = Math.max(Math.round(parseInt(w) * 1.5), 38);
     return `^A${font}N,${height},${width}`;
   });
-  
-  // Se não houver fontes especificadas, adiciona fonte escalável padrão após ^PMB
-  if (!optimizedZpl.includes('^A')) {
-    optimizedZpl = optimizedZpl.replace(/\^PMB/g, '^PMB^A@N,45,45,E:TT0003M_.FNT');
-  }
   
   return optimizedZpl;
 };
