@@ -8,29 +8,35 @@ import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 /**
  * Otimiza o código ZPL para melhor qualidade de impressão
  * Adiciona comandos para melhorar resolução, fontes e códigos de barras
+ * Aumenta fontes em 1,5x e usa fontes escaláveis quando possível
  */
 const optimizeZplForQuality = (zpl: string): string => {
   // Adiciona ^PMB (print mode bold) logo após ^XA para engrossar textos
   let optimizedZpl = zpl.replace(/\^XA/g, '^XA^PMB');
   
-  // Melhora códigos de barras adicionando ^BY3,3,100 antes de códigos de barras comuns
-  // ^BC = Code 128, ^B3 = Code 39, ^BQ = QR Code, ^BY = Bar width
-  optimizedZpl = optimizedZpl.replace(/(\^BC|\^B3|\^BQ)/g, '^BY3,3,100$1');
+  // Melhora códigos de barras adicionando ^BY3,3,120 antes de códigos de barras comuns
+  // ^BC = Code 128, ^B3 = Code 39, ^BQ = QR Code, ^BY = Bar width (mais largo e alto)
+  optimizedZpl = optimizedZpl.replace(/(\^BC|\^B3|\^BQ)/g, '^BY3,3,120$1');
   
-  // Ajusta fontes pequenas para tamanho mínimo legível
-  // ^A0 é fonte padrão, garantir mínimo de 30,30 para boa legibilidade
+  // Substitui fontes fixas por fonte escalável TrueType quando possível
+  // ^A0 → ^A@ (fonte escalável) com tamanho aumentado em 1,5x
   optimizedZpl = optimizedZpl.replace(/\^A0N,(\d+),(\d+)/g, (match, h, w) => {
-    const height = Math.max(parseInt(h), 30);
-    const width = Math.max(parseInt(w), 30);
-    return `^A0N,${height},${width}`;
+    const height = Math.max(Math.round(parseInt(h) * 1.5), 45);
+    const width = Math.max(Math.round(parseInt(w) * 1.5), 45);
+    return `^A@N,${height},${width},E:TT0003M_.FNT`;
   });
   
-  // Melhora outras fontes fixas (A-Z) para tamanhos mínimos
+  // Melhora outras fontes fixas (A-Z) aumentando em 1,5x
   optimizedZpl = optimizedZpl.replace(/\^A([A-Z])N,(\d+),(\d+)/g, (match, font, h, w) => {
-    const height = Math.max(parseInt(h), 25);
-    const width = Math.max(parseInt(w), 25);
+    const height = Math.max(Math.round(parseInt(h) * 1.5), 38);
+    const width = Math.max(Math.round(parseInt(w) * 1.5), 38);
     return `^A${font}N,${height},${width}`;
   });
+  
+  // Se não houver fontes especificadas, adiciona fonte escalável padrão após ^PMB
+  if (!optimizedZpl.includes('^A')) {
+    optimizedZpl = optimizedZpl.replace(/\^PMB/g, '^PMB^A@N,45,45,E:TT0003M_.FNT');
+  }
   
   return optimizedZpl;
 };
@@ -85,7 +91,7 @@ export const useA4Conversion = () => {
             // Otimiza o ZPL para melhor qualidade antes de enviar
             const optimizedLabel = optimizeZplForQuality(label);
             
-            // Usa 12dpmm (300 dpi) para melhor resolução
+            // Usa 12dpmm (300 dpi) para melhor resolução (mantém PNG para A4)
             const response = await fetch('https://api.labelary.com/v1/printers/12dpmm/labels/4x6/0/', {
               method: 'POST',
               headers: {
