@@ -24,113 +24,74 @@ export function useHistoryDownload() {
   
   const handleDownload = async (record: ProcessingRecord) => {
     try {
-      // For records that have a storage path, always use that (more reliable after page refresh)
+      let downloadUrl: string | null = null;
+      
+      // Priority 1: Use pdfPath to get public URL (most reliable for persisted files)
       if (record.pdfPath) {
-        console.log('Downloading from storage path:', record.pdfPath);
+        console.log('Getting public URL from storage path:', record.pdfPath);
         
-        // Get direct download URL with proper authorization
-        const { data, error } = await supabase.storage
+        const { data } = supabase.storage
           .from('pdfs')
-          .createSignedUrl(record.pdfPath, 3600); // 60 minutes expiration for better viewing experience
+          .getPublicUrl(record.pdfPath);
           
-        if (error || !data?.signedUrl) {
-          console.error('Error creating signed URL:', error);
-          throw new Error('Failed to create download URL');
+        if (data?.publicUrl) {
+          console.log('Public URL obtained:', data.publicUrl);
+          downloadUrl = data.publicUrl;
         }
-        
-        console.log('Signed URL created successfully:', data.signedUrl);
-        
-        // Direct download instead of opening modal
-        const a = document.createElement('a');
-        a.href = data.signedUrl;
-        a.download = `etiquetas-${new Date(record.date).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        console.log('Download initiated successfully');
-        
-        toast({
-          title: t('downloadStarted'),
-          description: t('downloadStartedDesc'),
-          duration: 3000,
-        });
-        
-        return;
       }
       
-      // If the pdfUrl is a complete URL (not a blob), use that directly
-      if (record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
-        console.log('Using direct URL from Supabase:', record.pdfUrl);
-        
-        // Direct download
-        const a = document.createElement('a');
-        a.href = record.pdfUrl;
-        a.download = `etiquetas-${new Date(record.date).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        console.log('Download initiated from direct URL');
-        
-        toast({
-          title: t('downloadStarted'),
-          description: t('downloadStartedDesc'),
-          duration: 3000,
-        });
-        
-        return;
+      // Priority 2: Use pdfUrl directly if it's not a blob (fallback)
+      if (!downloadUrl && record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
+        console.log('Using direct pdfUrl:', record.pdfUrl);
+        downloadUrl = record.pdfUrl;
       }
       
-      // Fallback to blob URL if available (for newly created PDFs)
-      // Note: This will only work during the current session before a page refresh
-      if (record.pdfUrl && record.pdfUrl.startsWith('blob:')) {
-        console.log('Trying to use blob URL:', record.pdfUrl);
+      // Priority 3: Use blob URL if available (only works in current session)
+      if (!downloadUrl && record.pdfUrl && record.pdfUrl.startsWith('blob:')) {
+        console.log('Attempting to use blob URL:', record.pdfUrl);
         
-        // Check if the blob URL is still valid
         try {
-          // This fetch will fail if the blob URL is no longer valid
           const response = await fetch(record.pdfUrl, { method: 'HEAD' });
-          
-          if (!response.ok) {
-            throw new Error('Blob URL is no longer valid');
+          if (response.ok) {
+            downloadUrl = record.pdfUrl;
+            console.log('Blob URL is valid');
           }
-          
-          // Direct download from blob URL
-          const a = document.createElement('a');
-          a.href = record.pdfUrl;
-          a.download = `etiquetas-${new Date(record.date).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
-          a.style.display = 'none';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          
-          console.log('Download initiated from blob URL');
-          
-          toast({
-            title: t('downloadStarted'),
-            description: t('downloadStartedDesc'),
-            duration: 3000,
-          });
-          
-          return;
         } catch (e) {
-          console.error('Error with blob URL:', e);
-          throw new Error('Blob URL is no longer accessible after page refresh');
+          console.error('Blob URL is no longer valid:', e);
         }
       }
       
-      // If we reach here, we don't have a valid way to download the file
+      // If we have a valid URL, initiate download
+      if (downloadUrl) {
+        console.log('Initiating download from:', downloadUrl);
+        
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `etiquetas-${new Date(record.date).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        toast({
+          title: t('downloadStarted'),
+          description: t('downloadStartedDesc'),
+          duration: 3000,
+        });
+        
+        return;
+      }
+      
+      // If we reach here, no valid URL was found
       console.error('No valid PDF URL or path available:', record);
-      throw new Error('No valid PDF URL or path available');
+      throw new Error('Arquivo não encontrado. O PDF pode ter sido removido do storage.');
+      
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast({
         variant: "destructive",
         title: t('error'),
-        description: t('downloadError'),
+        description: error instanceof Error ? error.message : t('downloadError'),
         duration: 3000,
       });
     }
