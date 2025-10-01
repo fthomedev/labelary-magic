@@ -4,6 +4,36 @@ import { useToast } from '@/components/ui/use-toast';
 import { splitZPLIntoBlocks, delay } from '@/utils/pdfUtils';
 import { DEFAULT_CONFIG, ProcessingMetricsTracker, ProcessingConfig } from '@/config/processingConfig';
 
+/**
+ * Otimiza o código ZPL para melhor qualidade de impressão
+ * Adiciona comandos para melhorar resolução, fontes e códigos de barras
+ */
+const optimizeZplForQuality = (zpl: string): string => {
+  // Adiciona ^PMB (print mode bold) logo após ^XA para engrossar textos
+  let optimizedZpl = zpl.replace(/\^XA/g, '^XA^PMB');
+  
+  // Melhora códigos de barras adicionando ^BY3,3,100 antes de códigos de barras comuns
+  // ^BC = Code 128, ^B3 = Code 39, ^BQ = QR Code, ^BY = Bar width
+  optimizedZpl = optimizedZpl.replace(/(\^BC|\^B3|\^BQ)/g, '^BY3,3,100$1');
+  
+  // Ajusta fontes pequenas para tamanho mínimo legível
+  // ^A0 é fonte padrão, garantir mínimo de 30,30 para boa legibilidade
+  optimizedZpl = optimizedZpl.replace(/\^A0N,(\d+),(\d+)/g, (match, h, w) => {
+    const height = Math.max(parseInt(h), 30);
+    const width = Math.max(parseInt(w), 30);
+    return `^A0N,${height},${width}`;
+  });
+  
+  // Melhora outras fontes fixas (A-Z) para tamanhos mínimos
+  optimizedZpl = optimizedZpl.replace(/\^A([A-Z])N,(\d+),(\d+)/g, (match, font, h, w) => {
+    const height = Math.max(parseInt(h), 25);
+    const width = Math.max(parseInt(w), 25);
+    return `^A${font}N,${height},${width}`;
+  });
+  
+  return optimizedZpl;
+};
+
 export const useZplApiConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -38,14 +68,18 @@ export const useZplApiConversion = () => {
       while (!batchSuccess && retryCount < currentConfig.maxRetries) {
         try {
           const blockZPL = blockLabels.join('');
+          
+          // Otimiza o ZPL para melhor qualidade antes de enviar
+          const optimizedZPL = optimizeZplForQuality(blockZPL);
 
-          const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
+          // Usa 12dpmm (300 dpi) para melhor resolução
+          const response = await fetch('https://api.labelary.com/v1/printers/12dpmm/labels/4x6/0/', {
             method: 'POST',
             headers: {
               'Accept': 'application/pdf',
               'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: blockZPL,
+            body: optimizedZPL,
           });
 
           if (!response.ok) {
