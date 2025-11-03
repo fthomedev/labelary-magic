@@ -1,5 +1,4 @@
-
-const ptBR = {
+const translations = {
   // Geral
   home: 'Início',
   login: 'Entrar',
@@ -139,9 +138,8 @@ const ptBR = {
   readErrorMessage: 'Erro ao ler o arquivo',
   
   // Histórico
-  history: 'Histórico',
   date: 'Data',
-  labelCount: 'Etiquetas',
+  labelCount: 'Quantidade de Etiquetas',
   view: 'Visualizar',
   download: 'Baixar',
   viewPdf: 'Visualizar PDF',
@@ -161,8 +159,8 @@ const ptBR = {
   downloadStartedDesc: 'O download do seu arquivo foi iniciado',
   
   // Preview & Conversion
-  totalLabels: 'Total de Processamentos',
-  labelsProcessed: '{{count}} processamentos processados',
+  totalLabels: 'Total de Etiquetas',
+  labelsProcessed: '{{count}} etiquetas processadas',
   downloadAgain: 'Baixar Novamente',
   process: 'Processar',
   converting: 'Convertendo...',
@@ -214,24 +212,6 @@ const ptBR = {
   
   // Process Again
   processAgain: 'Processar Novamente',
-  
-  // Share functionality
-  shareTitle: 'Compartilhar PDF',
-  shareDescription: 'Escolha como deseja compartilhar o arquivo de forma segura:',
-  shareViaWhatsApp: 'Compartilhar no WhatsApp',
-  generatePublicLink: 'Gerar link público seguro',
-  securityNotice: '🔒 Links são gerados com tokens seguros, encurtados automaticamente e <strong>expiram em 24 horas</strong> por motivos de segurança.',
-  fileInfo: '📋 Arquivo: {{count}} {{labelText}} ZPL',
-  convertedOn: 'Convertido em {{date}}',
-  whatsAppOpened: 'WhatsApp aberto',
-  whatsAppOpenedDesc: 'Mensagem preparada com link seguro e informações detalhadas',
-  linkCopied: 'Link copiado!',
-  linkCopiedDesc: 'Link seguro de {{count}} {{labelText}} ZPL copiado (válido por 24h)',
-  errorGeneratingLink: 'Não foi possível gerar link seguro',
-  errorGeneratingPublicLink: 'Não foi possível gerar o link público seguro: {{error}}',
-  whatsAppMessage: '📋 *ZPL Easy* - Arquivo de {{count}} {{labelText}} ZPL convertidas para PDF\n\n🔗 Acesse o arquivo aqui: {{url}}\n\n⏰ *Link válido por 24 horas*\n🔒 Acesso seguro e temporário',
-  label: 'processamentos',
-  labels: 'processamentos',
 };
 
-export default ptBR;
+export default translations;

@@ -5,36 +5,6 @@ import { useZplLabelProcessor } from './useZplLabelProcessor';
 import { useZplValidator } from './useZplValidator';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
-/**
- * Otimiza o código ZPL para melhor qualidade de impressão
- * Adiciona comandos para melhorar resolução, fontes e códigos de barras
- * Aumenta fontes em 1,5x usando apenas fontes padrão do ZPL
- */
-const optimizeZplForQuality = (zpl: string): string => {
-  // Adiciona ^PMB (print mode bold) logo após ^XA para engrossar textos
-  let optimizedZpl = zpl.replace(/\^XA/g, '^XA^PMB');
-  
-  // Melhora códigos de barras adicionando ^BY3,3,120 antes de códigos de barras comuns
-  // ^BC = Code 128, ^B3 = Code 39, ^BQ = QR Code, ^BY = Bar width (mais largo e alto)
-  optimizedZpl = optimizedZpl.replace(/(\^BC|\^B3|\^BQ)/g, '^BY3,3,120$1');
-  
-  // Aumenta fontes em 1,5x - fonte ^A0 (fonte padrão bitmap)
-  optimizedZpl = optimizedZpl.replace(/\^A0N,(\d+),(\d+)/g, (match, h, w) => {
-    const height = Math.max(Math.round(parseInt(h) * 1.5), 45);
-    const width = Math.max(Math.round(parseInt(w) * 1.5), 45);
-    return `^A0N,${height},${width}`;
-  });
-  
-  // Aumenta outras fontes fixas (A-Z) em 1,5x
-  optimizedZpl = optimizedZpl.replace(/\^A([A-Z])N,(\d+),(\d+)/g, (match, font, h, w) => {
-    const height = Math.max(Math.round(parseInt(h) * 1.5), 38);
-    const width = Math.max(Math.round(parseInt(w) * 1.5), 38);
-    return `^A${font}N,${height},${width}`;
-  });
-  
-  return optimizedZpl;
-};
-
 export const useA4Conversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -82,17 +52,13 @@ export const useA4Conversion = () => {
             
             console.log(`🔄 Processing A4 label ${labelNumber}/${validLabels.length} in batch ${batchNumber}...`);
             
-            // Otimiza o ZPL para melhor qualidade antes de enviar
-            const optimizedLabel = optimizeZplForQuality(label);
-            
-            // Usa 12dpmm (300 dpi) para melhor resolução (mantém PNG para A4)
-            const response = await fetch('https://api.labelary.com/v1/printers/12dpmm/labels/4x6/0/', {
+            const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
               method: 'POST',
               headers: {
                 'Accept': 'image/png',
                 'Content-Type': 'application/x-www-form-urlencoded',
               },
-              body: optimizedLabel,
+              body: label,
             });
 
             console.log(`📡 API Response for A4 label ${labelNumber}: ${response.status} ${response.statusText}`);

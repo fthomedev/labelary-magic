@@ -38,13 +38,6 @@ export const FAST_CONFIG: ProcessingConfig = {
   fallbackDelay: 2000,
 };
 
-export const TURBO_CONFIG: ProcessingConfig = {
-  delayBetweenBatches: 400,
-  labelsPerBatch: 24,
-  maxRetries: 2,
-  fallbackDelay: 2000,
-};
-
 export class ProcessingMetricsTracker {
   private metrics: ProcessingMetrics[] = [];
   private errorRate = 0;

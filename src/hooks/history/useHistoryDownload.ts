@@ -24,74 +24,65 @@ export function useHistoryDownload() {
   
   const handleDownload = async (record: ProcessingRecord) => {
     try {
-      let downloadUrl: string | null = null;
-      
-      // Priority 1: Use pdfPath to get public URL (most reliable for persisted files)
+      // For records that have a storage path, always use that (more reliable after page refresh)
       if (record.pdfPath) {
-        console.log('Getting public URL from storage path:', record.pdfPath);
+        console.log('Downloading from storage path:', record.pdfPath);
         
-        const { data } = supabase.storage
+        // Get direct download URL with proper authorization
+        const { data, error } = await supabase.storage
           .from('pdfs')
-          .getPublicUrl(record.pdfPath);
+          .createSignedUrl(record.pdfPath, 3600); // 60 minutes expiration for better viewing experience
           
-        if (data?.publicUrl) {
-          console.log('Public URL obtained:', data.publicUrl);
-          downloadUrl = data.publicUrl;
+        if (error || !data?.signedUrl) {
+          console.error('Error creating signed URL:', error);
+          throw new Error('Failed to create download URL');
         }
-      }
+        
+        console.log('Signed URL created successfully:', data.signedUrl);
+        
+        // Open the PDF in modal
+        openPdfModal(data.signedUrl, record);
+        return;
+      } 
       
-      // Priority 2: Use pdfUrl directly if it's not a blob (fallback)
-      if (!downloadUrl && record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
-        console.log('Using direct pdfUrl:', record.pdfUrl);
-        downloadUrl = record.pdfUrl;
-      }
-      
-      // Priority 3: Use blob URL if available (only works in current session)
-      if (!downloadUrl && record.pdfUrl && record.pdfUrl.startsWith('blob:')) {
-        console.log('Attempting to use blob URL:', record.pdfUrl);
-        
-        try {
-          const response = await fetch(record.pdfUrl, { method: 'HEAD' });
-          if (response.ok) {
-            downloadUrl = record.pdfUrl;
-            console.log('Blob URL is valid');
-          }
-        } catch (e) {
-          console.error('Blob URL is no longer valid:', e);
-        }
-      }
-      
-      // If we have a valid URL, initiate download
-      if (downloadUrl) {
-        console.log('Initiating download from:', downloadUrl);
-        
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = `etiquetas-${new Date(record.date).toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        toast({
-          title: t('downloadStarted'),
-          description: t('downloadStartedDesc'),
-          duration: 3000,
-        });
-        
+      // If the pdfUrl is a complete URL (not a blob), use that directly
+      if (record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
+        console.log('Using direct URL from Supabase:', record.pdfUrl);
+        openPdfModal(record.pdfUrl, record);
         return;
       }
       
-      // If we reach here, no valid URL was found
-      console.error('No valid PDF URL or path available:', record);
-      throw new Error('Arquivo não encontrado. O PDF pode ter sido removido do storage.');
+      // Fallback to blob URL if available (for newly created PDFs)
+      // Note: This will only work during the current session before a page refresh
+      if (record.pdfUrl && record.pdfUrl.startsWith('blob:')) {
+        console.log('Trying to use blob URL:', record.pdfUrl);
+        
+        // Check if the blob URL is still valid
+        try {
+          // This fetch will fail if the blob URL is no longer valid
+          const response = await fetch(record.pdfUrl, { method: 'HEAD' });
+          
+          if (!response.ok) {
+            throw new Error('Blob URL is no longer valid');
+          }
+          
+          openPdfModal(record.pdfUrl, record);
+          return;
+        } catch (e) {
+          console.error('Error with blob URL:', e);
+          throw new Error('Blob URL is no longer accessible after page refresh');
+        }
+      }
       
+      // If we reach here, we don't have a valid way to download the file
+      console.error('No valid PDF URL or path available:', record);
+      throw new Error('No valid PDF URL or path available');
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast({
         variant: "destructive",
         title: t('error'),
-        description: error instanceof Error ? error.message : t('downloadError'),
+        description: t('downloadError'),
         duration: 3000,
       });
     }

@@ -28,7 +28,6 @@ export function DeleteConfirmDialog({
 
   const handleConfirm = async () => {
     console.log('Delete confirm button clicked');
-    if (isDeleting) return; // Prevent multiple clicks
     const success = await onConfirm();
     console.log('Delete operation completed with success:', success);
     // The dialog will be closed by the parent component if deletion is successful
@@ -39,9 +38,7 @@ export function DeleteConfirmDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('deleteRecordConfirm') || 'Confirm deletion'}</DialogTitle>
-          <DialogDescription>
-            {t('deleteRecordWarning') || 'This action cannot be undone.'}
-          </DialogDescription>
+          <DialogDescription>{t('deleteRecordWarning') || 'This action cannot be undone.'}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button 

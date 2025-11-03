@@ -6,7 +6,7 @@ import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
 import { usePdfOperations } from '@/hooks/conversion/usePdfOperations';
 import { useConversionState } from '@/hooks/conversion/useConversionState';
 import { useConversionMetrics } from '@/hooks/conversion/useConversionMetrics';
-import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig, TURBO_CONFIG } from '@/config/processingConfig';
+import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export interface ProcessingRecord {
   id: string;
@@ -46,7 +46,7 @@ export const useZplConversion = () => {
     downloadPdf
   } = usePdfOperations();
 
-  const convertToPDF = async (zplContent: string, useOptimizedTiming: boolean = true, turboMode: boolean = false) => {
+  const convertToPDF = async (zplContent: string, useOptimizedTiming: boolean = true) => {
     if (!zplContent) return;
     
     const conversionStartTime = Date.now();
@@ -61,13 +61,11 @@ export const useZplConversion = () => {
       const finalLabelCount = Math.ceil(labels.length / 2);
       
       console.log(`🎯 Starting conversion of ${finalLabelCount} labels (FINAL COUNT CORRECTED - ${labels.length} blocks / 2)`);
-      console.log(`⚡ Using ${turboMode ? 'turbo' : (useOptimizedTiming ? 'optimized' : 'default')} timing configuration`);
+      console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
       
       // Choose configuration based on label count and user preference
       let config: ProcessingConfig;
-      if (turboMode) {
-        config = TURBO_CONFIG; // Most aggressive (still with safe fallbacks)
-      } else if (!useOptimizedTiming) {
+      if (!useOptimizedTiming) {
         config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 }; // Original conservative timing
       } else if (finalLabelCount > 100) {
         config = DEFAULT_CONFIG; // Moderate optimization for large batches

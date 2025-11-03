@@ -25,22 +25,18 @@ export function ConvertButton({
     return (
       <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-3 ${isMobile ? 'w-full' : ''}`}>
         <Button
-          size={isMobile ? "mobile" : "default"}
+          size={isMobile ? "sm" : "default"}
           onClick={onClick}
-          variant="outline"
-          className={`${isMobile ? 'w-full' : 'min-w-[160px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect border-primary text-primary hover:bg-primary/5`}
-          aria-label={t('downloadAgain')}
+          className={`${isMobile ? 'w-full' : 'min-w-[160px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-green-500 text-green-600 hover:bg-green-50`}
         >
           <Download className="mr-2 h-4 w-4" />
           {t('downloadAgain')}
         </Button>
         
         <Button
-          size={isMobile ? "mobile" : "default"}
+          size={isMobile ? "sm" : "default"}
           onClick={onProcessAgain}
-          variant="outline"
-          className={`${isMobile ? 'w-full' : 'min-w-[160px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect border-primary text-primary hover:bg-primary/5`}
-          aria-label={t('processAgain')}
+          className={`${isMobile ? 'w-full' : 'min-w-[160px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-green-500 text-green-600 hover:bg-green-50`}
         >
           <RotateCcw className="mr-2 h-4 w-4" />
           {t('processAgain')}
@@ -51,14 +47,16 @@ export function ConvertButton({
   
   return (
     <Button
-      size={isMobile ? "mobile" : "default"}
+      size={isMobile ? "sm" : "default"}
       onClick={onClick}
       disabled={isConverting}
-      variant={isProcessingComplete ? "outline" : "default"}
       className={`${isMobile ? 'w-full' : 'min-w-[180px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect ${
-        isProcessingComplete ? 'border-primary text-primary hover:bg-primary/5' : ''
+        isConverting 
+          ? 'bg-gray-100 text-gray-500 dark:bg-gray-700'
+          : isProcessingComplete
+            ? 'bg-white border border-green-500 text-green-600 hover:bg-green-50'
+            : 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600'
       }`}
-      aria-label={isConverting ? t('converting') : isProcessingComplete ? t('downloadAgain') : t('process')}
     >
       {isConverting ? (
         <>
