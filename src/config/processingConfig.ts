@@ -14,28 +14,28 @@ export interface ProcessingMetrics {
   errorCount: number;
 }
 
-// Cenário 2: Moderado (Delay: 1000ms + Batch: 20) - usado para processamento standard
+// Configuração padrão - equilibra velocidade e confiabilidade
 export const DEFAULT_CONFIG: ProcessingConfig = {
-  delayBetweenBatches: 500, // Reduced from 1000ms
-  labelsPerBatch: 30, // Increased from 20
+  delayBetweenBatches: 800, // Increased for reliability
+  labelsPerBatch: 25, // Balanced batch size
   maxRetries: 3,
-  fallbackDelay: 2000, // Reduced from 3000ms
+  fallbackDelay: 2500, // Longer delay for retries
 };
 
-// Cenário 2: Moderado - específico para A4 (mais conservador para evitar rate limit)
+// Configuração para A4
 export const A4_CONFIG: ProcessingConfig = {
-  delayBetweenBatches: 500, // Reduced from 1000ms
-  labelsPerBatch: 30, // Increased from 20
+  delayBetweenBatches: 800,
+  labelsPerBatch: 25,
   maxRetries: 3,
-  fallbackDelay: 1500, // Reduced
+  fallbackDelay: 2500,
 };
 
-// Aggressive configuration for testing (use with caution)
+// Configuração rápida (para poucos labels)
 export const FAST_CONFIG: ProcessingConfig = {
-  delayBetweenBatches: 300, // Reduced from 800ms
-  labelsPerBatch: 40, // Increased from 16
-  maxRetries: 2,
-  fallbackDelay: 1000, // Reduced from 2000ms
+  delayBetweenBatches: 500,
+  labelsPerBatch: 30,
+  maxRetries: 3,
+  fallbackDelay: 2000,
 };
 
 export class ProcessingMetricsTracker {
