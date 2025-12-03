@@ -13,31 +13,28 @@ export const useZplApiConversion = () => {
     onProgress: (progress: number) => void,
     config: ProcessingConfig = DEFAULT_CONFIG
   ): Promise<Blob[]> => {
-    const pdfs: Blob[] = [];
-    const metricsTracker = new ProcessingMetricsTracker(config);
     const totalStartTime = Date.now();
     
     console.log(`🏁 Starting conversion of ${labels.length} labels with config:`, config);
-    console.log(`🔢 Input labels array length: ${labels.length}`);
     
-    let currentConfig = { ...config };
-    let consecutiveErrors = 0;
-    let successfulBatches = 0;
+    // Create batches
+    const batches: string[][] = [];
+    for (let i = 0; i < labels.length; i += config.labelsPerBatch) {
+      batches.push(labels.slice(i, i + config.labelsPerBatch));
+    }
     
-    for (let i = 0; i < labels.length; i += currentConfig.labelsPerBatch) {
-      const blockLabels = labels.slice(i, i + currentConfig.labelsPerBatch);
-      const batchNumber = Math.floor(i / currentConfig.labelsPerBatch) + 1;
-      const totalBatches = Math.ceil(labels.length / currentConfig.labelsPerBatch);
-      
-      console.log(`📦 Processing batch ${batchNumber}/${totalBatches} (${blockLabels.length} labels)`);
-      
-      const batchStartTime = metricsTracker.startBatch(blockLabels.length);
-      let batchSuccess = false;
+    console.log(`📦 Created ${batches.length} batches of ~${config.labelsPerBatch} labels each`);
+    
+    const PARALLEL_BATCHES = 3; // Process 3 batches in parallel
+    const results: (Blob | null)[] = new Array(batches.length).fill(null);
+    let completed = 0;
+
+    const processBatch = async (batchLabels: string[], batchIndex: number): Promise<Blob | null> => {
       let retryCount = 0;
       
-      while (!batchSuccess && retryCount < currentConfig.maxRetries) {
+      while (retryCount < config.maxRetries) {
         try {
-          const blockZPL = blockLabels.join('');
+          const blockZPL = batchLabels.join('');
 
           const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
             method: 'POST',
@@ -48,85 +45,75 @@ export const useZplApiConversion = () => {
             body: blockZPL,
           });
 
+          if (response.status === 429) {
+            retryCount++;
+            const waitTime = config.fallbackDelay * retryCount;
+            console.log(`⏳ Rate limited on batch ${batchIndex + 1}, waiting ${waitTime}ms...`);
+            await delay(waitTime);
+            continue;
+          }
+
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
           const blob = await response.blob();
           
-          // Validate PDF blob
           if (blob.size === 0) {
             throw new Error('Empty PDF received');
           }
           
-          pdfs.push(blob);
-          batchSuccess = true;
-          successfulBatches++;
-          consecutiveErrors = 0;
-
-          const progressValue = ((i + blockLabels.length) / labels.length) * 100;
-          onProgress(progressValue);
-
-          console.log(`✅ Batch ${batchNumber} completed successfully (${blob.size} bytes)`);
+          console.log(`✅ Batch ${batchIndex + 1}/${batches.length} completed (${blob.size} bytes)`);
+          return blob;
           
         } catch (error) {
           retryCount++;
-          consecutiveErrors++;
+          console.error(`❌ Batch ${batchIndex + 1} attempt ${retryCount} failed:`, error);
           
-          console.error(`❌ Batch ${batchNumber} attempt ${retryCount} failed:`, error);
-          
-          if (retryCount < currentConfig.maxRetries) {
-            const retryDelay = currentConfig.delayBetweenBatches * retryCount;
-            console.log(`⏳ Retrying in ${retryDelay}ms...`);
-            await delay(retryDelay);
-          } else {
-            console.error(`💥 Batch ${batchNumber} failed after ${currentConfig.maxRetries} attempts`);
-            toast({
-              variant: "destructive",
-              title: t('blockError'),
-              description: t('blockErrorMessage', { block: batchNumber }),
-              duration: 4000,
-            });
+          if (retryCount < config.maxRetries) {
+            await delay(config.delayBetweenBatches * retryCount);
           }
         }
       }
       
-      metricsTracker.endBatch(batchStartTime, blockLabels.length, batchSuccess, batchSuccess ? 0 : 1);
-      
-      // Check if we should switch to fallback mode
-      if (consecutiveErrors >= 2 || metricsTracker.shouldUseFallback()) {
-        console.log(`⚠️ Switching to fallback mode due to high error rate`);
-        currentConfig = {
-          ...currentConfig,
-          delayBetweenBatches: currentConfig.fallbackDelay,
-          labelsPerBatch: Math.max(currentConfig.labelsPerBatch - 2, 10),
-        };
-        metricsTracker.updateConfig(currentConfig);
-        consecutiveErrors = 0;
-      }
+      console.error(`💥 Batch ${batchIndex + 1} failed after ${config.maxRetries} attempts`);
+      toast({
+        variant: "destructive",
+        title: t('blockError'),
+        description: t('blockErrorMessage', { block: batchIndex + 1 }),
+        duration: 4000,
+      });
+      return null;
+    };
 
-      // Add delay between batches (except for the last batch)
-      if (i + currentConfig.labelsPerBatch < labels.length) {
-        console.log(`⏱️ Waiting ${currentConfig.delayBetweenBatches}ms before next batch...`);
-        await delay(currentConfig.delayBetweenBatches);
+    // Process batches in parallel groups
+    for (let i = 0; i < batches.length; i += PARALLEL_BATCHES) {
+      const parallelBatches = batches.slice(i, i + PARALLEL_BATCHES);
+      const startIdx = i;
+      
+      const batchResults = await Promise.all(
+        parallelBatches.map((batch, j) => processBatch(batch, startIdx + j))
+      );
+      
+      batchResults.forEach((result, j) => {
+        results[startIdx + j] = result;
+      });
+      
+      completed += parallelBatches.length;
+      const progressValue = (completed / batches.length) * 100;
+      onProgress(progressValue);
+      
+      // Small delay between parallel groups
+      if (i + PARALLEL_BATCHES < batches.length) {
+        await delay(config.delayBetweenBatches);
       }
     }
     
+    const pdfs = results.filter((pdf): pdf is Blob => pdf !== null);
     const totalTime = Date.now() - totalStartTime;
-    const stats = metricsTracker.getProcessingStats();
     
     console.log(`🏆 Conversion completed in ${totalTime}ms`);
-    console.log(`📊 Final conversion stats:`, {
-      ...stats,
-      totalTimeMs: totalTime,
-      inputLabels: labels.length,
-      successfulBatches: successfulBatches,
-      outputPdfs: pdfs.length,
-      averageTimePerLabel: labels.length > 0 ? totalTime / labels.length : 0,
-      labelsPerSecond: labels.length > 0 ? (labels.length / (totalTime / 1000)).toFixed(2) : 0,
-    });
-    
-    metricsTracker.logPerformanceReport();
+    console.log(`📊 Final: ${pdfs.length}/${batches.length} batches successful, ${labels.length} labels processed`);
     
     return pdfs;
   };
