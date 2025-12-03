@@ -6,7 +6,6 @@ import { useA4Conversion } from './useA4Conversion';
 import { usePdfOperations } from './usePdfOperations';
 import { useConversionState } from './useConversionState';
 import { useConversionMetrics } from './useConversionMetrics';
-import { organizeImagesInA4PDF } from '@/utils/a4Utils';
 import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
@@ -15,7 +14,7 @@ export const useA4ZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const { addToProcessingHistory } = useHistoryRecords();
-  const { convertZplToA4Images, parseLabelsFromZpl } = useA4Conversion();
+  const { convertZplToA4Pdfs, parseLabelsFromZpl } = useA4Conversion();
   const { logPerformanceMetrics } = useConversionMetrics();
   const { uploadPDFToStorage } = useUploadPdf();
   const { ensurePdfBucketExists } = useStorageOperations();
@@ -62,30 +61,21 @@ export const useA4ZplConversion = () => {
       
       const conversionPhaseStart = Date.now();
 
-      // Convert to PNG images with batch processing
-      const images = await convertZplToA4Images(labels, (progressValue) => {
-        setProgress(progressValue); // 0-80%
+      // Convert to vector PDFs and organize in A4 format (preserves quality)
+      const a4Pdf = await convertZplToA4Pdfs(labels, (progressValue) => {
+        setProgress(progressValue); // 0-90%
       }, config);
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
-      console.log(`⚡ A4 image conversion phase completed in ${conversionPhaseTime}ms`);
+      console.log(`⚡ A4 vector PDF conversion completed in ${conversionPhaseTime}ms`);
 
       try {
-        setProgress(85);
-        
         // Ensure bucket exists
         await ensurePdfBucketExists();
         
-        setProgress(90);
+        setProgress(92);
         
-        // Organize images into A4 PDF
-        const mergeStartTime = Date.now();
-        const a4Pdf = await organizeImagesInA4PDF(images);
-        const mergeTime = Date.now() - mergeStartTime;
-        
-        console.log(`📄 A4 PDF organization completed in ${mergeTime}ms`);
-        
-        setProgress(95);
+        const mergeTime = 0; // Merge already done in convertZplToA4Pdfs
         
         // Upload PDF to storage
         const uploadStartTime = Date.now();
