@@ -23,126 +23,84 @@ export const useA4Conversion = () => {
       throw new Error('Nenhuma etiqueta válida encontrada para processamento');
     }
 
-    const images: Blob[] = [];
+    const images: Blob[] = new Array(validLabels.length);
+    const processed = new Set<number>();
     
-    console.log(`🖼️ Starting A4 PNG conversion of ${validLabels.length} valid labels with Cenário 2 batch processing`);
-    console.log(`⚡ Using A4 Cenário 2 configuration:`, config);
+    console.log(`🖼️ Starting A4 PNG conversion of ${validLabels.length} valid labels`);
     
-    let currentConfig = { ...config };
-    let consecutiveErrors = 0;
-    let successfulBatches = 0;
-    
-    // Process labels in batches with Cenário 2 settings
-    for (let i = 0; i < validLabels.length; i += currentConfig.labelsPerBatch) {
-      const batchLabels = validLabels.slice(i, i + currentConfig.labelsPerBatch);
-      const batchNumber = Math.floor(i / currentConfig.labelsPerBatch) + 1;
-      const totalBatches = Math.ceil(validLabels.length / currentConfig.labelsPerBatch);
+    // Process labels one by one with proper delay to avoid rate limits
+    for (let i = 0; i < validLabels.length; i++) {
+      if (processed.has(i)) continue;
       
-      console.log(`📦 Processing A4 batch ${batchNumber}/${totalBatches} (${batchLabels.length} labels) - Cenário 2`);
-      
-      let batchSuccess = false;
+      const label = validLabels[i];
       let retryCount = 0;
+      let success = false;
       
-      while (!batchSuccess && retryCount < currentConfig.maxRetries) {
+      while (!success && retryCount < config.maxRetries) {
         try {
-          // Process each label in the current batch
-          for (let j = 0; j < batchLabels.length; j++) {
-            const label = batchLabels[j];
-            const labelNumber = i + j + 1;
-            
-            console.log(`🔄 Processing A4 label ${labelNumber}/${validLabels.length} in batch ${batchNumber}...`);
-            
-            const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
-              method: 'POST',
-              headers: {
-                'Accept': 'image/png',
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-              body: label,
-            });
+          console.log(`🔄 Processing A4 label ${i + 1}/${validLabels.length}...`);
+          
+          const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
+            method: 'POST',
+            headers: {
+              'Accept': 'image/png',
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: label,
+          });
 
-            console.log(`📡 API Response for A4 label ${labelNumber}: ${response.status} ${response.statusText}`);
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ A4 Label ${i + 1} HTTP error: ${response.status}`);
+            
+            // On rate limit, wait longer
+            if (response.status === 429) {
+              const waitTime = 3000 * (retryCount + 1);
+              console.log(`⏳ Rate limited, waiting ${waitTime}ms...`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
+            }
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+          }
 
-            if (!response.ok) {
-              const errorText = await response.text();
-              console.error(`❌ A4 Label ${labelNumber} HTTP error:`, {
-                status: response.status,
-                statusText: response.statusText,
-                errorText: errorText.substring(0, 200)
-              });
-              throw new Error(`HTTP ${response.status}: ${errorText}`);
-            }
-
-            const blob = await response.blob();
-            console.log(`📦 Received A4 blob for label ${labelNumber}:`, {
-              size: blob.size,
-              type: blob.type
-            });
-            
-            if (blob.size === 0) {
-              throw new Error('Empty PNG received from API');
-            }
-            
-            images.push(blob);
-            console.log(`✅ A4 Label ${labelNumber}/${validLabels.length} converted successfully (${blob.size} bytes)`);
-            
-            // Add small delay between individual labels within a batch
-            if (j < batchLabels.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 150)); // Slightly increased delay
-            }
+          const blob = await response.blob();
+          
+          if (blob.size === 0) {
+            throw new Error('Empty PNG received from API');
           }
           
-          batchSuccess = true;
-          successfulBatches++;
-          consecutiveErrors = 0;
+          images[i] = blob;
+          processed.add(i);
+          success = true;
           
-          const progressValue = ((i + batchLabels.length) / validLabels.length) * 80; // Reserve 20% for PDF generation
+          console.log(`✅ A4 Label ${i + 1}/${validLabels.length} converted (${blob.size} bytes)`);
+          
+          // Update progress (0-80%)
+          const progressValue = ((i + 1) / validLabels.length) * 80;
           onProgress(progressValue);
           
-          console.log(`✅ A4 Batch ${batchNumber} completed successfully (${batchLabels.length} labels) - Cenário 2`);
+          // Add delay between requests to avoid rate limits
+          if (i < validLabels.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
           
         } catch (error) {
           retryCount++;
-          consecutiveErrors++;
+          console.error(`💥 A4 Label ${i + 1} attempt ${retryCount}/${config.maxRetries} failed`);
           
-          console.error(`💥 A4 Batch ${batchNumber} attempt ${retryCount}/${currentConfig.maxRetries} failed:`, {
-            error: error instanceof Error ? error.message : error,
-            stack: error instanceof Error ? error.stack : undefined
-          });
-          
-          if (retryCount < currentConfig.maxRetries) {
-            const retryDelay = currentConfig.delayBetweenBatches * retryCount;
-            console.log(`⏳ Retrying A4 batch ${batchNumber} in ${retryDelay}ms...`);
+          if (retryCount < config.maxRetries) {
+            const retryDelay = config.delayBetweenBatches * retryCount;
+            console.log(`⏳ Retrying in ${retryDelay}ms...`);
             await new Promise(resolve => setTimeout(resolve, retryDelay));
-          } else {
-            console.error(`💀 A4 Batch ${batchNumber} permanently failed after ${currentConfig.maxRetries} attempts`);
-            // Continue with next batch instead of throwing
           }
         }
       }
-      
-      // Check if we should switch to fallback mode
-      if (consecutiveErrors >= 2) {
-        console.log(`⚠️ A4 processing switching to fallback mode due to high error rate`);
-        currentConfig = {
-          ...currentConfig,
-          delayBetweenBatches: currentConfig.fallbackDelay,
-          labelsPerBatch: Math.max(currentConfig.labelsPerBatch - 5, 10), // More conservative fallback
-        };
-        consecutiveErrors = 0;
-      }
-      
-      // Add delay between batches (Cenário 2: 1000ms)
-      if (i + currentConfig.labelsPerBatch < validLabels.length) {
-        console.log(`⏱️ A4 waiting ${currentConfig.delayBetweenBatches}ms before next batch (Cenário 2)...`);
-        await new Promise(resolve => setTimeout(resolve, currentConfig.delayBetweenBatches));
-      }
     }
     
-    console.log(`🎯 A4 PNG conversion summary: ${images.length}/${validLabels.length} images generated successfully`);
-    console.log(`📊 A4 batch processing stats: ${successfulBatches} successful batches with Cenário 2`);
+    // Filter out any unprocessed slots
+    const finalImages = images.filter(img => img !== undefined);
+    console.log(`🎯 A4 conversion complete: ${finalImages.length}/${validLabels.length} images`);
     
-    return images;
+    return finalImages;
   };
 
   const parseLabelsFromZpl = (zplContent: string) => {
