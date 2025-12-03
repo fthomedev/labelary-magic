@@ -21,7 +21,7 @@ export function SharePromoBanner() {
             <Zap className="h-5 w-5 text-green-600 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">
-                🚀 Performance otimizada! Ambos os processos estão mais rápidos.
+                🚀 Performance otimizada! Processos mais rápidos e etiquetas com maior nitidez via IA.
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Encontrou algum erro? Use o botão de feedback ao lado →
