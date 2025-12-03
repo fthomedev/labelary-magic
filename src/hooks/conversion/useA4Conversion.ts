@@ -7,13 +7,19 @@ import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 // Upscale image for better quality
 const upscaleImage = async (blob: Blob, scale: number): Promise<Blob> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const img = new Image();
+    const objectUrl = URL.createObjectURL(blob);
+    
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = img.width * scale;
       canvas.height = img.height * scale;
       const ctx = canvas.getContext('2d');
+      
+      // Clean up object URL
+      URL.revokeObjectURL(objectUrl);
+      
       if (!ctx) {
         resolve(blob); // Fallback to original
         return;
@@ -25,15 +31,16 @@ const upscaleImage = async (blob: Blob, scale: number): Promise<Blob> => {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       
       canvas.toBlob((newBlob) => {
-        if (newBlob) {
-          resolve(newBlob);
-        } else {
-          resolve(blob);
-        }
+        resolve(newBlob || blob);
       }, 'image/png', 1.0);
     };
-    img.onerror = () => resolve(blob);
-    img.src = URL.createObjectURL(blob);
+    
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(blob);
+    };
+    
+    img.src = objectUrl;
   });
 };
 
@@ -81,7 +88,7 @@ export const useA4Conversion = () => {
       throw new Error('Nenhuma etiqueta válida encontrada para processamento');
     }
 
-    const MAX_CONCURRENT = 10; // High concurrency
+    const MAX_CONCURRENT = 5; // Reduced to avoid rate limiting
     const semaphore = new Semaphore(MAX_CONCURRENT);
     const results: (Blob | null)[] = new Array(validLabels.length).fill(null);
     let completed = 0;
