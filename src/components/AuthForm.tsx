@@ -34,6 +34,15 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isSignUp && !name.trim()) {
+      toast({
+        variant: "destructive",
+        title: t("error"),
+        description: t("nameRequired"),
+      });
+      return;
+    }
+    
     if (isSignUp || !isResetPassword) {
       const passwordError = validatePassword(password);
       if (passwordError) {
