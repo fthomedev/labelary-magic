@@ -189,8 +189,8 @@ const translations = {
   
   // Formato de impressão
   printFormat: 'Formato de Impressão',
-  standardFormat: 'Padrão (Etiquetas Individuais)',
-  a4Format: 'Folha A4 (4 etiquetas por página)',
+  standardFormat: 'Padrão - Etiquetas Individuais',
+  a4Format: 'Folha A4 - 4 etiquetas por página',
   selectPrintFormat: 'Selecione como deseja imprimir suas etiquetas',
   formatDescription: 'Escolha o formato que melhor se adapta à sua impressora',
   a4FormatDescription: '4 etiquetas organizadas em folha A4',
