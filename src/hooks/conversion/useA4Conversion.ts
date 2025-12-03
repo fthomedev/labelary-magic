@@ -67,7 +67,7 @@ export const useA4Conversion = () => {
     }
 
     const images: (Blob | null)[] = [];
-    const PARALLEL_BATCH_SIZE = 4; // Process 4 labels in parallel
+    const PARALLEL_BATCH_SIZE = 6; // Process 6 labels in parallel
     
     console.log(`🖼️ Starting A4 conversion of ${validLabels.length} labels (parallel batches of ${PARALLEL_BATCH_SIZE})`);
     
