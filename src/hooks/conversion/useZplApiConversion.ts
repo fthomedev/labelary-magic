@@ -2,11 +2,126 @@
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { splitZPLIntoBlocks, delay } from '@/utils/pdfUtils';
-import { DEFAULT_CONFIG, ProcessingMetricsTracker, ProcessingConfig } from '@/config/processingConfig';
+import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export const useZplApiConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
+
+  const convertZplBlocksToPngs = async (
+    labels: string[],
+    onProgress: (progress: number) => void,
+    config: ProcessingConfig = DEFAULT_CONFIG
+  ): Promise<Blob[]> => {
+    const totalStartTime = Date.now();
+    
+    console.log(`🖼️ Starting PNG conversion of ${labels.length} labels with config:`, config);
+    
+    const results: (Blob | null)[] = new Array(labels.length).fill(null);
+    const failedLabels: number[] = [];
+    let completed = 0;
+
+    const processLabel = async (label: string, labelIndex: number, maxRetries: number = config.maxRetries): Promise<Blob | null> => {
+      let retryCount = 0;
+      
+      while (retryCount < maxRetries) {
+        try {
+          const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
+            method: 'POST',
+            headers: {
+              'Accept': 'image/png',
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: label,
+          });
+
+          if (response.status === 429) {
+            retryCount++;
+            const waitTime = config.fallbackDelay * retryCount;
+            console.log(`⏳ Rate limited on label ${labelIndex + 1}, waiting ${waitTime}ms...`);
+            await delay(waitTime);
+            continue;
+          }
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const blob = await response.blob();
+          
+          if (blob.size === 0) {
+            throw new Error('Empty PNG received');
+          }
+          
+          return blob;
+          
+        } catch (error) {
+          retryCount++;
+          console.error(`❌ Label ${labelIndex + 1} attempt ${retryCount} failed:`, error);
+          
+          if (retryCount < maxRetries) {
+            await delay(config.delayBetweenBatches * retryCount);
+          }
+        }
+      }
+      
+      return null;
+    };
+
+    // Process labels in parallel groups (semaphore pattern)
+    const PARALLEL_LABELS = 5;
+    
+    for (let i = 0; i < labels.length; i += PARALLEL_LABELS) {
+      const parallelLabels = labels.slice(i, i + PARALLEL_LABELS);
+      const startIdx = i;
+      
+      const labelResults = await Promise.all(
+        parallelLabels.map((label, j) => processLabel(label, startIdx + j))
+      );
+      
+      labelResults.forEach((result, j) => {
+        if (result) {
+          results[startIdx + j] = result;
+        } else {
+          failedLabels.push(startIdx + j);
+        }
+      });
+      
+      completed += parallelLabels.length;
+      const progressValue = (completed / labels.length) * 100;
+      onProgress(progressValue);
+      
+      // Small delay between groups to avoid rate limits
+      if (i + PARALLEL_LABELS < labels.length) {
+        await delay(200);
+      }
+    }
+    
+    // Retry failed labels
+    if (failedLabels.length > 0) {
+      console.log(`🔄 Retrying ${failedLabels.length} failed labels...`);
+      
+      for (const labelIndex of failedLabels) {
+        await delay(config.fallbackDelay);
+        
+        const result = await processLabel(labels[labelIndex], labelIndex, 3);
+        
+        if (result) {
+          results[labelIndex] = result;
+          console.log(`✅ Label ${labelIndex + 1} recovered`);
+        } else {
+          console.error(`💥 Label ${labelIndex + 1} permanently failed`);
+        }
+      }
+    }
+    
+    const pngs = results.filter((png): png is Blob => png !== null);
+    const totalTime = Date.now() - totalStartTime;
+    
+    console.log(`🏆 PNG conversion completed in ${totalTime}ms: ${pngs.length}/${labels.length} successful`);
+    
+    return pngs;
+  };
 
   const convertZplBlocksToPdfs = async (
     labels: string[],
@@ -161,6 +276,7 @@ export const useZplApiConversion = () => {
   };
 
   return {
+    convertZplBlocksToPngs,
     convertZplBlocksToPdfs,
     parseLabelsFromZpl,
     countLabelsInZpl
