@@ -31,6 +31,7 @@ const translations = {
   checkYourEmail: 'Check your inbox for the reset link',
   signUpSuccess: 'Sign Up Successful',
   passwordTooShort: 'Password must be at least 6 characters',
+  nameRequired: 'Name is required',
   rememberMe: 'Remember me',
   
   // Conta de usuário

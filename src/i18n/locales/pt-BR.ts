@@ -31,6 +31,7 @@ const translations = {
   checkYourEmail: 'Verifique sua caixa de entrada para o link de recuperação',
   signUpSuccess: 'Cadastro Realizado com Sucesso',
   passwordTooShort: 'A senha deve ter pelo menos 6 caracteres',
+  nameRequired: 'O nome é obrigatório',
   rememberMe: 'Lembrar-me',
   
   // Conta de usuário
