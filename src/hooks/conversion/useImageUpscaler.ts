@@ -1,6 +1,7 @@
 import { useRef, useCallback } from 'react';
 
 let Upscaler: any = null;
+let defaultModel: any = null;
 
 export const useImageUpscaler = () => {
   const upscalerRef = useRef<any>(null);
@@ -23,12 +24,16 @@ export const useImageUpscaler = () => {
       
       // Dynamic import to avoid loading TensorFlow on page load
       if (!Upscaler) {
-        const module = await import('upscaler');
-        Upscaler = module.default;
+        const [upscalerModule, modelModule] = await Promise.all([
+          import('upscaler'),
+          import('@upscalerjs/default-model')
+        ]);
+        Upscaler = upscalerModule.default;
+        defaultModel = modelModule.default;
       }
       
       upscalerRef.current = new Upscaler({
-        model: 'default', // Uses default lightweight model
+        model: defaultModel,
       });
       
       console.log('✅ UpscalerJS initialized successfully');
