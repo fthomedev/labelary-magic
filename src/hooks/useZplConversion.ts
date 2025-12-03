@@ -60,17 +60,16 @@ export const useZplConversion = () => {
 
       // Parse labels ONCE at the beginning and use this count throughout
       const labels = parseLabelsFromZpl(zplContent);
-      // Divide by 2 to get the correct final count as each label has 2 ^XA markers
-      const finalLabelCount = Math.ceil(labels.length / 2);
+      const inputLabelCount = labels.length;
       
-      console.log(`🎯 Starting conversion of ${finalLabelCount} labels (FINAL COUNT CORRECTED - ${labels.length} blocks / 2)`);
+      console.log(`🎯 INPUT: ${inputLabelCount} labels parsed from ZPL content`);
       console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
       
       // Choose configuration based on label count and user preference
       let config: ProcessingConfig;
       if (!useOptimizedTiming) {
         config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 }; // Original conservative timing
-      } else if (finalLabelCount > 100) {
+      } else if (inputLabelCount > 100) {
         config = DEFAULT_CONFIG; // Moderate optimization for large batches
       } else {
         config = FAST_CONFIG; // Aggressive optimization for smaller batches
@@ -93,7 +92,13 @@ export const useZplConversion = () => {
       await upscalerPromise;
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
-      console.log(`⚡ PNG conversion completed in ${conversionPhaseTime}ms (${pngs.length} images)`);
+      const outputPngCount = pngs.length;
+      console.log(`⚡ PNG conversion completed in ${conversionPhaseTime}ms`);
+      console.log(`📊 VALIDATION: Input=${inputLabelCount} labels → Output=${outputPngCount} PNGs`);
+      
+      if (outputPngCount !== inputLabelCount) {
+        console.warn(`⚠️ LABEL LOSS DETECTED: ${inputLabelCount - outputPngCount} labels lost during conversion`);
+      }
 
       // Phase 2: Upscale PNGs with AI (50-80%)
       const upscaleStart = Date.now();
@@ -124,10 +129,11 @@ export const useZplConversion = () => {
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
         
-        // Save to history using the EXACT same finalLabelCount from the beginning and include processing time
+        // Save to history using the ACTUAL output count (PNGs converted to PDF)
+        const actualOutputCount = upscaledPngs.length;
         if (pdfPath) {
-          console.log(`💾 Saving to history: ${finalLabelCount} labels processed in ${totalTime}ms (CONSISTENT CORRECTED COUNT)`);
-          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime);
+          console.log(`💾 Saving to history: ${actualOutputCount} labels (input: ${inputLabelCount}, output: ${actualOutputCount})`);
+          await addToProcessingHistory(actualOutputCount, pdfPath, totalTime);
           triggerHistoryRefresh();
         }
         
@@ -136,11 +142,11 @@ export const useZplConversion = () => {
         // Download the file
         downloadPdf(blobUrl);
 
-        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount, upscaleTime);
+        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, actualOutputCount, upscaleTime);
 
         toast({
           title: t('success'),
-          description: `${t('successMessage')} com IA (${totalTime}ms, ${finalLabelCount} etiquetas)`,
+          description: `${t('successMessage')} (${actualOutputCount} etiquetas em ${(totalTime/1000).toFixed(1)}s)`,
           duration: 5000,
         });
         
