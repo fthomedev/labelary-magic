@@ -25,14 +25,15 @@ export const useZplApiConversion = () => {
     
     console.log(`📦 Created ${batches.length} batches of ~${config.labelsPerBatch} labels each`);
     
-    const PARALLEL_BATCHES = 3; // Process 3 batches in parallel
+    const PARALLEL_BATCHES = 2; // Reduced from 3 to avoid rate limits
     const results: (Blob | null)[] = new Array(batches.length).fill(null);
+    const failedBatches: number[] = [];
     let completed = 0;
 
-    const processBatch = async (batchLabels: string[], batchIndex: number): Promise<Blob | null> => {
+    const processBatch = async (batchLabels: string[], batchIndex: number, maxRetries: number = config.maxRetries, baseDelay: number = config.delayBetweenBatches): Promise<Blob | null> => {
       let retryCount = 0;
       
-      while (retryCount < config.maxRetries) {
+      while (retryCount < maxRetries) {
         try {
           const blockZPL = batchLabels.join('');
 
@@ -70,19 +71,12 @@ export const useZplApiConversion = () => {
           retryCount++;
           console.error(`❌ Batch ${batchIndex + 1} attempt ${retryCount} failed:`, error);
           
-          if (retryCount < config.maxRetries) {
-            await delay(config.delayBetweenBatches * retryCount);
+          if (retryCount < maxRetries) {
+            await delay(baseDelay * retryCount);
           }
         }
       }
       
-      console.error(`💥 Batch ${batchIndex + 1} failed after ${config.maxRetries} attempts`);
-      toast({
-        variant: "destructive",
-        title: t('blockError'),
-        description: t('blockErrorMessage', { block: batchIndex + 1 }),
-        duration: 4000,
-      });
       return null;
     };
 
@@ -96,24 +90,58 @@ export const useZplApiConversion = () => {
       );
       
       batchResults.forEach((result, j) => {
-        results[startIdx + j] = result;
+        if (result) {
+          results[startIdx + j] = result;
+        } else {
+          failedBatches.push(startIdx + j);
+        }
       });
       
       completed += parallelBatches.length;
-      const progressValue = (completed / batches.length) * 100;
+      const progressValue = (completed / batches.length) * 90; // Reserve 10% for retry
       onProgress(progressValue);
       
-      // Small delay between parallel groups
+      // Delay between parallel groups
       if (i + PARALLEL_BATCHES < batches.length) {
         await delay(config.delayBetweenBatches);
       }
     }
+    
+    // Retry failed batches sequentially with longer delays
+    if (failedBatches.length > 0) {
+      console.log(`🔄 Retrying ${failedBatches.length} failed batches sequentially...`);
+      
+      for (const batchIndex of failedBatches) {
+        await delay(config.fallbackDelay); // Wait before retry
+        
+        const result = await processBatch(batches[batchIndex], batchIndex, 3, config.fallbackDelay);
+        
+        if (result) {
+          results[batchIndex] = result;
+          console.log(`✅ Batch ${batchIndex + 1} recovered successfully`);
+        } else {
+          console.error(`💥 Batch ${batchIndex + 1} permanently failed`);
+          toast({
+            variant: "destructive",
+            title: t('blockError'),
+            description: t('blockErrorMessage', { block: batchIndex + 1 }),
+            duration: 4000,
+          });
+        }
+      }
+    }
+    
+    onProgress(100);
     
     const pdfs = results.filter((pdf): pdf is Blob => pdf !== null);
     const totalTime = Date.now() - totalStartTime;
     
     console.log(`🏆 Conversion completed in ${totalTime}ms`);
     console.log(`📊 Final: ${pdfs.length}/${batches.length} batches successful, ${labels.length} labels processed`);
+    
+    if (pdfs.length < batches.length) {
+      console.warn(`⚠️ Warning: ${batches.length - pdfs.length} batches failed and were not included in the final PDF`);
+    }
     
     return pdfs;
   };
