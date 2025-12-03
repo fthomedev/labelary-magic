@@ -49,7 +49,7 @@ export const useZplApiConversion = () => {
       throw new Error('Nenhuma etiqueta válida encontrada para processamento');
     }
 
-    const MAX_CONCURRENT = 8; // High concurrency for performance
+    const MAX_CONCURRENT = 12; // Higher concurrency for faster processing
     const semaphore = new Semaphore(MAX_CONCURRENT);
     const results: (Blob | null)[] = new Array(validLabels.length).fill(null);
     let completed = 0;
@@ -79,7 +79,7 @@ export const useZplApiConversion = () => {
             if (response.status === 429) {
               rateLimitHits++;
               retries++;
-              const waitTime = 1500 * retries;
+              const waitTime = 1000 * retries; // Reduced from 1500
               console.log(`⏳ Rate limited on label ${index + 1}, waiting ${waitTime}ms...`);
               await new Promise(resolve => setTimeout(resolve, waitTime));
               continue;
@@ -96,7 +96,7 @@ export const useZplApiConversion = () => {
           } catch (error) {
             retries++;
             if (retries < maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, 500 * retries));
+              await new Promise(resolve => setTimeout(resolve, 300 * retries)); // Reduced from 500
             }
           }
         }
