@@ -5,6 +5,38 @@ import { useZplLabelProcessor } from './useZplLabelProcessor';
 import { useZplValidator } from './useZplValidator';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
+// Upscale image for better quality
+const upscaleImage = async (blob: Blob, scale: number): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(blob); // Fallback to original
+        return;
+      }
+      
+      // Use high quality scaling
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      canvas.toBlob((newBlob) => {
+        if (newBlob) {
+          resolve(newBlob);
+        } else {
+          resolve(blob);
+        }
+      }, 'image/png', 1.0);
+    };
+    img.onerror = () => resolve(blob);
+    img.src = URL.createObjectURL(blob);
+  });
+};
+
 // Semaphore for controlling concurrent requests
 class Semaphore {
   private permits: number;
@@ -89,7 +121,9 @@ export const useA4Conversion = () => {
             const blob = await response.blob();
             if (blob.size === 0) throw new Error('Empty PNG');
             
-            results[index] = blob;
+            // Upscale image 2x for better quality
+            const upscaledBlob = await upscaleImage(blob, 2);
+            results[index] = upscaledBlob;
             break;
             
           } catch (error) {
