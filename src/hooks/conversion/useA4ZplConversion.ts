@@ -6,6 +6,7 @@ import { useA4Conversion } from './useA4Conversion';
 import { usePdfOperations } from './usePdfOperations';
 import { useConversionState } from './useConversionState';
 import { useConversionMetrics } from './useConversionMetrics';
+import { useImageUpscaler } from './useImageUpscaler';
 import { organizeImagesInA4PDF } from '@/utils/a4Utils';
 import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
@@ -17,6 +18,7 @@ export const useA4ZplConversion = () => {
   const { addToProcessingHistory } = useHistoryRecords();
   const { convertZplToA4Images, parseLabelsFromZpl } = useA4Conversion();
   const { logPerformanceMetrics } = useConversionMetrics();
+  const { upscaleImages } = useImageUpscaler();
   const { uploadPDFToStorage } = useUploadPdf();
   const { ensurePdfBucketExists } = useStorageOperations();
   
@@ -62,13 +64,24 @@ export const useA4ZplConversion = () => {
       
       const conversionPhaseStart = Date.now();
 
-      // Convert to PNG images with batch processing
+      // Convert to PNG images with batch processing (0-50% progress)
       const images = await convertZplToA4Images(labels, (progressValue) => {
-        setProgress(progressValue); // 0-80%
+        setProgress(progressValue * 0.5); // 0-50%
       }, config);
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ A4 image conversion phase completed in ${conversionPhaseTime}ms`);
+
+      // Upscale images with AI (50-80% progress)
+      const upscaleStartTime = Date.now();
+      console.log(`🔍 Starting AI upscaling of ${images.length} images...`);
+      
+      const upscaledImages = await upscaleImages(images, (upscaleProgress) => {
+        setProgress(50 + (upscaleProgress * 0.3)); // 50-80%
+      });
+      
+      const upscaleTime = Date.now() - upscaleStartTime;
+      console.log(`✨ AI upscaling completed in ${upscaleTime}ms`);
 
       try {
         setProgress(85);
@@ -78,9 +91,9 @@ export const useA4ZplConversion = () => {
         
         setProgress(90);
         
-        // Organize images into A4 PDF
+        // Organize upscaled images into A4 PDF
         const mergeStartTime = Date.now();
-        const a4Pdf = await organizeImagesInA4PDF(images);
+        const a4Pdf = await organizeImagesInA4PDF(upscaledImages);
         const mergeTime = Date.now() - mergeStartTime;
         
         console.log(`📄 A4 PDF organization completed in ${mergeTime}ms`);
@@ -114,11 +127,11 @@ export const useA4ZplConversion = () => {
         // Download the file
         downloadPdf(blobUrl, 'etiquetas-a4.pdf');
 
-        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount);
+        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount, upscaleTime);
 
         toast({
           title: t('success'),
-          description: `${t('successMessage')} - A4 Format (${totalTime}ms, ${finalLabelCount} etiquetas)`,
+          description: `${t('successMessage')} - A4 Format + AI Upscale (${totalTime}ms, ${finalLabelCount} etiquetas)`,
           duration: 5000,
         });
         
