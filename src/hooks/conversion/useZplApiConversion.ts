@@ -3,122 +3,120 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { splitZPLIntoBlocks, delay } from '@/utils/pdfUtils';
 import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
+import { useZplValidator } from './useZplValidator';
+
+// Semaphore for controlling concurrent requests
+class Semaphore {
+  private permits: number;
+  private queue: (() => void)[] = [];
+
+  constructor(permits: number) {
+    this.permits = permits;
+  }
+
+  async acquire(): Promise<void> {
+    if (this.permits > 0) {
+      this.permits--;
+      return;
+    }
+    return new Promise<void>(resolve => this.queue.push(resolve));
+  }
+
+  release(): void {
+    if (this.queue.length > 0) {
+      const next = this.queue.shift();
+      if (next) next();
+    } else {
+      this.permits++;
+    }
+  }
+}
 
 export const useZplApiConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { filterValidLabels } = useZplValidator();
 
   const convertZplBlocksToPngs = async (
     labels: string[],
     onProgress: (progress: number) => void,
     config: ProcessingConfig = DEFAULT_CONFIG
   ): Promise<Blob[]> => {
-    const totalStartTime = Date.now();
+    // Filter out invalid labels first
+    const validLabels = filterValidLabels(labels);
     
-    console.log(`🖼️ Starting PNG conversion of ${labels.length} labels with config:`, config);
-    
-    const results: (Blob | null)[] = new Array(labels.length).fill(null);
-    const failedLabels: number[] = [];
+    if (validLabels.length === 0) {
+      throw new Error('Nenhuma etiqueta válida encontrada para processamento');
+    }
+
+    const MAX_CONCURRENT = 8; // High concurrency for performance
+    const semaphore = new Semaphore(MAX_CONCURRENT);
+    const results: (Blob | null)[] = new Array(validLabels.length).fill(null);
     let completed = 0;
+    let rateLimitHits = 0;
+    
+    console.log(`🖼️ Starting PNG conversion of ${validLabels.length} valid labels (${MAX_CONCURRENT} concurrent)`);
+    const startTime = Date.now();
 
-    const processLabel = async (label: string, labelIndex: number, maxRetries: number = config.maxRetries): Promise<Blob | null> => {
-      let retryCount = 0;
+    const convertLabel = async (label: string, index: number): Promise<void> => {
+      await semaphore.acquire();
       
-      while (retryCount < maxRetries) {
-        try {
-          const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
-            method: 'POST',
-            headers: {
-              'Accept': 'image/png',
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: label,
-          });
+      try {
+        let retries = 0;
+        const maxRetries = 3;
+        
+        while (retries < maxRetries) {
+          try {
+            const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
+              method: 'POST',
+              headers: {
+                'Accept': 'image/png',
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: label,
+            });
 
-          if (response.status === 429) {
-            retryCount++;
-            const waitTime = config.fallbackDelay * retryCount;
-            console.log(`⏳ Rate limited on label ${labelIndex + 1}, waiting ${waitTime}ms...`);
-            await delay(waitTime);
-            continue;
-          }
+            if (response.status === 429) {
+              rateLimitHits++;
+              retries++;
+              const waitTime = 1500 * retries;
+              console.log(`⏳ Rate limited on label ${index + 1}, waiting ${waitTime}ms...`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
+              continue;
+            }
 
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-          const blob = await response.blob();
-          
-          if (blob.size === 0) {
-            throw new Error('Empty PNG received');
-          }
-          
-          return blob;
-          
-        } catch (error) {
-          retryCount++;
-          console.error(`❌ Label ${labelIndex + 1} attempt ${retryCount} failed:`, error);
-          
-          if (retryCount < maxRetries) {
-            await delay(config.delayBetweenBatches * retryCount);
+            const blob = await response.blob();
+            if (blob.size === 0) throw new Error('Empty PNG');
+            
+            results[index] = blob;
+            break;
+            
+          } catch (error) {
+            retries++;
+            if (retries < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 500 * retries));
+            }
           }
         }
+        
+        completed++;
+        const progressValue = (completed / validLabels.length) * 100;
+        onProgress(progressValue);
+        
+      } finally {
+        semaphore.release();
       }
-      
-      return null;
     };
 
-    // Process labels in parallel groups (semaphore pattern)
-    const PARALLEL_LABELS = 5;
+    // Launch all conversions in parallel (semaphore controls concurrency)
+    await Promise.all(validLabels.map((label, i) => convertLabel(label, i)));
     
-    for (let i = 0; i < labels.length; i += PARALLEL_LABELS) {
-      const parallelLabels = labels.slice(i, i + PARALLEL_LABELS);
-      const startIdx = i;
-      
-      const labelResults = await Promise.all(
-        parallelLabels.map((label, j) => processLabel(label, startIdx + j))
-      );
-      
-      labelResults.forEach((result, j) => {
-        if (result) {
-          results[startIdx + j] = result;
-        } else {
-          failedLabels.push(startIdx + j);
-        }
-      });
-      
-      completed += parallelLabels.length;
-      const progressValue = (completed / labels.length) * 100;
-      onProgress(progressValue);
-      
-      // Small delay between groups to avoid rate limits
-      if (i + PARALLEL_LABELS < labels.length) {
-        await delay(200);
-      }
-    }
+    const pngs = results.filter((img): img is Blob => img !== null);
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     
-    // Retry failed labels
-    if (failedLabels.length > 0) {
-      console.log(`🔄 Retrying ${failedLabels.length} failed labels...`);
-      
-      for (const labelIndex of failedLabels) {
-        await delay(config.fallbackDelay);
-        
-        const result = await processLabel(labels[labelIndex], labelIndex, 3);
-        
-        if (result) {
-          results[labelIndex] = result;
-          console.log(`✅ Label ${labelIndex + 1} recovered`);
-        } else {
-          console.error(`💥 Label ${labelIndex + 1} permanently failed`);
-        }
-      }
-    }
-    
-    const pngs = results.filter((png): png is Blob => png !== null);
-    const totalTime = Date.now() - totalStartTime;
-    
-    console.log(`🏆 PNG conversion completed in ${totalTime}ms: ${pngs.length}/${labels.length} successful`);
+    console.log(`🏆 PNG conversion complete: ${pngs.length}/${validLabels.length} in ${elapsed}s (${rateLimitHits} rate limits)`);
     
     return pngs;
   };
