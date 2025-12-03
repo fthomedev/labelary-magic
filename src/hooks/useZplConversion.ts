@@ -25,7 +25,7 @@ export const useZplConversion = () => {
   const { addToProcessingHistory } = useHistoryRecords();
   const { convertZplBlocksToPngs, parseLabelsFromZpl } = useZplApiConversion();
   const { logPerformanceMetrics } = useConversionMetrics();
-  const { upscaleImages } = useImageUpscaler();
+  const { upscaleImages, initUpscaler } = useImageUpscaler();
   
   const {
     isConverting,
@@ -78,13 +78,19 @@ export const useZplConversion = () => {
       
       console.log(`📋 Using configuration:`, config);
       
-      // Phase 1: Convert ZPL to PNGs (0-50%)
+      // Phase 1: Convert ZPL to PNGs (0-50%) + Pre-initialize upscaler in parallel
       const conversionPhaseStart = Date.now();
-      console.log(`🖼️ Phase 1: Converting ZPL to PNGs...`);
+      console.log(`🖼️ Phase 1: Converting ZPL to PNGs + pre-warming AI upscaler...`);
+
+      // Start upscaler initialization in parallel with PNG conversion
+      const upscalerPromise = initUpscaler();
 
       const pngs = await convertZplBlocksToPngs(labels, (progressValue) => {
         setProgress(progressValue * 0.5); // 0-50% for PNG conversion
       }, config);
+
+      // Ensure upscaler is ready
+      await upscalerPromise;
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ PNG conversion completed in ${conversionPhaseTime}ms (${pngs.length} images)`);
