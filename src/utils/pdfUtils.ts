@@ -1,5 +1,32 @@
 
 import PDFMerger from 'pdf-merger-js';
+import jsPDF from 'jspdf';
+
+const blobToDataURL = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+export const convertImagesToPdf = async (imageBlobs: Blob[]): Promise<Blob> => {
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'in',
+    format: [4, 6] // 4x6 inches label size
+  });
+
+  for (let i = 0; i < imageBlobs.length; i++) {
+    if (i > 0) pdf.addPage([4, 6], 'portrait');
+    
+    const imageDataUrl = await blobToDataURL(imageBlobs[i]);
+    pdf.addImage(imageDataUrl, 'PNG', 0, 0, 4, 6);
+  }
+
+  return pdf.output('blob');
+};
 
 export const splitZPLIntoBlocks = (zpl: string): string[] => {
   // Split by end marker ^XZ and filter for blocks that contain start marker ^XA

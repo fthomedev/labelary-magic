@@ -6,6 +6,8 @@ import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
 import { usePdfOperations } from '@/hooks/conversion/usePdfOperations';
 import { useConversionState } from '@/hooks/conversion/useConversionState';
 import { useConversionMetrics } from '@/hooks/conversion/useConversionMetrics';
+import { useImageUpscaler } from '@/hooks/conversion/useImageUpscaler';
+import { convertImagesToPdf } from '@/utils/pdfUtils';
 import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export interface ProcessingRecord {
@@ -21,8 +23,9 @@ export const useZplConversion = () => {
   const { t } = useTranslation();
 
   const { addToProcessingHistory } = useHistoryRecords();
-  const { convertZplBlocksToPdfs, parseLabelsFromZpl } = useZplApiConversion();
+  const { convertZplBlocksToPngs, parseLabelsFromZpl } = useZplApiConversion();
   const { logPerformanceMetrics } = useConversionMetrics();
+  const { upscaleImages } = useImageUpscaler();
   
   const {
     isConverting,
@@ -75,17 +78,42 @@ export const useZplConversion = () => {
       
       console.log(`📋 Using configuration:`, config);
       
+      // Phase 1: Convert ZPL to PNGs (0-50%)
       const conversionPhaseStart = Date.now();
+      console.log(`🖼️ Phase 1: Converting ZPL to PNGs...`);
 
-      const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
-        setProgress(progressValue * 0.8); // Reserve 20% for merging and upload
+      const pngs = await convertZplBlocksToPngs(labels, (progressValue) => {
+        setProgress(progressValue * 0.5); // 0-50% for PNG conversion
       }, config);
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
-      console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
+      console.log(`⚡ PNG conversion completed in ${conversionPhaseTime}ms (${pngs.length} images)`);
+
+      // Phase 2: Upscale PNGs with AI (50-80%)
+      const upscaleStart = Date.now();
+      console.log(`🔧 Phase 2: Upscaling ${pngs.length} images with AI...`);
+      
+      const upscaledPngs = await upscaleImages(pngs, (progressValue) => {
+        setProgress(50 + (progressValue * 0.3)); // 50-80% for upscaling
+      });
+      
+      const upscaleTime = Date.now() - upscaleStart;
+      console.log(`✅ AI upscaling completed in ${upscaleTime}ms`);
+
+      // Phase 3: Convert upscaled PNGs to PDF (80-90%)
+      const pdfCreateStart = Date.now();
+      console.log(`📄 Phase 3: Creating PDF from upscaled images...`);
+      setProgress(85);
+      
+      const finalPdf = await convertImagesToPdf(upscaledPngs);
+      
+      const pdfCreateTime = Date.now() - pdfCreateStart;
+      console.log(`✅ PDF created in ${pdfCreateTime}ms`);
 
       try {
-        const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, setProgress);
+        // Phase 4: Upload and finish (90-100%)
+        setProgress(90);
+        const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs([finalPdf], setProgress);
         
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
@@ -102,11 +130,11 @@ export const useZplConversion = () => {
         // Download the file
         downloadPdf(blobUrl);
 
-        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount);
+        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount, upscaleTime);
 
         toast({
           title: t('success'),
-          description: `${t('successMessage')} (${totalTime}ms, ${finalLabelCount} etiquetas)`,
+          description: `${t('successMessage')} com IA (${totalTime}ms, ${finalLabelCount} etiquetas)`,
           duration: 5000,
         });
         
