@@ -37,7 +37,7 @@ export const useZplApiConversion = () => {
         try {
           const blockZPL = batchLabels.join('');
 
-          const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
+          const response = await fetch('https://api.labelary.com/v1/printers/12dpmm/labels/4x6/', {
             method: 'POST',
             headers: {
               'Accept': 'application/pdf',
