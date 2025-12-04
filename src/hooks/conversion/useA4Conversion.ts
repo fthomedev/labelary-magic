@@ -51,25 +51,30 @@ export const useA4Conversion = () => {
       throw new Error('Nenhuma etiqueta válida encontrada para processamento');
     }
 
-    const MAX_CONCURRENT = 10; // High concurrency
+    const MAX_CONCURRENT = 4; // Reduced to avoid 429 rate limits
     const semaphore = new Semaphore(MAX_CONCURRENT);
     const results: (Blob | null)[] = new Array(validLabels.length).fill(null);
+    const failedIndices: number[] = [];
     let completed = 0;
     let rateLimitHits = 0;
     
-    console.log(`🖼️ Starting A4 conversion of ${validLabels.length} labels (${MAX_CONCURRENT} concurrent)`);
+    console.log(`\n========== PNG CONVERSION START ==========`);
+    console.log(`📊 Input: ${validLabels.length} labels`);
+    console.log(`⚙️ Concurrent limit: ${MAX_CONCURRENT}`);
     const startTime = Date.now();
 
     // Phase 1: ZPL to PNG conversion (0-55% progress)
-    const convertLabel = async (label: string, index: number): Promise<void> => {
+    const convertLabel = async (label: string, index: number, isRetryPass: boolean = false): Promise<boolean> => {
       await semaphore.acquire();
       
       try {
-        let retries = 0;
-        const maxRetries = 3;
+        const maxRetries = 4;
+        const baseDelays = [3000, 6000, 12000, 24000]; // Exponential backoff for 429
         
-        while (retries < maxRetries) {
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
           try {
+            console.log(`🔄 [${index + 1}/${validLabels.length}] Attempt ${attempt + 1}/${maxRetries}${isRetryPass ? ' (retry pass)' : ''}`);
+            
             const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
               method: 'POST',
               headers: {
@@ -81,51 +86,88 @@ export const useA4Conversion = () => {
 
             if (response.status === 429) {
               rateLimitHits++;
-              retries++;
-              const waitTime = 1500 * retries;
+              const waitTime = baseDelays[attempt] || 24000;
+              console.warn(`⚠️ [${index + 1}] Rate limit 429 - waiting ${waitTime/1000}s before retry`);
               await new Promise(resolve => setTimeout(resolve, waitTime));
               continue;
             }
 
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            if (!response.ok) {
+              console.error(`❌ [${index + 1}] HTTP ${response.status}`);
+              throw new Error(`HTTP ${response.status}`);
+            }
 
             const blob = await response.blob();
-            if (blob.size === 0) throw new Error('Empty PNG');
+            if (blob.size === 0) {
+              console.error(`❌ [${index + 1}] Empty PNG received`);
+              throw new Error('Empty PNG');
+            }
             
             results[index] = blob;
-            break;
+            console.log(`✅ [${index + 1}] PNG generated (${(blob.size / 1024).toFixed(1)}KB)`);
+            return true;
             
           } catch (error) {
-            retries++;
-            if (retries < maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, 500 * retries));
+            if (attempt < maxRetries - 1) {
+              const waitTime = 1000 * (attempt + 1);
+              console.warn(`⚠️ [${index + 1}] Error, retrying in ${waitTime/1000}s...`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
             }
           }
         }
         
-        completed++;
-        // Phase 1 progress: 0-55%
-        const progressValue = (completed / validLabels.length) * 55;
-        onProgress(progressValue);
+        console.error(`🚨 [${index + 1}] FAILED after ${maxRetries} attempts`);
+        return false;
         
       } finally {
+        if (!isRetryPass) {
+          completed++;
+          const progressValue = (completed / validLabels.length) * 55;
+          onProgress(progressValue);
+        }
         semaphore.release();
       }
     };
 
-    // Launch all PNG conversions in parallel (semaphore controls concurrency)
-    await Promise.all(validLabels.map((label, i) => convertLabel(label, i)));
+    // First pass: Process all labels in parallel
+    console.log(`\n--- First Pass ---`);
+    const firstPassResults = await Promise.all(
+      validLabels.map((label, i) => convertLabel(label, i, false))
+    );
     
+    // Identify failed labels
+    firstPassResults.forEach((success, index) => {
+      if (!success) failedIndices.push(index);
+    });
+    
+    // Second pass: Retry failed labels sequentially (more conservative)
+    if (failedIndices.length > 0) {
+      console.log(`\n--- Second Pass (${failedIndices.length} failed labels) ---`);
+      for (const index of failedIndices) {
+        // Wait before retry to let rate limit cool down
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        await convertLabel(validLabels[index], index, true);
+      }
+    }
+    
+    // Final validation
+    const finalNullIndices = results.map((img, i) => img === null ? i : -1).filter(i => i !== -1);
     const pngImages = results.filter((img): img is Blob => img !== null);
     const pngElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     
-    // CRITICAL: Log label count validation
-    const pngLossCount = validLabels.length - pngImages.length;
-    console.log(`📸 PNG conversion complete: ${pngImages.length}/${validLabels.length} in ${pngElapsed}s (${rateLimitHits} rate limits)`);
+    console.log(`\n========== PNG CONVERSION SUMMARY ==========`);
+    console.log(`📊 Input labels: ${validLabels.length}`);
+    console.log(`✅ PNG generated: ${pngImages.length}`);
+    console.log(`⚠️ Rate limit hits: ${rateLimitHits}`);
+    console.log(`⏱️ Time: ${pngElapsed}s`);
     
-    if (pngLossCount > 0) {
-      console.warn(`⚠️ WARNING: ${pngLossCount} labels lost during PNG conversion!`);
+    if (finalNullIndices.length > 0) {
+      console.error(`🚨 FAILED labels at indices: [${finalNullIndices.join(', ')}]`);
+      console.error(`🚨 LABEL LOSS: ${finalNullIndices.length} labels could not be converted!`);
+    } else {
+      console.log(`✅ All ${validLabels.length} labels converted successfully`);
     }
+    console.log(`=============================================\n`);
 
     // Phase 2: AI Upscaling (55-90% progress)
     console.log(`🔍 Starting AI upscaling of ${pngImages.length} images...`);
