@@ -42,6 +42,9 @@ export const useImageUpscaler = () => {
     return upscalerInstance;
   };
 
+  // WebGL texture size limit (most GPUs support 16384, use conservative 8192)
+  const MAX_TEXTURE_SIZE = 8192;
+
   const blobToImage = (blob: Blob): Promise<HTMLImageElement> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -52,6 +55,35 @@ export const useImageUpscaler = () => {
       img.onerror = reject;
       img.src = URL.createObjectURL(blob);
     });
+  };
+
+  const resizeImageForWebGL = (img: HTMLImageElement): HTMLCanvasElement | HTMLImageElement => {
+    const { width, height } = img;
+    
+    // Check if resize is needed
+    if (width <= MAX_TEXTURE_SIZE && height <= MAX_TEXTURE_SIZE) {
+      return img;
+    }
+
+    // Calculate new dimensions maintaining aspect ratio
+    const scale = Math.min(MAX_TEXTURE_SIZE / width, MAX_TEXTURE_SIZE / height);
+    const newWidth = Math.floor(width * scale);
+    const newHeight = Math.floor(height * scale);
+
+    console.log(`📐 Resizing image for WebGL: ${width}x${height} → ${newWidth}x${newHeight}`);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      console.warn('⚠️ Could not get canvas context, using original image');
+      return img;
+    }
+
+    ctx.drawImage(img, 0, 0, newWidth, newHeight);
+    return canvas;
   };
 
   const dataUrlToBlob = (dataUrl: string): Promise<Blob> => {
@@ -77,8 +109,11 @@ export const useImageUpscaler = () => {
       const upscaler = await getUpscaler();
       const img = await blobToImage(blob);
       
+      // Resize image if it exceeds WebGL texture limits
+      const resizedInput = resizeImageForWebGL(img);
+      
       // Upscale the image (returns base64 data URL by default)
-      const upscaledSrc = await upscaler.upscale(img);
+      const upscaledSrc = await upscaler.upscale(resizedInput);
       
       // Convert data URL back to Blob
       const upscaledBlob = await dataUrlToBlob(upscaledSrc);
