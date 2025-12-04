@@ -2,124 +2,11 @@
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { splitZPLIntoBlocks, delay } from '@/utils/pdfUtils';
-import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
-import { useZplValidator } from './useZplValidator';
-
-// Semaphore for controlling concurrent requests
-class Semaphore {
-  private permits: number;
-  private queue: (() => void)[] = [];
-
-  constructor(permits: number) {
-    this.permits = permits;
-  }
-
-  async acquire(): Promise<void> {
-    if (this.permits > 0) {
-      this.permits--;
-      return;
-    }
-    return new Promise<void>(resolve => this.queue.push(resolve));
-  }
-
-  release(): void {
-    if (this.queue.length > 0) {
-      const next = this.queue.shift();
-      if (next) next();
-    } else {
-      this.permits++;
-    }
-  }
-}
+import { DEFAULT_CONFIG, ProcessingMetricsTracker, ProcessingConfig } from '@/config/processingConfig';
 
 export const useZplApiConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { filterValidLabels } = useZplValidator();
-
-  const convertZplBlocksToPngs = async (
-    labels: string[],
-    onProgress: (progress: number) => void,
-    config: ProcessingConfig = DEFAULT_CONFIG
-  ): Promise<Blob[]> => {
-    // Filter out invalid labels first
-    const validLabels = filterValidLabels(labels);
-    
-    if (validLabels.length === 0) {
-      throw new Error('Nenhuma etiqueta válida encontrada para processamento');
-    }
-
-    const MAX_CONCURRENT = 12; // Higher concurrency for faster processing
-    const semaphore = new Semaphore(MAX_CONCURRENT);
-    const results: (Blob | null)[] = new Array(validLabels.length).fill(null);
-    let completed = 0;
-    let rateLimitHits = 0;
-    
-    console.log(`🖼️ Starting PNG conversion of ${validLabels.length} valid labels (${MAX_CONCURRENT} concurrent)`);
-    const startTime = Date.now();
-
-    const convertLabel = async (label: string, index: number): Promise<void> => {
-      await semaphore.acquire();
-      
-      try {
-        let retries = 0;
-        const maxRetries = 3;
-        
-        while (retries < maxRetries) {
-          try {
-            const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
-              method: 'POST',
-              headers: {
-                'Accept': 'image/png',
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-              body: label,
-            });
-
-            if (response.status === 429) {
-              rateLimitHits++;
-              retries++;
-              const waitTime = 1000 * retries; // Reduced from 1500
-              console.log(`⏳ Rate limited on label ${index + 1}, waiting ${waitTime}ms...`);
-              await new Promise(resolve => setTimeout(resolve, waitTime));
-              continue;
-            }
-
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-            const blob = await response.blob();
-            if (blob.size === 0) throw new Error('Empty PNG');
-            
-            results[index] = blob;
-            break;
-            
-          } catch (error) {
-            retries++;
-            if (retries < maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, 300 * retries)); // Reduced from 500
-            }
-          }
-        }
-        
-        completed++;
-        const progressValue = (completed / validLabels.length) * 100;
-        onProgress(progressValue);
-        
-      } finally {
-        semaphore.release();
-      }
-    };
-
-    // Launch all conversions in parallel (semaphore controls concurrency)
-    await Promise.all(validLabels.map((label, i) => convertLabel(label, i)));
-    
-    const pngs = results.filter((img): img is Blob => img !== null);
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    
-    console.log(`🏆 PNG conversion complete: ${pngs.length}/${validLabels.length} in ${elapsed}s (${rateLimitHits} rate limits)`);
-    
-    return pngs;
-  };
 
   const convertZplBlocksToPdfs = async (
     labels: string[],
@@ -267,12 +154,13 @@ export const useZplApiConversion = () => {
 
   const countLabelsInZpl = (zplContent: string): number => {
     const labels = splitZPLIntoBlocks(zplContent);
-    console.log(`🔢 countLabelsInZpl: Counted ${labels.length} labels in ZPL content`);
-    return labels.length;
+    // Divide by 2 to get the correct count as each label has 2 ^XA markers
+    const correctCount = Math.ceil(labels.length / 2);
+    console.log(`🔢 countLabelsInZpl: Counted ${correctCount} labels in ZPL content (${labels.length} blocks / 2)`);
+    return correctCount;
   };
 
   return {
-    convertZplBlocksToPngs,
     convertZplBlocksToPdfs,
     parseLabelsFromZpl,
     countLabelsInZpl

@@ -5,14 +5,12 @@ export const useConversionMetrics = () => {
     conversionPhaseTime: number,
     mergeTime: number,
     uploadTime: number,
-    finalLabelCount: number,
-    upscaleTime?: number
+    finalLabelCount: number
   ) => {
     console.log(`🏁 Total conversion process completed in ${totalTime}ms`);
     console.log(`📊 Performance breakdown:`, {
       totalTimeMs: totalTime,
       conversionTimeMs: conversionPhaseTime,
-      upscaleTimeMs: upscaleTime || 0,
       mergeTimeMs: mergeTime,
       uploadTimeMs: uploadTime,
       labelsProcessed: finalLabelCount,

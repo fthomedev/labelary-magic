@@ -6,8 +6,6 @@ import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
 import { usePdfOperations } from '@/hooks/conversion/usePdfOperations';
 import { useConversionState } from '@/hooks/conversion/useConversionState';
 import { useConversionMetrics } from '@/hooks/conversion/useConversionMetrics';
-import { useImageUpscaler } from '@/hooks/conversion/useImageUpscaler';
-import { convertImagesToPdf } from '@/utils/pdfUtils';
 import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 export interface ProcessingRecord {
@@ -23,9 +21,8 @@ export const useZplConversion = () => {
   const { t } = useTranslation();
 
   const { addToProcessingHistory } = useHistoryRecords();
-  const { convertZplBlocksToPngs, parseLabelsFromZpl } = useZplApiConversion();
+  const { convertZplBlocksToPdfs, parseLabelsFromZpl } = useZplApiConversion();
   const { logPerformanceMetrics } = useConversionMetrics();
-  const { upscaleImages, initUpscaler } = useImageUpscaler();
   
   const {
     isConverting,
@@ -60,16 +57,17 @@ export const useZplConversion = () => {
 
       // Parse labels ONCE at the beginning and use this count throughout
       const labels = parseLabelsFromZpl(zplContent);
-      const inputLabelCount = labels.length;
+      // Divide by 2 to get the correct final count as each label has 2 ^XA markers
+      const finalLabelCount = Math.ceil(labels.length / 2);
       
-      console.log(`🎯 INPUT: ${inputLabelCount} labels parsed from ZPL content`);
+      console.log(`🎯 Starting conversion of ${finalLabelCount} labels (FINAL COUNT CORRECTED - ${labels.length} blocks / 2)`);
       console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
       
       // Choose configuration based on label count and user preference
       let config: ProcessingConfig;
       if (!useOptimizedTiming) {
         config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 }; // Original conservative timing
-      } else if (inputLabelCount > 100) {
+      } else if (finalLabelCount > 100) {
         config = DEFAULT_CONFIG; // Moderate optimization for large batches
       } else {
         config = FAST_CONFIG; // Aggressive optimization for smaller batches
@@ -77,63 +75,25 @@ export const useZplConversion = () => {
       
       console.log(`📋 Using configuration:`, config);
       
-      // Phase 1: Convert ZPL to PNGs (0-50%) + Pre-initialize upscaler in parallel
       const conversionPhaseStart = Date.now();
-      console.log(`🖼️ Phase 1: Converting ZPL to PNGs + pre-warming AI upscaler...`);
 
-      // Start upscaler initialization in parallel with PNG conversion
-      const upscalerPromise = initUpscaler();
-
-      const pngs = await convertZplBlocksToPngs(labels, (progressValue) => {
-        setProgress(progressValue * 0.5); // 0-50% for PNG conversion
+      const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
+        setProgress(progressValue * 0.8); // Reserve 20% for merging and upload
       }, config);
 
-      // Ensure upscaler is ready
-      await upscalerPromise;
-
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
-      const outputPngCount = pngs.length;
-      console.log(`⚡ PNG conversion completed in ${conversionPhaseTime}ms`);
-      console.log(`📊 VALIDATION: Input=${inputLabelCount} labels → Output=${outputPngCount} PNGs`);
-      
-      if (outputPngCount !== inputLabelCount) {
-        console.warn(`⚠️ LABEL LOSS DETECTED: ${inputLabelCount - outputPngCount} labels lost during conversion`);
-      }
-
-      // Phase 2: Upscale PNGs with AI (50-80%)
-      const upscaleStart = Date.now();
-      console.log(`🔧 Phase 2: Upscaling ${pngs.length} images with AI...`);
-      
-      const upscaledPngs = await upscaleImages(pngs, (progressValue) => {
-        setProgress(50 + (progressValue * 0.3)); // 50-80% for upscaling
-      });
-      
-      const upscaleTime = Date.now() - upscaleStart;
-      console.log(`✅ AI upscaling completed in ${upscaleTime}ms`);
-
-      // Phase 3: Convert upscaled PNGs to PDF (80-90%)
-      const pdfCreateStart = Date.now();
-      console.log(`📄 Phase 3: Creating PDF from upscaled images...`);
-      setProgress(85);
-      
-      const finalPdf = await convertImagesToPdf(upscaledPngs);
-      
-      const pdfCreateTime = Date.now() - pdfCreateStart;
-      console.log(`✅ PDF created in ${pdfCreateTime}ms`);
+      console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
 
       try {
-        // Phase 4: Upload and finish (90-100%)
-        setProgress(90);
-        const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs([finalPdf], setProgress);
+        const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, setProgress);
         
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
         
-        // Save to history using the ACTUAL output count (PNGs converted to PDF)
-        const actualOutputCount = upscaledPngs.length;
+        // Save to history using the EXACT same finalLabelCount from the beginning and include processing time
         if (pdfPath) {
-          console.log(`💾 Saving to history: ${actualOutputCount} labels (input: ${inputLabelCount}, output: ${actualOutputCount})`);
-          await addToProcessingHistory(actualOutputCount, pdfPath, totalTime);
+          console.log(`💾 Saving to history: ${finalLabelCount} labels processed in ${totalTime}ms (CONSISTENT CORRECTED COUNT)`);
+          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime);
           triggerHistoryRefresh();
         }
         
@@ -142,11 +102,11 @@ export const useZplConversion = () => {
         // Download the file
         downloadPdf(blobUrl);
 
-        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, actualOutputCount, upscaleTime);
+        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount);
 
         toast({
           title: t('success'),
-          description: `${t('successMessage')} (${actualOutputCount} etiquetas em ${(totalTime/1000).toFixed(1)}s)`,
+          description: `${t('successMessage')} (${totalTime}ms, ${finalLabelCount} etiquetas)`,
           duration: 5000,
         });
         

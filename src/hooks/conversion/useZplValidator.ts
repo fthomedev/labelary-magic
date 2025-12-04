@@ -12,15 +12,23 @@ export const useZplValidator = () => {
       return false;
     }
 
-    // Only filter truly empty labels (just markers with no content)
-    const contentBetweenMarkers = trimmed
-      .replace(/\^XA/g, '')
-      .replace(/\^XZ/g, '')
-      .replace(/\^FS/g, '')
-      .trim();
-    
-    if (contentBetweenMarkers.length === 0) {
-      console.log(`🚫 Empty ZPL label detected (no content between markers)`);
+    // Check for invalid patterns that cause "no labels generated"
+    const invalidPatterns = [
+      /^\^XA\^IDR:/,  // Labels that only reference graphics without content
+      /^\^XA\^FS\^XZ$/,  // Empty labels with only field separator
+      /^\^XA\s*\^XZ$/,   // Labels with only start and end markers
+    ];
+
+    for (const pattern of invalidPatterns) {
+      if (pattern.test(trimmed)) {
+        console.log(`🚫 Invalid ZPL pattern detected: ${trimmed.substring(0, 50)}...`);
+        return false;
+      }
+    }
+
+    // Check for very short labels that are likely incomplete
+    if (trimmed.length < 15) {
+      console.log(`🚫 ZPL too short: ${trimmed}`);
       return false;
     }
 
@@ -36,14 +44,11 @@ export const useZplValidator = () => {
         validLabels.push(label);
       } else {
         invalidCount++;
-        console.log(`🚫 Filtered out label ${index + 1}: "${label.substring(0, 80)}..."`);
+        console.log(`🚫 Skipping invalid label ${index + 1}: ${label.substring(0, 50)}...`);
       }
     });
 
-    if (invalidCount > 0) {
-      console.warn(`⚠️ VALIDATION: ${invalidCount} labels filtered out of ${labels.length} total`);
-    }
-    console.log(`✅ ZPL validation: ${validLabels.length}/${labels.length} labels valid`);
+    console.log(`✅ ZPL validation complete: ${validLabels.length} valid, ${invalidCount} invalid labels`);
     return validLabels;
   };
 
