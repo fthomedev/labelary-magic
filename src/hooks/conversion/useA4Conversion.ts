@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useZplLabelProcessor } from './useZplLabelProcessor';
 import { useZplValidator } from './useZplValidator';
+import { useImageUpscaler } from './useImageUpscaler';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 
 // Semaphore for controlling concurrent requests
@@ -37,6 +38,7 @@ export const useA4Conversion = () => {
   const { t } = useTranslation();
   const { splitZplIntoLabels } = useZplLabelProcessor();
   const { filterValidLabels } = useZplValidator();
+  const { upscaleImages } = useImageUpscaler();
 
   const convertZplToA4Images = async (
     labels: string[],
@@ -58,6 +60,7 @@ export const useA4Conversion = () => {
     console.log(`🖼️ Starting A4 conversion of ${validLabels.length} labels (${MAX_CONCURRENT} concurrent)`);
     const startTime = Date.now();
 
+    // Phase 1: ZPL to PNG conversion (0-55% progress)
     const convertLabel = async (label: string, index: number): Promise<void> => {
       await semaphore.acquire();
       
@@ -101,7 +104,8 @@ export const useA4Conversion = () => {
         }
         
         completed++;
-        const progressValue = (completed / validLabels.length) * 80;
+        // Phase 1 progress: 0-55%
+        const progressValue = (completed / validLabels.length) * 55;
         onProgress(progressValue);
         
       } finally {
@@ -109,15 +113,34 @@ export const useA4Conversion = () => {
       }
     };
 
-    // Launch all conversions in parallel (semaphore controls concurrency)
+    // Launch all PNG conversions in parallel (semaphore controls concurrency)
     await Promise.all(validLabels.map((label, i) => convertLabel(label, i)));
     
-    const finalImages = results.filter((img): img is Blob => img !== null);
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    const pngImages = results.filter((img): img is Blob => img !== null);
+    const pngElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     
-    console.log(`🎯 A4 conversion complete: ${finalImages.length}/${validLabels.length} in ${elapsed}s (${rateLimitHits} rate limits)`);
+    console.log(`📸 PNG conversion complete: ${pngImages.length}/${validLabels.length} in ${pngElapsed}s (${rateLimitHits} rate limits)`);
+
+    // Phase 2: AI Upscaling (55-90% progress)
+    console.log(`🔍 Starting AI upscaling of ${pngImages.length} images...`);
+    const upscaleStartTime = Date.now();
     
-    return finalImages;
+    const upscaledImages = await upscaleImages(pngImages, (upscaleProgress) => {
+      // Map upscale progress (0-100) to overall progress (55-90)
+      const overallProgress = 55 + (upscaleProgress * 0.35);
+      onProgress(overallProgress);
+    });
+    
+    const upscaleElapsed = ((Date.now() - upscaleStartTime) / 1000).toFixed(1);
+    console.log(`✨ AI upscaling complete: ${upscaledImages.length} images in ${upscaleElapsed}s`);
+    
+    // Set progress to 90% after upscaling (remaining 10% for PDF generation)
+    onProgress(90);
+    
+    const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`🎯 A4 conversion complete: ${upscaledImages.length}/${validLabels.length} in ${totalElapsed}s`);
+    
+    return upscaledImages;
   };
 
   const parseLabelsFromZpl = (zplContent: string) => {
