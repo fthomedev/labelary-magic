@@ -45,11 +45,25 @@ export function useHistoryDownload() {
         return;
       } 
       
-      // If the pdfUrl is a complete URL (not a blob), use that directly
+      // Try to extract path from old public URLs and create signed URL
       if (record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
-        console.log('Using direct URL from Supabase:', record.pdfUrl);
-        openPdfModal(record.pdfUrl, record);
-        return;
+        console.log('Trying to extract path from URL:', record.pdfUrl);
+        // Extract the file path from the public URL (format: .../storage/v1/object/public/pdfs/...)
+        const match = record.pdfUrl.match(/\/pdfs\/(.+)$/);
+        if (match && match[1]) {
+          const extractedPath = match[1];
+          console.log('Extracted path:', extractedPath);
+          
+          const { data, error } = await supabase.storage
+            .from('pdfs')
+            .createSignedUrl(extractedPath, 3600);
+            
+          if (!error && data?.signedUrl) {
+            openPdfModal(data.signedUrl, record);
+            return;
+          }
+          console.error('Failed to create signed URL from extracted path:', error);
+        }
       }
       
       // Fallback to blob URL if available (for newly created PDFs)
