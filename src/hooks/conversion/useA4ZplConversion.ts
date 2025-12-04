@@ -51,9 +51,9 @@ export const useA4ZplConversion = () => {
       
       // Parse labels
       const labels = parseLabelsFromZpl(zplContent);
-      const finalLabelCount = Math.ceil(labels.length / 2);
       
-      console.log(`🎯 Starting A4 conversion of ${finalLabelCount} labels with Cenário 2 (Moderate) configuration`);
+      console.log(`\n========== A4 CONVERSION TRACKING ==========`);
+      console.log(`📊 CHECKPOINT 1 - Parsed labels: ${labels.length}`);
       
       // Sempre usar A4_CONFIG (Cenário 2) para processamento A4
       const config: ProcessingConfig = A4_CONFIG;
@@ -69,6 +69,7 @@ export const useA4ZplConversion = () => {
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ A4 image conversion phase completed in ${conversionPhaseTime}ms`);
+      console.log(`📊 CHECKPOINT 2 - PNG images generated: ${images.length}`);
 
       try {
         setProgress(85);
@@ -80,10 +81,17 @@ export const useA4ZplConversion = () => {
         
         // Organize images into A4 PDF
         const mergeStartTime = Date.now();
-        const a4Pdf = await organizeImagesInA4PDF(images);
+        const { pdfBlob: a4Pdf, labelsAdded, failedLabels } = await organizeImagesInA4PDF(images);
         const mergeTime = Date.now() - mergeStartTime;
         
         console.log(`📄 A4 PDF organization completed in ${mergeTime}ms`);
+        console.log(`📊 CHECKPOINT 3 - Labels in PDF: ${labelsAdded}`);
+        
+        // CRITICAL: Validate label count consistency
+        if (labelsAdded !== images.length) {
+          console.error(`🚨 LABEL MISMATCH: Expected ${images.length}, got ${labelsAdded} in PDF`);
+          console.error(`🚨 Failed label indices: [${failedLabels.join(', ')}]`);
+        }
         
         setProgress(95);
         
@@ -102,10 +110,13 @@ export const useA4ZplConversion = () => {
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
         
-        // Save to history
+        // Use actual labels added to PDF, not estimated count
+        const actualLabelCount = labelsAdded;
+        
+        // Save to history with ACTUAL label count
         if (pdfPath) {
-          console.log(`💾 Saving A4 conversion to history: ${finalLabelCount} labels processed in ${totalTime}ms`);
-          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime);
+          console.log(`💾 Saving A4 conversion to history: ${actualLabelCount} labels processed in ${totalTime}ms`);
+          await addToProcessingHistory(actualLabelCount, pdfPath, totalTime);
           triggerHistoryRefresh();
         }
         
@@ -114,11 +125,27 @@ export const useA4ZplConversion = () => {
         // Download the file
         downloadPdf(blobUrl, 'etiquetas-a4.pdf');
 
-        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount);
+        console.log(`\n========== FINAL CONVERSION SUMMARY ==========`);
+        console.log(`📊 Input (parsed labels): ${labels.length}`);
+        console.log(`📊 After validation/filtering: ${images.length} PNG images`);
+        console.log(`📊 Final PDF labels: ${labelsAdded}`);
+        if (labels.length !== labelsAdded) {
+          const validFiltered = labels.length - images.length;
+          const pdfLoss = images.length - labelsAdded;
+          console.error(`🚨 TOTAL LOSS: ${labels.length - labelsAdded} labels`);
+          console.error(`   - Filtered as invalid: ${validFiltered}`);
+          console.error(`   - Lost in PNG conversion: ${labels.length - validFiltered - images.length}`);
+          console.error(`   - Lost in PDF generation: ${pdfLoss}`);
+        } else {
+          console.log(`✅ All labels preserved!`);
+        }
+        console.log(`================================================\n`);
+
+        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, actualLabelCount);
 
         toast({
           title: t('success'),
-          description: `${t('successMessage')} - A4 Format (${totalTime}ms, ${finalLabelCount} etiquetas)`,
+          description: `${t('successMessage')} - A4 Format (${totalTime}ms, ${actualLabelCount} etiquetas)`,
           duration: 5000,
         });
         
