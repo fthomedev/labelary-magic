@@ -3,18 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const useStorageOperations = () => {
   const ensurePdfBucketExists = async () => {
-    try {
-      const { error: bucketError } = await supabase.storage.getBucket('pdfs');
-      if (bucketError && bucketError.message.includes('The resource was not found')) {
-        // Create bucket as private for security - RLS policies handle access
-        await supabase.storage.createBucket('pdfs', {
-          public: false,
-          fileSizeLimit: 10485760 // 10MB
-        });
-      }
-    } catch (bucketError) {
-      console.error('Error with bucket operations:', bucketError);
-    }
+    // The 'pdfs' bucket is private and already exists in Supabase.
+    // We cannot use getBucket() with anon key on private buckets (returns 404).
+    // RLS policies control file access, so we just proceed with the upload.
+    // If bucket doesn't exist, the upload will fail and we handle it there.
+    console.log('📦 Using existing pdfs bucket (private, RLS-controlled)');
   };
 
   return {
