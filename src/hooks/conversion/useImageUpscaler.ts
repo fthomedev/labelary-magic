@@ -95,34 +95,50 @@ export const useImageUpscaler = () => {
     blobs: Blob[],
     onProgress: (progress: number) => void
   ): Promise<Blob[]> => {
-    if (blobs.length === 0) return [];
+    if (blobs.length === 0) {
+      console.log('🔍 Upscaling: No images to process');
+      return [];
+    }
 
-    const MAX_CONCURRENT = 3; // Limit concurrent upscaling to avoid memory issues
+    const MAX_CONCURRENT = 3;
     const semaphore = new UpscaleSemaphore(MAX_CONCURRENT);
     const results: (Blob | null)[] = new Array(blobs.length).fill(null);
     let completed = 0;
+    let successCount = 0;
+    let fallbackCount = 0;
+    let errorCount = 0;
 
-    console.log(`🔍 Starting AI upscaling of ${blobs.length} images (${MAX_CONCURRENT} concurrent)`);
+    console.log(`\n========== UPSCALING START ==========`);
+    console.log(`📊 Input: ${blobs.length} images`);
+    console.log(`⚙️ Concurrent limit: ${MAX_CONCURRENT}`);
     const startTime = Date.now();
 
     const processImage = async (blob: Blob, index: number): Promise<void> => {
       await semaphore.acquire();
       
       try {
+        console.log(`🔄 [${index + 1}/${blobs.length}] Processing image (${(blob.size / 1024).toFixed(1)}KB)`);
         const upscaledBlob = await upscaleImage(blob);
+        
+        if (upscaledBlob !== blob) {
+          successCount++;
+          console.log(`✅ [${index + 1}] Upscaled: ${(blob.size / 1024).toFixed(1)}KB → ${(upscaledBlob.size / 1024).toFixed(1)}KB`);
+        } else {
+          fallbackCount++;
+          console.log(`⚠️ [${index + 1}] Fallback to original (upscaling returned same blob)`);
+        }
+        
         results[index] = upscaledBlob;
       } catch (error) {
+        errorCount++;
+        console.error(`❌ [${index + 1}] Upscaling FAILED:`, error);
         // CRITICAL: Always preserve the original image on any error
-        console.error(`⚠️ Upscaling failed for image ${index + 1}, using original:`, error);
         results[index] = blob;
+        console.log(`🔄 [${index + 1}] Using original image as fallback`);
       } finally {
         completed++;
         const progressValue = (completed / blobs.length) * 100;
         onProgress(progressValue);
-        
-        if (completed % 10 === 0 || completed === blobs.length) {
-          console.log(`🔍 Processed ${completed}/${blobs.length} images`);
-        }
         semaphore.release();
       }
     };
@@ -130,20 +146,34 @@ export const useImageUpscaler = () => {
     // Process all images in parallel with semaphore control
     await Promise.all(blobs.map((blob, i) => processImage(blob, i)));
 
-    // CRITICAL: All results should be set (original or upscaled) - no filtering needed
-    // But validate just in case
-    const nullCount = results.filter(img => img === null).length;
-    if (nullCount > 0) {
-      console.error(`🚨 CRITICAL: ${nullCount} images are null after upscaling - this should not happen!`);
+    // Detailed validation
+    const nullIndices = results.map((img, i) => img === null ? i : -1).filter(i => i !== -1);
+    const nonNullCount = results.filter(img => img !== null).length;
+    
+    console.log(`\n========== UPSCALING SUMMARY ==========`);
+    console.log(`📊 Input images: ${blobs.length}`);
+    console.log(`✅ Successfully upscaled: ${successCount}`);
+    console.log(`⚠️ Fallback to original: ${fallbackCount}`);
+    console.log(`❌ Errors (using original): ${errorCount}`);
+    console.log(`📤 Output images: ${nonNullCount}`);
+    
+    if (nullIndices.length > 0) {
+      console.error(`🚨 CRITICAL: ${nullIndices.length} NULL images at indices: [${nullIndices.join(', ')}]`);
+      console.error(`🚨 This should NEVER happen - investigating...`);
     }
     
-    // Return all non-null images (should be all of them)
-    const finalImages = results.filter((img): img is Blob => img !== null);
+    if (nonNullCount !== blobs.length) {
+      console.error(`🚨 LABEL LOSS DETECTED: ${blobs.length - nonNullCount} images missing!`);
+    } else {
+      console.log(`✅ All ${blobs.length} images preserved`);
+    }
+    
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`⏱️ Total time: ${elapsed}s`);
+    console.log(`========================================\n`);
 
-    console.log(`✨ AI upscaling complete: ${finalImages.length}/${blobs.length} in ${elapsed}s`);
-
-    return finalImages;
+    // Return all non-null images
+    return results.filter((img): img is Blob => img !== null);
   };
 
   return {
