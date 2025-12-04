@@ -254,16 +254,16 @@ export type Database = {
       generate_secure_token: { Args: never; Returns: string }
       insert_processing_history:
         | {
-            Args: { p_file_name: string; p_status: string }
-            Returns: undefined
-          }
-        | {
             Args: {
               p_label_count: number
               p_pdf_path?: string
               p_pdf_url: string
               p_user_id: string
             }
+            Returns: undefined
+          }
+        | {
+            Args: { p_file_name: string; p_status: string }
             Returns: undefined
           }
         | { Args: never; Returns: undefined }

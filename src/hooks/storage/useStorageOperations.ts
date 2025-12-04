@@ -6,13 +6,10 @@ export const useStorageOperations = () => {
     try {
       const { error: bucketError } = await supabase.storage.getBucket('pdfs');
       if (bucketError && bucketError.message.includes('The resource was not found')) {
+        // Create bucket as private for security - RLS policies handle access
         await supabase.storage.createBucket('pdfs', {
-          public: true,
+          public: false,
           fileSizeLimit: 10485760 // 10MB
-        });
-        
-        await supabase.storage.updateBucket('pdfs', {
-          public: true
         });
       }
     } catch (bucketError) {
