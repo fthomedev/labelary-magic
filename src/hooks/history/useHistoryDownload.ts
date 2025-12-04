@@ -24,26 +24,38 @@ export function useHistoryDownload() {
   
   const handleDownload = async (record: ProcessingRecord) => {
     try {
-      // For records that have a storage path, always use that (more reliable after page refresh)
+      // Get current user for folder path
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // For records that have a storage path, try to create signed URL
       if (record.pdfPath) {
         console.log('Downloading from storage path:', record.pdfPath);
         
-        // Get direct download URL with proper authorization
-        const { data, error } = await supabase.storage
+        // Try the path as-is first (for new records with user folder)
+        let { data, error } = await supabase.storage
           .from('pdfs')
-          .createSignedUrl(record.pdfPath, 3600); // 60 minutes expiration for better viewing experience
+          .createSignedUrl(record.pdfPath, 3600);
+          
+        // If failed and user exists, try with user folder prefix (for old records without folder)
+        if (error && user && !record.pdfPath.includes('/')) {
+          console.log('Trying with user folder prefix...');
+          const userFolderPath = `${user.id}/${record.pdfPath}`;
+          const result = await supabase.storage
+            .from('pdfs')
+            .createSignedUrl(userFolderPath, 3600);
+          data = result.data;
+          error = result.error;
+        }
           
         if (error || !data?.signedUrl) {
           console.error('Error creating signed URL:', error);
-          throw new Error('Failed to create download URL');
+          throw new Error('Failed to create download URL - file may no longer exist');
         }
         
-        console.log('Signed URL created successfully:', data.signedUrl);
-        
-        // Open the PDF in modal
+        console.log('Signed URL created successfully');
         openPdfModal(data.signedUrl, record);
         return;
-      } 
+      }
       
       // Try to extract path from old public URLs and create signed URL
       if (record.pdfUrl && !record.pdfUrl.startsWith('blob:')) {
