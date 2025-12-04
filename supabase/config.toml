@@ -15,3 +15,6 @@ port = 54323
 
 [functions.stripe]
 verify_jwt = true
+
+[functions.migrate-storage-files]
+verify_jwt = true
