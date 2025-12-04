@@ -5,8 +5,15 @@ import { supabase } from '@/integrations/supabase/client';
 export const useUploadPdf = () => {
   const uploadPDFToStorage = async (pdfBlob: Blob): Promise<string> => {
     try {
+      // Get current user for folder-based storage (required for RLS policies)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
       const fileName = `label-${uuidv4()}.pdf`;
-      const filePath = `${fileName}`;
+      // Store files in user-specific folder for RLS policy compliance
+      const filePath = `${user.id}/${fileName}`;
       
       const { data, error } = await supabase.storage
         .from('pdfs')
