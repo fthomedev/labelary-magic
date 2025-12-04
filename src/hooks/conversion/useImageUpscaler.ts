@@ -111,15 +111,18 @@ export const useImageUpscaler = () => {
       try {
         const upscaledBlob = await upscaleImage(blob);
         results[index] = upscaledBlob;
-        
+      } catch (error) {
+        // CRITICAL: Always preserve the original image on any error
+        console.error(`⚠️ Upscaling failed for image ${index + 1}, using original:`, error);
+        results[index] = blob;
+      } finally {
         completed++;
         const progressValue = (completed / blobs.length) * 100;
         onProgress(progressValue);
         
         if (completed % 10 === 0 || completed === blobs.length) {
-          console.log(`🔍 Upscaled ${completed}/${blobs.length} images`);
+          console.log(`🔍 Processed ${completed}/${blobs.length} images`);
         }
-      } finally {
         semaphore.release();
       }
     };
@@ -127,6 +130,14 @@ export const useImageUpscaler = () => {
     // Process all images in parallel with semaphore control
     await Promise.all(blobs.map((blob, i) => processImage(blob, i)));
 
+    // CRITICAL: All results should be set (original or upscaled) - no filtering needed
+    // But validate just in case
+    const nullCount = results.filter(img => img === null).length;
+    if (nullCount > 0) {
+      console.error(`🚨 CRITICAL: ${nullCount} images are null after upscaling - this should not happen!`);
+    }
+    
+    // Return all non-null images (should be all of them)
     const finalImages = results.filter((img): img is Blob => img !== null);
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
