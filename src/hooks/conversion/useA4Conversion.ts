@@ -119,7 +119,13 @@ export const useA4Conversion = () => {
     const pngImages = results.filter((img): img is Blob => img !== null);
     const pngElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     
+    // CRITICAL: Log label count validation
+    const pngLossCount = validLabels.length - pngImages.length;
     console.log(`📸 PNG conversion complete: ${pngImages.length}/${validLabels.length} in ${pngElapsed}s (${rateLimitHits} rate limits)`);
+    
+    if (pngLossCount > 0) {
+      console.warn(`⚠️ WARNING: ${pngLossCount} labels lost during PNG conversion!`);
+    }
 
     // Phase 2: AI Upscaling (55-90% progress)
     console.log(`🔍 Starting AI upscaling of ${pngImages.length} images...`);
@@ -132,13 +138,26 @@ export const useA4Conversion = () => {
     });
     
     const upscaleElapsed = ((Date.now() - upscaleStartTime) / 1000).toFixed(1);
-    console.log(`✨ AI upscaling complete: ${upscaledImages.length} images in ${upscaleElapsed}s`);
+    
+    // CRITICAL: Validate upscaling preserved all images
+    const upscaleLossCount = pngImages.length - upscaledImages.length;
+    console.log(`✨ AI upscaling complete: ${upscaledImages.length}/${pngImages.length} images in ${upscaleElapsed}s`);
+    
+    if (upscaleLossCount > 0) {
+      console.error(`🚨 CRITICAL: ${upscaleLossCount} labels lost during upscaling!`);
+    }
     
     // Set progress to 90% after upscaling (remaining 10% for PDF generation)
     onProgress(90);
     
     const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    const totalLoss = validLabels.length - upscaledImages.length;
+    
     console.log(`🎯 A4 conversion complete: ${upscaledImages.length}/${validLabels.length} in ${totalElapsed}s`);
+    
+    if (totalLoss > 0) {
+      console.error(`🚨 TOTAL LABEL LOSS: ${totalLoss} labels (input: ${validLabels.length}, output: ${upscaledImages.length})`);
+    }
     
     return upscaledImages;
   };
