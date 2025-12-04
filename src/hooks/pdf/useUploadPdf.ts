@@ -36,21 +36,21 @@ export const useUploadPdf = () => {
     }
   };
 
-  const getPdfPublicUrl = async (pdfPath: string): Promise<string> => {
-    const { data: publicUrlData } = await supabase.storage
+  const getPdfSignedUrl = async (pdfPath: string, expiresIn: number = 3600): Promise<string> => {
+    const { data, error } = await supabase.storage
       .from('pdfs')
-      .getPublicUrl(pdfPath);
+      .createSignedUrl(pdfPath, expiresIn);
         
-    if (!publicUrlData || !publicUrlData.publicUrl) {
-      console.error('Failed to get public URL for PDF');
-      throw new Error('Failed to get public URL for PDF');
+    if (error || !data?.signedUrl) {
+      console.error('Failed to get signed URL for PDF:', error);
+      throw new Error('Failed to get signed URL for PDF');
     }
       
-    return publicUrlData.publicUrl;
+    return data.signedUrl;
   };
 
   return {
     uploadPDFToStorage,
-    getPdfPublicUrl
+    getPdfSignedUrl
   };
 };
