@@ -33,6 +33,8 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
+      // Dedupe React to prevent multiple instances (fixes TensorFlow.js/UpscalerJS conflict)
+      dedupe: ['react', 'react-dom'],
     },
     build: {
       rollupOptions: {
