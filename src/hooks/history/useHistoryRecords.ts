@@ -10,23 +10,12 @@ export const useHistoryRecords = () => {
         console.log(`🏷️ Label count being saved: ${labelCount}`);
         console.log(`⏱️ Processing time being saved: ${processingTime}ms`);
         
-        // Get the public URL for the PDF from Supabase storage
-        const { data: publicUrlData } = await supabase.storage
-          .from('pdfs')
-          .getPublicUrl(pdfPath);
-          
-        if (!publicUrlData || !publicUrlData.publicUrl) {
-          console.error('Failed to get public URL for PDF');
-          return;
-        }
-        
-        const pdfUrl = publicUrlData.publicUrl;
-        console.log('Public URL for PDF:', pdfUrl);
-        
+        // Store the path - use signed URLs when accessing the file later
+        // The bucket is private so getPublicUrl() won't work
         const { error } = await supabase.from('processing_history').insert({
           user_id: user.id,
           label_count: labelCount,
-          pdf_url: pdfUrl,
+          pdf_url: pdfPath, // Store path instead of public URL (bucket is private)
           pdf_path: pdfPath,
           processing_time: processingTime
         });
