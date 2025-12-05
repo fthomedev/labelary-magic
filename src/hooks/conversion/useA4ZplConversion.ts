@@ -41,7 +41,7 @@ export const useA4ZplConversion = () => {
     downloadPdf
   } = usePdfOperations();
 
-  const convertToA4PDF = async (zplContent: string, useOptimizedTiming: boolean = true) => {
+  const convertToA4PDF = async (zplContent: string, enhanceLabels: boolean = false) => {
     if (!zplContent) return;
     
     const conversionStartTime = Date.now();
@@ -54,6 +54,7 @@ export const useA4ZplConversion = () => {
       
       console.log(`\n========== A4 CONVERSION TRACKING ==========`);
       console.log(`📊 CHECKPOINT 1 - Parsed labels: ${labels.length}`);
+      console.log(`✨ Enhance labels (upscaling): ${enhanceLabels ? 'ENABLED' : 'DISABLED'}`);
       
       // Sempre usar A4_CONFIG (Cenário 2) para processamento A4
       const config: ProcessingConfig = A4_CONFIG;
@@ -65,7 +66,7 @@ export const useA4ZplConversion = () => {
       // Convert to PNG images with batch processing
       const images = await convertZplToA4Images(labels, (progressValue) => {
         setProgress(progressValue); // 0-80%
-      }, config);
+      }, config, enhanceLabels);
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ A4 image conversion phase completed in ${conversionPhaseTime}ms`);

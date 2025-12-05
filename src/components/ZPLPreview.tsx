@@ -15,6 +15,8 @@ interface ZPLPreviewProps {
   onDownload?: () => void;
   selectedFormat: PrintFormat;
   onFormatChange: (format: PrintFormat) => void;
+  enhanceLabels?: boolean;
+  onEnhanceLabelsChange?: (enhance: boolean) => void;
 }
 
 export function ZPLPreview({ 
@@ -25,7 +27,9 @@ export function ZPLPreview({
   lastPdfUrl,
   onDownload,
   selectedFormat,
-  onFormatChange
+  onFormatChange,
+  enhanceLabels = false,
+  onEnhanceLabelsChange
 }: ZPLPreviewProps) {
   const isMobile = useIsMobile();
   const totalLabels = countLabels(content);
@@ -45,6 +49,8 @@ export function ZPLPreview({
             <FormatSelector 
               selectedFormat={selectedFormat}
               onFormatChange={onFormatChange}
+              enhanceLabels={enhanceLabels}
+              onEnhanceLabelsChange={onEnhanceLabelsChange}
             />
           </div>
         </CardContent>

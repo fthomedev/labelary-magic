@@ -43,7 +43,8 @@ export const useA4Conversion = () => {
   const convertZplToA4Images = async (
     labels: string[],
     onProgress: (progress: number) => void,
-    config: ProcessingConfig = A4_CONFIG
+    config: ProcessingConfig = A4_CONFIG,
+    enhanceLabels: boolean = false
   ): Promise<Blob[]> => {
     const validLabels = filterValidLabels(labels);
     
@@ -51,8 +52,8 @@ export const useA4Conversion = () => {
       throw new Error('Nenhuma etiqueta válida encontrada para processamento');
     }
 
-    // OPTIMIZATION: Pre-load upscaler model while PNG conversion starts
-    const preloadPromise = preloadUpscaler();
+    // OPTIMIZATION: Pre-load upscaler model while PNG conversion starts (only if enhancing)
+    const preloadPromise = enhanceLabels ? preloadUpscaler() : Promise.resolve();
 
     const MAX_CONCURRENT = 4; // Reduced to avoid 429 rate limits
     const semaphore = new Semaphore(MAX_CONCURRENT);
@@ -172,41 +173,50 @@ export const useA4Conversion = () => {
     }
     console.log(`=============================================\n`);
 
-    // Phase 2: AI Upscaling (55-90% progress)
-    // Ensure upscaler is ready before starting
-    await preloadPromise;
-    console.log(`🔍 Starting AI upscaling of ${pngImages.length} images...`);
-    const upscaleStartTime = Date.now();
+    let finalImages: Blob[];
     
-    const upscaledImages = await upscaleImages(pngImages, (upscaleProgress) => {
-      // Map upscale progress (0-100) to overall progress (55-90)
-      const overallProgress = 55 + (upscaleProgress * 0.35);
-      onProgress(overallProgress);
-    });
-    
-    const upscaleElapsed = ((Date.now() - upscaleStartTime) / 1000).toFixed(1);
-    
-    // CRITICAL: Validate upscaling preserved all images
-    const upscaleLossCount = pngImages.length - upscaledImages.length;
-    console.log(`✨ AI upscaling complete: ${upscaledImages.length}/${pngImages.length} images in ${upscaleElapsed}s`);
-    
-    if (upscaleLossCount > 0) {
-      console.error(`🚨 CRITICAL: ${upscaleLossCount} labels lost during upscaling!`);
+    // Phase 2: AI Upscaling (55-90% progress) - ONLY if enhanceLabels is enabled
+    if (enhanceLabels) {
+      // Ensure upscaler is ready before starting
+      await preloadPromise;
+      console.log(`🔍 Starting AI upscaling of ${pngImages.length} images...`);
+      const upscaleStartTime = Date.now();
+      
+      const upscaledImages = await upscaleImages(pngImages, (upscaleProgress) => {
+        // Map upscale progress (0-100) to overall progress (55-90)
+        const overallProgress = 55 + (upscaleProgress * 0.35);
+        onProgress(overallProgress);
+      });
+      
+      const upscaleElapsed = ((Date.now() - upscaleStartTime) / 1000).toFixed(1);
+      
+      // CRITICAL: Validate upscaling preserved all images
+      const upscaleLossCount = pngImages.length - upscaledImages.length;
+      console.log(`✨ AI upscaling complete: ${upscaledImages.length}/${pngImages.length} images in ${upscaleElapsed}s`);
+      
+      if (upscaleLossCount > 0) {
+        console.error(`🚨 CRITICAL: ${upscaleLossCount} labels lost during upscaling!`);
+      }
+      
+      finalImages = upscaledImages;
+    } else {
+      console.log(`⏭️ Skipping AI upscaling (enhance labels disabled)`);
+      finalImages = pngImages;
     }
     
     // Set progress to 90% after upscaling (remaining 10% for PDF generation)
     onProgress(90);
     
     const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    const totalLoss = validLabels.length - upscaledImages.length;
+    const totalLoss = validLabels.length - finalImages.length;
     
-    console.log(`🎯 A4 conversion complete: ${upscaledImages.length}/${validLabels.length} in ${totalElapsed}s`);
+    console.log(`🎯 A4 conversion complete: ${finalImages.length}/${validLabels.length} in ${totalElapsed}s`);
     
     if (totalLoss > 0) {
-      console.error(`🚨 TOTAL LABEL LOSS: ${totalLoss} labels (input: ${validLabels.length}, output: ${upscaledImages.length})`);
+      console.error(`🚨 TOTAL LABEL LOSS: ${totalLoss} labels (input: ${validLabels.length}, output: ${finalImages.length})`);
     }
     
-    return upscaledImages;
+    return finalImages;
   };
 
   const parseLabelsFromZpl = (zplContent: string) => {
