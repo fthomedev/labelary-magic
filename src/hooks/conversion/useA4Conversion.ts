@@ -38,7 +38,7 @@ export const useA4Conversion = () => {
   const { t } = useTranslation();
   const { splitZplIntoLabels } = useZplLabelProcessor();
   const { filterValidLabels } = useZplValidator();
-  const { upscaleImages } = useImageUpscaler();
+  const { upscaleImages, preloadUpscaler } = useImageUpscaler();
 
   const convertZplToA4Images = async (
     labels: string[],
@@ -50,6 +50,9 @@ export const useA4Conversion = () => {
     if (validLabels.length === 0) {
       throw new Error('Nenhuma etiqueta válida encontrada para processamento');
     }
+
+    // OPTIMIZATION: Pre-load upscaler model while PNG conversion starts
+    const preloadPromise = preloadUpscaler();
 
     const MAX_CONCURRENT = 4; // Reduced to avoid 429 rate limits
     const semaphore = new Semaphore(MAX_CONCURRENT);
@@ -170,6 +173,8 @@ export const useA4Conversion = () => {
     console.log(`=============================================\n`);
 
     // Phase 2: AI Upscaling (55-90% progress)
+    // Ensure upscaler is ready before starting
+    await preloadPromise;
     console.log(`🔍 Starting AI upscaling of ${pngImages.length} images...`);
     const upscaleStartTime = Date.now();
     
