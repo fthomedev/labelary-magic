@@ -6,9 +6,40 @@ interface ImageDimensions {
   height: number;
 }
 
+// Parallel blob to dataURL conversion with concurrency control
+const blobsToDataURLs = async (blobs: Blob[], concurrency: number = 10): Promise<(string | null)[]> => {
+  const results: (string | null)[] = new Array(blobs.length).fill(null);
+  let index = 0;
+  
+  const processNext = async (): Promise<void> => {
+    while (index < blobs.length) {
+      const currentIndex = index++;
+      try {
+        if (blobs[currentIndex] && blobs[currentIndex].size > 0) {
+          results[currentIndex] = await blobToDataURL(blobs[currentIndex]);
+        }
+      } catch (error) {
+        console.error(`❌ Failed to convert blob ${currentIndex + 1} to dataURL:`, error);
+      }
+    }
+  };
+  
+  // Start concurrent workers
+  const workers = Array(Math.min(concurrency, blobs.length)).fill(null).map(() => processNext());
+  await Promise.all(workers);
+  
+  return results;
+};
+
 export const organizeImagesInA4PDF = async (imageBlobs: Blob[]): Promise<{ pdfBlob: Blob; labelsAdded: number; failedLabels: number[] }> => {
   console.log(`\n========== A4 PDF GENERATION START ==========`);
   console.log(`📄 Input images: ${imageBlobs.length}`);
+  
+  // OPTIMIZATION: Pre-convert all blobs to dataURLs in parallel
+  const conversionStart = Date.now();
+  console.log(`🔄 Converting ${imageBlobs.length} blobs to dataURLs in parallel...`);
+  const dataUrls = await blobsToDataURLs(imageBlobs);
+  console.log(`✅ Blob conversion completed in ${Date.now() - conversionStart}ms`);
   
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -56,8 +87,8 @@ export const organizeImagesInA4PDF = async (imageBlobs: Blob[]): Promise<{ pdfBl
     }
     
     try {
-      // Convert blob to data URL
-      const imageDataUrl = await blobToDataURL(imageBlobs[i]);
+      // Use pre-converted dataURL
+      const imageDataUrl = dataUrls[i];
       
       if (!imageDataUrl || !imageDataUrl.startsWith('data:')) {
         console.error(`🚨 [PDF] Label ${i + 1}: Failed to convert to data URL`);

@@ -35,11 +35,21 @@ export const useImageUpscaler = () => {
   const getUpscaler = async (): Promise<InstanceType<typeof Upscaler>> => {
     if (!upscalerInstance) {
       console.log('🔧 Initializing UpscalerJS with default model (2x)...');
+      const initStart = Date.now();
       upscalerInstance = new Upscaler({
         model: x2,
       });
+      console.log(`✅ UpscalerJS initialized in ${Date.now() - initStart}ms`);
     }
     return upscalerInstance;
+  };
+
+  // Pre-warm the upscaler (call early to avoid delay during processing)
+  const preloadUpscaler = async (): Promise<void> => {
+    console.log('🔥 Pre-loading upscaler model...');
+    const start = Date.now();
+    await getUpscaler();
+    console.log(`✅ Upscaler pre-loaded in ${Date.now() - start}ms`);
   };
 
   // WebGL texture size limit (most GPUs support 16384, use conservative 8192)
@@ -214,5 +224,6 @@ export const useImageUpscaler = () => {
   return {
     upscaleImage,
     upscaleImages,
+    preloadUpscaler,
   };
 };
