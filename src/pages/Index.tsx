@@ -84,7 +84,9 @@ const Index = () => {
   };
 
   const handleConvert = async () => {
+    console.log(`🔧 DEBUG: handleConvert called - selectedFormat: ${selectedFormat}, enhanceLabels: ${enhanceLabels}`);
     if (selectedFormat === 'a4') {
+      console.log(`🔧 DEBUG: Calling convertToA4PDF with enhanceLabels = ${enhanceLabels}`);
       await convertToA4PDF(zplContent, enhanceLabels);
     } else {
       await convertToPDF(zplContent);

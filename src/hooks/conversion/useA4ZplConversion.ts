@@ -42,6 +42,9 @@ export const useA4ZplConversion = () => {
   } = usePdfOperations();
 
   const convertToA4PDF = async (zplContent: string, enhanceLabels: boolean = false) => {
+    // CRITICAL DEBUG: Log received parameter
+    console.log(`\n🔧 DEBUG: convertToA4PDF called with enhanceLabels = ${enhanceLabels} (type: ${typeof enhanceLabels})`);
+    
     if (!zplContent) return;
     
     const conversionStartTime = Date.now();
@@ -54,7 +57,7 @@ export const useA4ZplConversion = () => {
       
       console.log(`\n========== A4 CONVERSION TRACKING ==========`);
       console.log(`📊 CHECKPOINT 1 - Parsed labels: ${labels.length}`);
-      console.log(`✨ Enhance labels (upscaling): ${enhanceLabels ? 'ENABLED' : 'DISABLED'}`);
+      console.log(`✨ Enhance labels (upscaling): ${enhanceLabels === true ? 'ENABLED' : 'DISABLED'}`);
       
       // Sempre usar A4_CONFIG (Cenário 2) para processamento A4
       const config: ProcessingConfig = A4_CONFIG;

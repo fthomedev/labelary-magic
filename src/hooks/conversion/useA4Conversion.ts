@@ -46,6 +46,9 @@ export const useA4Conversion = () => {
     config: ProcessingConfig = A4_CONFIG,
     enhanceLabels: boolean = false
   ): Promise<Blob[]> => {
+    // CRITICAL DEBUG: Log enhanceLabels value at entry
+    console.log(`\n🔧 DEBUG: convertZplToA4Images called with enhanceLabels = ${enhanceLabels} (type: ${typeof enhanceLabels})`);
+    
     const validLabels = filterValidLabels(labels);
     
     if (validLabels.length === 0) {
@@ -53,7 +56,14 @@ export const useA4Conversion = () => {
     }
 
     // OPTIMIZATION: Pre-load upscaler model while PNG conversion starts (only if enhancing)
-    const preloadPromise = enhanceLabels ? preloadUpscaler() : Promise.resolve();
+    let preloadPromise: Promise<void>;
+    if (enhanceLabels === true) {
+      console.log('🔧 DEBUG: Will preload upscaler (enhanceLabels is TRUE)');
+      preloadPromise = preloadUpscaler();
+    } else {
+      console.log('🔧 DEBUG: Skipping upscaler preload (enhanceLabels is FALSE)');
+      preloadPromise = Promise.resolve();
+    }
 
     const MAX_CONCURRENT = 4; // Reduced to avoid 429 rate limits
     const semaphore = new Semaphore(MAX_CONCURRENT);
@@ -175,8 +185,10 @@ export const useA4Conversion = () => {
 
     let finalImages: Blob[];
     
-    // Phase 2: AI Upscaling (55-90% progress) - ONLY if enhanceLabels is enabled
-    if (enhanceLabels) {
+    // Phase 2: AI Upscaling (55-90% progress) - ONLY if enhanceLabels is EXPLICITLY true
+    console.log(`\n🔧 DEBUG: Checking enhanceLabels before upscaling: ${enhanceLabels} (strict check: ${enhanceLabels === true})`);
+    
+    if (enhanceLabels === true) {
       // Ensure upscaler is ready before starting
       await preloadPromise;
       console.log(`🔍 Starting AI upscaling of ${pngImages.length} images...`);
@@ -200,7 +212,7 @@ export const useA4Conversion = () => {
       
       finalImages = upscaledImages;
     } else {
-      console.log(`⏭️ Skipping AI upscaling (enhance labels disabled)`);
+      console.log(`⏭️ SKIPPING AI upscaling - enhanceLabels is ${enhanceLabels}`);
       finalImages = pngImages;
     }
     
