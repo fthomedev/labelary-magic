@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
 import { useA4Conversion } from './useA4Conversion';
+import { useA4DirectConversion } from './useA4DirectConversion';
 import { usePdfOperations } from './usePdfOperations';
 import { useConversionState } from './useConversionState';
 import { useConversionMetrics } from './useConversionMetrics';
@@ -16,6 +17,7 @@ export const useA4ZplConversion = () => {
   const { t } = useTranslation();
   const { addToProcessingHistory } = useHistoryRecords();
   const { convertZplToA4Images, parseLabelsFromZpl } = useA4Conversion();
+  const { convertZplToA4PDFDirect } = useA4DirectConversion();
   const { logPerformanceMetrics } = useConversionMetrics();
   const { uploadPDFToStorage } = useUploadPdf();
   const { ensurePdfBucketExists } = useStorageOperations();
@@ -41,11 +43,76 @@ export const useA4ZplConversion = () => {
     downloadPdf
   } = usePdfOperations();
 
-  const convertToA4PDF = async (zplContent: string, enhanceLabels: boolean = false) => {
-    // CRITICAL DEBUG: Log received parameter
-    console.log(`\n🔧 DEBUG: convertToA4PDF called with enhanceLabels = ${enhanceLabels} (type: ${typeof enhanceLabels})`);
+  // Fast A4 conversion using direct Labelary API (no upscaling)
+  const convertToA4PDFDirect = async (zplContent: string) => {
+    console.log('\n🚀 A4 DIRECT MODE (No Upscaling) - Fast Conversion');
     
-    if (!zplContent) return;
+    const conversionStartTime = Date.now();
+    
+    try {
+      startConversion();
+      
+      // Ensure bucket exists
+      await ensurePdfBucketExists();
+      
+      // Direct conversion via Labelary API with A4 headers
+      const { pdfBlob, labelCount } = await convertZplToA4PDFDirect(zplContent, (progressValue) => {
+        setProgress(progressValue);
+      });
+      
+      // Upload PDF to storage
+      const uploadStartTime = Date.now();
+      const pdfPath = await uploadPDFToStorage(pdfBlob);
+      const uploadTime = Date.now() - uploadStartTime;
+      
+      console.log(`☁️ A4 PDF upload completed in ${uploadTime}ms:`, pdfPath);
+      setLastPdfPath(pdfPath);
+      
+      // Create blob URL for download
+      const blobUrl = window.URL.createObjectURL(pdfBlob);
+      setLastPdfUrl(blobUrl);
+      
+      // Calculate total processing time
+      const totalTime = Date.now() - conversionStartTime;
+      
+      // Save to history
+      if (pdfPath) {
+        console.log(`💾 Saving A4 direct conversion to history: ${labelCount} labels in ${totalTime}ms`);
+        await addToProcessingHistory(labelCount, pdfPath, totalTime);
+        triggerHistoryRefresh();
+      }
+      
+      setProgress(100);
+      
+      // Download the file
+      downloadPdf(blobUrl, 'etiquetas-a4.pdf');
+      
+      console.log(`\n✅ A4 DIRECT CONVERSION COMPLETE: ${labelCount} labels in ${totalTime}ms`);
+      
+      toast({
+        title: t('success'),
+        description: `${t('successMessage')} - A4 Format (${totalTime}ms, ${labelCount} etiquetas)`,
+        duration: 5000,
+      });
+      
+      finishConversion();
+    } catch (error) {
+      console.error('A4 direct conversion error:', error);
+      toast({
+        variant: "destructive",
+        title: t('error'),
+        description: t('errorMessage'),
+        duration: 5000,
+      });
+    } finally {
+      setIsConverting(false);
+      setProgress(100);
+    }
+  };
+
+  // Full A4 conversion with AI upscaling (slower, higher quality)
+  const convertToA4PDFWithUpscaling = async (zplContent: string) => {
+    console.log('\n✨ A4 ENHANCED MODE (With Upscaling) - Quality Conversion');
     
     const conversionStartTime = Date.now();
     
@@ -55,25 +122,20 @@ export const useA4ZplConversion = () => {
       // Parse labels
       const labels = parseLabelsFromZpl(zplContent);
       
-      console.log(`\n========== A4 CONVERSION TRACKING ==========`);
-      console.log(`📊 CHECKPOINT 1 - Parsed labels: ${labels.length}`);
-      console.log(`✨ Enhance labels (upscaling): ${enhanceLabels === true ? 'ENABLED' : 'DISABLED'}`);
+      console.log(`\n========== A4 ENHANCED CONVERSION ==========`);
+      console.log(`📊 Parsed labels: ${labels.length}`);
       
-      // Sempre usar A4_CONFIG (Cenário 2) para processamento A4
       const config: ProcessingConfig = A4_CONFIG;
-      
-      console.log(`📋 A4 using Cenário 2 configuration:`, config);
-      
       const conversionPhaseStart = Date.now();
 
-      // Convert to PNG images with batch processing
+      // Convert to PNG images with upscaling enabled
       const images = await convertZplToA4Images(labels, (progressValue) => {
         setProgress(progressValue); // 0-80%
-      }, config, enhanceLabels);
+      }, config, true); // enhanceLabels = true
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
-      console.log(`⚡ A4 image conversion phase completed in ${conversionPhaseTime}ms`);
-      console.log(`📊 CHECKPOINT 2 - PNG images generated: ${images.length}`);
+      console.log(`⚡ Image conversion + upscaling completed in ${conversionPhaseTime}ms`);
+      console.log(`📊 PNG images generated: ${images.length}`);
 
       try {
         setProgress(85);
@@ -89,12 +151,11 @@ export const useA4ZplConversion = () => {
         const mergeTime = Date.now() - mergeStartTime;
         
         console.log(`📄 A4 PDF organization completed in ${mergeTime}ms`);
-        console.log(`📊 CHECKPOINT 3 - Labels in PDF: ${labelsAdded}`);
+        console.log(`📊 Labels in PDF: ${labelsAdded}`);
         
-        // CRITICAL: Validate label count consistency
         if (labelsAdded !== images.length) {
-          console.error(`🚨 LABEL MISMATCH: Expected ${images.length}, got ${labelsAdded} in PDF`);
-          console.error(`🚨 Failed label indices: [${failedLabels.join(', ')}]`);
+          console.error(`🚨 LABEL MISMATCH: Expected ${images.length}, got ${labelsAdded}`);
+          console.error(`🚨 Failed indices: [${failedLabels.join(', ')}]`);
         }
         
         setProgress(95);
@@ -113,13 +174,11 @@ export const useA4ZplConversion = () => {
         
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
-        
-        // Use actual labels added to PDF, not estimated count
         const actualLabelCount = labelsAdded;
         
-        // Save to history with ACTUAL label count
+        // Save to history
         if (pdfPath) {
-          console.log(`💾 Saving A4 conversion to history: ${actualLabelCount} labels processed in ${totalTime}ms`);
+          console.log(`💾 Saving enhanced conversion: ${actualLabelCount} labels in ${totalTime}ms`);
           await addToProcessingHistory(actualLabelCount, pdfPath, totalTime);
           triggerHistoryRefresh();
         }
@@ -129,33 +188,21 @@ export const useA4ZplConversion = () => {
         // Download the file
         downloadPdf(blobUrl, 'etiquetas-a4.pdf');
 
-        console.log(`\n========== FINAL CONVERSION SUMMARY ==========`);
-        console.log(`📊 Input (parsed labels): ${labels.length}`);
-        console.log(`📊 After validation/filtering: ${images.length} PNG images`);
-        console.log(`📊 Final PDF labels: ${labelsAdded}`);
-        if (labels.length !== labelsAdded) {
-          const validFiltered = labels.length - images.length;
-          const pdfLoss = images.length - labelsAdded;
-          console.error(`🚨 TOTAL LOSS: ${labels.length - labelsAdded} labels`);
-          console.error(`   - Filtered as invalid: ${validFiltered}`);
-          console.error(`   - Lost in PNG conversion: ${labels.length - validFiltered - images.length}`);
-          console.error(`   - Lost in PDF generation: ${pdfLoss}`);
-        } else {
-          console.log(`✅ All labels preserved!`);
-        }
-        console.log(`================================================\n`);
+        console.log(`\n✅ A4 ENHANCED CONVERSION COMPLETE`);
+        console.log(`📊 Input: ${labels.length} → Output: ${labelsAdded} labels`);
+        console.log(`⏱️ Total time: ${totalTime}ms`);
 
         logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, actualLabelCount);
 
         toast({
           title: t('success'),
-          description: `${t('successMessage')} - A4 Format (${totalTime}ms, ${actualLabelCount} etiquetas)`,
+          description: `${t('successMessage')} - A4 Enhanced (${totalTime}ms, ${actualLabelCount} etiquetas)`,
           duration: 5000,
         });
         
         finishConversion();
       } catch (uploadError) {
-        console.error('Error uploading A4 PDF to storage:', uploadError);
+        console.error('Error uploading enhanced A4 PDF:', uploadError);
         toast({
           variant: "destructive",
           title: t('error'),
@@ -164,7 +211,7 @@ export const useA4ZplConversion = () => {
         });
       }
     } catch (error) {
-      console.error('A4 conversion error:', error);
+      console.error('A4 enhanced conversion error:', error);
       toast({
         variant: "destructive",
         title: t('error'),
@@ -174,6 +221,21 @@ export const useA4ZplConversion = () => {
     } finally {
       setIsConverting(false);
       setProgress(100);
+    }
+  };
+
+  // Main entry point - routes to direct or enhanced conversion
+  const convertToA4PDF = async (zplContent: string, enhanceLabels: boolean = false) => {
+    console.log(`\n🔧 convertToA4PDF called - enhanceLabels: ${enhanceLabels}`);
+    
+    if (!zplContent) return;
+    
+    if (enhanceLabels === true) {
+      // Use PNG → Upscale → PDF pipeline (slower, higher quality)
+      await convertToA4PDFWithUpscaling(zplContent);
+    } else {
+      // Use direct Labelary A4 API (fast, no upscaling)
+      await convertToA4PDFDirect(zplContent);
     }
   };
 
