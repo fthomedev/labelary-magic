@@ -21,6 +21,7 @@ const Index = () => {
   const [fileCount, setFileCount] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [selectedFormat, setSelectedFormat] = useState<PrintFormat>('standard');
+  const [enhanceLabels, setEnhanceLabels] = useState<boolean>(false);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
@@ -84,7 +85,7 @@ const Index = () => {
 
   const handleConvert = async () => {
     if (selectedFormat === 'a4') {
-      await convertToA4PDF(zplContent);
+      await convertToA4PDF(zplContent, enhanceLabels);
     } else {
       await convertToPDF(zplContent);
     }
@@ -162,6 +163,8 @@ const Index = () => {
                         onDownload={handleDownload}
                         selectedFormat={selectedFormat}
                         onFormatChange={handleFormatChange}
+                        enhanceLabels={enhanceLabels}
+                        onEnhanceLabelsChange={setEnhanceLabels}
                       />
                     </div>
                   </div>

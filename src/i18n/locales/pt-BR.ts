@@ -195,6 +195,7 @@ const translations = {
   selectPrintFormat: 'Selecione como deseja imprimir suas etiquetas',
   formatDescription: 'Escolha o formato que melhor se adapta à sua impressora',
   a4FormatDescription: '4 etiquetas organizadas em folha A4',
+  enhanceLabels: 'Melhorar etiquetas (mais lento)',
   standardFormatDescription: 'Etiquetas individuais em sequência',
   
   // Pagination

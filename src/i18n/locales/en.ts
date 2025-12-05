@@ -195,6 +195,7 @@ const translations = {
   selectPrintFormat: 'Select how you want to print your labels',
   formatDescription: 'Choose the format that best suits your printer',
   a4FormatDescription: '4 labels organized on A4 sheet',
+  enhanceLabels: 'Enhance labels (slower)',
   standardFormatDescription: 'Individual labels in sequence',
   
   // Pagination
