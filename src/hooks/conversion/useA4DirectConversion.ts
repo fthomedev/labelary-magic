@@ -190,7 +190,7 @@ export const useA4DirectConversion = () => {
             'Accept': 'application/pdf',
             'Content-Type': 'application/x-www-form-urlencoded',
             'X-Page-Size': 'A4',
-            'X-Page-Layout': '2x2',
+            'X-Page-Layout': '2x1',
             'X-Page-Align': 'Center',
             'X-Page-Vertical-Align': 'Center',
             'X-Label-Border': 'None'
