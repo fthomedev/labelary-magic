@@ -43,61 +43,103 @@ export const useA4ZplConversion = () => {
     downloadPdf
   } = usePdfOperations();
 
-  // Fast A4 conversion using direct Labelary API (no upscaling)
+  // Fast A4 conversion using PNG pipeline without upscaling
   const convertToA4PDFDirect = async (zplContent: string) => {
-    console.log('\n🚀 A4 DIRECT MODE (No Upscaling) - Fast Conversion');
+    console.log('\n🚀 A4 FAST MODE (No Upscaling) - PNG Pipeline');
     
     const conversionStartTime = Date.now();
     
     try {
       startConversion();
       
-      // Ensure bucket exists
-      await ensurePdfBucketExists();
+      // Parse labels
+      const labels = parseLabelsFromZpl(zplContent);
       
-      // Direct conversion via Labelary API with A4 headers
-      const { pdfBlob, labelCount } = await convertZplToA4PDFDirect(zplContent, (progressValue) => {
-        setProgress(progressValue);
-      });
+      console.log(`\n========== A4 FAST CONVERSION ==========`);
+      console.log(`📊 Parsed labels: ${labels.length}`);
       
-      // Upload PDF to storage
-      const uploadStartTime = Date.now();
-      const pdfPath = await uploadPDFToStorage(pdfBlob);
-      const uploadTime = Date.now() - uploadStartTime;
-      
-      console.log(`☁️ A4 PDF upload completed in ${uploadTime}ms:`, pdfPath);
-      setLastPdfPath(pdfPath);
-      
-      // Create blob URL for download
-      const blobUrl = window.URL.createObjectURL(pdfBlob);
-      setLastPdfUrl(blobUrl);
-      
-      // Calculate total processing time
-      const totalTime = Date.now() - conversionStartTime;
-      
-      // Save to history
-      if (pdfPath) {
-        console.log(`💾 Saving A4 direct conversion to history: ${labelCount} labels in ${totalTime}ms`);
-        await addToProcessingHistory(labelCount, pdfPath, totalTime);
-        triggerHistoryRefresh();
+      const config: ProcessingConfig = A4_CONFIG;
+
+      // Convert to PNG images WITHOUT upscaling
+      const images = await convertZplToA4Images(labels, (progressValue) => {
+        setProgress(progressValue); // 0-80%
+      }, config, false); // enhanceLabels = false (skip upscaling)
+
+      console.log(`📊 PNG images generated: ${images.length}`);
+
+      try {
+        setProgress(85);
+        
+        // Ensure bucket exists
+        await ensurePdfBucketExists();
+        
+        setProgress(90);
+        
+        // Organize images into A4 PDF (same method as enhanced path)
+        const mergeStartTime = Date.now();
+        const { pdfBlob: a4Pdf, labelsAdded, failedLabels } = await organizeImagesInA4PDF(images);
+        const mergeTime = Date.now() - mergeStartTime;
+        
+        console.log(`📄 A4 PDF organization completed in ${mergeTime}ms`);
+        console.log(`📊 Labels in PDF: ${labelsAdded}`);
+        
+        if (labelsAdded !== images.length) {
+          console.error(`🚨 LABEL MISMATCH: Expected ${images.length}, got ${labelsAdded}`);
+          console.error(`🚨 Failed indices: [${failedLabels.join(', ')}]`);
+        }
+        
+        setProgress(95);
+        
+        // Upload PDF to storage
+        const uploadStartTime = Date.now();
+        const pdfPath = await uploadPDFToStorage(a4Pdf);
+        const uploadTime = Date.now() - uploadStartTime;
+        
+        console.log(`☁️ A4 PDF upload completed in ${uploadTime}ms:`, pdfPath);
+        setLastPdfPath(pdfPath);
+        
+        // Create blob URL for download
+        const blobUrl = window.URL.createObjectURL(a4Pdf);
+        setLastPdfUrl(blobUrl);
+        
+        // Calculate total processing time
+        const totalTime = Date.now() - conversionStartTime;
+        const actualLabelCount = labelsAdded;
+        
+        // Save to history
+        if (pdfPath) {
+          console.log(`💾 Saving fast conversion: ${actualLabelCount} labels in ${totalTime}ms`);
+          await addToProcessingHistory(actualLabelCount, pdfPath, totalTime);
+          triggerHistoryRefresh();
+        }
+        
+        setProgress(100);
+        
+        // Download the file
+        downloadPdf(blobUrl, 'etiquetas-a4.pdf');
+
+        console.log(`\n✅ A4 FAST CONVERSION COMPLETE`);
+        console.log(`📊 Input: ${labels.length} → Output: ${labelsAdded} labels`);
+        console.log(`⏱️ Total time: ${totalTime}ms`);
+
+        toast({
+          title: t('success'),
+          description: `${t('successMessage')} - A4 Rápido (${totalTime}ms, ${actualLabelCount} etiquetas)`,
+          duration: 5000,
+        });
+        
+        finishConversion();
+      } catch (uploadError) {
+        console.error('Error uploading A4 PDF:', uploadError);
+        toast({
+          variant: "destructive",
+          title: t('error'),
+          description: t('errorMessage'),
+          duration: 5000,
+        });
       }
-      
-      setProgress(100);
-      
-      // Download the file
-      downloadPdf(blobUrl, 'etiquetas-a4.pdf');
-      
-      console.log(`\n✅ A4 DIRECT CONVERSION COMPLETE: ${labelCount} labels in ${totalTime}ms`);
-      
-      toast({
-        title: t('success'),
-        description: `${t('successMessage')} - A4 Format (${totalTime}ms, ${labelCount} etiquetas)`,
-        duration: 5000,
-      });
-      
-      finishConversion();
     } catch (error) {
-      console.error('A4 direct conversion error:', error);
+      console.error('A4 fast conversion error:', error);
       
       // Extract specific error message
       let errorDescription = t('errorMessage');
