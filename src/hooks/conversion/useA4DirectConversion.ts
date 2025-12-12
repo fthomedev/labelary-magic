@@ -1,7 +1,34 @@
 import { splitZPLIntoBlocks, mergePDFs, delay } from '@/utils/pdfUtils';
 
-const A4_BATCH_SIZE = 50; // Labelary max labels per request
+const MAX_BATCH_SIZE_BYTES = 1.8 * 1024 * 1024; // 1.8MB (safety margin under 2MB limit)
+const MAX_LABELS_PER_BATCH = 50; // Labelary max labels per request
 const BATCH_DELAY_MS = 400; // Delay between batches to avoid rate limits
+
+// Estimate label size in bytes
+const estimateLabelSize = (label: string): number => {
+  return new Blob([label]).size;
+};
+
+// Calculate optimal batch size based on label content
+const calculateOptimalBatchSize = (labels: string[]): number => {
+  if (labels.length === 0) return 1;
+  
+  // Sample first few labels to estimate average size
+  const sampleSize = Math.min(5, labels.length);
+  const sampleLabels = labels.slice(0, sampleSize);
+  const totalSampleSize = sampleLabels.reduce((sum, label) => sum + estimateLabelSize(label), 0);
+  const avgSize = totalSampleSize / sampleSize;
+  
+  // Calculate how many labels fit in 1.8MB
+  const optimalBatch = Math.floor(MAX_BATCH_SIZE_BYTES / avgSize);
+  
+  // Clamp between 1 and 50
+  const batchSize = Math.max(1, Math.min(MAX_LABELS_PER_BATCH, optimalBatch));
+  
+  console.log(`📏 Label size analysis: avg=${(avgSize / 1024).toFixed(1)}KB, optimal batch=${batchSize}`);
+  
+  return batchSize;
+};
 
 export const useA4DirectConversion = () => {
   
@@ -20,10 +47,13 @@ export const useA4DirectConversion = () => {
       throw new Error('No valid ZPL labels found');
     }
     
-    // Split into batches of max 50 labels
+    // Calculate optimal batch size based on label content
+    const batchSize = calculateOptimalBatchSize(labels);
+    
+    // Split into batches using calculated size
     const batches: string[][] = [];
-    for (let i = 0; i < labels.length; i += A4_BATCH_SIZE) {
-      batches.push(labels.slice(i, i + A4_BATCH_SIZE));
+    for (let i = 0; i < labels.length; i += batchSize) {
+      batches.push(labels.slice(i, i + batchSize));
     }
     
     console.log(`📦 Split into ${batches.length} batch(es)`);
