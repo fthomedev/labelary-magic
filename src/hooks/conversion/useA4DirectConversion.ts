@@ -49,11 +49,13 @@ export const useA4DirectConversion = () => {
     onProgress: (progress: number) => void
   ): Promise<{ pdfBlob: Blob; labelCount: number }> => {
     console.log('\n========== A4 DIRECT CONVERSION (NO UPSCALING) ==========');
+    console.log('🚀 Using DIRECT A4 API path (12dpmm, X-Page-Size: A4)');
     
     const labels = splitZPLIntoBlocks(zplContent);
     const labelCount = labels.length;
     
     console.log(`📊 Total labels to convert: ${labelCount}`);
+    console.log(`📊 ZPL content length: ${zplContent.length} chars`);
     
     if (labelCount === 0) {
       throw new Error('No valid ZPL labels found');
