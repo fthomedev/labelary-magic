@@ -110,7 +110,10 @@ export const useA4DirectConversion = () => {
         }
         
         if (!response.ok) {
+          const errorText = await response.text();
           console.error(`❌ Labelary error: ${response.status} ${response.statusText}`);
+          console.error(`❌ Error body: ${errorText}`);
+          console.error(`❌ ZPL content (first 500 chars): ${zplContent.substring(0, 500)}`);
           if (attempt < retries) {
             await delay(1000 * attempt);
             continue;
