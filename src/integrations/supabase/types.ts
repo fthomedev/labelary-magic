@@ -253,6 +253,11 @@ export type Database = {
       delete_user: { Args: never; Returns: Json }
       generate_secure_token: { Args: never; Returns: string }
       insert_processing_history:
+        | { Args: never; Returns: undefined }
+        | {
+            Args: { p_file_name: string; p_status: string }
+            Returns: undefined
+          }
         | {
             Args: {
               p_label_count: number
@@ -262,11 +267,6 @@ export type Database = {
             }
             Returns: undefined
           }
-        | {
-            Args: { p_file_name: string; p_status: string }
-            Returns: undefined
-          }
-        | { Args: never; Returns: undefined }
       reset_daily_usage: { Args: never; Returns: undefined }
     }
     Enums: {
