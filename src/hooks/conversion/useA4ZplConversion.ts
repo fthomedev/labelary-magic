@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
 import { useA4Conversion } from './useA4Conversion';
-import { useA4DirectConversion } from './useA4DirectConversion';
+import { useA4DirectConversion, A4ConversionError } from './useA4DirectConversion';
 import { usePdfOperations } from './usePdfOperations';
 import { useConversionState } from './useConversionState';
 import { useConversionMetrics } from './useConversionMetrics';
@@ -98,11 +98,21 @@ export const useA4ZplConversion = () => {
       finishConversion();
     } catch (error) {
       console.error('A4 direct conversion error:', error);
+      
+      // Extract specific error message
+      let errorDescription = t('errorMessage');
+      if (error instanceof A4ConversionError) {
+        errorDescription = error.userMessage;
+        console.error('Technical details:', error.technicalDetails);
+      } else if (error instanceof Error) {
+        errorDescription = error.message;
+      }
+      
       toast({
         variant: "destructive",
         title: t('error'),
-        description: t('errorMessage'),
-        duration: 5000,
+        description: errorDescription,
+        duration: 8000,
       });
     } finally {
       setIsConverting(false);
