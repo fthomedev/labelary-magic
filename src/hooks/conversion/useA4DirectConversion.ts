@@ -3,10 +3,16 @@ import { splitZPLIntoBlocks, mergePDFs, delay } from '@/utils/pdfUtils';
 const MAX_BATCH_SIZE_BYTES = 1.8 * 1024 * 1024; // 1.8MB (safety margin under 2MB limit)
 const MAX_LABELS_PER_BATCH = 50; // Labelary max labels per request
 const BATCH_DELAY_MS = 400; // Delay between batches to avoid rate limits
+const IMAGE_SIZE_MULTIPLIER = 4; // Embedded images consume ~4x more resources when rendered
 
 // Estimate label size in bytes
 const estimateLabelSize = (label: string): number => {
   return new Blob([label]).size;
+};
+
+// Detect if label contains embedded images
+const hasEmbeddedImage = (label: string): boolean => {
+  return label.includes('~DG') || label.includes(':Z64:') || label.includes('~EG');
 };
 
 // Calculate optimal batch size based on label content
@@ -19,13 +25,19 @@ const calculateOptimalBatchSize = (labels: string[]): number => {
   const totalSampleSize = sampleLabels.reduce((sum, label) => sum + estimateLabelSize(label), 0);
   const avgSize = totalSampleSize / sampleSize;
   
+  // Check if labels contain embedded images
+  const containsImages = sampleLabels.some(label => hasEmbeddedImage(label));
+  
+  // Apply multiplier for images (rendered images consume more resources than ZPL text)
+  const effectiveSize = containsImages ? avgSize * IMAGE_SIZE_MULTIPLIER : avgSize;
+  
   // Calculate how many labels fit in 1.8MB
-  const optimalBatch = Math.floor(MAX_BATCH_SIZE_BYTES / avgSize);
+  const optimalBatch = Math.floor(MAX_BATCH_SIZE_BYTES / effectiveSize);
   
   // Clamp between 1 and 50
   const batchSize = Math.max(1, Math.min(MAX_LABELS_PER_BATCH, optimalBatch));
   
-  console.log(`📏 Label size analysis: avg=${(avgSize / 1024).toFixed(1)}KB, optimal batch=${batchSize}`);
+  console.log(`📏 Label analysis: avg=${(avgSize / 1024).toFixed(1)}KB, hasImages=${containsImages}, effectiveSize=${(effectiveSize / 1024).toFixed(1)}KB, batch=${batchSize}`);
   
   return batchSize;
 };
