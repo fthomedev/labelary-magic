@@ -227,9 +227,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_access_logs: {
+        Row: {
+          accessed_at: string
+          id: string
+          ip_hash: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          accessed_at?: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          accessed_at?: string
+          id?: string
+          ip_hash?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      recurring_users_last_7_days: {
+        Row: {
+          access_count: number | null
+          first_access: string | null
+          last_access: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_file_access_token: {
@@ -267,6 +299,7 @@ export type Database = {
             }
             Returns: undefined
           }
+      log_user_access: { Args: never; Returns: undefined }
       reset_daily_usage: { Args: never; Returns: undefined }
     }
     Enums: {
