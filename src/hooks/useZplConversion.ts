@@ -93,7 +93,7 @@ export const useZplConversion = () => {
         // Save to history using the EXACT same finalLabelCount from the beginning and include processing time
         if (pdfPath) {
           console.log(`💾 Saving to history: ${finalLabelCount} labels processed in ${totalTime}ms (CONSISTENT CORRECTED COUNT)`);
-          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime);
+          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime, 'standard');
           triggerHistoryRefresh();
         }
         

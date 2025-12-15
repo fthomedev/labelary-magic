@@ -109,7 +109,7 @@ export const useA4ZplConversion = () => {
         // Save to history
         if (pdfPath) {
           console.log(`💾 Saving fast conversion: ${actualLabelCount} labels in ${totalTime}ms`);
-          await addToProcessingHistory(actualLabelCount, pdfPath, totalTime);
+          await addToProcessingHistory(actualLabelCount, pdfPath, totalTime, 'a4');
           triggerHistoryRefresh();
         }
         
@@ -231,7 +231,7 @@ export const useA4ZplConversion = () => {
         // Save to history
         if (pdfPath) {
           console.log(`💾 Saving enhanced conversion: ${actualLabelCount} labels in ${totalTime}ms`);
-          await addToProcessingHistory(actualLabelCount, pdfPath, totalTime);
+          await addToProcessingHistory(actualLabelCount, pdfPath, totalTime, 'a4');
           triggerHistoryRefresh();
         }
         
