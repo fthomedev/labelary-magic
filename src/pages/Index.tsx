@@ -14,6 +14,7 @@ import { SEO } from '@/components/SEO';
 import { FeedbackModal } from '@/components/FeedbackModal';
 import { PrintFormat } from '@/components/format/FormatSelector';
 import { SharePromoBanner } from '@/components/SharePromoBanner';
+import { useUserAccessLog } from '@/hooks/useUserAccessLog';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -25,6 +26,9 @@ const Index = () => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
+  
+  // Log user access for analytics
+  useUserAccessLog();
   
   // Standard conversion hook
   const {

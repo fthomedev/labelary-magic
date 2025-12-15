@@ -253,15 +253,7 @@ export type Database = {
       }
     }
     Views: {
-      recurring_users_last_7_days: {
-        Row: {
-          access_count: number | null
-          first_access: string | null
-          last_access: string | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       create_file_access_token: {
