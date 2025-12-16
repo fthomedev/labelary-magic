@@ -108,19 +108,28 @@ export const useZplLabelProcessor = () => {
 
   const uploadPngToStorage = async (pngBlob: Blob, fileName: string): Promise<string> => {
     try {
-      // Ensure PNG bucket exists
+      // Get current user for RLS-compliant file path
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Ensure PNG bucket exists (private bucket)
       const { error: bucketError } = await supabase.storage.getBucket('pngs');
       if (bucketError && bucketError.message.includes('The resource was not found')) {
         await supabase.storage.createBucket('pngs', {
-          public: true,
+          public: false,
           fileSizeLimit: 5242880 // 5MB
         });
-        console.log('📁 Created PNG bucket');
+        console.log('📁 Created PNG bucket (private)');
       }
+
+      // Store in user-specific folder for RLS compliance
+      const filePath = `${user.id}/${fileName}`;
 
       const { data, error } = await supabase.storage
         .from('pngs')
-        .upload(fileName, pngBlob, {
+        .upload(filePath, pngBlob, {
           contentType: 'image/png',
           cacheControl: '3600',
           upsert: false
@@ -131,12 +140,17 @@ export const useZplLabelProcessor = () => {
         throw error;
       }
 
-      // Get public URL
-      const { data: publicUrlData } = supabase.storage
+      // Get signed URL (private bucket requires signed URLs)
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from('pngs')
-        .getPublicUrl(fileName);
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
 
-      return publicUrlData.publicUrl;
+      if (signedUrlError || !signedUrlData?.signedUrl) {
+        console.error('Failed to create signed URL:', signedUrlError);
+        throw signedUrlError || new Error('Failed to create signed URL');
+      }
+
+      return signedUrlData.signedUrl;
     } catch (error) {
       console.error('Failed to upload PNG to storage:', error);
       throw error;
