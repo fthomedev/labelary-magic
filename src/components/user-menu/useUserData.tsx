@@ -12,31 +12,30 @@ export function useUserData() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Primeiro, tente obter o perfil do banco de dados
+        // Get profile name from database, email from auth (security best practice)
         const { data: profile } = await supabase
           .from('profiles')
-          .select('name, email')
+          .select('name')
           .eq('id', user.id)
           .single();
         
+        // Email always comes from auth.users for security
+        const email = user.email || null;
+        
         if (profile && profile.name) {
-          // Se o perfil existir e tiver um nome, use-o
-          setUserData(profile);
+          setUserData({ name: profile.name, email });
         } else {
-          // Se não houver perfil ou o nome estiver vazio, use os dados do usuário autenticado
-          const userData = {
-            name: user.user_metadata?.name || null,
-            email: user.email
-          };
+          // Use metadata name if no profile name exists
+          const name = user.user_metadata?.name || null;
           
-          // Atualizar o perfil com os dados do usuário se necessário
+          // Update profile with name if needed
           if (!profile || !profile.name) {
             await supabase.from('profiles')
-              .update({ name: userData.name })
+              .update({ name })
               .eq('id', user.id);
           }
           
-          setUserData(userData);
+          setUserData({ name, email });
         }
       }
     } catch (error) {
