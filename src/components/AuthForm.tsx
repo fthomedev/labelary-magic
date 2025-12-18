@@ -179,6 +179,15 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           title: t("signUpSuccess"),
           description: t("checkYourEmail"),
         });
+        
+        // Clear form and switch to login
+        setName("");
+        setEmail("");
+        setPassword("");
+        setNameTouched(false);
+        setEmailTouched(false);
+        setPasswordTouched(false);
+        setIsSignUp(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
