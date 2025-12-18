@@ -155,13 +155,17 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
       <form onSubmit={handleAuth} className="space-y-4">
         {isSignUp && (
           <div className="space-y-2">
-            <Label htmlFor="name">{t("name")}</Label>
+            <Label htmlFor="name">
+              {t("name")} <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              minLength={2}
+              placeholder={t("nameRequired")}
             />
           </div>
         )}
