@@ -283,8 +283,8 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
   }
 
   return (
-    <Card className="w-full max-w-sm p-6">
-      <form onSubmit={handleAuth} className="space-y-4">
+    <Card className="w-full max-w-sm p-6 overflow-hidden">
+      <form key={isSignUp ? 'signup' : 'login'} onSubmit={handleAuth} className="space-y-4 animate-fade-in">
         {isSignUp && (
           <div className="space-y-2">
             <Label htmlFor="name">
