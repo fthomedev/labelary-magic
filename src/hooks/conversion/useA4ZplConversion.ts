@@ -27,6 +27,8 @@ export const useA4ZplConversion = () => {
     setIsConverting,
     progress,
     setProgress,
+    progressInfo,
+    updateProgress,
     isProcessingComplete,
     historyRefreshTrigger,
     resetProcessingStatus,
@@ -58,22 +60,24 @@ export const useA4ZplConversion = () => {
       console.log(`\n========== A4 FAST CONVERSION ==========`);
       console.log(`📊 Parsed labels: ${labels.length}`);
       
+      updateProgress({ totalLabels: labels.length, stage: 'converting' });
+      
       const config: ProcessingConfig = A4_CONFIG;
 
       // Convert to PNG images WITHOUT upscaling
-      const images = await convertZplToA4Images(labels, (progressValue) => {
-        setProgress(progressValue); // 0-80%
+      const images = await convertZplToA4Images(labels, (progressValue, currentLabel) => {
+        updateProgress({ percentage: progressValue, currentLabel, stage: 'converting' });
       }, config, false); // enhanceLabels = false (skip upscaling)
 
       console.log(`📊 PNG images generated: ${images.length}`);
 
       try {
-        setProgress(85);
+        updateProgress({ percentage: 85, stage: 'organizing' });
         
         // Ensure bucket exists
         await ensurePdfBucketExists();
         
-        setProgress(90);
+        updateProgress({ percentage: 90, stage: 'uploading' });
         
         // Organize images into A4 PDF (same method as enhanced path)
         const mergeStartTime = Date.now();
@@ -88,7 +92,7 @@ export const useA4ZplConversion = () => {
           console.error(`🚨 Failed indices: [${failedLabels.join(', ')}]`);
         }
         
-        setProgress(95);
+        updateProgress({ percentage: 95, stage: 'uploading' });
         
         // Upload PDF to storage
         const uploadStartTime = Date.now();
@@ -113,7 +117,7 @@ export const useA4ZplConversion = () => {
           triggerHistoryRefresh();
         }
         
-        setProgress(100);
+        updateProgress({ percentage: 100, stage: 'complete' });
         
         // Download the file
         downloadPdf(blobUrl, 'etiquetas-a4.pdf');
@@ -177,12 +181,16 @@ export const useA4ZplConversion = () => {
       console.log(`\n========== A4 ENHANCED CONVERSION ==========`);
       console.log(`📊 Parsed labels: ${labels.length}`);
       
+      updateProgress({ totalLabels: labels.length, stage: 'converting' });
+      
       const config: ProcessingConfig = A4_CONFIG;
       const conversionPhaseStart = Date.now();
 
       // Convert to PNG images with upscaling enabled
-      const images = await convertZplToA4Images(labels, (progressValue) => {
-        setProgress(progressValue); // 0-80%
+      const images = await convertZplToA4Images(labels, (progressValue, currentLabel) => {
+        // Determine stage based on progress value
+        const stage = progressValue > 55 ? 'upscaling' : 'converting';
+        updateProgress({ percentage: progressValue, currentLabel: currentLabel || 0, stage });
       }, config, true); // enhanceLabels = true
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
@@ -190,12 +198,12 @@ export const useA4ZplConversion = () => {
       console.log(`📊 PNG images generated: ${images.length}`);
 
       try {
-        setProgress(85);
+        updateProgress({ percentage: 85, stage: 'organizing' });
         
         // Ensure bucket exists
         await ensurePdfBucketExists();
         
-        setProgress(90);
+        updateProgress({ percentage: 90, stage: 'uploading' });
         
         // Organize images into A4 PDF
         const mergeStartTime = Date.now();
@@ -210,7 +218,7 @@ export const useA4ZplConversion = () => {
           console.error(`🚨 Failed indices: [${failedLabels.join(', ')}]`);
         }
         
-        setProgress(95);
+        updateProgress({ percentage: 95, stage: 'uploading' });
         
         // Upload PDF to storage
         const uploadStartTime = Date.now();
@@ -235,7 +243,7 @@ export const useA4ZplConversion = () => {
           triggerHistoryRefresh();
         }
         
-        setProgress(100);
+        updateProgress({ percentage: 100, stage: 'complete' });
         
         // Download the file
         downloadPdf(blobUrl, 'etiquetas-a4.pdf');
@@ -294,6 +302,7 @@ export const useA4ZplConversion = () => {
   return {
     isConverting,
     progress,
+    progressInfo,
     isProcessingComplete,
     lastPdfUrl,
     lastPdfPath,

@@ -36,6 +36,7 @@ const Index = () => {
   const {
     isConverting: isStandardConverting,
     progress: standardProgress,
+    progressInfo: standardProgressInfo,
     isProcessingComplete: isStandardComplete,
     lastPdfUrl: standardPdfUrl,
     convertToPDF,
@@ -47,6 +48,7 @@ const Index = () => {
   const {
     isConverting: isA4Converting,
     progress: a4Progress,
+    progressInfo: a4ProgressInfo,
     isProcessingComplete: isA4Complete,
     lastPdfUrl: a4PdfUrl,
     convertToA4PDF,
@@ -57,6 +59,7 @@ const Index = () => {
   // Determine which conversion is active
   const isConverting = isStandardConverting || isA4Converting;
   const progress = isStandardConverting ? standardProgress : a4Progress;
+  const progressInfo = isStandardConverting ? standardProgressInfo : a4ProgressInfo;
   const isProcessingComplete = isStandardComplete || isA4Complete;
   const lastPdfUrl = standardPdfUrl || a4PdfUrl;
   const historyRefreshTrigger = Math.max(standardHistoryRefresh, a4HistoryRefresh);
@@ -194,6 +197,9 @@ const Index = () => {
                         onConvert={handleConvert}
                         isProcessingComplete={isProcessingComplete}
                         onDownload={handleDownload}
+                        currentLabel={progressInfo.currentLabel}
+                        totalLabels={progressInfo.totalLabels}
+                        stage={progressInfo.stage}
                       />
                     </div>
                   </div>

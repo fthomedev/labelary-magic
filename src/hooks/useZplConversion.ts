@@ -29,6 +29,8 @@ export const useZplConversion = () => {
     setIsConverting,
     progress,
     setProgress,
+    progressInfo,
+    updateProgress,
     isProcessingComplete,
     historyRefreshTrigger,
     resetProcessingStatus,
@@ -60,6 +62,8 @@ export const useZplConversion = () => {
       // Divide by 2 to get the correct final count as each label has 2 ^XA markers
       const finalLabelCount = Math.ceil(labels.length / 2);
       
+      updateProgress({ totalLabels: finalLabelCount, stage: 'converting' });
+      
       console.log(`🎯 Starting conversion of ${finalLabelCount} labels (FINAL COUNT CORRECTED - ${labels.length} blocks / 2)`);
       console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
       
@@ -78,14 +82,19 @@ export const useZplConversion = () => {
       const conversionPhaseStart = Date.now();
 
       const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
-        setProgress(progressValue * 0.8); // Reserve 20% for merging and upload
+        const percentage = progressValue * 0.8; // Reserve 20% for merging and upload
+        const currentLabel = Math.floor((progressValue / 100) * finalLabelCount);
+        updateProgress({ percentage, currentLabel, stage: 'converting' });
       }, config);
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
 
       try {
-        const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, setProgress);
+        updateProgress({ percentage: 85, stage: 'organizing' });
+        const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, (p) => {
+          updateProgress({ percentage: 80 + (p * 0.15), stage: 'uploading' });
+        });
         
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
@@ -97,7 +106,7 @@ export const useZplConversion = () => {
           triggerHistoryRefresh();
         }
         
-        setProgress(100);
+        updateProgress({ percentage: 100, stage: 'complete' });
         
         // Download the file
         downloadPdf(blobUrl);
@@ -138,6 +147,7 @@ export const useZplConversion = () => {
   return {
     isConverting,
     progress,
+    progressInfo,
     pdfUrls,
     isProcessingComplete,
     lastPdfUrl,

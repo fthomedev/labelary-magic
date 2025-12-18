@@ -2,6 +2,7 @@
 import React from 'react';
 import { ProgressBar } from './progress/ProgressBar';
 import { ConvertButton } from './progress/ConvertButton';
+import { ConversionStage } from '@/hooks/conversion/useConversionState';
 
 interface ConversionProgressProps {
   isConverting: boolean;
@@ -9,6 +10,9 @@ interface ConversionProgressProps {
   onConvert: () => void;
   isProcessingComplete?: boolean;
   onDownload?: () => void;
+  currentLabel?: number;
+  totalLabels?: number;
+  stage?: ConversionStage;
 }
 
 export const ConversionProgress = ({ 
@@ -16,7 +20,10 @@ export const ConversionProgress = ({
   progress, 
   onConvert,
   isProcessingComplete = false,
-  onDownload
+  onDownload,
+  currentLabel = 0,
+  totalLabels = 0,
+  stage = 'converting'
 }: ConversionProgressProps) => {
   const handleButtonClick = () => {
     if (isProcessingComplete && onDownload) {
@@ -34,7 +41,10 @@ export const ConversionProgress = ({
     <div className="space-y-4">
       <ProgressBar 
         isConverting={isConverting} 
-        progress={progress} 
+        progress={progress}
+        currentLabel={currentLabel}
+        totalLabels={totalLabels}
+        stage={stage}
       />
       
       <div className="flex justify-center">
