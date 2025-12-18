@@ -42,7 +42,7 @@ export const useA4Conversion = () => {
 
   const convertZplToA4Images = async (
     labels: string[],
-    onProgress: (progress: number) => void,
+    onProgress: (progress: number, currentLabel?: number) => void,
     config: ProcessingConfig = A4_CONFIG,
     enhanceLabels: boolean = false
   ): Promise<Blob[]> => {
@@ -137,7 +137,7 @@ export const useA4Conversion = () => {
         if (!isRetryPass) {
           completed++;
           const progressValue = (completed / validLabels.length) * 55;
-          onProgress(progressValue);
+          onProgress(progressValue, completed);
         }
         semaphore.release();
       }
@@ -194,10 +194,10 @@ export const useA4Conversion = () => {
       console.log(`🔍 Starting AI upscaling of ${pngImages.length} images...`);
       const upscaleStartTime = Date.now();
       
-      const upscaledImages = await upscaleImages(pngImages, (upscaleProgress) => {
+      const upscaledImages = await upscaleImages(pngImages, (upscaleProgress, currentImage) => {
         // Map upscale progress (0-100) to overall progress (55-90)
         const overallProgress = 55 + (upscaleProgress * 0.35);
-        onProgress(overallProgress);
+        onProgress(overallProgress, currentImage || 0);
       });
       
       const upscaleElapsed = ((Date.now() - upscaleStartTime) / 1000).toFixed(1);

@@ -227,6 +227,16 @@ const translations = {
   
   // Beta Notice
   betaNotice: '🚧 This tool is in BETA and under DEVELOPMENT. For issues or suggestions, use the Feedback button.',
+  
+  // Progress Messages
+  progressParsing: 'Analyzing labels...',
+  progressConverting: 'Converting {{current}}/{{total}} labels...',
+  progressConvertingSimple: 'Converting labels...',
+  progressUpscaling: 'Enhancing {{current}}/{{total}} labels...',
+  progressUpscalingSimple: 'Enhancing quality...',
+  progressOrganizing: 'Organizing PDF...',
+  progressUploading: 'Finishing...',
+  progressComplete: 'Complete!',
 };
 
 export default translations;

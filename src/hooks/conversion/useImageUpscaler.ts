@@ -138,7 +138,7 @@ export const useImageUpscaler = () => {
 
   const upscaleImages = async (
     blobs: Blob[],
-    onProgress: (progress: number) => void
+    onProgress: (progress: number, currentImage?: number) => void
   ): Promise<Blob[]> => {
     if (blobs.length === 0) {
       console.log('🔍 Upscaling: No images to process');
@@ -183,7 +183,7 @@ export const useImageUpscaler = () => {
       } finally {
         completed++;
         const progressValue = (completed / blobs.length) * 100;
-        onProgress(progressValue);
+        onProgress(progressValue, completed);
         semaphore.release();
       }
     };
