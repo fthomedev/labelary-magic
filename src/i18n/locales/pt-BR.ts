@@ -217,6 +217,9 @@ const translations = {
   
   // Process Again
   processAgain: 'Processar Novamente',
+  
+  // Beta Notice
+  betaNotice: '🚧 Esta ferramenta está em fase beta e em desenvolvimento. Para problemas ou sugestões, use o botão de Feedback.',
 };
 
 export default translations;
