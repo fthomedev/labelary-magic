@@ -43,6 +43,10 @@ const translations = {
   pwReqUppercase: 'Uma letra maiúscula',
   pwReqNumber: 'Um número',
   pwReqSymbol: 'Um caractere especial (!@#$...)',
+  emailConfirmationTitle: 'Verifique seu E-mail',
+  emailConfirmationDescription: 'Enviamos um link de confirmação para o seu e-mail. Por favor, acesse sua caixa de entrada e clique no link para ativar sua conta.',
+  emailConfirmationNote: 'Não recebeu o e-mail? Verifique sua pasta de spam ou lixo eletrônico.',
+  understood: 'Entendi',
   
   // Conta de usuário
   myAccount: 'Minha Conta',

@@ -8,8 +8,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
-import { Eye, EyeOff, Check, X } from "lucide-react";
+import { Eye, EyeOff, Check, X, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type AuthFormProps = {
   initialTab?: 'login' | 'signup';
@@ -26,6 +33,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showEmailConfirmModal, setShowEmailConfirmModal] = useState(false);
   
   // Validation states
   const [nameError, setNameError] = useState<string | null>(null);
@@ -175,19 +183,14 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           return;
         }
 
-        toast({
-          title: t("signUpSuccess"),
-          description: t("checkYourEmail"),
-        });
+        // Show email confirmation modal
+        setShowEmailConfirmModal(true);
         
-        // Clear form and switch to login
+        // Clear form
         setName("");
-        setEmail("");
         setPassword("");
         setNameTouched(false);
-        setEmailTouched(false);
         setPasswordTouched(false);
-        setIsSignUp(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -283,8 +286,37 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
     );
   }
 
+  const handleCloseEmailModal = () => {
+    setShowEmailConfirmModal(false);
+    setEmail("");
+    setEmailTouched(false);
+    setIsSignUp(false);
+  };
+
   return (
-    <Card className="w-full max-w-sm p-6 overflow-hidden">
+    <>
+      {/* Email Confirmation Modal */}
+      <Dialog open={showEmailConfirmModal} onOpenChange={setShowEmailConfirmModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center sm:text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <Mail className="h-8 w-8 text-primary" />
+            </div>
+            <DialogTitle className="text-xl">{t("emailConfirmationTitle")}</DialogTitle>
+            <DialogDescription className="text-base pt-2">
+              {t("emailConfirmationDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-muted/50 rounded-lg p-4 text-center">
+            <p className="text-sm text-muted-foreground">{t("emailConfirmationNote")}</p>
+          </div>
+          <Button onClick={handleCloseEmailModal} className="w-full mt-2">
+            {t("understood")}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      <Card className="w-full max-w-sm p-6 overflow-hidden">
       <form key={isSignUp ? 'signup' : 'login'} onSubmit={handleAuth} className="space-y-4 animate-fade-in">
         {isSignUp && (
           <div className="space-y-2">
@@ -418,5 +450,6 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
         </div>
       </form>
     </Card>
+    </>
   );
 };
