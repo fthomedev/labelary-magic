@@ -1,137 +1,83 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-
-function useMediaQuery(query: string) {
-  const getInitial = () => {
-    if (typeof window === 'undefined' || !window.matchMedia) return false;
-    return window.matchMedia(query).matches;
-  };
-
-  const [matches, setMatches] = useState<boolean>(getInitial);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-
-    const mql = window.matchMedia(query);
-    const onChange = () => setMatches(mql.matches);
-
-    onChange();
-
-    // Safari fallback
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const anyMql: any = mql;
-    if (mql.addEventListener) mql.addEventListener('change', onChange);
-    else if (anyMql.addListener) anyMql.addListener(onChange);
-
-    return () => {
-      if (mql.removeEventListener) mql.removeEventListener('change', onChange);
-      else if (anyMql.removeListener) anyMql.removeListener(onChange);
-    };
-  }, [query]);
-
-  return matches;
-}
+import { useEffect, useRef } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export function AdsterraBanner() {
-  const isDesktop = useMediaQuery('(min-width: 768px)');
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const slotRef = useRef<HTMLDivElement>(null);
-  const injectedKeyRef = useRef<string | null>(null);
-  const [scale, setScale] = useState(1);
+  const isMobile = useIsMobile();
+  const desktopRef = useRef<HTMLDivElement>(null);
+  const mobileRef = useRef<HTMLDivElement>(null);
+  const desktopLoaded = useRef(false);
+  const mobileLoaded = useRef(false);
 
-  const config = useMemo(() => {
-    return isDesktop
-      ? {
-          key: '808f74ee81253f98eac20b3774c0604e',
-          width: 728,
-          height: 90,
-          src: 'https://www.highperformanceformat.com/808f74ee81253f98eac20b3774c0604e/invoke.js',
-        }
-      : {
-          key: 'e0e59fcd3c3828b8f6644ab48a9e172d',
-          width: 320,
-          height: 50,
-          src: 'https://www.highperformanceformat.com/e0e59fcd3c3828b8f6644ab48a9e172d/invoke.js',
+  useEffect(() => {
+    // Load desktop banner (728x90)
+    if (desktopRef.current && !desktopLoaded.current) {
+      desktopLoaded.current = true;
+      
+      const optionsScript = document.createElement('script');
+      optionsScript.type = 'text/javascript';
+      optionsScript.text = `
+        atOptions = {
+          'key' : '808f74ee81253f98eac20b3774c0604e',
+          'format' : 'iframe',
+          'height' : 90,
+          'width' : 728,
+          'params' : {}
         };
-  }, [isDesktop]);
+      `;
+      
+      const invokeScript = document.createElement('script');
+      invokeScript.type = 'text/javascript';
+      invokeScript.src = 'https://www.highperformanceformat.com/808f74ee81253f98eac20b3774c0604e/invoke.js';
+
+      desktopRef.current.appendChild(optionsScript);
+      desktopRef.current.appendChild(invokeScript);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!wrapperRef.current) return;
+    // Load mobile banner (320x50)
+    if (mobileRef.current && !mobileLoaded.current) {
+      mobileLoaded.current = true;
+      
+      const optionsScript = document.createElement('script');
+      optionsScript.type = 'text/javascript';
+      optionsScript.text = `
+        atOptions = {
+          'key' : 'e0e59fcd3c3828b8f6644ab48a9e172d',
+          'format' : 'iframe',
+          'height' : 50,
+          'width' : 320,
+          'params' : {}
+        };
+      `;
+      
+      const invokeScript = document.createElement('script');
+      invokeScript.type = 'text/javascript';
+      invokeScript.src = 'https://www.highperformanceformat.com/e0e59fcd3c3828b8f6644ab48a9e172d/invoke.js';
 
-    const el = wrapperRef.current;
-    const update = () => {
-      const w = el.clientWidth || 0;
-      const next = w > 0 ? Math.min(1, w / config.width) : 1;
-      setScale(next);
-    };
-
-    update();
-
-    const ro = new ResizeObserver(() => update());
-    ro.observe(el);
-
-    return () => ro.disconnect();
-  }, [config.width]);
-
-  useEffect(() => {
-    if (!slotRef.current) return;
-    if (injectedKeyRef.current === config.key) return;
-
-    injectedKeyRef.current = config.key;
-    slotRef.current.innerHTML = '';
-
-    // Ensure global var exists before the invoke script loads
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).atOptions = {
-      key: config.key,
-      format: 'iframe',
-      height: config.height,
-      width: config.width,
-      params: {},
-    };
-
-    const optionsScript = document.createElement('script');
-    optionsScript.type = 'text/javascript';
-    optionsScript.text = `
-      atOptions = {
-        'key' : '${config.key}',
-        'format' : 'iframe',
-        'height' : ${config.height},
-        'width' : ${config.width},
-        'params' : {}
-      };
-    `;
-
-    const invokeScript = document.createElement('script');
-    invokeScript.type = 'text/javascript';
-    invokeScript.src = config.src;
-
-    slotRef.current.appendChild(optionsScript);
-    slotRef.current.appendChild(invokeScript);
-  }, [config.height, config.key, config.src, config.width]);
+      mobileRef.current.appendChild(optionsScript);
+      mobileRef.current.appendChild(invokeScript);
+    }
+  }, []);
 
   return (
     <div className="w-full flex justify-center mb-4">
-      <div ref={wrapperRef} className="w-full max-w-[728px] overflow-hidden">
-        <div
-          className="mx-auto"
-          style={{
-            height: config.height * scale,
-            width: Math.min(config.width, (wrapperRef.current?.clientWidth ?? config.width)),
-          }}
-        >
-          <div
-            style={{
-              width: config.width,
-              height: config.height,
-              transform: `scale(${scale})`,
-              transformOrigin: 'top left',
-            }}
-          >
-            <div ref={slotRef} style={{ width: config.width, height: config.height }} />
-          </div>
-        </div>
-      </div>
+      {/* Desktop banner - hidden on mobile */}
+      {!isMobile && (
+        <div 
+          ref={desktopRef}
+          className="flex items-center justify-center"
+          style={{ width: 728, height: 90 }}
+        />
+      )}
+      {/* Mobile banner - visible only on mobile */}
+      {isMobile && (
+        <div 
+          ref={mobileRef}
+          className="flex items-center justify-center"
+          style={{ width: 320, height: 50 }}
+        />
+      )}
     </div>
   );
 }
-
