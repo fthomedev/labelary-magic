@@ -34,8 +34,15 @@ const translations = {
   passwordRequirements: 'Password must contain lowercase, uppercase, number and symbol',
   passwordPlaceholder: 'Min 8 chars: Aa1@...',
   nameRequired: 'Name is required',
+  nameTooShort: 'Name must be at least 2 characters',
+  invalidEmail: 'Invalid email format',
   rememberMe: 'Remember me',
   emailAlreadyInUse: 'This email is already in use. Please log in or use a different email.',
+  pwReqMinLength: 'At least 8 characters',
+  pwReqLowercase: 'One lowercase letter',
+  pwReqUppercase: 'One uppercase letter',
+  pwReqNumber: 'One number',
+  pwReqSymbol: 'One special character (!@#$...)',
   
   // Conta de usuário
   myAccount: 'My Account',

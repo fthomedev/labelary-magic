@@ -34,8 +34,15 @@ const translations = {
   passwordRequirements: 'A senha deve conter minúscula, maiúscula, número e símbolo',
   passwordPlaceholder: 'Mín 8 chars: Aa1@...',
   nameRequired: 'O nome é obrigatório',
+  nameTooShort: 'Nome deve ter pelo menos 2 caracteres',
+  invalidEmail: 'Formato de e-mail inválido',
   rememberMe: 'Lembrar-me',
   emailAlreadyInUse: 'Este e-mail já está em uso. Por favor, faça login ou use outro e-mail.',
+  pwReqMinLength: 'Pelo menos 8 caracteres',
+  pwReqLowercase: 'Uma letra minúscula',
+  pwReqUppercase: 'Uma letra maiúscula',
+  pwReqNumber: 'Um número',
+  pwReqSymbol: 'Um caractere especial (!@#$...)',
   
   // Conta de usuário
   myAccount: 'Minha Conta',
