@@ -12,17 +12,17 @@ export function AdsterraMediumRectangle() {
     optionsScript.type = 'text/javascript';
     optionsScript.text = `
       atOptions = {
-        'key' : '35fc031b245d16ebfc56ba72d35405bb',
+        'key' : 'dd8023f6133948c01724c154fc1d6843',
         'format' : 'iframe',
-        'height' : 250,
-        'width' : 300,
+        'height' : 300,
+        'width' : 160,
         'params' : {}
       };
     `;
 
     const invokeScript = document.createElement('script');
     invokeScript.type = 'text/javascript';
-    invokeScript.src = 'https://www.highperformanceformat.com/35fc031b245d16ebfc56ba72d35405bb/invoke.js';
+    invokeScript.src = 'https://www.highperformanceformat.com/dd8023f6133948c01724c154fc1d6843/invoke.js';
 
     slotRef.current.appendChild(optionsScript);
     slotRef.current.appendChild(invokeScript);
@@ -33,7 +33,7 @@ export function AdsterraMediumRectangle() {
       <div 
         ref={slotRef} 
         className="flex items-center justify-center"
-        style={{ width: 300, height: 250 }}
+        style={{ width: 160, height: 300 }}
       />
     </div>
   );
