@@ -192,6 +192,9 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
+          options: {
+            captchaToken: captchaToken || undefined,
+          },
         });
         
         if (!error && rememberMe) {
@@ -214,11 +217,9 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
       });
     } finally {
       setIsLoading(false);
-      // Reset captcha after each attempt
-      if (isSignUp) {
-        captchaRef.current?.reset();
-        setCaptchaToken(null);
-      }
+      // Reset captcha after each attempt (both login and signup)
+      captchaRef.current?.reset();
+      setCaptchaToken(null);
     }
   };
 
@@ -366,36 +367,33 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           </div>
         )}
 
-        {/* Anti-bot protection for signup */}
+        {/* Anti-bot protection - Honeypot field for signup only */}
         {isSignUp && (
-          <>
-            {/* Honeypot field - invisible to users, bots fill it */}
-            <div style={{ position: 'absolute', left: '-9999px' }} aria-hidden="true">
-              <input
-                type="text"
-                name="website"
-                value={honeypot}
-                onChange={(e) => setHoneypot(e.target.value)}
-                tabIndex={-1}
-                autoComplete="off"
-              />
-            </div>
-            
-            {/* Cloudflare Turnstile CAPTCHA */}
-            <div className="flex justify-center">
-              <Turnstile
-                ref={captchaRef}
-                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                onSuccess={setCaptchaToken}
-                onError={() => setCaptchaToken(null)}
-                onExpire={() => setCaptchaToken(null)}
-                options={{ theme: 'light', size: 'normal' }}
-              />
-            </div>
-          </>
+          <div style={{ position: 'absolute', left: '-9999px' }} aria-hidden="true">
+            <input
+              type="text"
+              name="website"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
         )}
+        
+        {/* Cloudflare Turnstile CAPTCHA - for both login and signup */}
+        <div className="flex justify-center">
+          <Turnstile
+            ref={captchaRef}
+            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+            onSuccess={setCaptchaToken}
+            onError={() => setCaptchaToken(null)}
+            onExpire={() => setCaptchaToken(null)}
+            options={{ theme: 'light', size: 'normal' }}
+          />
+        </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading || (isSignUp && !captchaToken)}>
+        <Button type="submit" className="w-full" disabled={isLoading || !captchaToken}>
           {isLoading ? t("loading") : isSignUp ? t("signUp") : t("login")}
         </Button>
         <div className="flex flex-col gap-2 pt-2">
