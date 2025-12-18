@@ -240,7 +240,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
             <div className="flex justify-center">
               <Turnstile
                 ref={captchaRef}
-                siteKey="0x4AAAAAACGYwzFudi9N8kKT"
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
                 onSuccess={setCaptchaToken}
                 onError={() => setCaptchaToken(null)}
                 onExpire={() => setCaptchaToken(null)}
