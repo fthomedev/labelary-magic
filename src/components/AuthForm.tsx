@@ -197,7 +197,9 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           </div>
         )}
         <div className="space-y-2">
-          <Label htmlFor="email">{t("email")}</Label>
+          <Label htmlFor="email">
+            {t("email")} {isSignUp && <span className="text-destructive">*</span>}
+          </Label>
           <Input
             id="email"
             type="email"
@@ -207,7 +209,9 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">{t("password")}</Label>
+          <Label htmlFor="password">
+            {t("password")} {isSignUp && <span className="text-destructive">*</span>}
+          </Label>
           <Input
             id="password"
             type="password"
