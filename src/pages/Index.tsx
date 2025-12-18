@@ -14,6 +14,7 @@ import { SEO } from '@/components/SEO';
 import { FeedbackModal } from '@/components/FeedbackModal';
 import { PrintFormat } from '@/components/format/FormatSelector';
 import { SharePromoBanner } from '@/components/SharePromoBanner';
+import { AdBanner } from '@/components/AdBanner';
 import { useUserAccessLog } from '@/hooks/useUserAccessLog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
@@ -203,6 +204,8 @@ const Index = () => {
                       />
                     </div>
                   </div>
+                  
+                  <AdBanner />
                 </div>
               )}
             </div>
