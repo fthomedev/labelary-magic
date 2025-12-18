@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
+import { Eye, EyeOff } from "lucide-react";
 
 type AuthFormProps = {
   initialTab?: 'login' | 'signup';
@@ -23,6 +24,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const captchaRef = useRef<TurnstileInstance>(null);
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -212,15 +214,26 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           <Label htmlFor="password">
             {t("password")} {isSignUp && <span className="text-destructive">*</span>}
           </Label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={8}
-            placeholder={isSignUp ? t("passwordPlaceholder") : undefined}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+              placeholder={isSignUp ? t("passwordPlaceholder") : undefined}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
         
         {!isSignUp && (
