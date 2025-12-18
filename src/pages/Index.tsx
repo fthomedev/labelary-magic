@@ -15,6 +15,8 @@ import { FeedbackModal } from '@/components/FeedbackModal';
 import { PrintFormat } from '@/components/format/FormatSelector';
 import { SharePromoBanner } from '@/components/SharePromoBanner';
 import { useUserAccessLog } from '@/hooks/useUserAccessLog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
@@ -139,6 +141,15 @@ const Index = () => {
       </header>
 
       <SharePromoBanner />
+
+      <div className="mx-auto max-w-7xl px-4 mt-3">
+        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
+          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-amber-800 dark:text-amber-200 text-sm">
+            {t('betaNotice')}
+          </AlertDescription>
+        </Alert>
+      </div>
 
       <main className="py-3 md:py-5">
         <div className="mx-auto max-w-7xl px-4">
