@@ -28,9 +28,19 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
   const { toast } = useToast();
 
   const validatePassword = (password: string) => {
-    if (password.length < 6) {
+    if (password.length < 8) {
       return t("passwordTooShort");
     }
+    
+    const hasLowercase = /[a-z]/.test(password);
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasDigit = /[0-9]/.test(password);
+    const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    
+    if (!hasLowercase || !hasUppercase || !hasDigit || !hasSymbol) {
+      return t("passwordRequirements");
+    }
+    
     return null;
   };
 
@@ -204,7 +214,8 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={6}
+            minLength={8}
+            placeholder={isSignUp ? t("passwordPlaceholder") : undefined}
           />
         </div>
         
