@@ -76,7 +76,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           description: t("checkYourEmail"),
         });
       } else if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -89,11 +89,14 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
         });
         if (error) throw error;
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await supabase.from('profiles')
-            .update({ name: name })
-            .eq('id', user.id);
+        // Check if email already exists (Supabase returns user with empty identities)
+        if (data.user && data.user.identities && data.user.identities.length === 0) {
+          toast({
+            variant: "destructive",
+            title: t("error"),
+            description: t("emailAlreadyInUse"),
+          });
+          return;
         }
 
         toast({

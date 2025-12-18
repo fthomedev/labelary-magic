@@ -33,6 +33,7 @@ const translations = {
   passwordTooShort: 'A senha deve ter pelo menos 6 caracteres',
   nameRequired: 'O nome é obrigatório',
   rememberMe: 'Lembrar-me',
+  emailAlreadyInUse: 'Este e-mail já está em uso. Por favor, faça login ou use outro e-mail.',
   
   // Conta de usuário
   myAccount: 'Minha Conta',
