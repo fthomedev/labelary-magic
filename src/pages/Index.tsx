@@ -143,9 +143,9 @@ const Index = () => {
       <SharePromoBanner />
 
       <div className="mx-auto max-w-7xl px-4 mt-3">
-        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
-          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-          <AlertDescription className="text-amber-800 dark:text-amber-200 text-sm">
+        <Alert className="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-400 dark:from-amber-950/50 dark:to-yellow-950/50 dark:border-amber-600 shadow-md animate-pulse-slow">
+          <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+          <AlertDescription className="text-amber-900 dark:text-amber-100 text-sm font-medium">
             {t('betaNotice')}
           </AlertDescription>
         </Alert>
