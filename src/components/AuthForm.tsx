@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
 
 type AuthFormProps = {
   initialTab?: 'login' | 'signup';
@@ -21,6 +21,9 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
   const [name, setName] = useState("");
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState("");
+  const captchaRef = useRef<TurnstileInstance>(null);
   const { t } = useTranslation();
   const { toast } = useToast();
 
@@ -33,6 +36,11 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Honeypot check - bots fill hidden fields
+    if (isSignUp && honeypot) {
+      return; // Silently fail for bots
+    }
     
     if (isSignUp && !name.trim()) {
       toast({
@@ -72,6 +80,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           email,
           password,
           options: {
+            captchaToken: captchaToken || undefined,
             data: {
               name: name,
             },
@@ -117,6 +126,11 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
       });
     } finally {
       setIsLoading(false);
+      // Reset captcha after each attempt
+      if (isSignUp) {
+        captchaRef.current?.reset();
+        setCaptchaToken(null);
+      }
     }
   };
 
@@ -204,7 +218,36 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           </div>
         )}
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        {/* Anti-bot protection for signup */}
+        {isSignUp && (
+          <>
+            {/* Honeypot field - invisible to users, bots fill it */}
+            <div style={{ position: 'absolute', left: '-9999px' }} aria-hidden="true">
+              <input
+                type="text"
+                name="website"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </div>
+            
+            {/* Cloudflare Turnstile CAPTCHA */}
+            <div className="flex justify-center">
+              <Turnstile
+                ref={captchaRef}
+                siteKey="0x4AAAAAACGYwzFudi9N8kKT"
+                onSuccess={setCaptchaToken}
+                onError={() => setCaptchaToken(null)}
+                onExpire={() => setCaptchaToken(null)}
+                options={{ theme: 'light', size: 'normal' }}
+              />
+            </div>
+          </>
+        )}
+
+        <Button type="submit" className="w-full" disabled={isLoading || (isSignUp && !captchaToken)}>
           {isLoading ? t("loading") : isSignUp ? t("signUp") : t("login")}
         </Button>
         <div className="flex flex-col gap-2 pt-2">
