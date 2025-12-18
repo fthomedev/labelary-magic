@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
-import { Eye, EyeOff, Check, X, Mail } from "lucide-react";
+import { Eye, EyeOff, Check, X, Mail, Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -34,6 +34,9 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
   const [honeypot, setHoneypot] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showEmailConfirmModal, setShowEmailConfirmModal] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [lastEmailSent, setLastEmailSent] = useState("");
   
   // Validation states
   const [nameError, setNameError] = useState<string | null>(null);
@@ -185,6 +188,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
 
         // Show email confirmation modal
         setShowEmailConfirmModal(true);
+        setLastEmailSent(email);
         
         // Clear form
         setName("");
@@ -286,10 +290,55 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
     );
   }
 
+  // Cooldown timer effect
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => {
+        setResendCooldown(resendCooldown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  const handleResendEmail = async () => {
+    if (isResending || resendCooldown > 0 || !lastEmailSent) return;
+    
+    setIsResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: lastEmailSent,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth`,
+        },
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: t("resendEmailSuccess"),
+        description: t("checkYourEmail"),
+      });
+      
+      // Start 60 second cooldown
+      setResendCooldown(60);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: t("error"),
+        description: error.message,
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleCloseEmailModal = () => {
     setShowEmailConfirmModal(false);
     setEmail("");
     setEmailTouched(false);
+    setLastEmailSent("");
+    setResendCooldown(0);
     setIsSignUp(false);
   };
 
@@ -310,9 +359,34 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           <div className="bg-muted/50 rounded-lg p-4 text-center">
             <p className="text-sm text-muted-foreground">{t("emailConfirmationNote")}</p>
           </div>
-          <Button onClick={handleCloseEmailModal} className="w-full mt-2">
-            {t("understood")}
-          </Button>
+          <div className="flex flex-col gap-2 mt-2">
+            <Button onClick={handleCloseEmailModal} className="w-full">
+              {t("understood")}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleResendEmail}
+              disabled={isResending || resendCooldown > 0}
+              className="w-full"
+            >
+              {isResending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  {t("sending")}
+                </>
+              ) : resendCooldown > 0 ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  {t("resendIn", { seconds: resendCooldown })}
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  {t("resendEmail")}
+                </>
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
