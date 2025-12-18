@@ -47,6 +47,9 @@ const translations = {
   emailConfirmationDescription: 'We sent a confirmation link to your email. Please check your inbox and click the link to activate your account.',
   emailConfirmationNote: 'Didn\'t receive the email? Check your spam or junk folder.',
   understood: 'Got it',
+  resendEmail: 'Resend email',
+  resendEmailSuccess: 'Email resent successfully!',
+  resendIn: 'Resend in {{seconds}}s',
   
   // Conta de usuário
   myAccount: 'My Account',

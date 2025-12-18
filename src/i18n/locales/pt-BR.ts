@@ -47,6 +47,9 @@ const translations = {
   emailConfirmationDescription: 'Enviamos um link de confirmação para o seu e-mail. Por favor, acesse sua caixa de entrada e clique no link para ativar sua conta.',
   emailConfirmationNote: 'Não recebeu o e-mail? Verifique sua pasta de spam ou lixo eletrônico.',
   understood: 'Entendi',
+  resendEmail: 'Reenviar e-mail',
+  resendEmailSuccess: 'E-mail reenviado com sucesso!',
+  resendIn: 'Reenviar em {{seconds}}s',
   
   // Conta de usuário
   myAccount: 'Minha Conta',
