@@ -226,7 +226,7 @@ const translations = {
   processAgain: 'Processar Novamente',
   
   // Beta Notice
-  betaNotice: '🚧 Esta ferramenta está em fase beta e em desenvolvimento. Para problemas ou sugestões, use o botão de Feedback.',
+  betaNotice: '🚧 Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.',
 };
 
 export default translations;
