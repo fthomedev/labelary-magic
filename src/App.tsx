@@ -12,6 +12,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Subscription from "./pages/Subscription";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
+import DonationSuccess from "./pages/DonationSuccess";
 import CheckoutPage from "./pages/CheckoutPage";
 import Landing from "./pages/Landing";
 import Pricing from "./pages/Pricing";
@@ -102,7 +103,14 @@ const App = () => {
               </AuthGuard>
             }
           />
+          <Route
+            path="/donation/success"
+            element={
+              <PageWithFooter><DonationSuccess /></PageWithFooter>
+            }
+          />
           <Route path="*" element={<PageWithFooter><NotFound /></PageWithFooter>} />
+
         </Routes>
       </TooltipProvider>
     </QueryClientProvider>

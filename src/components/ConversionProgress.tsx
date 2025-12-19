@@ -3,6 +3,8 @@ import React from 'react';
 import { ProgressBar } from './progress/ProgressBar';
 import { ConvertButton } from './progress/ConvertButton';
 import { ConversionStage } from '@/hooks/conversion/useConversionState';
+import { DonationButton } from './DonationButton';
+import { useTranslation } from 'react-i18next';
 
 interface ConversionProgressProps {
   isConverting: boolean;
@@ -27,6 +29,8 @@ export const ConversionProgress = ({
   totalLabels = 0,
   stage = 'converting'
 }: ConversionProgressProps) => {
+  const { t } = useTranslation();
+  
   const handleButtonClick = () => {
     if (isProcessingComplete && onDownload) {
       onDownload();
@@ -58,6 +62,15 @@ export const ConversionProgress = ({
           onNewProcess={isProcessingComplete ? onNewProcess : undefined}
         />
       </div>
+
+      {isProcessingComplete && (
+        <div className="pt-4 border-t border-border/50">
+          <div className="text-center space-y-2">
+            <p className="text-sm text-muted-foreground">{t('likedIt')}</p>
+            <DonationButton variant="compact" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
