@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileUpload } from '@/components/FileUpload';
+import { FileUpload, FileUploadRef } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
 import { ConversionProgress } from '@/components/ConversionProgress';
 import { LanguageSelector } from '@/components/LanguageSelector';
@@ -31,6 +31,7 @@ const Index = () => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
+  const fileUploadRef = useRef<FileUploadRef>(null);
   
   // Log user access for analytics
   useUserAccessLog();
@@ -133,6 +134,10 @@ const Index = () => {
     resetA4Status();
     // Force FileUpload to remount and reset its internal state
     setFileUploadKey(prev => prev + 1);
+    // Open file selector after a brief delay to allow component to remount
+    setTimeout(() => {
+      fileUploadRef.current?.openFileSelector();
+    }, 100);
   };
 
   return (
@@ -182,7 +187,7 @@ const Index = () => {
             <div className="space-y-3">
               <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
                 <div className="p-3">
-                  <FileUpload key={fileUploadKey} onFileSelect={handleFileSelect} />
+                  <FileUpload key={fileUploadKey} ref={fileUploadRef} onFileSelect={handleFileSelect} />
                 </div>
               </div>
               
