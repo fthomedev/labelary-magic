@@ -27,6 +27,7 @@ const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [selectedFormat, setSelectedFormat] = useState<PrintFormat>('standard');
   const [enhanceLabels, setEnhanceLabels] = useState<boolean>(false);
+  const [fileUploadKey, setFileUploadKey] = useState(0);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
@@ -130,6 +131,8 @@ const Index = () => {
     setFileCount(1);
     resetStandardStatus();
     resetA4Status();
+    // Force FileUpload to remount and reset its internal state
+    setFileUploadKey(prev => prev + 1);
   };
 
   return (
@@ -179,7 +182,7 @@ const Index = () => {
             <div className="space-y-3">
               <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
                 <div className="p-3">
-                  <FileUpload onFileSelect={handleFileSelect} />
+                  <FileUpload key={fileUploadKey} onFileSelect={handleFileSelect} />
                 </div>
               </div>
               
