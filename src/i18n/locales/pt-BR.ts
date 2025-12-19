@@ -263,7 +263,11 @@ const translations = {
   // Donation
   supportProject: 'Apoiar o Projeto',
   donationDescription: 'Sua contribuição ajuda a manter o ZPL Easy gratuito e em constante evolução. Escolha um valor para doar:',
+  donationHelpMessage: 'Sua doação mantém o projeto gratuito e em evolução. Obrigado!',
   donateNow: 'Doar Agora',
+  donateWithCard: 'Doar com Cartão',
+  card: 'Cartão',
+  scanPixQrCode: 'Escaneie o QR Code com o app do seu banco',
   likedIt: 'Gostou? Considere apoiar o projeto!',
   donationSuccessTitle: 'Obrigado pela Doação!',
   donationThankYouMessage: 'Sua generosidade nos ajuda a continuar melhorando o ZPL Easy.',
