@@ -275,23 +275,45 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
       <Card className="w-full max-w-sm p-6">
         <form onSubmit={handleAuth} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">{t("email")}</Label>
+            <Label htmlFor="reset-email">{t("email")}</Label>
             <Input
-              id="email"
+              id="reset-email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
+              onBlur={handleEmailBlur}
               required
+              className={cn(emailError && emailTouched && "border-destructive")}
+            />
+            {emailError && emailTouched && (
+              <p className="text-sm text-destructive">{emailError}</p>
+            )}
+          </div>
+          
+          {/* Cloudflare Turnstile CAPTCHA */}
+          <div className="flex justify-center">
+            <Turnstile
+              ref={captchaRef}
+              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+              onSuccess={setCaptchaToken}
+              onError={() => setCaptchaToken(null)}
+              onExpire={() => setCaptchaToken(null)}
+              options={{ theme: 'light', size: 'normal' }}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          
+          <Button type="submit" className="w-full" disabled={isLoading || !captchaToken || !!emailError}>
             {isLoading ? t("sending") : t("sendResetLink")}
           </Button>
           <Button
             type="button"
             variant="ghost"
             className="w-full"
-            onClick={() => setIsResetPassword(false)}
+            onClick={() => {
+              setIsResetPassword(false);
+              captchaRef.current?.reset();
+              setCaptchaToken(null);
+            }}
           >
             {t("backToLogin")}
           </Button>
