@@ -1,5 +1,6 @@
 const translations = {
   // Geral
+  newProcess: 'New',
   home: 'Home',
   login: 'Login',
   register: 'Register',

@@ -123,6 +123,15 @@ const Index = () => {
     }
   };
 
+  const handleNewProcess = () => {
+    // Clear the content and reset all processing states
+    setZplContent('');
+    setSourceType('file');
+    setFileCount(1);
+    resetStandardStatus();
+    resetA4Status();
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <SEO 
@@ -201,6 +210,7 @@ const Index = () => {
                         onConvert={handleConvert}
                         isProcessingComplete={isProcessingComplete}
                         onDownload={handleDownload}
+                        onNewProcess={handleNewProcess}
                         currentLabel={progressInfo.currentLabel}
                         totalLabels={progressInfo.totalLabels}
                         stage={progressInfo.stage}
