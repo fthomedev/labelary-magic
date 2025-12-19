@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Heart, Coffee, Loader2 } from 'lucide-react';
+import { Heart, Coffee, Loader2, CreditCard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,8 +10,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import qrCodePix from '@/assets/qrcode-pix.png';
 
 const DONATION_OPTIONS = [
   { amount: 500, label: 'R$ 5' },
@@ -83,48 +85,78 @@ export const DonationButton = ({ variant = 'default', className = '' }: Donation
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Heart className="h-5 w-5 text-red-500" />
             {t('supportProject')}
           </DialogTitle>
-          <DialogDescription>
-            {t('donationDescription')}
+          <DialogDescription className="text-center">
+            {t('donationHelpMessage')}
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="grid grid-cols-2 gap-3 py-4">
-          {DONATION_OPTIONS.map((option) => (
-            <Button
-              key={option.amount}
-              variant={selectedAmount === option.amount ? 'default' : 'outline'}
-              className="h-14 text-lg font-semibold"
-              onClick={() => setSelectedAmount(option.amount)}
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
 
-        <Button
-          className="w-full"
-          size="lg"
-          disabled={!selectedAmount || isLoading}
-          onClick={handleDonate}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {t('processing')}
-            </>
-          ) : (
-            <>
-              <Heart className="mr-2 h-4 w-4" />
-              {t('donateNow')}
-            </>
-          )}
-        </Button>
+        <Tabs defaultValue="pix" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="pix" className="gap-2">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo%E2%80%94pix_powered_by_Banco_Central_%28Brazil%2C_2020%29.svg" alt="PIX" className="h-4 w-auto" />
+              PIX
+            </TabsTrigger>
+            <TabsTrigger value="card" className="gap-2">
+              <CreditCard className="h-4 w-4" />
+              {t('card')}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pix" className="mt-4">
+            <div className="flex flex-col items-center gap-4">
+              <div className="bg-white p-3 rounded-lg shadow-sm">
+                <img 
+                  src={qrCodePix} 
+                  alt="QR Code PIX" 
+                  className="w-48 h-48 object-contain"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                {t('scanPixQrCode')}
+              </p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="card" className="mt-4">
+            <div className="grid grid-cols-2 gap-3">
+              {DONATION_OPTIONS.map((option) => (
+                <Button
+                  key={option.amount}
+                  variant={selectedAmount === option.amount ? 'default' : 'outline'}
+                  className="h-14 text-lg font-semibold"
+                  onClick={() => setSelectedAmount(option.amount)}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+
+            <Button
+              className="w-full mt-4"
+              size="lg"
+              disabled={!selectedAmount || isLoading}
+              onClick={handleDonate}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t('processing')}
+                </>
+              ) : (
+                <>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  {t('donateWithCard')}
+                </>
+              )}
+            </Button>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
