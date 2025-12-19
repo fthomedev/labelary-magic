@@ -34,6 +34,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
   const [honeypot, setHoneypot] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showEmailConfirmModal, setShowEmailConfirmModal] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [lastEmailSent, setLastEmailSent] = useState("");
@@ -159,10 +160,10 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           captchaToken: captchaToken || undefined,
         });
         if (error) throw error;
-        toast({
-          title: t("resetPasswordEmailSent"),
-          description: t("checkYourEmail"),
-        });
+        
+        // Show reset password confirmation modal
+        setLastEmailSent(email);
+        setShowResetPasswordModal(true);
       } else if (isSignUp) {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -365,6 +366,16 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
     setIsSignUp(false);
   };
 
+  const handleCloseResetPasswordModal = () => {
+    setShowResetPasswordModal(false);
+    setEmail("");
+    setEmailTouched(false);
+    setLastEmailSent("");
+    setIsResetPassword(false);
+    captchaRef.current?.reset();
+    setCaptchaToken(null);
+  };
+
   return (
     <>
       {/* Email Confirmation Modal */}
@@ -408,6 +419,29 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
                   {t("resendEmail")}
                 </>
               )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Confirmation Modal */}
+      <Dialog open={showResetPasswordModal} onOpenChange={setShowResetPasswordModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center sm:text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <Mail className="h-8 w-8 text-primary" />
+            </div>
+            <DialogTitle className="text-xl">{t("resetPasswordEmailSent")}</DialogTitle>
+            <DialogDescription className="text-base pt-2">
+              {t("resetPasswordDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-muted/50 rounded-lg p-4 text-center">
+            <p className="text-sm text-muted-foreground">{t("resetPasswordNote")}</p>
+          </div>
+          <div className="flex flex-col gap-2 mt-2">
+            <Button onClick={handleCloseResetPasswordModal} className="w-full">
+              {t("goToLogin")}
             </Button>
           </div>
         </DialogContent>

@@ -50,6 +50,9 @@ const translations = {
   resendEmail: 'Reenviar e-mail',
   resendEmailSuccess: 'E-mail reenviado com sucesso!',
   resendIn: 'Reenviar em {{seconds}}s',
+  resetPasswordDescription: 'Enviamos um link de recuperação para o seu e-mail. Por favor, acesse sua caixa de entrada e clique no link para redefinir sua senha.',
+  resetPasswordNote: 'Não recebeu o e-mail? Verifique sua pasta de spam ou lixo eletrônico.',
+  goToLogin: 'Ir para Login',
   
   // Conta de usuário
   myAccount: 'Minha Conta',
