@@ -269,6 +269,8 @@ const translations = {
   donationThankYouMessage: 'Your generosity helps us continue improving ZPL Easy.',
   donationImpactMessage: 'Your support is essential to keep the tool free and add new features.',
   footerDescription: 'The best platform for ZPL to PDF conversion. Simple, fast and secure.',
+  supporter: 'supporter',
+  supporters: 'supporters',
 };
 
 export default translations;
