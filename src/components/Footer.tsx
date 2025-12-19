@@ -1,6 +1,6 @@
 
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { DonationButton } from "./DonationButton";
 
 export const Footer = () => {
   const { t } = useTranslation();
@@ -8,15 +8,19 @@ export const Footer = () => {
   return (
     <footer className="w-full py-12 px-4 bg-gray-900 text-gray-400 mt-auto">
       <div className="container mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
           <div>
             <h3 className="text-white font-semibold mb-4">ZPL Easy</h3>
             <p className="text-sm">
-              A melhor plataforma para conversão de ZPL para PDF. Simples, rápido e seguro.
+              {t('footerDescription')}
             </p>
           </div>
           
-          <div className="border-t border-gray-800 mt-8 pt-6 text-center text-sm">
+          <div className="flex justify-center">
+            <DonationButton />
+          </div>
+          
+          <div className="text-center md:text-right text-sm">
             <p>© {new Date().getFullYear()} ZPL Easy. {t('allRightsReserved')}</p>
           </div>
         </div>

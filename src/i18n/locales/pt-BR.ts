@@ -259,6 +259,17 @@ const translations = {
   progressOrganizing: 'Organizando PDF...',
   progressUploading: 'Finalizando...',
   progressComplete: 'Concluído!',
+  
+  // Donation
+  supportProject: 'Apoiar o Projeto',
+  donationDescription: 'Sua contribuição ajuda a manter o ZPL Easy gratuito e em constante evolução. Escolha um valor para doar:',
+  donateNow: 'Doar Agora',
+  likedIt: 'Gostou? Considere apoiar o projeto!',
+  donationSuccessTitle: 'Obrigado pela Doação!',
+  donationThankYouMessage: 'Sua generosidade nos ajuda a continuar melhorando o ZPL Easy.',
+  donationImpactMessage: 'Seu apoio é fundamental para mantermos a ferramenta gratuita e adicionarmos novos recursos.',
+  footerDescription: 'A melhor plataforma para conversão de ZPL para PDF. Simples, rápido e seguro.',
 };
 
 export default translations;
+

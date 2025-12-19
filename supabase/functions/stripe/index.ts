@@ -5,6 +5,7 @@ import { initializeStripe } from "./utils/stripe.ts";
 import { handleCreateCheckoutSession } from "./handlers/checkoutSession.ts";
 import { handleGetPrices } from "./handlers/prices.ts";
 import { handleGetCustomerSubscription } from "./handlers/subscription.ts";
+import { handleCreateDonationSession } from "./handlers/donation.ts";
 
 // Main request handler
 serve(async (req) => {
@@ -40,6 +41,9 @@ serve(async (req) => {
 
       case 'get-customer-subscription':
         return handleGetCustomerSubscription(stripe, data);
+
+      case 'create-donation-session':
+        return handleCreateDonationSession(stripe, data);
 
       default:
         console.error(`Invalid action: ${action}`);
