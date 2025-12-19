@@ -14,8 +14,6 @@ import { SEO } from '@/components/SEO';
 import { FeedbackModal } from '@/components/FeedbackModal';
 import { PrintFormat } from '@/components/format/FormatSelector';
 import { SharePromoBanner } from '@/components/SharePromoBanner';
-import { AdBanner } from '@/components/AdBanner';
-import { AdsterraBanner } from '@/components/AdsterraBanner';
 import { useUserAccessLog } from '@/hooks/useUserAccessLog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
@@ -165,7 +163,6 @@ const Index = () => {
       <SharePromoBanner />
 
       <div className="mx-auto max-w-7xl px-4 mt-3">
-        <AdsterraBanner />
         
         <Alert className="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-400 dark:from-amber-950/50 dark:to-yellow-950/50 dark:border-amber-600 shadow-md animate-pulse-slow">
           <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
@@ -225,8 +222,6 @@ const Index = () => {
                       />
                     </div>
                   </div>
-                  
-                  <AdBanner />
                 </div>
               )}
             </div>

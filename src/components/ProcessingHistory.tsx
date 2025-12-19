@@ -9,7 +9,7 @@ import { HistoryTable } from './history/HistoryTable';
 import { HistoryPagination } from './history/HistoryPagination';
 import { PdfViewerModal } from './history/PdfViewerModal';
 import { DeleteConfirmDialog } from './history/DeleteConfirmDialog';
-import { AdsterraMediumRectangle } from './AdsterraMediumRectangle';
+
 
 interface ProcessingHistoryProps {
   records?: ProcessingRecord[];
@@ -109,11 +109,6 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           />
         </CardFooter>
       )}
-      
-      {/* Adsterra 300x250 Banner */}
-      <div className="border-t">
-        <AdsterraMediumRectangle />
-      </div>
 
       {/* PDF Viewer Modal */}
       <PdfViewerModal
