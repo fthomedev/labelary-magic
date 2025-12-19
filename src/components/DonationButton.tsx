@@ -21,7 +21,7 @@ const DONATION_OPTIONS = [
 ];
 
 interface DonationButtonProps {
-  variant?: 'default' | 'compact';
+  variant?: 'default' | 'compact' | 'success';
   className?: string;
 }
 
@@ -68,6 +68,11 @@ export const DonationButton = ({ variant = 'default', className = '' }: Donation
       <DialogTrigger asChild>
         {variant === 'compact' ? (
           <Button variant="ghost" size="sm" className={`gap-2 ${className}`}>
+            <Coffee className="h-4 w-4" />
+            {t('supportProject')}
+          </Button>
+        ) : variant === 'success' ? (
+          <Button className={`gap-2 bg-primary hover:bg-primary/90 text-primary-foreground ${className}`}>
             <Coffee className="h-4 w-4" />
             {t('supportProject')}
           </Button>
