@@ -6,14 +6,14 @@ type AdConfig = {
   height: number;
 };
 
-// Top banner (desktop) — script provided by you
+// Top banner (desktop 468x60)
 const DESKTOP_AD: AdConfig = {
   key: 'e2719207af9eb12b04d412caf1071e79',
   width: 468,
   height: 60,
 };
 
-// Mobile banner
+// Mobile banner (320x50)
 const MOBILE_AD: AdConfig = {
   key: 'e0e59fcd3c3828b8f6644ab48a9e172d',
   width: 320,
@@ -21,31 +21,48 @@ const MOBILE_AD: AdConfig = {
 };
 
 function injectAd(
-  target: React.RefObject<HTMLDivElement>,
+  container: HTMLDivElement,
   config: AdConfig,
-  loadedRef: React.MutableRefObject<boolean>
+  uniqueId: string
 ) {
-  if (!target.current || loadedRef.current) return;
-  loadedRef.current = true;
+  // Create isolated iframe to avoid atOptions conflicts
+  const iframe = document.createElement('iframe');
+  iframe.style.width = `${config.width}px`;
+  iframe.style.height = `${config.height}px`;
+  iframe.style.border = 'none';
+  iframe.style.overflow = 'hidden';
+  iframe.scrolling = 'no';
+  iframe.id = uniqueId;
 
-  const optionsScript = document.createElement('script');
-  optionsScript.type = 'text/javascript';
-  optionsScript.text = `
-    atOptions = {
-      'key' : '${config.key}',
-      'format' : 'iframe',
-      'height' : ${config.height},
-      'width' : ${config.width},
-      'params' : {}
-    };
-  `;
+  container.appendChild(iframe);
 
-  const invokeScript = document.createElement('script');
-  invokeScript.type = 'text/javascript';
-  invokeScript.src = `https://www.highperformanceformat.com/${config.key}/invoke.js`;
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+  if (!iframeDoc) return;
 
-  target.current.appendChild(optionsScript);
-  target.current.appendChild(invokeScript);
+  iframeDoc.open();
+  iframeDoc.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { margin: 0; padding: 0; overflow: hidden; }
+        </style>
+      </head>
+      <body>
+        <script type="text/javascript">
+          atOptions = {
+            'key' : '${config.key}',
+            'format' : 'iframe',
+            'height' : ${config.height},
+            'width' : ${config.width},
+            'params' : {}
+          };
+        </script>
+        <script type="text/javascript" src="https://www.highperformanceformat.com/${config.key}/invoke.js"></script>
+      </body>
+    </html>
+  `);
+  iframeDoc.close();
 }
 
 export function AdsterraBanner() {
@@ -55,19 +72,17 @@ export function AdsterraBanner() {
   const mobileLoaded = useRef(false);
 
   useEffect(() => {
-    const mql = window.matchMedia('(min-width: 768px)');
+    const isDesktop = window.innerWidth >= 768;
 
-    const loadForBreakpoint = () => {
-      if (mql.matches) {
-        injectAd(desktopRef, DESKTOP_AD, desktopLoaded);
-      } else {
-        injectAd(mobileRef, MOBILE_AD, mobileLoaded);
-      }
-    };
+    if (isDesktop && desktopRef.current && !desktopLoaded.current) {
+      desktopLoaded.current = true;
+      injectAd(desktopRef.current, DESKTOP_AD, 'adsterra-top-desktop');
+    }
 
-    loadForBreakpoint();
-    mql.addEventListener('change', loadForBreakpoint);
-    return () => mql.removeEventListener('change', loadForBreakpoint);
+    if (!isDesktop && mobileRef.current && !mobileLoaded.current) {
+      mobileLoaded.current = true;
+      injectAd(mobileRef.current, MOBILE_AD, 'adsterra-top-mobile');
+    }
   }, []);
 
   return (
@@ -85,4 +100,3 @@ export function AdsterraBanner() {
     </div>
   );
 }
-
