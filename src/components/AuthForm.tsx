@@ -230,6 +230,16 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
     }
   };
 
+  // Cooldown timer effect - MUST be before any conditional returns
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => {
+        setResendCooldown(resendCooldown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
   // Password strength indicator component
   const PasswordStrengthIndicator = () => {
     if (!isSignUp || !passwordTouched || password.length === 0) return null;
@@ -289,16 +299,6 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
       </Card>
     );
   }
-
-  // Cooldown timer effect
-  useEffect(() => {
-    if (resendCooldown > 0) {
-      const timer = setTimeout(() => {
-        setResendCooldown(resendCooldown - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [resendCooldown]);
 
   const handleResendEmail = async () => {
     if (isResending || resendCooldown > 0 || !lastEmailSent) return;
