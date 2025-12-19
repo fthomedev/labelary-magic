@@ -23,7 +23,7 @@ serve(async (req) => {
     let event: Stripe.Event;
 
     if (webhookSecret) {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     } else {
       // For testing without webhook secret
       event = JSON.parse(body);
