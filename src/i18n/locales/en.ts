@@ -50,6 +50,9 @@ const translations = {
   resendEmail: 'Resend email',
   resendEmailSuccess: 'Email resent successfully!',
   resendIn: 'Resend in {{seconds}}s',
+  resetPasswordDescription: 'We sent a password reset link to your email. Please check your inbox and click the link to reset your password.',
+  resetPasswordNote: 'Didn\'t receive the email? Check your spam or junk folder.',
+  goToLogin: 'Go to Login',
   
   // Conta de usuário
   myAccount: 'My Account',
