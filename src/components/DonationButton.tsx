@@ -74,7 +74,7 @@ export const DonationButton = ({ variant = 'default', className = '' }: Donation
             {t('supportProject')}
           </Button>
         ) : variant === 'success' ? (
-          <Button className={`gap-2 bg-primary hover:bg-primary/90 text-primary-foreground animate-pulse ${className}`}>
+          <Button className={`gap-2 bg-primary hover:bg-primary/90 text-primary-foreground animate-pulse-slow ${className}`}>
             <Coffee className="h-4 w-4" />
             {t('supportProject')}
           </Button>
