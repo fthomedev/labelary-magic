@@ -156,6 +156,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
       if (isResetPassword) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth/reset-password`,
+          captchaToken: captchaToken || undefined,
         });
         if (error) throw error;
         toast({
