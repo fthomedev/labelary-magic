@@ -53,7 +53,18 @@ const translations = {
   resetPasswordDescription: 'Enviamos um link de recuperação para o seu e-mail. Por favor, acesse sua caixa de entrada e clique no link para redefinir sua senha.',
   resetPasswordNote: 'Não recebeu o e-mail? Verifique sua pasta de spam ou lixo eletrônico.',
   goToLogin: 'Ir para Login',
-  
+  createNewPassword: 'Criar Nova Senha',
+  createNewPasswordDesc: 'Digite sua nova senha abaixo.',
+  newPassword: 'Nova Senha',
+  confirmPassword: 'Confirmar Senha',
+  passwordsDontMatch: 'As senhas não coincidem',
+  passwordsMatch: 'As senhas coincidem',
+  passwordResetSuccess: 'Senha Redefinida com Sucesso',
+  passwordResetSuccessDesc: 'Sua senha foi alterada. Você será redirecionado para o login.',
+  linkExpiredTitle: 'Link Expirado',
+  linkExpiredDescription: 'Este link de recuperação é inválido ou expirou. Por favor, solicite um novo link.',
+  requestNewLink: 'Solicitar Novo Link',
+
   // Conta de usuário
   myAccount: 'Minha Conta',
   userMenu: 'Menu do Usuário',

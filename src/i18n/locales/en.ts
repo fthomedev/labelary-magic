@@ -53,7 +53,18 @@ const translations = {
   resetPasswordDescription: 'We sent a password reset link to your email. Please check your inbox and click the link to reset your password.',
   resetPasswordNote: 'Didn\'t receive the email? Check your spam or junk folder.',
   goToLogin: 'Go to Login',
-  
+  createNewPassword: 'Create New Password',
+  createNewPasswordDesc: 'Enter your new password below.',
+  newPassword: 'New Password',
+  confirmPassword: 'Confirm Password',
+  passwordsDontMatch: 'Passwords do not match',
+  passwordsMatch: 'Passwords match',
+  passwordResetSuccess: 'Password Reset Successfully',
+  passwordResetSuccessDesc: 'Your password has been changed. You will be redirected to login.',
+  linkExpiredTitle: 'Link Expired',
+  linkExpiredDescription: 'This recovery link is invalid or has expired. Please request a new link.',
+  requestNewLink: 'Request New Link',
+
   // Conta de usuário
   myAccount: 'My Account',
   userMenu: 'User Menu',

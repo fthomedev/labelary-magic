@@ -8,6 +8,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 import { Footer } from "@/components/Footer";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Subscription from "./pages/Subscription";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
@@ -50,6 +51,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<PageWithFooter><Landing /></PageWithFooter>} />
           <Route path="/auth" element={<PageWithFooter><Auth /></PageWithFooter>} />
+          <Route path="/auth/reset-password" element={<PageWithFooter><ResetPassword /></PageWithFooter>} />
           <Route
             path="/app"
             element={
