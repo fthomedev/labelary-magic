@@ -67,7 +67,7 @@ export const ConversionProgress = ({
         <div className="pt-4 border-t border-border/50">
           <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">{t('likedIt')}</p>
-            <DonationButton variant="compact" />
+            <DonationButton variant="success" />
           </div>
         </div>
       )}
