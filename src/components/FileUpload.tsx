@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, forwardRef, useImperativeHandle } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,11 @@ interface FileUploadProps {
   onFileSelect: (content: string, type?: 'file' | 'zip', count?: number) => void;
 }
 
-export function FileUpload({ onFileSelect }: FileUploadProps) {
+export interface FileUploadRef {
+  openFileSelector: () => void;
+}
+
+export const FileUpload = forwardRef<FileUploadRef, FileUploadProps>(({ onFileSelect }, ref) => {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -56,15 +60,22 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
     }
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
       'text/plain': ['.txt'],
       'application/zip': ['.zip'],
       'application/x-zip-compressed': ['.zip'],
     },
-    multiple: true, // Enable multiple file selection
+    multiple: true,
+    noClick: false,
+    noKeyboard: false,
   });
+
+  // Expose the open function to parent components
+  useImperativeHandle(ref, () => ({
+    openFileSelector: open
+  }));
 
   return (
     <Card className="w-full shadow-md overflow-hidden">
@@ -89,4 +100,6 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
       <ErrorMessage message={error} />
     </Card>
   );
-}
+});
+
+FileUpload.displayName = 'FileUpload';
