@@ -223,12 +223,13 @@ const translations = {
   // Formato de impressão
   printFormat: 'Formato de Impressão',
   standardFormat: 'Padrão',
-  a4Format: 'Folha A4',
+  hdFormat: 'Alta Qualidade (HD)',
   selectPrintFormat: 'Selecione como deseja imprimir suas etiquetas',
   formatDescription: 'Escolha o formato que melhor se adapta à sua impressora',
-  a4FormatDescription: '4 etiquetas organizadas em folha A4',
-  enhanceLabels: 'Melhorar etiquetas (mais lento)',
+  hdFormatDescription: 'Etiquetas com qualidade aprimorada via IA',
   standardFormatDescription: 'Etiquetas individuais em sequência',
+  hdFormatWarning: 'Atenção: Processo Mais Demorado',
+  hdFormatWarningMessage: 'O modo Alta Qualidade utiliza inteligência artificial para melhorar cada etiqueta individualmente. Este processo pode levar significativamente mais tempo que o modo padrão.',
   
   // Pagination
   previous: 'Anterior',
