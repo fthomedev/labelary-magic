@@ -1,6 +1,5 @@
 import Upscaler from 'upscaler';
 import x2 from '@upscalerjs/default-model';
-import * as tf from '@tensorflow/tfjs';
 
 // Singleton upscaler instance for model caching
 let upscalerInstance: InstanceType<typeof Upscaler> | null = null;
@@ -116,46 +115,62 @@ export const useImageUpscaler = () => {
   };
 
   const upscaleImage = async (blob: Blob): Promise<Blob> => {
+    const UPSCALE_TIMEOUT_MS = 45_000;
+
+    const abortController = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      abortController.abort();
+    }, UPSCALE_TIMEOUT_MS);
+
     try {
       const upscaler = await getUpscaler();
       const img = await blobToImage(blob);
-      
+
       // Resize image if it exceeds WebGL texture limits
       const resizedInput = resizeImageForWebGL(img);
-      
-      // Upscale the image (returns base64 data URL by default)
-      const upscaledSrc = await upscaler.upscale(resizedInput);
-      
+
+      // IMPORTANT: Some GPUs/WebGL drivers can hang during upscale.
+      // Use AbortController so a stuck upscale doesn't freeze the whole HD pipeline.
+      const upscaledSrc = (await upscaler.upscale(resizedInput as any, {
+        output: 'base64',
+        signal: abortController.signal,
+      } as const)) as unknown as string;
+
       // Convert data URL back to Blob
       const upscaledBlob = await dataUrlToBlob(upscaledSrc);
-      
+
       return upscaledBlob;
     } catch (error) {
-      console.error('⚠️ Upscaling failed, using original image:', error);
-      // Fallback to original image on error
+      if (abortController.signal.aborted) {
+        console.warn('⏱️ Upscaling timed out/aborted, using original image');
+      } else {
+        console.error('⚠️ Upscaling failed, using original image:', error);
+      }
+      // Fallback to original image on any error
       return blob;
+    } finally {
+      clearTimeout(timeoutId);
     }
   };
 
-  // Clean up TensorFlow memory gradually
+  // Best-effort: yield the main thread so the browser can reclaim GPU/JS memory.
+  // Avoid tf.disposeVariables() here because it can break the upscaler model for the next run.
   const cleanupTensorMemory = async (): Promise<void> => {
     try {
-      console.log('🧹 Starting gradual TensorFlow memory cleanup...');
-      
-      // Dispose any lingering tensors
-      const numTensors = tf.memory().numTensors;
-      console.log(`📊 Tensors before cleanup: ${numTensors}`);
-      
-      // Force garbage collection by disposing unused tensors
-      tf.disposeVariables();
-      
-      // Small delay to let the GPU release memory gradually
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      console.log(`📊 Tensors after cleanup: ${tf.memory().numTensors}`);
-      console.log('✅ TensorFlow memory cleanup complete');
+      console.log('🧹 Finalizing: yielding for memory cleanup...');
+      await new Promise(resolve => setTimeout(resolve, 120));
+
+      // If tf is present, log memory stats (no disposing)
+      try {
+        const tf = await import('@tensorflow/tfjs');
+        console.log(`📊 TensorFlow tensors (info): ${tf.memory().numTensors}`);
+      } catch {
+        // ignore if tf can't be imported
+      }
+
+      console.log('✅ Finalizing step complete');
     } catch (error) {
-      console.warn('⚠️ TensorFlow cleanup warning:', error);
+      console.warn('⚠️ Finalizing warning:', error);
     }
   };
 
@@ -168,7 +183,7 @@ export const useImageUpscaler = () => {
       return [];
     }
 
-    const MAX_CONCURRENT = 3;
+    const MAX_CONCURRENT = 1;
     const semaphore = new UpscaleSemaphore(MAX_CONCURRENT);
     const results: (Blob | null)[] = new Array(blobs.length).fill(null);
     let completed = 0;
