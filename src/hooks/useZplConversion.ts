@@ -7,6 +7,7 @@ import { usePdfOperations } from '@/hooks/conversion/usePdfOperations';
 import { useConversionState } from '@/hooks/conversion/useConversionState';
 import { useConversionMetrics } from '@/hooks/conversion/useConversionMetrics';
 import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
+import { calculateProgress } from '@/hooks/conversion/useProgressCalculator';
 
 export interface ProcessingRecord {
   id: string;
@@ -82,7 +83,8 @@ export const useZplConversion = () => {
       const conversionPhaseStart = Date.now();
 
       const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
-        const percentage = progressValue * 0.8; // Reserve 20% for merging and upload
+        // progressValue is 0-100 within the converting stage
+        const percentage = calculateProgress('standard', 'converting', progressValue);
         const currentLabel = Math.floor((progressValue / 100) * finalLabelCount);
         updateProgress({ percentage, currentLabel, stage: 'converting' });
       }, config);
@@ -91,9 +93,11 @@ export const useZplConversion = () => {
       console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
 
       try {
-        updateProgress({ percentage: 85, stage: 'organizing' });
+        updateProgress({ percentage: calculateProgress('standard', 'organizing', 0), stage: 'organizing' });
         const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, (p) => {
-          updateProgress({ percentage: 80 + (p * 0.15), stage: 'uploading' });
+          // p is 0-100 within the uploading stage
+          const percentage = calculateProgress('standard', 'uploading', p);
+          updateProgress({ percentage, stage: 'uploading' });
         });
         
         // Calculate total processing time
@@ -106,7 +110,7 @@ export const useZplConversion = () => {
           triggerHistoryRefresh();
         }
         
-        updateProgress({ percentage: 100, stage: 'complete' });
+        updateProgress({ percentage: calculateProgress('standard', 'complete', 100), stage: 'complete' });
         
         // Download the file
         downloadPdf(blobUrl);
