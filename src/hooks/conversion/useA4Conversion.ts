@@ -51,7 +51,7 @@ export const useA4Conversion = () => {
     }
 
     // Use 24dpmm (600 DPI) for HD mode, 8dpmm (203 DPI) for standard
-    const dpmm = enhanceLabels ? '24dpmm' : '8dpmm';
+    const dpmm = '8dpmm';
     console.log(`📊 Using Labelary API at ${dpmm} (${enhanceLabels ? '600 DPI HD' : '203 DPI Standard'})`);
 
     const MAX_CONCURRENT = enhanceLabels ? 2 : 4; // Lower concurrency for HD due to larger images
