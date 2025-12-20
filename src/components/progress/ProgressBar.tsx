@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Progress } from '@/components/ui/progress';
 import { ConversionStage } from '@/hooks/conversion/useConversionState';
@@ -20,24 +20,11 @@ export function ProgressBar({
   stage = 'converting'
 }: ProgressBarProps) {
   const { t } = useTranslation();
-  const [isVisible, setIsVisible] = useState(false);
-  const [shouldRender, setShouldRender] = useState(false);
   
-  // Handle visibility transitions
-  useEffect(() => {
-    if (isConverting || stage === 'complete' || stage === 'finalizing') {
-      setShouldRender(true);
-      // Small delay for fade-in
-      requestAnimationFrame(() => setIsVisible(true));
-    } else {
-      setIsVisible(false);
-      // Wait for fade-out transition before unmounting
-      const timer = setTimeout(() => setShouldRender(false), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isConverting, stage]);
+  // Show component during conversion OR when in finalizing/complete stage
+  const shouldShow = isConverting || stage === 'finalizing' || stage === 'complete';
   
-  if (!shouldRender) {
+  if (!shouldShow) {
     return null;
   }
 
@@ -69,7 +56,7 @@ export function ProgressBar({
   };
   
   return (
-    <div className={`space-y-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+    <div className="space-y-3 transition-opacity duration-300">
       <div className="overflow-hidden rounded-full bg-secondary">
         <Progress 
           value={progress} 
