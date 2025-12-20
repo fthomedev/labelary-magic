@@ -66,19 +66,20 @@ export const useServerUpscaler = () => {
           try {
             const upscaled = await upscaleSingleImage(image, scale);
             console.log(`✅ [${globalIndex + 1}/${images.length}] Upscaled successfully`);
-            // Report progress per individual label
-            onProgress?.(globalIndex + 1, images.length);
             return upscaled;
           } catch (error) {
             console.warn(`⚠️ [${globalIndex + 1}/${images.length}] Upscale failed, using original:`, error);
-            // Report progress even on fallback
-            onProgress?.(globalIndex + 1, images.length);
             return image;
           }
         })
       );
       
       results.push(...batchResults);
+      
+      // Report progress AFTER each batch completes to avoid race conditions
+      const processedCount = Math.min(i + BATCH_SIZE, images.length);
+      onProgress?.(processedCount, images.length);
+      console.log(`📊 Progress: ${processedCount}/${images.length} images`);
     }
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
