@@ -222,6 +222,7 @@ const Index = () => {
                         currentLabel={progressInfo.currentLabel}
                         totalLabels={progressInfo.totalLabels}
                         stage={progressInfo.stage}
+                        startTime={progressInfo.startTime}
                       />
                     </div>
                   </div>

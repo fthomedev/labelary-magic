@@ -261,6 +261,9 @@ const translations = {
   progressUploading: 'Finalizando...',
   progressFinalizing: 'Liberando memória...',
   progressComplete: 'Concluído!',
+  etaSeconds: '~{{seconds}}s restantes',
+  etaMinutes: '~{{minutes}}min {{seconds}}s restantes',
+  etaFinalizing: 'Finalizando...',
   
   // Donation
   supportProject: 'Apoiar o Projeto',

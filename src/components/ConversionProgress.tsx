@@ -16,6 +16,7 @@ interface ConversionProgressProps {
   currentLabel?: number;
   totalLabels?: number;
   stage?: ConversionStage;
+  startTime?: number;
 }
 
 export const ConversionProgress = ({ 
@@ -27,7 +28,8 @@ export const ConversionProgress = ({
   onNewProcess,
   currentLabel = 0,
   totalLabels = 0,
-  stage = 'converting'
+  stage = 'converting',
+  startTime
 }: ConversionProgressProps) => {
   const { t } = useTranslation();
   
@@ -51,6 +53,7 @@ export const ConversionProgress = ({
         currentLabel={currentLabel}
         totalLabels={totalLabels}
         stage={stage}
+        startTime={startTime}
       />
       
       <div className="flex justify-center">
