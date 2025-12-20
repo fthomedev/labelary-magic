@@ -190,7 +190,7 @@ export const useA4Conversion = () => {
       const upscaleStartTime = Date.now();
       
       try {
-        finalImages = await upscaleImages(pngImages, 2, (current, total) => {
+        finalImages = await upscaleImages(pngImages, 3, (current, total) => {
           // Calculate progress within the 'upscaling' stage (0-100% within stage)
           const stageProgress = (current / total) * 100;
           const overallProgress = calculateProgress(mode, 'upscaling', stageProgress);
