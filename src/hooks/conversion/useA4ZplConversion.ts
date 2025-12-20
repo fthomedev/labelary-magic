@@ -175,22 +175,26 @@ export const useA4ZplConversion = () => {
     try {
       startConversion();
       
-      // Parse labels
-      const labels = parseLabelsFromZpl(zplContent);
+      // Parse labels (keep label counting identical to Standard)
+      const labelBlocks = parseLabelsFromZpl(zplContent);
+      // Divide by 2 to get the correct final count as many files contain 2 ^XA blocks per printed label
+      const finalLabelCount = Math.ceil(labelBlocks.length / 2);
       
       console.log(`\n========== HD CONVERSION ==========`);
-      console.log(`📊 Parsed labels: ${labels.length}`);
+      console.log(`📊 Parsed blocks: ${labelBlocks.length} (final count: ${finalLabelCount})`);
       
-      updateProgress({ totalLabels: labels.length, stage: 'converting' });
+      updateProgress({ totalLabels: finalLabelCount, stage: 'converting' });
       
       const config: ProcessingConfig = A4_CONFIG;
       const conversionPhaseStart = Date.now();
 
       // Convert to PNG images with upscaling enabled
-      const images = await convertZplToA4Images(labels, (progressValue, currentLabel) => {
+      const images = await convertZplToA4Images(labelBlocks, (progressValue, currentBlock) => {
         // Determine stage based on progress value
         const stage = progressValue > 55 ? 'upscaling' : 'converting';
-        updateProgress({ percentage: progressValue, currentLabel: currentLabel || 0, stage });
+        // Keep the displayed counter identical to Standard by mapping blocks -> labels
+        const displayCurrent = currentBlock ? Math.min(finalLabelCount, Math.ceil(currentBlock / 2)) : 0;
+        updateProgress({ percentage: progressValue, currentLabel: displayCurrent, stage });
       }, config, true); // enhanceLabels = true
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
@@ -234,12 +238,12 @@ export const useA4ZplConversion = () => {
         
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
-        const actualLabelCount = labelsAdded;
+        const correctedLabelCount = finalLabelCount;
         
         // Save to history
         if (pdfPath) {
-          console.log(`💾 Saving HD conversion: ${actualLabelCount} labels in ${totalTime}ms`);
-          await addToProcessingHistory(actualLabelCount, pdfPath, totalTime, 'hd');
+          console.log(`💾 Saving HD conversion: ${correctedLabelCount} labels in ${totalTime}ms`);
+          await addToProcessingHistory(correctedLabelCount, pdfPath, totalTime, 'hd');
           triggerHistoryRefresh();
         }
         
@@ -249,14 +253,14 @@ export const useA4ZplConversion = () => {
         downloadPdf(blobUrl, 'etiquetas-hd.pdf');
 
         console.log(`\n✅ HD CONVERSION COMPLETE`);
-        console.log(`📊 Input: ${labels.length} → Output: ${labelsAdded} labels`);
+        console.log(`📊 Output pages: ${labelsAdded} (displayed labels: ${correctedLabelCount})`);
         console.log(`⏱️ Total time: ${totalTime}ms`);
 
-        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, actualLabelCount);
+        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, correctedLabelCount);
 
         toast({
           title: t('success'),
-          description: `${t('successMessage')} - HD (${totalTime}ms, ${actualLabelCount} etiquetas)`,
+          description: `${t('successMessage')} - HD (${totalTime}ms, ${correctedLabelCount} etiquetas)`,
           duration: 5000,
         });
         
