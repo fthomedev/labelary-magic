@@ -54,6 +54,9 @@ export const useServerUpscaler = () => {
     const startTime = Date.now();
     const results: Blob[] = [];
     
+    // Atomic counter for accurate progress tracking across parallel operations
+    let completedCount = 0;
+    
     // Process in batches of 6 for optimized parallel processing
     const BATCH_SIZE = 6;
     
@@ -66,13 +69,15 @@ export const useServerUpscaler = () => {
           try {
             const upscaled = await upscaleSingleImage(image, scale);
             console.log(`✅ [${globalIndex + 1}/${images.length}] Upscaled successfully`);
-            // Report progress per individual label
-            onProgress?.(globalIndex + 1, images.length);
+            // Increment atomic counter and report progress
+            completedCount++;
+            onProgress?.(completedCount, images.length);
             return upscaled;
           } catch (error) {
             console.warn(`⚠️ [${globalIndex + 1}/${images.length}] Upscale failed, using original:`, error);
-            // Report progress even on fallback
-            onProgress?.(globalIndex + 1, images.length);
+            // Increment counter even on fallback
+            completedCount++;
+            onProgress?.(completedCount, images.length);
             return image;
           }
         })

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Progress } from '@/components/ui/progress';
 import { ConversionStage } from '@/hooks/conversion/useConversionState';
@@ -10,6 +10,7 @@ interface ProgressBarProps {
   currentLabel?: number;
   totalLabels?: number;
   stage?: ConversionStage;
+  startTime?: number;
 }
 
 export function ProgressBar({ 
@@ -17,12 +18,37 @@ export function ProgressBar({
   progress, 
   currentLabel = 0, 
   totalLabels = 0,
-  stage = 'converting'
+  stage = 'converting',
+  startTime
 }: ProgressBarProps) {
   const { t } = useTranslation();
   
   // Show component during conversion OR when in finalizing/complete stage
   const shouldShow = isConverting || stage === 'finalizing' || stage === 'complete';
+  
+  // Calculate ETA based on elapsed time and progress
+  const etaDisplay = useMemo(() => {
+    if (!startTime || progress <= 5 || progress >= 95 || stage === 'complete') {
+      return null;
+    }
+    
+    const elapsed = Date.now() - startTime;
+    const estimatedTotal = (elapsed / progress) * 100;
+    const remaining = Math.max(0, estimatedTotal - elapsed);
+    const remainingSeconds = Math.ceil(remaining / 1000);
+    
+    if (remainingSeconds < 5) {
+      return t('etaFinalizing', 'Finalizando...');
+    }
+    
+    if (remainingSeconds < 60) {
+      return t('etaSeconds', { seconds: remainingSeconds });
+    }
+    
+    const minutes = Math.floor(remainingSeconds / 60);
+    const seconds = remainingSeconds % 60;
+    return t('etaMinutes', { minutes, seconds });
+  }, [startTime, progress, stage, t]);
   
   if (!shouldShow) {
     return null;
@@ -63,9 +89,10 @@ export function ProgressBar({
           className="h-2 w-full bg-gradient-to-r from-emerald-500 to-green-500 transition-all duration-300" 
         />
       </div>
-      <p className="text-xs text-muted-foreground text-center">
-        {getStageMessage()}
-      </p>
+      <div className="flex justify-between items-center text-xs text-muted-foreground">
+        <span>{getStageMessage()}</span>
+        {etaDisplay && <span className="text-primary/70">{etaDisplay}</span>}
+      </div>
     </div>
   );
 }

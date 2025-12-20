@@ -16,13 +16,15 @@ export interface ProgressInfo {
   currentLabel: number;
   totalLabels: number;
   stage: ConversionStage;
+  startTime?: number;
 }
 
 const initialProgressInfo: ProgressInfo = {
   percentage: 0,
   currentLabel: 0,
   totalLabels: 0,
-  stage: 'idle'
+  stage: 'idle',
+  startTime: undefined
 };
 
 export const useConversionState = () => {
@@ -42,7 +44,7 @@ export const useConversionState = () => {
     setIsConverting(true);
     setProgress(0);
     setIsProcessingComplete(false);
-    setProgressInfo({ ...initialProgressInfo, stage: 'parsing' });
+    setProgressInfo({ ...initialProgressInfo, stage: 'parsing', startTime: Date.now() });
   };
 
   const finishConversion = () => {
