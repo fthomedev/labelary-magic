@@ -38,6 +38,14 @@ export const FAST_CONFIG: ProcessingConfig = {
   fallbackDelay: 2000,
 };
 
+// Configuração otimizada para HD (mais agressiva)
+export const HD_CONFIG: ProcessingConfig = {
+  delayBetweenBatches: 300,
+  labelsPerBatch: 1,
+  maxRetries: 4,
+  fallbackDelay: 1500,
+};
+
 export class ProcessingMetricsTracker {
   private metrics: ProcessingMetrics[] = [];
   private errorRate = 0;
