@@ -24,7 +24,6 @@ const Index = () => {
   const [fileCount, setFileCount] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [selectedFormat, setSelectedFormat] = useState<PrintFormat>('standard');
-  const [enhanceLabels, setEnhanceLabels] = useState<boolean>(false);
   const [fileUploadKey, setFileUploadKey] = useState(0);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -46,25 +45,25 @@ const Index = () => {
     resetProcessingStatus: resetStandardStatus
   } = useZplConversion();
 
-  // A4 conversion hook
+  // HD conversion hook (always uses upscaling)
   const {
-    isConverting: isA4Converting,
-    progress: a4Progress,
-    progressInfo: a4ProgressInfo,
-    isProcessingComplete: isA4Complete,
-    lastPdfUrl: a4PdfUrl,
-    convertToA4PDF,
-    historyRefreshTrigger: a4HistoryRefresh,
-    resetProcessingStatus: resetA4Status
+    isConverting: isHdConverting,
+    progress: hdProgress,
+    progressInfo: hdProgressInfo,
+    isProcessingComplete: isHdComplete,
+    lastPdfUrl: hdPdfUrl,
+    convertToA4PDF: convertToHdPDF,
+    historyRefreshTrigger: hdHistoryRefresh,
+    resetProcessingStatus: resetHdStatus
   } = useA4ZplConversion();
 
   // Determine which conversion is active
-  const isConverting = isStandardConverting || isA4Converting;
-  const progress = isStandardConverting ? standardProgress : a4Progress;
-  const progressInfo = isStandardConverting ? standardProgressInfo : a4ProgressInfo;
-  const isProcessingComplete = isStandardComplete || isA4Complete;
-  const lastPdfUrl = standardPdfUrl || a4PdfUrl;
-  const historyRefreshTrigger = Math.max(standardHistoryRefresh, a4HistoryRefresh);
+  const isConverting = isStandardConverting || isHdConverting;
+  const progress = isStandardConverting ? standardProgress : hdProgress;
+  const progressInfo = isStandardConverting ? standardProgressInfo : hdProgressInfo;
+  const isProcessingComplete = isStandardComplete || isHdComplete;
+  const lastPdfUrl = standardPdfUrl || hdPdfUrl;
+  const historyRefreshTrigger = Math.max(standardHistoryRefresh, hdHistoryRefresh);
 
   useEffect(() => {
     // Check if user is logged in
@@ -87,7 +86,7 @@ const Index = () => {
     setFileCount(count);
     // Reset both processing statuses when a new file is selected
     resetStandardStatus();
-    resetA4Status();
+    resetHdStatus();
   };
 
   const handleFormatChange = (format: PrintFormat) => {
@@ -95,10 +94,11 @@ const Index = () => {
   };
 
   const handleConvert = async () => {
-    console.log(`🔧 DEBUG: handleConvert called - selectedFormat: ${selectedFormat}, enhanceLabels: ${enhanceLabels}`);
-    if (selectedFormat === 'a4') {
-      console.log(`🔧 DEBUG: Calling convertToA4PDF with enhanceLabels = ${enhanceLabels}`);
-      await convertToA4PDF(zplContent, enhanceLabels);
+    console.log(`🔧 DEBUG: handleConvert called - selectedFormat: ${selectedFormat}`);
+    if (selectedFormat === 'hd') {
+      console.log(`🔧 DEBUG: Calling convertToHdPDF with upscaling enabled`);
+      // HD mode always uses upscaling (enhanceLabels = true)
+      await convertToHdPDF(zplContent, true);
     } else {
       await convertToPDF(zplContent);
     }
@@ -108,7 +108,7 @@ const Index = () => {
     if (lastPdfUrl) {
       const a = document.createElement('a');
       a.href = lastPdfUrl;
-      a.download = selectedFormat === 'a4' ? 'etiquetas-a4.pdf' : 'etiquetas.pdf';
+      a.download = selectedFormat === 'hd' ? 'etiquetas-hd.pdf' : 'etiquetas.pdf';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -129,7 +129,7 @@ const Index = () => {
     setSourceType('file');
     setFileCount(1);
     resetStandardStatus();
-    resetA4Status();
+    resetHdStatus();
     // Force FileUpload to remount and reset its internal state
     setFileUploadKey(prev => prev + 1);
     // Open file selector after a brief delay to allow component to remount
@@ -201,8 +201,6 @@ const Index = () => {
                         onDownload={handleDownload}
                         selectedFormat={selectedFormat}
                         onFormatChange={handleFormatChange}
-                        enhanceLabels={enhanceLabels}
-                        onEnhanceLabelsChange={setEnhanceLabels}
                       />
                     </div>
                   </div>

@@ -223,12 +223,13 @@ const translations = {
   // Formato de impressão
   printFormat: 'Print Format',
   standardFormat: 'Standard',
-  a4Format: 'A4 Sheet',
+  hdFormat: 'High Quality (HD)',
   selectPrintFormat: 'Select how you want to print your labels',
   formatDescription: 'Choose the format that best suits your printer',
-  a4FormatDescription: '4 labels organized on A4 sheet',
-  enhanceLabels: 'Enhance labels (slower)',
+  hdFormatDescription: 'Labels with AI-enhanced quality',
   standardFormatDescription: 'Individual labels in sequence',
+  hdFormatWarning: 'Warning: Slower Process',
+  hdFormatWarningMessage: 'High Quality mode uses artificial intelligence to enhance each label individually. This process may take significantly longer than standard mode.',
   
   // Pagination
   previous: 'Previous',
