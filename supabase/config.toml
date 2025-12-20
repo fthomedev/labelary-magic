@@ -1,4 +1,3 @@
-
 project_id = "ekoakbihwprthzjyztwq"
 
 [api]
@@ -20,4 +19,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.stripe-webhook]
+verify_jwt = false
+
+[functions.upscale-image]
 verify_jwt = false
