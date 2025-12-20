@@ -8,6 +8,7 @@ export type ConversionStage =
   | 'upscaling'
   | 'organizing'
   | 'uploading'
+  | 'finalizing'
   | 'complete';
 
 export interface ProgressInfo {

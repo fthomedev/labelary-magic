@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Progress } from '@/components/ui/progress';
 import { ConversionStage } from '@/hooks/conversion/useConversionState';
@@ -20,8 +20,24 @@ export function ProgressBar({
   stage = 'converting'
 }: ProgressBarProps) {
   const { t } = useTranslation();
+  const [isVisible, setIsVisible] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
   
-  if (!isConverting) {
+  // Handle visibility transitions
+  useEffect(() => {
+    if (isConverting || stage === 'complete' || stage === 'finalizing') {
+      setShouldRender(true);
+      // Small delay for fade-in
+      requestAnimationFrame(() => setIsVisible(true));
+    } else {
+      setIsVisible(false);
+      // Wait for fade-out transition before unmounting
+      const timer = setTimeout(() => setShouldRender(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isConverting, stage]);
+  
+  if (!shouldRender) {
     return null;
   }
 
@@ -43,6 +59,8 @@ export function ProgressBar({
         return t('progressOrganizing');
       case 'uploading':
         return t('progressUploading');
+      case 'finalizing':
+        return t('progressFinalizing', 'Finalizando...');
       case 'complete':
         return t('progressComplete');
       default:
@@ -51,7 +69,7 @@ export function ProgressBar({
   };
   
   return (
-    <div className="space-y-3">
+    <div className={`space-y-3 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
       <div className="overflow-hidden rounded-full bg-secondary">
         <Progress 
           value={progress} 

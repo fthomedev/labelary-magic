@@ -16,7 +16,7 @@ export const useA4ZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const { addToProcessingHistory } = useHistoryRecords();
-  const { convertZplToA4Images, parseLabelsFromZpl } = useA4Conversion();
+  const { convertZplToA4Images, parseLabelsFromZpl, cleanupTensorMemory } = useA4Conversion();
   const { convertZplToA4PDFDirect } = useA4DirectConversion();
   const { logPerformanceMetrics } = useConversionMetrics();
   const { uploadPDFToStorage } = useUploadPdf();
@@ -263,6 +263,15 @@ export const useA4ZplConversion = () => {
           description: `${t('successMessage')} - HD (${totalTime}ms, ${correctedLabelCount} etiquetas)`,
           duration: 5000,
         });
+        
+        // Add finalizing stage with gradual cleanup to prevent screen flash
+        updateProgress({ percentage: 100, stage: 'finalizing' });
+        
+        // Gradual TensorFlow memory cleanup
+        await cleanupTensorMemory();
+        
+        // Small delay before finishing to let GPU memory release gradually
+        await new Promise(resolve => setTimeout(resolve, 150));
         
         finishConversion();
       } catch (uploadError) {
