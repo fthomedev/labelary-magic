@@ -300,6 +300,7 @@ export type Database = {
       }
       delete_user: { Args: never; Returns: Json }
       generate_secure_token: { Args: never; Returns: string }
+      get_completed_donations_count: { Args: never; Returns: number }
       insert_processing_history:
         | { Args: never; Returns: undefined }
         | {
