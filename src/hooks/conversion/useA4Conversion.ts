@@ -60,7 +60,7 @@ export const useA4Conversion = () => {
     const dpmm = '8dpmm';
     console.log(`📊 Using Labelary API at ${dpmm} (${enhanceLabels ? '600 DPI HD' : '203 DPI Standard'})`);
 
-    const MAX_CONCURRENT = enhanceLabels ? 2 : 4; // Lower concurrency for HD due to larger images
+    const MAX_CONCURRENT = enhanceLabels ? 5 : 6; // Increased concurrency for better performance
     const semaphore = new Semaphore(MAX_CONCURRENT);
     const results: (Blob | null)[] = new Array(validLabels.length).fill(null);
     const failedIndices: number[] = [];
@@ -79,7 +79,7 @@ export const useA4Conversion = () => {
       
       try {
         const maxRetries = 4;
-        const baseDelays = [3000, 6000, 12000, 24000]; // Exponential backoff for 429
+        const baseDelays = [1500, 3000, 6000, 12000]; // Faster exponential backoff for 429
         
         for (let attempt = 0; attempt < maxRetries; attempt++) {
           try {

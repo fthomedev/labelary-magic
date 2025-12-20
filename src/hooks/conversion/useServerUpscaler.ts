@@ -54,8 +54,8 @@ export const useServerUpscaler = () => {
     const startTime = Date.now();
     const results: Blob[] = [];
     
-    // Process in batches of 3 for parallel processing
-    const BATCH_SIZE = 3;
+    // Process in batches of 6 for optimized parallel processing
+    const BATCH_SIZE = 6;
     
     for (let i = 0; i < images.length; i += BATCH_SIZE) {
       const batch = images.slice(i, Math.min(i + BATCH_SIZE, images.length));
