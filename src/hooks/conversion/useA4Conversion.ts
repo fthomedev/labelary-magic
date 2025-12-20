@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useZplLabelProcessor } from './useZplLabelProcessor';
 import { useZplValidator } from './useZplValidator';
+import { useServerUpscaler } from './useServerUpscaler';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 // Semaphore for controlling concurrent requests
 class Semaphore {
@@ -35,6 +36,7 @@ export const useA4Conversion = () => {
   const { t } = useTranslation();
   const { splitZplIntoLabels } = useZplLabelProcessor();
   const { filterValidLabels } = useZplValidator();
+  const { upscaleImages } = useServerUpscaler();
 
   const convertZplToA4Images = async (
     labels: string[],
@@ -174,8 +176,29 @@ export const useA4Conversion = () => {
     }
     console.log(`=============================================\n`);
 
-    // No more AI upscaling - HD quality comes from 24dpmm (600 DPI) directly
-    const finalImages = pngImages;
+    // Server-side upscaling with Nearest Neighbor for HD mode
+    let finalImages = pngImages;
+    
+    if (enhanceLabels && pngImages.length > 0) {
+      console.log(`\n========== SERVER UPSCALING START ==========`);
+      console.log(`🔄 Upscaling ${pngImages.length} images at 2x with Nearest Neighbor`);
+      const upscaleStartTime = Date.now();
+      
+      try {
+        finalImages = await upscaleImages(pngImages, 2, (current, total) => {
+          // Progress from 55% to 90% during upscaling
+          const upscaleProgress = 55 + (current / total) * 35;
+          onProgress(upscaleProgress, current);
+        });
+        
+        const upscaleElapsed = ((Date.now() - upscaleStartTime) / 1000).toFixed(1);
+        console.log(`✅ Server upscaling completed in ${upscaleElapsed}s`);
+        console.log(`=============================================\n`);
+      } catch (error) {
+        console.error('❌ Server upscaling failed, using original images:', error);
+        finalImages = pngImages;
+      }
+    }
     
     // Set progress to 90% (remaining 10% for PDF generation)
     onProgress(90);
