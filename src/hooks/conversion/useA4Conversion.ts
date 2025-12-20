@@ -1,11 +1,8 @@
-
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useZplLabelProcessor } from './useZplLabelProcessor';
 import { useZplValidator } from './useZplValidator';
-import { useImageUpscaler } from './useImageUpscaler';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
-
 // Semaphore for controlling concurrent requests
 class Semaphore {
   private permits: number;
@@ -38,7 +35,6 @@ export const useA4Conversion = () => {
   const { t } = useTranslation();
   const { splitZplIntoLabels } = useZplLabelProcessor();
   const { filterValidLabels } = useZplValidator();
-  const { upscaleImages, preloadUpscaler, cleanupTensorMemory } = useImageUpscaler();
 
   const convertZplToA4Images = async (
     labels: string[],
@@ -46,8 +42,7 @@ export const useA4Conversion = () => {
     config: ProcessingConfig = A4_CONFIG,
     enhanceLabels: boolean = false
   ): Promise<Blob[]> => {
-    // CRITICAL DEBUG: Log enhanceLabels value at entry
-    console.log(`\n🔧 DEBUG: convertZplToA4Images called with enhanceLabels = ${enhanceLabels} (type: ${typeof enhanceLabels})`);
+    console.log(`\n🔧 convertZplToA4Images: enhanceLabels = ${enhanceLabels}`);
     
     const validLabels = filterValidLabels(labels);
     
@@ -55,17 +50,11 @@ export const useA4Conversion = () => {
       throw new Error('Nenhuma etiqueta válida encontrada para processamento');
     }
 
-    // OPTIMIZATION: Pre-load upscaler model while PNG conversion starts (only if enhancing)
-    let preloadPromise: Promise<void>;
-    if (enhanceLabels === true) {
-      console.log('🔧 DEBUG: Will preload upscaler (enhanceLabels is TRUE)');
-      preloadPromise = preloadUpscaler();
-    } else {
-      console.log('🔧 DEBUG: Skipping upscaler preload (enhanceLabels is FALSE)');
-      preloadPromise = Promise.resolve();
-    }
+    // Use 24dpmm (600 DPI) for HD mode, 8dpmm (203 DPI) for standard
+    const dpmm = enhanceLabels ? '24dpmm' : '8dpmm';
+    console.log(`📊 Using Labelary API at ${dpmm} (${enhanceLabels ? '600 DPI HD' : '203 DPI Standard'})`);
 
-    const MAX_CONCURRENT = 4; // Reduced to avoid 429 rate limits
+    const MAX_CONCURRENT = enhanceLabels ? 2 : 4; // Lower concurrency for HD due to larger images
     const semaphore = new Semaphore(MAX_CONCURRENT);
     const results: (Blob | null)[] = new Array(validLabels.length).fill(null);
     const failedIndices: number[] = [];
@@ -77,7 +66,9 @@ export const useA4Conversion = () => {
     console.log(`⚙️ Concurrent limit: ${MAX_CONCURRENT}`);
     const startTime = Date.now();
 
-    // Phase 1: ZPL to PNG conversion (0-55% progress)
+    // Phase 1: ZPL to PNG conversion (0-90% progress for HD, 0-55% for standard)
+    const progressMax = enhanceLabels ? 90 : 55;
+    
     const convertLabel = async (label: string, index: number, isRetryPass: boolean = false): Promise<boolean> => {
       await semaphore.acquire();
       
@@ -89,7 +80,7 @@ export const useA4Conversion = () => {
           try {
             console.log(`🔄 [${index + 1}/${validLabels.length}] Attempt ${attempt + 1}/${maxRetries}${isRetryPass ? ' (retry pass)' : ''}`);
             
-            const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/', {
+            const response = await fetch(`https://api.labelary.com/v1/printers/${dpmm}/labels/4x6/0/`, {
               method: 'POST',
               headers: {
                 'Accept': 'image/png',
@@ -136,7 +127,7 @@ export const useA4Conversion = () => {
       } finally {
         if (!isRetryPass) {
           completed++;
-          const progressValue = (completed / validLabels.length) * 55;
+          const progressValue = (completed / validLabels.length) * progressMax;
           onProgress(progressValue, completed);
         }
         semaphore.release();
@@ -183,41 +174,10 @@ export const useA4Conversion = () => {
     }
     console.log(`=============================================\n`);
 
-    let finalImages: Blob[];
+    // No more AI upscaling - HD quality comes from 24dpmm (600 DPI) directly
+    const finalImages = pngImages;
     
-    // Phase 2: AI Upscaling (55-90% progress) - ONLY if enhanceLabels is EXPLICITLY true
-    console.log(`\n🔧 DEBUG: Checking enhanceLabels before upscaling: ${enhanceLabels} (strict check: ${enhanceLabels === true})`);
-    
-    if (enhanceLabels === true) {
-      // Ensure upscaler is ready before starting
-      await preloadPromise;
-      console.log(`🔍 Starting AI upscaling of ${pngImages.length} images...`);
-      const upscaleStartTime = Date.now();
-      
-      const upscaledImages = await upscaleImages(pngImages, (upscaleProgress, currentImage) => {
-        // Map upscale progress (0-100) to overall progress (55-90)
-        const overallProgress = 55 + (upscaleProgress * 0.35);
-        // Pass the actual current image being processed (not resetting from 1)
-        onProgress(overallProgress, currentImage);
-      });
-      
-      const upscaleElapsed = ((Date.now() - upscaleStartTime) / 1000).toFixed(1);
-      
-      // CRITICAL: Validate upscaling preserved all images
-      const upscaleLossCount = pngImages.length - upscaledImages.length;
-      console.log(`✨ AI upscaling complete: ${upscaledImages.length}/${pngImages.length} images in ${upscaleElapsed}s`);
-      
-      if (upscaleLossCount > 0) {
-        console.error(`🚨 CRITICAL: ${upscaleLossCount} labels lost during upscaling!`);
-      }
-      
-      finalImages = upscaledImages;
-    } else {
-      console.log(`⏭️ SKIPPING AI upscaling - enhanceLabels is ${enhanceLabels}`);
-      finalImages = pngImages;
-    }
-    
-    // Set progress to 90% after upscaling (remaining 10% for PDF generation)
+    // Set progress to 90% (remaining 10% for PDF generation)
     onProgress(90);
     
     const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -248,6 +208,5 @@ export const useA4Conversion = () => {
   return {
     convertZplToA4Images,
     parseLabelsFromZpl,
-    cleanupTensorMemory
   };
 };

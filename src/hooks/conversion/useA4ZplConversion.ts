@@ -16,7 +16,7 @@ export const useA4ZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const { addToProcessingHistory } = useHistoryRecords();
-  const { convertZplToA4Images, parseLabelsFromZpl, cleanupTensorMemory } = useA4Conversion();
+  const { convertZplToA4Images, parseLabelsFromZpl } = useA4Conversion();
   const { convertZplToA4PDFDirect } = useA4DirectConversion();
   const { logPerformanceMetrics } = useConversionMetrics();
   const { uploadPDFToStorage } = useUploadPdf();
@@ -188,17 +188,15 @@ export const useA4ZplConversion = () => {
       const config: ProcessingConfig = A4_CONFIG;
       const conversionPhaseStart = Date.now();
 
-      // Convert to PNG images with upscaling enabled
+      // Convert to PNG images at high DPI (24dpmm = 600 DPI)
       const images = await convertZplToA4Images(labelBlocks, (progressValue, currentBlock) => {
-        // Determine stage based on progress value
-        const stage = progressValue > 55 ? 'upscaling' : 'converting';
         // Keep the displayed counter identical to Standard by mapping blocks -> labels
         const displayCurrent = currentBlock ? Math.min(finalLabelCount, Math.ceil(currentBlock / 2)) : 0;
-        updateProgress({ percentage: progressValue, currentLabel: displayCurrent, stage });
-      }, config, true); // enhanceLabels = true
+        updateProgress({ percentage: progressValue, currentLabel: displayCurrent, stage: 'converting' });
+      }, config, true); // enhanceLabels = true (uses 24dpmm)
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
-      console.log(`⚡ Image conversion + upscaling completed in ${conversionPhaseTime}ms`);
+      console.log(`⚡ HD image conversion (600 DPI) completed in ${conversionPhaseTime}ms`);
       console.log(`📊 PNG images generated: ${images.length}`);
 
       try {
@@ -263,15 +261,6 @@ export const useA4ZplConversion = () => {
           description: `${t('successMessage')} - HD (${totalTime}ms, ${correctedLabelCount} etiquetas)`,
           duration: 5000,
         });
-        
-        // Add finalizing stage with gradual cleanup to prevent screen flash
-        updateProgress({ percentage: 100, stage: 'finalizing' });
-        
-        // Gradual TensorFlow memory cleanup
-        await cleanupTensorMemory();
-        
-        // Small delay before finishing to let GPU memory release gradually
-        await new Promise(resolve => setTimeout(resolve, 150));
         
         finishConversion();
       } catch (uploadError) {
