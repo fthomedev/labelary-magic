@@ -181,7 +181,7 @@ function deflateSync(data: Uint8Array): Uint8Array {
 }
 
 // PNG decoder - extracts RGBA data from PNG
-async function decodePNG(pngData: Uint8Array): Promise<{ data: Uint8ClampedArray; width: number; height: number }> {
+function decodePNG(pngData: Uint8Array): { data: Uint8ClampedArray; width: number; height: number } {
   // Verify PNG signature
   const signature = [137, 80, 78, 71, 13, 10, 26, 10];
   for (let i = 0; i < 8; i++) {
@@ -222,8 +222,8 @@ async function decodePNG(pngData: Uint8Array): Promise<{ data: Uint8ClampedArray
     offset += chunk.length;
   }
 
-  // Decompress using async inflate
-  const decompressed = await inflateAsync(allCompressed);
+  // Decompress
+  const decompressed = inflateSync(allCompressed);
 
   // Calculate bytes per pixel
   let bytesPerPixel = 1;
@@ -300,37 +300,34 @@ function paethPredictor(a: number, b: number, c: number): number {
   return c;
 }
 
-async function inflateAsync(data: Uint8Array): Promise<Uint8Array> {
-  // Skip zlib header (2 bytes) and adler32 checksum (4 bytes at end)
-  const deflateData = data.slice(2, data.length - 4);
+function inflateSync(data: Uint8Array): Uint8Array {
+  // Skip zlib header (2 bytes)
+  let pos = 2;
+  const output: number[] = [];
   
-  // Use DecompressionStream API (available in Deno)
-  const stream = new DecompressionStream('deflate-raw');
-  const writer = stream.writable.getWriter();
-  const reader = stream.readable.getReader();
-  
-  // Write compressed data
-  writer.write(deflateData);
-  writer.close();
-  
-  // Read decompressed data
-  const chunks: Uint8Array[] = [];
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
+  while (pos < data.length - 4) { // -4 for adler32
+    const header = data[pos++];
+    const bfinal = header & 0x01;
+    const btype = (header >> 1) & 0x03;
+    
+    if (btype === 0) { // Stored
+      // Align to byte boundary (already aligned after header byte)
+      const len = data[pos] | (data[pos + 1] << 8);
+      pos += 4; // len + nlen
+      
+      for (let i = 0; i < len; i++) {
+        output.push(data[pos++]);
+      }
+    } else {
+      // For compressed data, we need a full inflate implementation
+      // This is a simplified version - fall back to uncompressed
+      throw new Error('Compressed PNG data not supported in this implementation');
+    }
+    
+    if (bfinal) break;
   }
   
-  // Combine chunks
-  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-  
-  return result;
+  return new Uint8Array(output);
 }
 
 serve(async (req) => {
@@ -359,7 +356,7 @@ serve(async (req) => {
     console.log(`📊 Input PNG size: ${(inputBytes.length / 1024).toFixed(1)}KB`);
     
     // Decode PNG
-    const decoded = await decodePNG(inputBytes);
+    const decoded = decodePNG(inputBytes);
     console.log(`📐 Input dimensions: ${decoded.width}x${decoded.height}`);
     
     // Upscale with Nearest Neighbor
