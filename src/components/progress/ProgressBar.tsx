@@ -30,12 +30,12 @@ export function ProgressBar({
       case 'parsing':
         return t('progressParsing');
       case 'converting':
-        if (totalLabels > 0) {
+        if (totalLabels > 0 && currentLabel > 0) {
           return t('progressConverting', { current: currentLabel, total: totalLabels });
         }
         return t('progressConvertingSimple');
       case 'upscaling':
-        if (totalLabels > 0) {
+        if (totalLabels > 0 && currentLabel > 0) {
           return t('progressUpscaling', { current: currentLabel, total: totalLabels });
         }
         return t('progressUpscalingSimple');

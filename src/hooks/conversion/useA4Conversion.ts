@@ -197,7 +197,8 @@ export const useA4Conversion = () => {
       const upscaledImages = await upscaleImages(pngImages, (upscaleProgress, currentImage) => {
         // Map upscale progress (0-100) to overall progress (55-90)
         const overallProgress = 55 + (upscaleProgress * 0.35);
-        onProgress(overallProgress, currentImage || 0);
+        // Pass the actual current image being processed (not resetting from 1)
+        onProgress(overallProgress, currentImage);
       });
       
       const upscaleElapsed = ((Date.now() - upscaleStartTime) / 1000).toFixed(1);
