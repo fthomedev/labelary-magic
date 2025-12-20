@@ -259,6 +259,7 @@ const translations = {
   progressUpscalingSimple: 'Melhorando qualidade...',
   progressOrganizing: 'Organizando PDF...',
   progressUploading: 'Finalizando...',
+  progressFinalizing: 'Liberando memória...',
   progressComplete: 'Concluído!',
   
   // Donation

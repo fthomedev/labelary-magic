@@ -38,7 +38,7 @@ export const useA4Conversion = () => {
   const { t } = useTranslation();
   const { splitZplIntoLabels } = useZplLabelProcessor();
   const { filterValidLabels } = useZplValidator();
-  const { upscaleImages, preloadUpscaler } = useImageUpscaler();
+  const { upscaleImages, preloadUpscaler, cleanupTensorMemory } = useImageUpscaler();
 
   const convertZplToA4Images = async (
     labels: string[],
@@ -247,6 +247,7 @@ export const useA4Conversion = () => {
 
   return {
     convertZplToA4Images,
-    parseLabelsFromZpl
+    parseLabelsFromZpl,
+    cleanupTensorMemory
   };
 };

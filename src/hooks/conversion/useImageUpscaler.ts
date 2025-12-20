@@ -1,5 +1,6 @@
 import Upscaler from 'upscaler';
 import x2 from '@upscalerjs/default-model';
+import * as tf from '@tensorflow/tfjs';
 
 // Singleton upscaler instance for model caching
 let upscalerInstance: InstanceType<typeof Upscaler> | null = null;
@@ -136,6 +137,28 @@ export const useImageUpscaler = () => {
     }
   };
 
+  // Clean up TensorFlow memory gradually
+  const cleanupTensorMemory = async (): Promise<void> => {
+    try {
+      console.log('🧹 Starting gradual TensorFlow memory cleanup...');
+      
+      // Dispose any lingering tensors
+      const numTensors = tf.memory().numTensors;
+      console.log(`📊 Tensors before cleanup: ${numTensors}`);
+      
+      // Force garbage collection by disposing unused tensors
+      tf.disposeVariables();
+      
+      // Small delay to let the GPU release memory gradually
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      console.log(`📊 Tensors after cleanup: ${tf.memory().numTensors}`);
+      console.log('✅ TensorFlow memory cleanup complete');
+    } catch (error) {
+      console.warn('⚠️ TensorFlow cleanup warning:', error);
+    }
+  };
+
   const upscaleImages = async (
     blobs: Blob[],
     onProgress: (progress: number, currentImage?: number) => void
@@ -225,5 +248,6 @@ export const useImageUpscaler = () => {
     upscaleImage,
     upscaleImages,
     preloadUpscaler,
+    cleanupTensorMemory,
   };
 };
