@@ -7,7 +7,7 @@ import { useA4DirectConversion, A4ConversionError } from './useA4DirectConversio
 import { usePdfOperations } from './usePdfOperations';
 import { useConversionState } from './useConversionState';
 import { useConversionMetrics } from './useConversionMetrics';
-import { organizeImagesInA4PDF } from '@/utils/a4Utils';
+import { organizeImagesInA4PDF, organizeImagesInSeparatePDF } from '@/utils/a4Utils';
 import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
@@ -166,9 +166,9 @@ export const useA4ZplConversion = () => {
     }
   };
 
-  // Full A4 conversion with AI upscaling (slower, higher quality)
-  const convertToA4PDFWithUpscaling = async (zplContent: string) => {
-    console.log('\n✨ A4 ENHANCED MODE (With Upscaling) - Quality Conversion');
+  // HD conversion with AI upscaling - one label per page
+  const convertToHdPDF = async (zplContent: string) => {
+    console.log('\n✨ HD MODE (With Upscaling) - Quality Conversion');
     
     const conversionStartTime = Date.now();
     
@@ -178,7 +178,7 @@ export const useA4ZplConversion = () => {
       // Parse labels
       const labels = parseLabelsFromZpl(zplContent);
       
-      console.log(`\n========== A4 ENHANCED CONVERSION ==========`);
+      console.log(`\n========== HD CONVERSION ==========`);
       console.log(`📊 Parsed labels: ${labels.length}`);
       
       updateProgress({ totalLabels: labels.length, stage: 'converting' });
@@ -205,12 +205,12 @@ export const useA4ZplConversion = () => {
         
         updateProgress({ percentage: 90, stage: 'uploading' });
         
-        // Organize images into A4 PDF
+        // Organize images into PDF with one label per page
         const mergeStartTime = Date.now();
-        const { pdfBlob: a4Pdf, labelsAdded, failedLabels } = await organizeImagesInA4PDF(images);
+        const { pdfBlob: hdPdf, labelsAdded, failedLabels } = await organizeImagesInSeparatePDF(images);
         const mergeTime = Date.now() - mergeStartTime;
         
-        console.log(`📄 A4 PDF organization completed in ${mergeTime}ms`);
+        console.log(`📄 HD PDF organization completed in ${mergeTime}ms`);
         console.log(`📊 Labels in PDF: ${labelsAdded}`);
         
         if (labelsAdded !== images.length) {
@@ -222,14 +222,14 @@ export const useA4ZplConversion = () => {
         
         // Upload PDF to storage
         const uploadStartTime = Date.now();
-        const pdfPath = await uploadPDFToStorage(a4Pdf);
+        const pdfPath = await uploadPDFToStorage(hdPdf);
         const uploadTime = Date.now() - uploadStartTime;
         
-        console.log(`☁️ A4 PDF upload completed in ${uploadTime}ms:`, pdfPath);
+        console.log(`☁️ HD PDF upload completed in ${uploadTime}ms:`, pdfPath);
         setLastPdfPath(pdfPath);
         
         // Create blob URL for download
-        const blobUrl = window.URL.createObjectURL(a4Pdf);
+        const blobUrl = window.URL.createObjectURL(hdPdf);
         setLastPdfUrl(blobUrl);
         
         // Calculate total processing time
@@ -238,17 +238,17 @@ export const useA4ZplConversion = () => {
         
         // Save to history
         if (pdfPath) {
-          console.log(`💾 Saving enhanced conversion: ${actualLabelCount} labels in ${totalTime}ms`);
-          await addToProcessingHistory(actualLabelCount, pdfPath, totalTime, 'a4');
+          console.log(`💾 Saving HD conversion: ${actualLabelCount} labels in ${totalTime}ms`);
+          await addToProcessingHistory(actualLabelCount, pdfPath, totalTime, 'hd');
           triggerHistoryRefresh();
         }
         
         updateProgress({ percentage: 100, stage: 'complete' });
         
         // Download the file
-        downloadPdf(blobUrl, 'etiquetas-a4.pdf');
+        downloadPdf(blobUrl, 'etiquetas-hd.pdf');
 
-        console.log(`\n✅ A4 ENHANCED CONVERSION COMPLETE`);
+        console.log(`\n✅ HD CONVERSION COMPLETE`);
         console.log(`📊 Input: ${labels.length} → Output: ${labelsAdded} labels`);
         console.log(`⏱️ Total time: ${totalTime}ms`);
 
@@ -256,13 +256,13 @@ export const useA4ZplConversion = () => {
 
         toast({
           title: t('success'),
-          description: `${t('successMessage')} - A4 Enhanced (${totalTime}ms, ${actualLabelCount} etiquetas)`,
+          description: `${t('successMessage')} - HD (${totalTime}ms, ${actualLabelCount} etiquetas)`,
           duration: 5000,
         });
         
         finishConversion();
       } catch (uploadError) {
-        console.error('Error uploading enhanced A4 PDF:', uploadError);
+        console.error('Error uploading HD PDF:', uploadError);
         toast({
           variant: "destructive",
           title: t('error'),
@@ -271,7 +271,7 @@ export const useA4ZplConversion = () => {
         });
       }
     } catch (error) {
-      console.error('A4 enhanced conversion error:', error);
+      console.error('HD conversion error:', error);
       toast({
         variant: "destructive",
         title: t('error'),
@@ -284,15 +284,15 @@ export const useA4ZplConversion = () => {
     }
   };
 
-  // Main entry point - routes to direct or enhanced conversion
+  // Main entry point - routes to direct or HD conversion
   const convertToA4PDF = async (zplContent: string, enhanceLabels: boolean = false) => {
     console.log(`\n🔧 convertToA4PDF called - enhanceLabels: ${enhanceLabels}`);
     
     if (!zplContent) return;
     
     if (enhanceLabels === true) {
-      // Use PNG → Upscale → PDF pipeline (slower, higher quality)
-      await convertToA4PDFWithUpscaling(zplContent);
+      // Use PNG → Upscale → PDF pipeline (slower, higher quality, one label per page)
+      await convertToHdPDF(zplContent);
     } else {
       // Use direct Labelary A4 API (fast, no upscaling)
       await convertToA4PDFDirect(zplContent);

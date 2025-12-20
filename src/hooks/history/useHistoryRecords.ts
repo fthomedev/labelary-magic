@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export type ProcessingType = 'standard' | 'a4';
+export type ProcessingType = 'standard' | 'a4' | 'hd';
 
 export const useHistoryRecords = () => {
   const addToProcessingHistory = async (

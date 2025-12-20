@@ -144,6 +144,91 @@ export const organizeImagesInA4PDF = async (imageBlobs: Blob[]): Promise<{ pdfBl
   return { pdfBlob, labelsAdded, failedLabels };
 };
 
+// Generate PDF with one label per page (for HD mode)
+export const organizeImagesInSeparatePDF = async (imageBlobs: Blob[]): Promise<{ pdfBlob: Blob; labelsAdded: number; failedLabels: number[] }> => {
+  console.log(`\n========== HD PDF GENERATION START ==========`);
+  console.log(`📄 Input images: ${imageBlobs.length}`);
+  
+  // OPTIMIZATION: Pre-convert all blobs to dataURLs in parallel
+  const conversionStart = Date.now();
+  console.log(`🔄 Converting ${imageBlobs.length} blobs to dataURLs in parallel...`);
+  const dataUrls = await blobsToDataURLs(imageBlobs);
+  console.log(`✅ Blob conversion completed in ${Date.now() - conversionStart}ms`);
+  
+  // Standard label dimensions (4x6 inches)
+  const labelWidthMM = 101.6; // 4 inches in mm
+  const labelHeightMM = 152.4; // 6 inches in mm
+  
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: [labelWidthMM, labelHeightMM] // Custom page size matching label
+  });
+  
+  let labelsAdded = 0;
+  const failedLabels: number[] = [];
+  
+  for (let i = 0; i < imageBlobs.length; i++) {
+    // Validate blob before processing
+    if (!imageBlobs[i] || imageBlobs[i].size === 0) {
+      console.error(`🚨 [PDF] Label ${i + 1}: Invalid/empty blob (size: ${imageBlobs[i]?.size || 0})`);
+      failedLabels.push(i + 1);
+      continue;
+    }
+    
+    // Add new page for each label after the first
+    if (labelsAdded > 0) {
+      pdf.addPage([labelWidthMM, labelHeightMM]);
+    }
+    
+    try {
+      // Use pre-converted dataURL
+      const imageDataUrl = dataUrls[i];
+      
+      if (!imageDataUrl || !imageDataUrl.startsWith('data:')) {
+        console.error(`🚨 [PDF] Label ${i + 1}: Failed to convert to data URL`);
+        failedLabels.push(i + 1);
+        continue;
+      }
+      
+      // Add image to fill the entire page
+      pdf.addImage(
+        imageDataUrl,
+        'PNG',
+        0,
+        0,
+        labelWidthMM,
+        labelHeightMM
+      );
+      
+      console.log(`📋 Added label ${i + 1} to page ${labelsAdded + 1}`);
+      labelsAdded++;
+      
+    } catch (error) {
+      console.error(`🚨 [PDF] Label ${i + 1}: Error adding to PDF:`, error);
+      failedLabels.push(i + 1);
+    }
+  }
+  
+  // Generate PDF blob
+  const pdfBlob = pdf.output('blob');
+  
+  console.log(`\n========== HD PDF GENERATION SUMMARY ==========`);
+  console.log(`📊 Input images: ${imageBlobs.length}`);
+  console.log(`✅ Labels added to PDF: ${labelsAdded}`);
+  console.log(`📄 Pages generated: ${labelsAdded}`);
+  
+  if (failedLabels.length > 0) {
+    console.error(`🚨 FAILED labels: [${failedLabels.join(', ')}]`);
+    console.error(`🚨 LABEL LOSS in PDF generation: ${failedLabels.length} labels!`);
+  } else {
+    console.log(`✅ All ${imageBlobs.length} labels successfully added`);
+  }
+  console.log(`================================================\n`);
+  
+  return { pdfBlob, labelsAdded, failedLabels };
+};
+
 const blobToDataURL = (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
