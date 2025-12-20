@@ -95,6 +95,11 @@ const Index = () => {
 
   const handleConvert = async () => {
     console.log(`🔧 DEBUG: handleConvert called - selectedFormat: ${selectedFormat}`);
+    
+    // Reset both processing statuses before starting new conversion
+    resetStandardStatus();
+    resetHdStatus();
+    
     if (selectedFormat === 'hd') {
       console.log(`🔧 DEBUG: Calling convertToHdPDF with upscaling enabled`);
       // HD mode always uses upscaling (enhanceLabels = true)
