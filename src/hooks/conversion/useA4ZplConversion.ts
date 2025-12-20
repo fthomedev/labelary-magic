@@ -11,6 +11,7 @@ import { organizeImagesInA4PDF, organizeImagesInSeparatePDF } from '@/utils/a4Ut
 import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
+import { calculateProgress } from './useProgressCalculator';
 
 export const useA4ZplConversion = () => {
   const { toast } = useToast();
@@ -72,12 +73,12 @@ export const useA4ZplConversion = () => {
       console.log(`📊 PNG images generated: ${images.length}`);
 
       try {
-        updateProgress({ percentage: 85, stage: 'organizing' });
+        updateProgress({ percentage: calculateProgress('standard', 'organizing', 0), stage: 'organizing' });
         
         // Ensure bucket exists
         await ensurePdfBucketExists();
         
-        updateProgress({ percentage: 90, stage: 'uploading' });
+        updateProgress({ percentage: calculateProgress('standard', 'uploading', 0), stage: 'uploading' });
         
         // Organize images into A4 PDF (same method as enhanced path)
         const mergeStartTime = Date.now();
@@ -92,7 +93,7 @@ export const useA4ZplConversion = () => {
           console.error(`🚨 Failed indices: [${failedLabels.join(', ')}]`);
         }
         
-        updateProgress({ percentage: 95, stage: 'uploading' });
+        updateProgress({ percentage: calculateProgress('standard', 'uploading', 50), stage: 'uploading' });
         
         // Upload PDF to storage
         const uploadStartTime = Date.now();
@@ -117,7 +118,7 @@ export const useA4ZplConversion = () => {
           triggerHistoryRefresh();
         }
         
-        updateProgress({ percentage: 100, stage: 'complete' });
+        updateProgress({ percentage: calculateProgress('standard', 'complete', 100), stage: 'complete' });
         
         // Download the file
         downloadPdf(blobUrl, 'etiquetas-a4.pdf');
@@ -200,12 +201,12 @@ export const useA4ZplConversion = () => {
       console.log(`📊 PNG images generated: ${images.length}`);
 
       try {
-        updateProgress({ percentage: 85, stage: 'organizing' });
+        updateProgress({ percentage: calculateProgress('hd', 'organizing', 0), stage: 'organizing' });
         
         // Ensure bucket exists
         await ensurePdfBucketExists();
         
-        updateProgress({ percentage: 90, stage: 'uploading' });
+        updateProgress({ percentage: calculateProgress('hd', 'uploading', 0), stage: 'uploading' });
         
         // Organize images into PDF with one label per page
         const mergeStartTime = Date.now();
@@ -220,7 +221,7 @@ export const useA4ZplConversion = () => {
           console.error(`🚨 Failed indices: [${failedLabels.join(', ')}]`);
         }
         
-        updateProgress({ percentage: 95, stage: 'uploading' });
+        updateProgress({ percentage: calculateProgress('hd', 'uploading', 50), stage: 'uploading' });
         
         // Upload PDF to storage
         const uploadStartTime = Date.now();
@@ -245,7 +246,7 @@ export const useA4ZplConversion = () => {
           triggerHistoryRefresh();
         }
         
-        updateProgress({ percentage: 100, stage: 'complete' });
+        updateProgress({ percentage: calculateProgress('hd', 'complete', 100), stage: 'complete' });
         
         // Download the file
         downloadPdf(blobUrl, 'etiquetas-hd.pdf');

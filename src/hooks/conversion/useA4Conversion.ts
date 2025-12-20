@@ -4,6 +4,7 @@ import { useZplLabelProcessor } from './useZplLabelProcessor';
 import { useZplValidator } from './useZplValidator';
 import { useServerUpscaler } from './useServerUpscaler';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
+import { calculateProgress, ConversionMode } from './useProgressCalculator';
 // Semaphore for controlling concurrent requests
 class Semaphore {
   private permits: number;
@@ -46,6 +47,9 @@ export const useA4Conversion = () => {
   ): Promise<Blob[]> => {
     console.log(`\n🔧 convertZplToA4Images: enhanceLabels = ${enhanceLabels}`);
     
+    // Determine which progress mode to use
+    const mode: ConversionMode = enhanceLabels ? 'hd' : 'standard';
+    
     const validLabels = filterValidLabels(labels);
     
     if (validLabels.length === 0) {
@@ -68,8 +72,7 @@ export const useA4Conversion = () => {
     console.log(`⚙️ Concurrent limit: ${MAX_CONCURRENT}`);
     const startTime = Date.now();
 
-    // Phase 1: ZPL to PNG conversion (0-90% progress for HD, 0-55% for standard)
-    const progressMax = enhanceLabels ? 90 : 55;
+    // Phase 1: ZPL to PNG conversion - uses 'converting' stage from progress calculator
     
     const convertLabel = async (label: string, index: number, isRetryPass: boolean = false): Promise<boolean> => {
       await semaphore.acquire();
@@ -129,8 +132,10 @@ export const useA4Conversion = () => {
       } finally {
         if (!isRetryPass) {
           completed++;
-          const progressValue = (completed / validLabels.length) * progressMax;
-          onProgress(progressValue, completed);
+          // Calculate progress within the 'converting' stage (0-100% within stage)
+          const stageProgress = (completed / validLabels.length) * 100;
+          const overallProgress = calculateProgress(mode, 'converting', stageProgress);
+          onProgress(overallProgress, completed);
         }
         semaphore.release();
       }
@@ -186,9 +191,10 @@ export const useA4Conversion = () => {
       
       try {
         finalImages = await upscaleImages(pngImages, 2, (current, total) => {
-          // Progress from 55% to 90% during upscaling
-          const upscaleProgress = 55 + (current / total) * 35;
-          onProgress(upscaleProgress, current);
+          // Calculate progress within the 'upscaling' stage (0-100% within stage)
+          const stageProgress = (current / total) * 100;
+          const overallProgress = calculateProgress(mode, 'upscaling', stageProgress);
+          onProgress(overallProgress, current);
         });
         
         const upscaleElapsed = ((Date.now() - upscaleStartTime) / 1000).toFixed(1);
@@ -200,8 +206,9 @@ export const useA4Conversion = () => {
       }
     }
     
-    // Set progress to 90% (remaining 10% for PDF generation)
-    onProgress(90);
+    // Set progress to start of 'organizing' stage
+    const organizingStart = calculateProgress(mode, 'organizing', 0);
+    onProgress(organizingStart);
     
     const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     const totalLoss = validLabels.length - finalImages.length;
