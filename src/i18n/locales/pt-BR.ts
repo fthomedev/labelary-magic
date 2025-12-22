@@ -280,6 +280,12 @@ const translations = {
   footerDescription: 'A melhor plataforma para conversão de ZPL para PDF. Simples, rápido e seguro.',
   supporter: 'apoiador',
   supporters: 'apoiadores',
+  
+  // Donation CTA in History
+  donationCta: {
+    title: 'Gostou do que usou até agora?',
+    message: 'Ajude a manter esta ferramenta gratuita! Sua contribuição via PIX garante a evolução e sustentação do projeto. Escaneie o QR code ao lado.',
+  },
 };
 
 export default translations;

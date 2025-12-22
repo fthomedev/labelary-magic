@@ -280,6 +280,12 @@ const translations = {
   footerDescription: 'The best platform for ZPL to PDF conversion. Simple, fast and secure.',
   supporter: 'supporter',
   supporters: 'supporters',
+  
+  // Donation CTA in History
+  donationCta: {
+    title: 'Enjoying the tool so far?',
+    message: 'Help keep this tool free! Your PIX contribution ensures the project\'s evolution and sustainability. Scan the QR code.',
+  },
 };
 
 export default translations;
