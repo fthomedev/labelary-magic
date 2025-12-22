@@ -23,7 +23,7 @@ const DONATION_OPTIONS = [
 ];
 
 interface DonationButtonProps {
-  variant?: 'default' | 'compact' | 'success';
+  variant?: 'default' | 'compact' | 'success' | 'header';
   className?: string;
 }
 
@@ -77,6 +77,11 @@ export const DonationButton = ({ variant = 'default', className = '' }: Donation
           <Button className={`gap-2 bg-primary hover:bg-primary/90 text-primary-foreground animate-pulse-slow ${className}`}>
             <Coffee className="h-4 w-4" />
             {t('supportProject')}
+          </Button>
+        ) : variant === 'header' ? (
+          <Button variant="ghost" size="sm" className={`gap-1.5 text-muted-foreground hover:text-foreground ${className}`}>
+            <Heart className="h-4 w-4 text-red-500" />
+            <span className="hidden sm:inline">{t('supportProject')}</span>
           </Button>
         ) : (
           <Button variant="outline" className={`gap-2 ${className}`}>

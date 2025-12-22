@@ -12,6 +12,7 @@ import { useA4ZplConversion } from '@/hooks/conversion/useA4ZplConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
 import { FeedbackModal } from '@/components/FeedbackModal';
+import { DonationButton } from '@/components/DonationButton';
 import { PrintFormat } from '@/components/format/FormatSelector';
 import { SharePromoBanner } from '@/components/SharePromoBanner';
 import { useUserAccessLog } from '@/hooks/useUserAccessLog';
@@ -157,6 +158,7 @@ const Index = () => {
               {t('title')}
             </h1>
             <div className="flex items-center gap-1 sm:gap-2">
+              <DonationButton variant="header" />
               <FeedbackModal />
               <LanguageSelector />
               <UserMenu />
