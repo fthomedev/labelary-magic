@@ -104,8 +104,7 @@ export const DonationButton = ({ variant = 'default', className = '' }: Donation
         <Tabs defaultValue="pix" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="pix" className="gap-2">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo%E2%80%94pix_powered_by_Banco_Central_%28Brazil%2C_2020%29.svg" alt="PIX" className="h-4 w-auto" />
-              PIX
+              <span className="font-bold text-primary">PIX</span>
             </TabsTrigger>
             <TabsTrigger value="card" className="gap-2">
               <CreditCard className="h-4 w-4" />
