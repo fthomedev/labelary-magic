@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, History } from 'lucide-react';
+import { Loader2, History, Heart } from 'lucide-react';
+import qrCodePix from '@/assets/qrcode-pix.png';
 import { CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useProcessingHistory } from '@/hooks/useProcessingHistory';
@@ -108,6 +109,30 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
             onPageChange={handlePageChange}
           />
         </CardFooter>
+      )}
+
+      {/* Donation Call-to-Action */}
+      {!localOnly && records && records.length > 0 && (
+        <div className="border-t bg-muted/30 p-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+            <div className="flex-shrink-0">
+              <img 
+                src={qrCodePix} 
+                alt="QR Code PIX" 
+                className="w-20 h-20 rounded-lg border shadow-sm"
+              />
+            </div>
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium flex items-center justify-center sm:justify-start gap-1">
+                <Heart className="h-4 w-4 text-red-500 fill-red-500" />
+                {t('donationCta.title')}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t('donationCta.message')}
+              </p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* PDF Viewer Modal */}
