@@ -2,7 +2,13 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Progress } from '@/components/ui/progress';
-import { ConversionStage } from '@/hooks/conversion/useConversionState';
+import { ConversionStage, ConversionMode } from '@/hooks/conversion/useConversionState';
+
+// Tempo médio por etiqueta em segundos (benchmarked)
+const TIME_PER_LABEL = {
+  hd: 0.93294749845583693638,
+  standard: 0.19007126667409801954
+} as const;
 
 interface ProgressBarProps {
   isConverting: boolean;
@@ -10,7 +16,7 @@ interface ProgressBarProps {
   currentLabel?: number;
   totalLabels?: number;
   stage?: ConversionStage;
-  startTime?: number;
+  conversionMode?: ConversionMode;
 }
 
 export function ProgressBar({ 
@@ -19,25 +25,32 @@ export function ProgressBar({
   currentLabel = 0, 
   totalLabels = 0,
   stage = 'converting',
-  startTime
+  conversionMode = 'standard'
 }: ProgressBarProps) {
   const { t } = useTranslation();
   
   // Show component during conversion OR when in finalizing/complete stage
   const shouldShow = isConverting || stage === 'finalizing' || stage === 'complete';
   
-  // Calculate ETA based on elapsed time and progress
+  // Calculate predictive ETA based on remaining labels and known time per label
   const etaDisplay = useMemo(() => {
-    if (!startTime || progress <= 5 || progress >= 95 || stage === 'complete') {
+    // Don't show ETA when complete, idle, or no labels info
+    if (!totalLabels || stage === 'complete' || stage === 'idle') {
       return null;
     }
     
-    const elapsed = Date.now() - startTime;
-    const estimatedTotal = (elapsed / progress) * 100;
-    const remaining = Math.max(0, estimatedTotal - elapsed);
-    const remainingSeconds = Math.ceil(remaining / 1000);
+    // Get time per label based on conversion mode
+    const timePerLabel = conversionMode === 'hd' 
+      ? TIME_PER_LABEL.hd 
+      : TIME_PER_LABEL.standard;
     
-    if (remainingSeconds < 5) {
+    // Calculate remaining labels
+    const remainingLabels = Math.max(0, totalLabels - currentLabel);
+    
+    // Calculate remaining time in seconds
+    const remainingSeconds = Math.ceil(remainingLabels * timePerLabel);
+    
+    if (remainingSeconds < 3) {
       return t('etaFinalizing', 'Finalizando...');
     }
     
@@ -48,7 +61,7 @@ export function ProgressBar({
     const minutes = Math.floor(remainingSeconds / 60);
     const seconds = remainingSeconds % 60;
     return t('etaMinutes', { minutes, seconds });
-  }, [startTime, progress, stage, t]);
+  }, [totalLabels, currentLabel, stage, conversionMode, t]);
   
   if (!shouldShow) {
     return null;
