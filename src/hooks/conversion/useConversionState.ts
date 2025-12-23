@@ -11,12 +11,15 @@ export type ConversionStage =
   | 'finalizing'
   | 'complete';
 
+export type ConversionMode = 'standard' | 'hd';
+
 export interface ProgressInfo {
   percentage: number;
   currentLabel: number;
   totalLabels: number;
   stage: ConversionStage;
   startTime?: number;
+  conversionMode?: ConversionMode;
 }
 
 const initialProgressInfo: ProgressInfo = {

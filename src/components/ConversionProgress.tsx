@@ -2,7 +2,7 @@
 import React from 'react';
 import { ProgressBar } from './progress/ProgressBar';
 import { ConvertButton } from './progress/ConvertButton';
-import { ConversionStage } from '@/hooks/conversion/useConversionState';
+import { ConversionStage, ConversionMode } from '@/hooks/conversion/useConversionState';
 import { DonationButton } from './DonationButton';
 import { useTranslation } from 'react-i18next';
 
@@ -16,7 +16,7 @@ interface ConversionProgressProps {
   currentLabel?: number;
   totalLabels?: number;
   stage?: ConversionStage;
-  startTime?: number;
+  conversionMode?: ConversionMode;
 }
 
 export const ConversionProgress = ({ 
@@ -29,7 +29,7 @@ export const ConversionProgress = ({
   currentLabel = 0,
   totalLabels = 0,
   stage = 'converting',
-  startTime
+  conversionMode = 'standard'
 }: ConversionProgressProps) => {
   const { t } = useTranslation();
   
@@ -53,7 +53,7 @@ export const ConversionProgress = ({
         currentLabel={currentLabel}
         totalLabels={totalLabels}
         stage={stage}
-        startTime={startTime}
+        conversionMode={conversionMode}
       />
       
       <div className="flex justify-center">
