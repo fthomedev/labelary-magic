@@ -1,9 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Maximum image size: 5MB (accounting for base64 overhead ~1.37x)
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024 * 1.37;
+const MIN_SCALE = 1;
+const MAX_SCALE = 4;
 
 // Nearest Neighbor upscaling - perfect for barcodes (sharp edges, no blur)
 function upscaleNearestNeighbor(
@@ -331,6 +337,7 @@ function inflateSync(data: Uint8Array): Uint8Array {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -338,10 +345,59 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
+    // ========== AUTHENTICATION ==========
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('❌ Missing authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create Supabase client with the user's auth token
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Verify the user is authenticated
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('❌ Authentication failed:', authError?.message || 'No user found');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`🔐 Authenticated user: ${user.id}`);
+
+    // ========== INPUT VALIDATION ==========
     const { imageBase64, scale = 2 } = await req.json();
     
     if (!imageBase64) {
       throw new Error('imageBase64 is required');
+    }
+
+    // Validate image size (prevent DoS with large images)
+    if (imageBase64.length > MAX_IMAGE_SIZE_BYTES) {
+      console.error(`❌ Image too large: ${(imageBase64.length / 1024 / 1024).toFixed(2)}MB`);
+      return new Response(
+        JSON.stringify({ error: 'Image too large (max 5MB)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate scale parameter
+    if (typeof scale !== 'number' || scale < MIN_SCALE || scale > MAX_SCALE) {
+      console.error(`❌ Invalid scale: ${scale}`);
+      return new Response(
+        JSON.stringify({ error: `Scale must be between ${MIN_SCALE} and ${MAX_SCALE}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log(`📥 Received image for ${scale}x upscaling`);
@@ -377,7 +433,7 @@ serve(async (req) => {
     outputBase64 = btoa(outputBase64);
     
     const elapsed = Date.now() - startTime;
-    console.log(`✅ Upscale completed in ${elapsed}ms`);
+    console.log(`✅ Upscale completed in ${elapsed}ms for user ${user.id}`);
     
     return new Response(
       JSON.stringify({ 
