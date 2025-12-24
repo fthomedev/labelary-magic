@@ -134,6 +134,30 @@ export type Database = {
         }
         Relationships: []
       }
+      processing_history_purge_audit: {
+        Row: {
+          deleted_count: number
+          id: number
+          ran_by: string
+          retention_days: number
+          run_at: string
+        }
+        Insert: {
+          deleted_count: number
+          id?: number
+          ran_by?: string
+          retention_days?: number
+          run_at?: string
+        }
+        Update: {
+          deleted_count?: number
+          id?: number
+          ran_by?: string
+          retention_days?: number
+          run_at?: string
+        }
+        Relationships: []
+      }
       processing_logs: {
         Row: {
           api_response_body: string | null
@@ -317,7 +341,15 @@ export type Database = {
             Returns: undefined
           }
       log_user_access: { Args: never; Returns: undefined }
+      purge_history_and_storage_older_than_60d: {
+        Args: never
+        Returns: undefined
+      }
+      purge_old_processing_history:
+        | { Args: never; Returns: number }
+        | { Args: { retention_days?: number }; Returns: number }
       reset_daily_usage: { Args: never; Returns: undefined }
+      run_purge_old_processing_history: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never

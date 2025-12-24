@@ -286,6 +286,7 @@ const translations = {
     title: 'Gostou do que usou até agora?',
     message: 'Ajude a manter esta ferramenta gratuita! Sua contribuição via PIX garante a evolução e sustentação do projeto. Escaneie o QR code ao lado.',
   },
+  historyRetentionNote: 'Registros e arquivos com mais de 60 dias são excluídos automaticamente.',
 };
 
 export default translations;

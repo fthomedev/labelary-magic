@@ -286,6 +286,7 @@ const translations = {
     title: 'Enjoying the tool so far?',
     message: 'Help keep this tool free! Your PIX contribution ensures the project\'s evolution and sustainability. Scan the QR code.',
   },
+  historyRetentionNote: 'Records and files older than 60 days are automatically deleted.',
 };
 
 export default translations;

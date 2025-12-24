@@ -100,6 +100,11 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           onDelete={handleDeleteClick}
           isMobile={isMobile}
         />
+        {!localOnly && (
+          <p className="text-[10px] text-muted-foreground/70 px-4 py-2 italic">
+            {t('historyRetentionNote')}
+          </p>
+        )}
       </CardContent>
       {!localOnly && totalPages > 1 && (
         <CardFooter className="py-2 px-4 flex justify-center border-t">
