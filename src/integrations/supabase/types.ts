@@ -317,6 +317,10 @@ export type Database = {
             Returns: undefined
           }
       log_user_access: { Args: never; Returns: undefined }
+      purge_history_and_storage_older_than_60d: {
+        Args: never
+        Returns: undefined
+      }
       reset_daily_usage: { Args: never; Returns: undefined }
     }
     Enums: {
