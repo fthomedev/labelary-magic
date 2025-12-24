@@ -278,6 +278,10 @@ const translations = {
   donationThankYouMessage: 'Sua generosidade nos ajuda a continuar melhorando o ZPL Easy.',
   donationImpactMessage: 'Seu apoio é fundamental para mantermos a ferramenta gratuita e adicionarmos novos recursos.',
   footerDescription: 'A melhor plataforma para conversão de ZPL para PDF. Simples, rápido e seguro.',
+  usefulLinks: 'Links Úteis',
+  converter: 'Conversor',
+  plans: 'Planos',
+  contact: 'Contato',
   supporter: 'apoiador',
   supporters: 'apoiadores',
   
