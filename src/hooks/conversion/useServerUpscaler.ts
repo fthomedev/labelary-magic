@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const UPSCALE_ENDPOINT = 'https://ekoakbihwprthzjyztwq.supabase.co/functions/v1/upscale-image';
 
@@ -28,11 +29,21 @@ export const useServerUpscaler = () => {
     imageBlob: Blob,
     scale: number = 2
   ): Promise<Blob> => {
+    // Get the current session for authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Authentication required for image upscaling');
+    }
+    
     const base64 = await blobToBase64(imageBlob);
     
     const response = await fetch(UPSCALE_ENDPOINT, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      },
       body: JSON.stringify({ imageBase64: base64, scale })
     });
     
