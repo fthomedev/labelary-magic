@@ -131,13 +131,41 @@ const Index = () => {
 
   const handlePrint = () => {
     if (lastPdfUrl) {
-      // Open PDF in new window and trigger print
-      const printWindow = window.open(lastPdfUrl, '_blank');
-      if (printWindow) {
-        printWindow.addEventListener('load', () => {
-          printWindow.print();
-        });
-      }
+      // Remove existing print frame if any
+      const existingFrame = document.getElementById('print-pdf-frame');
+      if (existingFrame) existingFrame.remove();
+
+      // Create hidden iframe for direct printing
+      const printFrame = document.createElement('iframe');
+      printFrame.id = 'print-pdf-frame';
+      printFrame.style.position = 'fixed';
+      printFrame.style.right = '0';
+      printFrame.style.bottom = '0';
+      printFrame.style.width = '0';
+      printFrame.style.height = '0';
+      printFrame.style.border = '0';
+      
+      printFrame.onload = () => {
+        if (printFrame.contentWindow) {
+          printFrame.contentWindow.focus();
+          printFrame.contentWindow.print();
+          
+          // Clean up after print dialog closes
+          printFrame.contentWindow.onafterprint = () => {
+            printFrame.remove();
+          };
+          
+          // Fallback cleanup after 60 seconds if onafterprint doesn't fire
+          setTimeout(() => {
+            if (document.getElementById('print-pdf-frame')) {
+              printFrame.remove();
+            }
+          }, 60000);
+        }
+      };
+      
+      printFrame.src = lastPdfUrl;
+      document.body.appendChild(printFrame);
     }
   };
 
