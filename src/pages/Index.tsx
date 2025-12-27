@@ -19,6 +19,7 @@ import { useUserAccessLog } from '@/hooks/useUserAccessLog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 import { PdfViewerModal } from '@/components/history/PdfViewerModal';
+import { useToast } from '@/hooks/use-toast';
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
@@ -35,6 +36,8 @@ const Index = () => {
   // Log user access for analytics
   useUserAccessLog();
   
+  const { toast } = useToast();
+  
   // Standard conversion hook
   const {
     isConverting: isStandardConverting,
@@ -44,7 +47,8 @@ const Index = () => {
     lastPdfUrl: standardPdfUrl,
     convertToPDF,
     historyRefreshTrigger: standardHistoryRefresh,
-    resetProcessingStatus: resetStandardStatus
+    resetProcessingStatus: resetStandardStatus,
+    resetPdfState: resetStandardPdfState
   } = useZplConversion();
 
   // HD conversion hook (always uses upscaling)
@@ -56,7 +60,8 @@ const Index = () => {
     lastPdfUrl: hdPdfUrl,
     convertToA4PDF: convertToHdPDF,
     historyRefreshTrigger: hdHistoryRefresh,
-    resetProcessingStatus: resetHdStatus
+    resetProcessingStatus: resetHdStatus,
+    resetPdfState: resetHdPdfState
   } = useA4ZplConversion();
 
   // Determine which conversion is active
@@ -98,6 +103,11 @@ const Index = () => {
   const handleConvert = async () => {
     console.log(`🔧 DEBUG: handleConvert called - selectedFormat: ${selectedFormat}`);
     
+    // Reset BOTH PDF states before starting any new conversion
+    // This ensures print/download buttons reference the new file, not the old one
+    resetStandardPdfState();
+    resetHdPdfState();
+    
     // Reset both processing statuses before starting new conversion
     resetStandardStatus();
     resetHdStatus();
@@ -120,8 +130,6 @@ const Index = () => {
       a.click();
       document.body.removeChild(a);
       
-      // Show toast notification
-      const { toast } = require('@/hooks/use-toast');
       toast({
         title: t('downloadStarted'),
         description: t('downloadStartedDesc'),

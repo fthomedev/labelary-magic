@@ -311,5 +311,6 @@ export const useA4ZplConversion = () => {
     convertToA4PDF,
     historyRefreshTrigger,
     resetProcessingStatus,
+    resetPdfState,
   };
 };
