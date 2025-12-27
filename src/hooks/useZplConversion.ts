@@ -158,5 +158,6 @@ export const useZplConversion = () => {
     convertToPDF,
     historyRefreshTrigger,
     resetProcessingStatus,
+    resetPdfState,
   };
 };
