@@ -119,9 +119,6 @@ export const useA4ZplConversion = () => {
         }
         
         updateProgress({ percentage: calculateProgress('standard', 'complete', 100), stage: 'complete' });
-        
-        // Download the file
-        downloadPdf(blobUrl, 'etiquetas-a4.pdf');
 
         console.log(`\n✅ A4 FAST CONVERSION COMPLETE`);
         console.log(`📊 Input: ${labels.length} → Output: ${labelsAdded} labels`);
@@ -247,9 +244,6 @@ export const useA4ZplConversion = () => {
         }
         
         updateProgress({ percentage: calculateProgress('hd', 'complete', 100), stage: 'complete' });
-        
-        // Download the file
-        downloadPdf(blobUrl, 'etiquetas-hd.pdf');
 
         console.log(`\n✅ HD CONVERSION COMPLETE`);
         console.log(`📊 Output pages: ${labelsAdded} (displayed labels: ${correctedLabelCount})`);
