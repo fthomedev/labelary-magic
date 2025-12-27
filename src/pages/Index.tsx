@@ -18,7 +18,7 @@ import { SharePromoBanner } from '@/components/SharePromoBanner';
 import { useUserAccessLog } from '@/hooks/useUserAccessLog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
-
+import { PdfViewerModal } from '@/components/history/PdfViewerModal';
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
@@ -26,6 +26,7 @@ const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [selectedFormat, setSelectedFormat] = useState<PrintFormat>('standard');
   const [fileUploadKey, setFileUploadKey] = useState(0);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
@@ -131,14 +132,12 @@ const Index = () => {
 
   const handlePrint = () => {
     if (lastPdfUrl) {
-      const printWindow = window.open(lastPdfUrl, '_blank');
-      if (printWindow) {
-        printWindow.onload = () => {
-          printWindow.focus();
-          printWindow.print();
-        };
-      }
+      setIsPdfModalOpen(true);
     }
+  };
+
+  const closePdfModal = () => {
+    setIsPdfModalOpen(false);
   };
 
   const handleNewProcess = () => {
@@ -251,6 +250,13 @@ const Index = () => {
           </div>
         </div>
       </main>
+
+      <PdfViewerModal
+        pdfUrl={lastPdfUrl}
+        isOpen={isPdfModalOpen}
+        onClose={closePdfModal}
+        onDownload={handleDownload}
+      />
     </div>
   );
 };
