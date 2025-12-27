@@ -285,7 +285,7 @@ const translations = {
   // Donation CTA in History
   donationCta: {
     title: 'Enjoying the tool so far?',
-    message: 'Help keep this tool free! Your PIX contribution ensures the project\'s evolution and sustainability. Scan the QR code.',
+    message: 'Help keep this tool free! Your PIX contribution ensures the project\'s evolution and sustainability. Scan the QR code using your favorite bank app\'s camera.',
   },
 
   // History retention note
