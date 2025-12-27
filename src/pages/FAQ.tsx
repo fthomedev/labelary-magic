@@ -2,7 +2,9 @@ import { SEO } from "@/components/SEO";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useTranslation } from "react-i18next";
 import { faqItems } from "@/components/landing/FAQSection";
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
+import { Header } from "@/components/landing/Header";
+import { supabase } from "@/integrations/supabase/client";
 
 // Componente FAQ Item reutilizável
 const FAQItem = memo(({ 
@@ -25,9 +27,19 @@ const FAQItem = memo(({
 const FAQ = () => {
   const { i18n } = useTranslation();
   const isPortuguese = i18n.language === 'pt-BR';
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+    checkAuth();
+  }, []);
 
   return (
     <div className="bg-gradient-to-b from-background to-muted/30 min-h-screen">
+      <Header isLoggedIn={isLoggedIn} />
       <SEO 
         title={isPortuguese ? "FAQ – ZPL Easy" : "FAQ – ZPL Easy"}
         description={isPortuguese 
