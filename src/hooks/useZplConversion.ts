@@ -111,9 +111,6 @@ export const useZplConversion = () => {
         }
         
         updateProgress({ percentage: calculateProgress('standard', 'complete', 100), stage: 'complete' });
-        
-        // Download the file
-        downloadPdf(blobUrl);
 
         logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount);
 
