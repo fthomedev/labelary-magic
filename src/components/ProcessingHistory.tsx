@@ -10,6 +10,7 @@ import { HistoryTable } from './history/HistoryTable';
 import { HistoryPagination } from './history/HistoryPagination';
 import { PdfViewerModal } from './history/PdfViewerModal';
 import { DeleteConfirmDialog } from './history/DeleteConfirmDialog';
+import { DonationButton } from './DonationButton';
 
 
 interface ProcessingHistoryProps {
@@ -118,23 +119,38 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
 
       {/* Donation Call-to-Action */}
       {!localOnly && records && records.length > 0 && (
-        <div className="border-t bg-muted/30 p-4">
+        <div className="border-t bg-gradient-to-r from-emerald-50/50 to-green-50/50 dark:from-emerald-950/20 dark:to-green-950/20 p-4">
           <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 relative">
               <img 
                 src={qrCodePix} 
-                alt="QR Code PIX" 
-                className="w-20 h-20 rounded-lg border shadow-sm"
+                alt="QR Code PIX para doação" 
+                className="w-24 h-24 rounded-lg border-2 border-emerald-200 dark:border-emerald-800 shadow-md"
               />
+              {/* Badge PIX */}
+              <div className="absolute -top-2 -right-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                PIX
+              </div>
             </div>
-            <div className="flex-1 space-y-1">
-              <p className="text-sm font-medium flex items-center justify-center sm:justify-start gap-1">
-                <Heart className="h-4 w-4 text-red-500 fill-red-500" />
-                {t('donationCta.title')}
-              </p>
+            <div className="flex-1 space-y-2">
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold flex items-center justify-center sm:justify-start gap-1.5">
+                  <Heart className="h-4 w-4 text-emerald-500 fill-emerald-500" />
+                  {t('donationCta.title')}
+                </p>
+                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                  {t('donationCta.subtitle')}
+                </p>
+              </div>
               <p className="text-xs text-muted-foreground">
                 {t('donationCta.message')}
               </p>
+              <DonationButton 
+                variant="link" 
+                className="h-auto p-0 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300"
+              >
+                {t('donationCta.otherMethods')}
+              </DonationButton>
             </div>
           </div>
         </div>

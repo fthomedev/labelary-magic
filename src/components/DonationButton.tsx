@@ -23,11 +23,12 @@ const DONATION_OPTIONS = [
 ];
 
 interface DonationButtonProps {
-  variant?: 'default' | 'compact' | 'success' | 'header';
+  variant?: 'default' | 'compact' | 'success' | 'header' | 'link';
   className?: string;
+  children?: React.ReactNode;
 }
 
-export const DonationButton = ({ variant = 'default', className = '' }: DonationButtonProps) => {
+export const DonationButton = ({ variant = 'default', className = '', children }: DonationButtonProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -83,6 +84,10 @@ export const DonationButton = ({ variant = 'default', className = '' }: Donation
             <Heart className="h-4 w-4 text-red-500" />
             <span className="hidden sm:inline">{t('supportProject')}</span>
           </Button>
+        ) : variant === 'link' ? (
+          <button type="button" className={`underline-offset-4 hover:underline ${className}`}>
+            {children || t('supportProject')}
+          </button>
         ) : (
           <Button variant="outline" className={`gap-2 ${className}`}>
             <Heart className="h-4 w-4 text-red-500" />
