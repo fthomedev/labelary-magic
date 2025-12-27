@@ -31,7 +31,7 @@ export function HistoryTable({
   console.log('📋 [DEBUG] HistoryTable rendering with records:', records.length);
 
   return (
-    <div className="overflow-x-auto max-h-[400px]">
+    <div className="overflow-x-auto max-h-[500px]">
       <Table className="compact-table">
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
