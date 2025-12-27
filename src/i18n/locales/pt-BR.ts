@@ -284,8 +284,10 @@ const translations = {
   
   // Donation CTA in History
   donationCta: {
-    title: 'Gostou do que usou até agora?',
-    message: 'Ajude a manter esta ferramenta gratuita! Sua contribuição via PIX garante a evolução e sustentação do projeto. Escaneie o QR code ao lado usando a câmera do app do seu banco favorito.',
+    title: 'Apoie o projeto!',
+    subtitle: 'Contribua via PIX',
+    message: 'Escaneie com a câmera do app do seu banco',
+    otherMethods: 'Outras formas de doar',
   },
 
   // History retention note
