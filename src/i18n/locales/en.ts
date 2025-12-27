@@ -195,6 +195,7 @@ const translations = {
   totalLabels: 'Total Labels',
   labelsProcessed: '{{count}} labels processed',
   downloadAgain: 'Download Again',
+  printDirect: 'Print',
   process: 'Process',
   converting: 'Converting...',
   successMessage: 'Conversion completed successfully',

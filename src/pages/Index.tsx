@@ -129,6 +129,18 @@ const Index = () => {
     }
   };
 
+  const handlePrint = () => {
+    if (lastPdfUrl) {
+      // Open PDF in new window and trigger print
+      const printWindow = window.open(lastPdfUrl, '_blank');
+      if (printWindow) {
+        printWindow.addEventListener('load', () => {
+          printWindow.print();
+        });
+      }
+    }
+  };
+
   const handleNewProcess = () => {
     // Clear the content and reset all processing states
     setZplContent('');
@@ -221,6 +233,7 @@ const Index = () => {
                         isProcessingComplete={isProcessingComplete}
                         onDownload={handleDownload}
                         onNewProcess={handleNewProcess}
+                        onPrint={handlePrint}
                         currentLabel={progressInfo.currentLabel}
                         totalLabels={progressInfo.totalLabels}
                         stage={progressInfo.stage}

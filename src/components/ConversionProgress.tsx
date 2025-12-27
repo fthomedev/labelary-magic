@@ -13,6 +13,7 @@ interface ConversionProgressProps {
   isProcessingComplete?: boolean;
   onDownload?: () => void;
   onNewProcess?: () => void;
+  onPrint?: () => void;
   currentLabel?: number;
   totalLabels?: number;
   stage?: ConversionStage;
@@ -26,6 +27,7 @@ export const ConversionProgress = ({
   isProcessingComplete = false,
   onDownload,
   onNewProcess,
+  onPrint,
   currentLabel = 0,
   totalLabels = 0,
   stage = 'converting',
@@ -63,6 +65,7 @@ export const ConversionProgress = ({
           onClick={handleButtonClick}
           onProcessAgain={isProcessingComplete ? handleProcessAgain : undefined}
           onNewProcess={isProcessingComplete ? onNewProcess : undefined}
+          onPrint={isProcessingComplete ? onPrint : undefined}
         />
       </div>
 

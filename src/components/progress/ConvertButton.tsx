@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2, Play, RotateCcw, FilePlus } from 'lucide-react';
+import { Download, Loader2, Play, RotateCcw, FilePlus, Printer } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ConvertButtonProps {
@@ -10,6 +10,7 @@ interface ConvertButtonProps {
   onClick: () => void;
   onProcessAgain?: () => void;
   onNewProcess?: () => void;
+  onPrint?: () => void;
 }
 
 export function ConvertButton({ 
@@ -17,7 +18,8 @@ export function ConvertButton({
   isProcessingComplete, 
   onClick,
   onProcessAgain,
-  onNewProcess
+  onNewProcess,
+  onPrint
 }: ConvertButtonProps) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -49,11 +51,22 @@ export function ConvertButton({
         <Button
           size={isMobile ? "sm" : "default"}
           onClick={onClick}
-          className={`${isMobile ? 'w-full' : 'min-w-[160px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-green-500 text-green-600 hover:bg-green-50`}
+          className={`${isMobile ? 'w-full' : 'min-w-[140px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-green-500 text-green-600 hover:bg-green-50`}
         >
           <Download className="mr-2 h-4 w-4" />
-          {t('downloadAgain')}
+          {t('download')}
         </Button>
+
+        {onPrint && (
+          <Button
+            size={isMobile ? "sm" : "default"}
+            onClick={onPrint}
+            className={`${isMobile ? 'w-full' : 'min-w-[140px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white`}
+          >
+            <Printer className="mr-2 h-4 w-4" />
+            {t('printDirect')}
+          </Button>
+        )}
       </div>
     );
   }
