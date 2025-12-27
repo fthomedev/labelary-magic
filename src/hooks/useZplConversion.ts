@@ -46,7 +46,8 @@ export const useZplConversion = () => {
     lastPdfUrl,
     lastPdfPath,
     processPdfs,
-    downloadPdf
+    downloadPdf,
+    resetPdfState
   } = usePdfOperations();
 
   const convertToPDF = async (zplContent: string, useOptimizedTiming: boolean = true) => {
@@ -55,8 +56,9 @@ export const useZplConversion = () => {
     const conversionStartTime = Date.now();
     
     try {
+      // Clear previous PDF state before starting new conversion
+      resetPdfState();
       startConversion();
-      setPdfUrls([]);
 
       // Parse labels ONCE at the beginning and use this count throughout
       const labels = parseLabelsFromZpl(zplContent);
