@@ -70,7 +70,8 @@ const Index = () => {
   const progressInfo = isStandardConverting ? standardProgressInfo : hdProgressInfo;
   const isProcessingComplete = isStandardComplete || isHdComplete;
   const lastPdfUrl = standardPdfUrl || hdPdfUrl;
-  const historyRefreshTrigger = Math.max(standardHistoryRefresh, hdHistoryRefresh);
+  // Sum both triggers to ensure any update from either hook triggers a refresh
+  const historyRefreshTrigger = standardHistoryRefresh + hdHistoryRefresh;
 
   useEffect(() => {
     // Check if user is logged in
