@@ -268,6 +268,7 @@ const translations = {
   
   // Donation
   supportProject: 'Apoiar o Projeto',
+  support: 'Apoiar',
   donationDescription: 'Sua contribuição ajuda a manter o ZPL Easy gratuito e em constante evolução. Escolha um valor para doar:',
   donationHelpMessage: 'Sua doação mantém o projeto gratuito e em evolução. Obrigado!',
   donateNow: 'Doar Agora',
