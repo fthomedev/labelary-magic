@@ -43,7 +43,8 @@ export const useA4ZplConversion = () => {
     setLastPdfUrl,
     lastPdfPath,
     setLastPdfPath,
-    downloadPdf
+    downloadPdf,
+    resetPdfState
   } = usePdfOperations();
 
   // Fast A4 conversion using PNG pipeline without upscaling
@@ -53,6 +54,8 @@ export const useA4ZplConversion = () => {
     const conversionStartTime = Date.now();
     
     try {
+      // Clear previous PDF state before starting new conversion
+      resetPdfState();
       startConversion();
       
       // Parse labels
@@ -171,6 +174,8 @@ export const useA4ZplConversion = () => {
     const conversionStartTime = Date.now();
     
     try {
+      // Clear previous PDF state before starting new conversion
+      resetPdfState();
       startConversion();
       
       // Parse labels (keep label counting identical to Standard)
