@@ -61,7 +61,7 @@ export function ConvertButton({
           <Button
             size={isMobile ? "sm" : "default"}
             onClick={onPrint}
-            className={`${isMobile ? 'w-full' : 'min-w-[140px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white`}
+            className={`${isMobile ? 'w-full' : 'min-w-[140px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-green-500 text-green-600 hover:bg-green-50`}
           >
             <Printer className="mr-2 h-4 w-4" />
             {t('printDirect')}
