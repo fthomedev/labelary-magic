@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Link } from 'react-router-dom';
 
 // Definição das perguntas para evitar re-renderizações desnecessárias
 const faqItems = [
@@ -159,15 +158,6 @@ export const FAQSection: React.FC = () => {
               />
             ))}
           </Accordion>
-          
-          <div className="mt-8 text-center">
-            <Link 
-              to="/faq" 
-              className="text-primary hover:underline font-medium"
-            >
-              {isPortuguese ? 'Ver todas as perguntas frequentes →' : 'See all frequently asked questions →'}
-            </Link>
-          </div>
         </div>
       </div>
     </section>
