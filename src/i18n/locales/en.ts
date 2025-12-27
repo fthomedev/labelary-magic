@@ -247,7 +247,7 @@ const translations = {
   errorProcessingFiles: 'Error processing one or more files',
   
   // Process Again
-  processAgain: 'Process Again',
+  processAgain: 'Reprocess',
   
   // Beta Notice
   betaNotice: '🚧 This tool is in BETA and under DEVELOPMENT. For issues or suggestions, use the Feedback button.',

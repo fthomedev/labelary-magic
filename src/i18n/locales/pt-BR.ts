@@ -247,7 +247,7 @@ const translations = {
   errorProcessingFiles: 'Erro ao processar um ou mais arquivos',
   
   // Process Again
-  processAgain: 'Processar Novamente',
+  processAgain: 'Reprocessar',
   
   // Beta Notice
   betaNotice: '🚧 Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.',
