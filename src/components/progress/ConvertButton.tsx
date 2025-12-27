@@ -27,44 +27,44 @@ export function ConvertButton({
   // Show three buttons when processing is complete
   if (isProcessingComplete && onProcessAgain) {
     return (
-      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row flex-wrap'} gap-2 ${isMobile ? 'w-full' : ''}`}>
+      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-center'} gap-3 ${isMobile ? 'w-full' : ''}`}>
         {/* Print button first - highlighted */}
         {onPrint && (
           <Button
-            size={isMobile ? "sm" : "default"}
+            size={isMobile ? "default" : "lg"}
             onClick={onPrint}
-            className={`${isMobile ? 'w-full' : 'flex-1 min-w-[100px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white`}
+            className={`${isMobile ? 'w-full' : 'px-6'} font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white`}
           >
-            <Printer className="mr-2 h-4 w-4" />
+            <Printer className="mr-2 h-5 w-5" />
             {t('printDirect')}
           </Button>
         )}
 
         <Button
-          size={isMobile ? "sm" : "default"}
+          size={isMobile ? "default" : "lg"}
           onClick={onClick}
-          className={`${isMobile ? 'w-full' : 'flex-1 min-w-[100px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-green-500 text-green-600 hover:bg-green-50`}
+          className={`${isMobile ? 'w-full' : 'px-6'} font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-green-500 text-green-600 hover:bg-green-50`}
         >
-          <Download className="mr-2 h-4 w-4" />
+          <Download className="mr-2 h-5 w-5" />
           {t('download')}
         </Button>
         
         <Button
-          size={isMobile ? "sm" : "default"}
+          size={isMobile ? "default" : "lg"}
           onClick={onProcessAgain}
-          className={`${isMobile ? 'w-full' : 'flex-1 min-w-[100px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-green-500 text-green-600 hover:bg-green-50`}
+          className={`${isMobile ? 'w-full' : 'px-6'} font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-green-500 text-green-600 hover:bg-green-50`}
         >
-          <RotateCcw className="mr-2 h-4 w-4" />
+          <RotateCcw className="mr-2 h-5 w-5" />
           {t('processAgain')}
         </Button>
 
         {onNewProcess && (
           <Button
-            size={isMobile ? "sm" : "default"}
+            size={isMobile ? "default" : "lg"}
             onClick={onNewProcess}
-            className={`${isMobile ? 'w-full' : 'flex-1 min-w-[100px]'} text-sm font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-green-500 text-green-600 hover:bg-green-50`}
+            className={`${isMobile ? 'w-full' : 'px-6'} font-medium transition-all duration-300 shadow hover:shadow-hover btn-effect bg-white border border-green-500 text-green-600 hover:bg-green-50`}
           >
-            <FilePlus className="mr-2 h-4 w-4" />
+            <FilePlus className="mr-2 h-5 w-5" />
             {t('newProcess')}
           </Button>
         )}
