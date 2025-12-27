@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import printJS from 'print-js';
 import { useTranslation } from 'react-i18next';
 import { FileUpload, FileUploadRef } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
@@ -132,10 +131,13 @@ const Index = () => {
 
   const handlePrint = () => {
     if (lastPdfUrl) {
-      printJS({
-        printable: lastPdfUrl,
-        type: 'pdf',
-      });
+      const printWindow = window.open(lastPdfUrl, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.focus();
+          printWindow.print();
+        };
+      }
     }
   };
 
