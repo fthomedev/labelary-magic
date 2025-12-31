@@ -224,13 +224,13 @@ const translations = {
   // Formato de impressão
   printFormat: 'Print Format',
   standardFormat: 'Standard',
-  hdFormat: 'High Quality (HD)',
+  hdFormat: 'Sharpness+',
   selectPrintFormat: 'Select how you want to print your labels',
   formatDescription: 'Choose the format that best suits your printer',
-  hdFormatDescription: 'Labels with AI-enhanced quality',
+  hdFormatDescription: 'AI-enhanced sharpness',
   standardFormatDescription: 'Individual labels in sequence',
-  hdFormatWarning: 'Warning: Slower Process',
-  hdFormatWarningMessage: 'High Quality mode uses artificial intelligence to enhance each label individually. This process may take significantly longer than standard mode.',
+  hdFormatWarning: 'Note: Sharpness+ is slower',
+  hdFormatWarningMessage: 'Sharpness+ mode uses AI to maximize the sharpness of each label. This process may take longer than standard mode.',
   
   // Pagination
   previous: 'Previous',
