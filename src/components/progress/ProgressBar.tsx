@@ -3,6 +3,8 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Progress } from '@/components/ui/progress';
 import { ConversionStage, ConversionMode } from '@/hooks/conversion/useConversionState';
+import { RotatingMetricBadge } from '@/components/donation/RotatingMetricBadge';
+import { useProjectMetrics } from '@/hooks/useProjectMetrics';
 
 // Tempo médio por etiqueta em segundos (benchmarked)
 const TIME_PER_LABEL = {
@@ -28,6 +30,7 @@ export function ProgressBar({
   conversionMode = 'standard'
 }: ProgressBarProps) {
   const { t } = useTranslation();
+  const metrics = useProjectMetrics();
   
   // Show component during conversion OR when in finalizing/complete stage
   const shouldShow = isConverting || stage === 'finalizing' || stage === 'complete';
@@ -93,6 +96,9 @@ export function ProgressBar({
         return `${t('processing')} ${Math.round(progress)}%`;
     }
   };
+
+  // Show rotating metric badge during active conversion (not when complete)
+  const showMetricBadge = isConverting && stage !== 'complete' && stage !== 'idle';
   
   return (
     <div className="space-y-3 transition-opacity duration-300">
@@ -106,6 +112,20 @@ export function ProgressBar({
         <span>{getStageMessage()}</span>
         {etaDisplay && <span className="text-primary/70">{etaDisplay}</span>}
       </div>
+      
+      {/* Subtle rotating metric during conversion */}
+      {showMetricBadge && (
+        <div className="flex justify-center pt-1">
+          <RotatingMetricBadge
+            totalLabels={metrics.totalLabels}
+            labelsToday={metrics.labelsToday}
+            conversionsToday={metrics.conversionsToday}
+            totalDonations={metrics.totalDonations}
+            uniqueUsers={metrics.uniqueUsers}
+            compact
+          />
+        </div>
+      )}
     </div>
   );
 }
