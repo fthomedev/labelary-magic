@@ -84,6 +84,8 @@ export const useProjectMetrics = (forceRefresh = false) => {
         error: null,
       };
 
+      console.log('📊 [METRICS] Fetched:', newMetrics);
+
       // Update cache
       cachedMetrics = newMetrics;
       lastFetchTime = now;

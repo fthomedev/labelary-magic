@@ -45,46 +45,47 @@ export const RotatingMetricBadge: React.FC<RotatingMetricBadgeProps> = ({
     return () => clearInterval(interval);
   }, [rotationInterval]);
 
-  const getMetricContent = () => {
+  const getMetricContent = (): { icon: React.ReactNode; prefix: string; value: number; suffix: string } => {
+    const parseTranslation = (key: string, count: number): { prefix: string; suffix: string } => {
+      const translated = t(key, { count });
+      const countStr = count.toLocaleString('pt-BR');
+      const parts = translated.split(countStr);
+      if (parts.length >= 2) {
+        return { prefix: parts[0].trim(), suffix: parts.slice(1).join(countStr).trim() };
+      }
+      // Fallback: remove any number pattern
+      const cleaned = translated.replace(/[\d.,]+/g, '').trim();
+      return { prefix: '', suffix: cleaned };
+    };
+
     switch (currentMetric) {
-      case 'labelsToday':
-        return {
-          icon: <Tag className="h-3.5 w-3.5" />,
-          text: t('metrics.labelsToday', { count: labelsToday }),
-          value: labelsToday,
-        };
-      case 'conversionsToday':
-        return {
-          icon: <TrendingUp className="h-3.5 w-3.5" />,
-          text: t('metrics.conversionsToday', { count: conversionsToday }),
-          value: conversionsToday,
-        };
-      case 'totalLabels':
-        return {
-          icon: <Tag className="h-3.5 w-3.5" />,
-          text: t('metrics.totalLabelsProcessed', { count: totalLabels }),
-          value: totalLabels,
-        };
-      case 'users':
-        return {
-          icon: <Users className="h-3.5 w-3.5" />,
-          text: t('metrics.uniqueUsers', { count: uniqueUsers }),
-          value: uniqueUsers,
-        };
-      case 'supporters':
-        return {
-          icon: <Heart className="h-3.5 w-3.5 text-rose-500" />,
-          text: totalDonations === 1 
-            ? t('metrics.supporterKeepingAlive', { count: totalDonations })
-            : t('metrics.supportersKeepingAlive', { count: totalDonations }),
-          value: totalDonations,
-        };
+      case 'labelsToday': {
+        const { prefix, suffix } = parseTranslation('metrics.labelsToday', labelsToday);
+        return { icon: <Tag className="h-3.5 w-3.5" />, prefix, value: labelsToday, suffix };
+      }
+      case 'conversionsToday': {
+        const { prefix, suffix } = parseTranslation('metrics.conversionsToday', conversionsToday);
+        return { icon: <TrendingUp className="h-3.5 w-3.5" />, prefix, value: conversionsToday, suffix };
+      }
+      case 'totalLabels': {
+        const { prefix, suffix } = parseTranslation('metrics.totalLabelsProcessed', totalLabels);
+        return { icon: <Tag className="h-3.5 w-3.5" />, prefix, value: totalLabels, suffix };
+      }
+      case 'users': {
+        const { prefix, suffix } = parseTranslation('metrics.uniqueUsers', uniqueUsers);
+        return { icon: <Users className="h-3.5 w-3.5" />, prefix, value: uniqueUsers, suffix };
+      }
+      case 'supporters': {
+        const key = totalDonations === 1 ? 'metrics.supporterKeepingAlive' : 'metrics.supportersKeepingAlive';
+        const { prefix, suffix } = parseTranslation(key, totalDonations);
+        return { icon: <Heart className="h-3.5 w-3.5 text-rose-500" />, prefix, value: totalDonations, suffix };
+      }
       default:
-        return { icon: null, text: '', value: 0 };
+        return { icon: null, prefix: '', value: 0, suffix: '' };
     }
   };
 
-  const { icon, text, value } = getMetricContent();
+  const { icon, prefix, value, suffix } = getMetricContent();
 
   if (compact) {
     return (
@@ -95,7 +96,9 @@ export const RotatingMetricBadge: React.FC<RotatingMetricBadgeProps> = ({
       >
         {icon}
         <span>
-          <AnimatedCounter value={value} duration={800} /> {text.replace(/[\d.,]+/, '').trim()}
+          {prefix && <span>{prefix} </span>}
+          <AnimatedCounter value={value} duration={800} />
+          {suffix && <span> {suffix}</span>}
         </span>
       </div>
     );
@@ -108,9 +111,9 @@ export const RotatingMetricBadge: React.FC<RotatingMetricBadgeProps> = ({
       }`}
     >
       {icon}
-      <span>{text.split('{{count}}')[0]}</span>
+      {prefix && <span>{prefix}</span>}
       <AnimatedCounter value={value} duration={800} className="font-medium text-foreground" />
-      <span>{text.split('{{count}}')[1] || ''}</span>
+      {suffix && <span>{suffix}</span>}
     </div>
   );
 };

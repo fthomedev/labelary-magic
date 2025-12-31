@@ -96,9 +96,8 @@ export function ProgressBar({
         return `${t('processing')} ${Math.round(progress)}%`;
     }
   };
-
-  // Show rotating metric badge during active conversion (not when complete)
-  const showMetricBadge = isConverting && stage !== 'complete' && stage !== 'idle';
+  // Show metric badge during active conversion (including finalizing/organizing stages)
+  const showMetricBadge = (isConverting || stage === 'organizing' || stage === 'uploading') && stage !== 'complete' && stage !== 'idle';
   
   return (
     <div className="space-y-3 transition-opacity duration-300">

@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProgressBar } from './progress/ProgressBar';
 import { ConvertButton } from './progress/ConvertButton';
 import { ConversionStage, ConversionMode } from '@/hooks/conversion/useConversionState';
@@ -32,6 +31,21 @@ export const ConversionProgress = ({
   stage = 'converting',
   conversionMode = 'standard'
 }: ConversionProgressProps) => {
+  // Preserve the label count when conversion completes
+  const [completedLabelsCount, setCompletedLabelsCount] = useState(0);
+
+  useEffect(() => {
+    if (isProcessingComplete && totalLabels > 0) {
+      setCompletedLabelsCount(totalLabels);
+    }
+  }, [isProcessingComplete, totalLabels]);
+
+  // Reset when starting a new conversion
+  useEffect(() => {
+    if (isConverting && stage === 'parsing') {
+      setCompletedLabelsCount(0);
+    }
+  }, [isConverting, stage]);
   
   const handleButtonClick = () => {
     if (isProcessingComplete && onDownload) {
@@ -69,7 +83,7 @@ export const ConversionProgress = ({
 
       {isProcessingComplete && (
         <div className="pt-4">
-          <DonationCTA labelsProcessed={totalLabels} />
+          <DonationCTA labelsProcessed={completedLabelsCount || totalLabels} />
         </div>
       )}
     </div>
