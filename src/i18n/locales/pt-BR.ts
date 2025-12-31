@@ -224,13 +224,13 @@ const translations = {
   // Formato de impressão
   printFormat: 'Formato de Impressão',
   standardFormat: 'Padrão',
-  hdFormat: 'Alta Qualidade (HD)',
+  hdFormat: 'Nitidez+',
   selectPrintFormat: 'Selecione como deseja imprimir suas etiquetas',
   formatDescription: 'Escolha o formato que melhor se adapta à sua impressora',
-  hdFormatDescription: 'Etiquetas com qualidade aprimorada via IA',
+  hdFormatDescription: 'Nitidez maximizada com IA',
   standardFormatDescription: 'Etiquetas individuais em sequência',
-  hdFormatWarning: 'Atenção: Processo Mais Demorado',
-  hdFormatWarningMessage: 'O modo Alta Qualidade utiliza inteligência artificial para melhorar cada etiqueta individualmente. Este processo pode levar significativamente mais tempo que o modo padrão.',
+  hdFormatWarning: 'Atenção: Nitidez+ é mais lento',
+  hdFormatWarningMessage: 'O modo Nitidez+ utiliza IA para maximizar a nitidez de cada etiqueta. Este processo pode levar mais tempo que o modo padrão.',
   
   // Pagination
   previous: 'Anterior',
