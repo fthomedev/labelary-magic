@@ -13,7 +13,7 @@ interface RotatingMetricBadgeProps {
   compact?: boolean;
 }
 
-type MetricType = 'labelsToday' | 'conversionsToday' | 'totalLabels' | 'supporters' | 'users';
+type MetricType = 'labelsToday' | 'conversionsToday' | 'totalLabels' | 'users';
 
 export const RotatingMetricBadge: React.FC<RotatingMetricBadgeProps> = ({
   totalLabels,
@@ -28,7 +28,7 @@ export const RotatingMetricBadge: React.FC<RotatingMetricBadgeProps> = ({
   const [currentMetric, setCurrentMetric] = useState<MetricType>('labelsToday');
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const metrics: MetricType[] = ['labelsToday', 'conversionsToday', 'totalLabels', 'users', 'supporters'];
+  const metrics: MetricType[] = ['labelsToday', 'conversionsToday', 'totalLabels', 'users'];
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -75,12 +75,8 @@ export const RotatingMetricBadge: React.FC<RotatingMetricBadgeProps> = ({
         const { prefix, suffix } = parseTranslation('metrics.uniqueUsers', uniqueUsers);
         return { icon: <Users className="h-3.5 w-3.5" />, prefix, value: uniqueUsers, suffix };
       }
-      case 'supporters': {
-        const key = totalDonations === 1 ? 'metrics.supporterKeepingAlive' : 'metrics.supportersKeepingAlive';
-        const { prefix, suffix } = parseTranslation(key, totalDonations);
-        return { icon: <Heart className="h-3.5 w-3.5 text-rose-500" />, prefix, value: totalDonations, suffix };
-      }
       default:
+        return { icon: null, prefix: '', value: 0, suffix: '' };
         return { icon: null, prefix: '', value: 0, suffix: '' };
     }
   };
