@@ -291,6 +291,25 @@ const translations = {
     otherMethods: 'Outras formas de doar',
   },
 
+  // Dynamic Metrics
+  metrics: {
+    youSaved: 'Você economizou aproximadamente',
+    estimatedSavings: 'economia estimada vs. serviços pagos',
+    labelsToday: '{{count}} etiquetas hoje',
+    conversionsToday: '{{count}} conversões hoje',
+    totalLabelsProcessed: '{{count}} etiquetas já processadas',
+    uniqueUsers: '{{count}} usuários',
+    supporterKeepingAlive: '{{count}} apoiador mantém o projeto vivo',
+    supportersKeepingAlive: '{{count}} apoiadores mantêm o projeto vivo',
+    updatedNow: 'Atualizado agora',
+    updatedAgo: 'Há {{minutes}} min',
+    today: 'Hoje',
+    total: 'Total',
+    labels: 'etiquetas',
+    conversions: 'conversões',
+    users: 'usuários',
+  },
+
   // History retention note
   historyRetentionNote: 'Registros e arquivos com mais de 60 dias são excluídos automaticamente.',
 };
