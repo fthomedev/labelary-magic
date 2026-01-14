@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import {
   Pagination,
   PaginationContent,
@@ -29,6 +29,12 @@ export function HistoryPagination({
     return null;
   }
   
+  const handleFirstPage = () => {
+    if (currentPage > 1) {
+      onPageChange(1);
+    }
+  };
+  
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       onPageChange(currentPage - 1);
@@ -38,6 +44,12 @@ export function HistoryPagination({
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       onPageChange(currentPage + 1);
+    }
+  };
+  
+  const handleLastPage = () => {
+    if (currentPage < totalPages) {
+      onPageChange(totalPages);
     }
   };
   
@@ -77,6 +89,22 @@ export function HistoryPagination({
     <div className="flex justify-center py-2">
       <Pagination className="mx-0">
         <PaginationContent className="gap-1">
+          {/* First Page Button */}
+          <PaginationItem>
+            <PaginationLink
+              onClick={handleFirstPage}
+              className={`
+                ${currentPage === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-accent hover:text-accent-foreground'} 
+                transition-colors h-8 px-2 md:h-10 md:px-3
+              `}
+              aria-label={t('firstPage')}
+              aria-disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="h-3 w-3 md:h-4 md:w-4" />
+            </PaginationLink>
+          </PaginationItem>
+          
+          {/* Previous Page Button */}
           <PaginationItem>
             <PaginationPrevious
               onClick={handlePreviousPage}
@@ -93,6 +121,7 @@ export function HistoryPagination({
           
           {getPaginationItems()}
           
+          {/* Next Page Button */}
           <PaginationItem>
             <PaginationNext 
               onClick={handleNextPage}
@@ -105,6 +134,21 @@ export function HistoryPagination({
               <span className="hidden sm:inline mr-1">{t('next')}</span>
               <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
             </PaginationNext>
+          </PaginationItem>
+          
+          {/* Last Page Button */}
+          <PaginationItem>
+            <PaginationLink
+              onClick={handleLastPage}
+              className={`
+                ${currentPage === totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-accent hover:text-accent-foreground'} 
+                transition-colors h-8 px-2 md:h-10 md:px-3
+              `}
+              aria-label={t('lastPage')}
+              aria-disabled={currentPage === totalPages}
+            >
+              <ChevronsRight className="h-3 w-3 md:h-4 md:w-4" />
+            </PaginationLink>
           </PaginationItem>
         </PaginationContent>
       </Pagination>
