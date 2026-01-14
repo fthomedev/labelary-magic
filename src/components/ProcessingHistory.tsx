@@ -12,7 +12,7 @@ import { HistoryPagination } from './history/HistoryPagination';
 import { PdfViewerModal } from './history/PdfViewerModal';
 import { DeleteConfirmDialog } from './history/DeleteConfirmDialog';
 import { DonationButton } from './DonationButton';
-import { useDateFormatter } from '@/hooks/history/useDateFormatter';
+
 
 interface ProcessingHistoryProps {
   records?: ProcessingRecord[];
@@ -21,8 +21,7 @@ interface ProcessingHistoryProps {
 
 export function ProcessingHistory({ records: localRecords, localOnly = false }: ProcessingHistoryProps) {
   const { t } = useTranslation();
-  const [searchFilter, setSearchFilter] = useState('');
-  const { formatDateHuman, formatTimeOnly, getRelativeDate } = useDateFormatter();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   
   const {
     isLoading,
@@ -45,25 +44,15 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     closeDeleteDialog,
   } = useProcessingHistory(localRecords, localOnly);
 
-  // Filter records based on search
+  // Filter records based on selected date
   const filteredRecords = useMemo(() => {
-    if (!records || !searchFilter.trim()) return records;
+    if (!records || !selectedDate) return records;
     
-    const search = searchFilter.toLowerCase().trim();
     return records.filter((record) => {
-      const dateHuman = formatDateHuman(record.date).toLowerCase();
-      const time = formatTimeOnly(record.date).toLowerCase();
-      const relativeDate = getRelativeDate(record.date).toLowerCase();
-      const labelCount = String(record.labelCount);
-      
-      return (
-        dateHuman.includes(search) ||
-        time.includes(search) ||
-        relativeDate.includes(search) ||
-        labelCount.includes(search)
-      );
+      const recordDate = new Date(record.date);
+      return recordDate.toDateString() === selectedDate.toDateString();
     });
-  }, [records, searchFilter, formatDateHuman, formatTimeOnly, getRelativeDate]);
+  }, [records, selectedDate]);
 
   if (isLoading) {
     return (
@@ -114,7 +103,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3 space-y-3">
-        <HistoryDateFilter value={searchFilter} onChange={setSearchFilter} />
+        <HistoryDateFilter value={selectedDate} onChange={setSelectedDate} />
         
         {filteredRecords && filteredRecords.length > 0 ? (
           <HistoryList
