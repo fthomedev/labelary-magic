@@ -68,8 +68,8 @@ export const useServerUpscaler = () => {
     // Atomic counter for accurate progress tracking across parallel operations
     let completedCount = 0;
     
-    // Process in batches of 6 for optimized parallel processing
-    const BATCH_SIZE = 6;
+    // Process in batches of 10 for optimized parallel processing
+    const BATCH_SIZE = 10;
     
     for (let i = 0; i < images.length; i += BATCH_SIZE) {
       const batch = images.slice(i, Math.min(i + BATCH_SIZE, images.length));
