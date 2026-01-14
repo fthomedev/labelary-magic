@@ -1,74 +1,50 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { User, Menu } from 'lucide-react';
+import { FileText, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { UserMenu } from '@/components/UserMenu';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 interface HeaderProps {
   isLoggedIn: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const isPortuguese = i18n.language === 'pt-BR';
 
   const handleMyAccount = () => {
     navigate('/app');
   };
 
-  const navLinks = [
-    { href: '#como-funciona', labelPt: 'Como Funciona', labelEn: 'How It Works' },
-    { href: '#beneficios', labelPt: 'Benefícios', labelEn: 'Benefits' },
-    { href: '#faq', labelPt: 'FAQ', labelEn: 'FAQ' },
-  ];
-
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur dark:bg-gray-900/95 dark:border-gray-800">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Logo */}
-        <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <img src="/favicon.png" alt="ZPL Easy logo" className="h-7 w-7" />
-          <span className="text-xl font-bold text-foreground">
+        <div className="flex items-center gap-2">
+          <FileText className="h-6 w-6 text-primary" aria-hidden="true" />
+          <span className="text-xl font-semibold truncate max-w-[200px] sm:max-w-none">
             ZPL Easy
           </span>
-        </a>
+        </div>
         
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {isPortuguese ? link.labelPt : link.labelEn}
-            </a>
-          ))}
-        </nav>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-4">
           {isLoggedIn ? (
             <>
               <Button 
-                variant="default" 
+                variant="outline" 
                 onClick={handleMyAccount}
                 className="hidden sm:flex items-center gap-2"
                 size="sm"
+                aria-label={t('myAccount')}
               >
-                {isPortuguese ? 'Acessar App' : 'Go to App'}
+                <User size={16} aria-hidden="true" />
+                <span>{t('myAccount')}</span>
               </Button>
+              
               <UserMenu />
             </>
           ) : (
@@ -78,6 +54,7 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
                 onClick={() => navigate('/auth')}
                 className="hidden sm:flex"
                 size="sm"
+                aria-label={t('login')}
               >
                 {t('login')}
               </Button>
@@ -85,33 +62,20 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn }) => {
                 onClick={() => navigate('/auth?signup=true')}
                 className="hidden sm:flex"
                 size="sm"
+                aria-label={t('register')}
               >
-                {isPortuguese ? 'Começar Grátis' : 'Start Free'}
+                {t('register')}
               </Button>
               
-              {/* Mobile menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild className="sm:hidden">
-                  <Button variant="outline" size="icon">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  {navLinks.map((link) => (
-                    <DropdownMenuItem key={link.href} asChild>
-                      <a href={link.href}>
-                        {isPortuguese ? link.labelPt : link.labelEn}
-                      </a>
-                    </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuItem onClick={() => navigate('/auth')}>
-                    {t('login')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/auth?signup=true')}>
-                    {isPortuguese ? 'Criar Conta' : 'Sign Up'}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/auth')}
+                className="sm:hidden"
+                aria-label={t('login')}
+              >
+                <User size={16} aria-hidden="true" />
+              </Button>
             </>
           )}
           <LanguageSelector />

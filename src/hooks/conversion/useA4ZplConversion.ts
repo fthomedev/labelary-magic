@@ -43,8 +43,7 @@ export const useA4ZplConversion = () => {
     setLastPdfUrl,
     lastPdfPath,
     setLastPdfPath,
-    downloadPdf,
-    resetPdfState
+    downloadPdf
   } = usePdfOperations();
 
   // Fast A4 conversion using PNG pipeline without upscaling
@@ -54,8 +53,6 @@ export const useA4ZplConversion = () => {
     const conversionStartTime = Date.now();
     
     try {
-      // Clear previous PDF state before starting new conversion
-      resetPdfState();
       startConversion();
       
       // Parse labels
@@ -122,6 +119,9 @@ export const useA4ZplConversion = () => {
         }
         
         updateProgress({ percentage: calculateProgress('standard', 'complete', 100), stage: 'complete' });
+        
+        // Download the file
+        downloadPdf(blobUrl, 'etiquetas-a4.pdf');
 
         console.log(`\n✅ A4 FAST CONVERSION COMPLETE`);
         console.log(`📊 Input: ${labels.length} → Output: ${labelsAdded} labels`);
@@ -174,8 +174,6 @@ export const useA4ZplConversion = () => {
     const conversionStartTime = Date.now();
     
     try {
-      // Clear previous PDF state before starting new conversion
-      resetPdfState();
       startConversion();
       
       // Parse labels (keep label counting identical to Standard)
@@ -249,6 +247,9 @@ export const useA4ZplConversion = () => {
         }
         
         updateProgress({ percentage: calculateProgress('hd', 'complete', 100), stage: 'complete' });
+        
+        // Download the file
+        downloadPdf(blobUrl, 'etiquetas-hd.pdf');
 
         console.log(`\n✅ HD CONVERSION COMPLETE`);
         console.log(`📊 Output pages: ${labelsAdded} (displayed labels: ${correctedLabelCount})`);
@@ -311,6 +312,5 @@ export const useA4ZplConversion = () => {
     convertToA4PDF,
     historyRefreshTrigger,
     resetProcessingStatus,
-    resetPdfState,
   };
 };

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import printJS from 'print-js';
 import { useTranslation } from 'react-i18next';
 import { FileUpload, FileUploadRef } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
@@ -18,8 +19,7 @@ import { SharePromoBanner } from '@/components/SharePromoBanner';
 import { useUserAccessLog } from '@/hooks/useUserAccessLog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
-import { PdfViewerModal } from '@/components/history/PdfViewerModal';
-import { useToast } from '@/hooks/use-toast';
+
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
@@ -27,7 +27,6 @@ const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [selectedFormat, setSelectedFormat] = useState<PrintFormat>('standard');
   const [fileUploadKey, setFileUploadKey] = useState(0);
-  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
@@ -35,8 +34,6 @@ const Index = () => {
   
   // Log user access for analytics
   useUserAccessLog();
-  
-  const { toast } = useToast();
   
   // Standard conversion hook
   const {
@@ -47,8 +44,7 @@ const Index = () => {
     lastPdfUrl: standardPdfUrl,
     convertToPDF,
     historyRefreshTrigger: standardHistoryRefresh,
-    resetProcessingStatus: resetStandardStatus,
-    resetPdfState: resetStandardPdfState
+    resetProcessingStatus: resetStandardStatus
   } = useZplConversion();
 
   // HD conversion hook (always uses upscaling)
@@ -60,8 +56,7 @@ const Index = () => {
     lastPdfUrl: hdPdfUrl,
     convertToA4PDF: convertToHdPDF,
     historyRefreshTrigger: hdHistoryRefresh,
-    resetProcessingStatus: resetHdStatus,
-    resetPdfState: resetHdPdfState
+    resetProcessingStatus: resetHdStatus
   } = useA4ZplConversion();
 
   // Determine which conversion is active
@@ -70,8 +65,7 @@ const Index = () => {
   const progressInfo = isStandardConverting ? standardProgressInfo : hdProgressInfo;
   const isProcessingComplete = isStandardComplete || isHdComplete;
   const lastPdfUrl = standardPdfUrl || hdPdfUrl;
-  // Sum both triggers to ensure any update from either hook triggers a refresh
-  const historyRefreshTrigger = standardHistoryRefresh + hdHistoryRefresh;
+  const historyRefreshTrigger = Math.max(standardHistoryRefresh, hdHistoryRefresh);
 
   useEffect(() => {
     // Check if user is logged in
@@ -104,11 +98,6 @@ const Index = () => {
   const handleConvert = async () => {
     console.log(`🔧 DEBUG: handleConvert called - selectedFormat: ${selectedFormat}`);
     
-    // Reset BOTH PDF states before starting any new conversion
-    // This ensures print/download buttons reference the new file, not the old one
-    resetStandardPdfState();
-    resetHdPdfState();
-    
     // Reset both processing statuses before starting new conversion
     resetStandardStatus();
     resetHdStatus();
@@ -131,6 +120,8 @@ const Index = () => {
       a.click();
       document.body.removeChild(a);
       
+      // Show toast notification
+      const { toast } = require('@/hooks/use-toast');
       toast({
         title: t('downloadStarted'),
         description: t('downloadStartedDesc'),
@@ -141,12 +132,11 @@ const Index = () => {
 
   const handlePrint = () => {
     if (lastPdfUrl) {
-      setIsPdfModalOpen(true);
+      printJS({
+        printable: lastPdfUrl,
+        type: 'pdf',
+      });
     }
-  };
-
-  const closePdfModal = () => {
-    setIsPdfModalOpen(false);
   };
 
   const handleNewProcess = () => {
@@ -259,13 +249,6 @@ const Index = () => {
           </div>
         </div>
       </main>
-
-      <PdfViewerModal
-        pdfUrl={lastPdfUrl}
-        isOpen={isPdfModalOpen}
-        onClose={closePdfModal}
-        onDownload={handleDownload}
-      />
     </div>
   );
 };

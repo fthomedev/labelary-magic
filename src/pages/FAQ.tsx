@@ -1,74 +1,73 @@
+
 import { SEO } from "@/components/SEO";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { useTranslation } from "react-i18next";
-import { faqItems } from "@/components/landing/FAQSection";
-import { memo, useEffect, useState } from "react";
-import { Header } from "@/components/landing/Header";
-import { supabase } from "@/integrations/supabase/client";
-
-// Componente FAQ Item reutilizável
-const FAQItem = memo(({ 
-  item, 
-  isPortuguese 
-}: { 
-  item: typeof faqItems[0], 
-  isPortuguese: boolean 
-}) => (
-  <AccordionItem value={item.id}>
-    <AccordionTrigger className="text-left">
-      {isPortuguese ? item.questionPtBr : item.questionEn}
-    </AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      {isPortuguese ? item.answerPtBr : item.answerEn}
-    </AccordionContent>
-  </AccordionItem>
-));
 
 const FAQ = () => {
-  const { i18n } = useTranslation();
-  const isPortuguese = i18n.language === 'pt-BR';
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsLoggedIn(!!session);
-    };
-    checkAuth();
-  }, []);
-
   return (
-    <div className="bg-gradient-to-b from-background to-muted/30 min-h-screen">
-      <Header isLoggedIn={isLoggedIn} />
+    <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
       <SEO 
-        title={isPortuguese ? "FAQ – ZPL Easy" : "FAQ – ZPL Easy"}
-        description={isPortuguese 
-          ? "Perguntas frequentes sobre conversão ZPL, impressão de etiquetas, formatos suportados e como usar o ZPL Easy."
-          : "Frequently asked questions about ZPL conversion, label printing, supported formats and how to use ZPL Easy."
-        }
+        title="FAQ – ZPL Easy"
+        description="Perguntas frequentes sobre conversão ZPL, impressão e integrações."
       />
       
       <div className="container mx-auto px-4 py-16">
         <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">
-          {isPortuguese ? 'Perguntas Frequentes' : 'Frequently Asked Questions'}
+          Perguntas Frequentes
         </h1>
         
-        <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-          {isPortuguese 
-            ? 'Encontre respostas para as dúvidas mais comuns sobre o ZPL Easy e a conversão de etiquetas.'
-            : 'Find answers to the most common questions about ZPL Easy and label conversion.'
-          }
-        </p>
-        
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto mt-12">
           <Accordion type="single" collapsible className="w-full">
-            {faqItems.map(item => (
-              <FAQItem 
-                key={item.id}
-                item={item}
-                isPortuguese={isPortuguese}
-              />
-            ))}
+            <AccordionItem value="item-1">
+              <AccordionTrigger>
+                O que é ZPL e por que preciso convertê-lo para PDF?
+              </AccordionTrigger>
+              <AccordionContent>
+                ZPL (Zebra Programming Language) é uma linguagem de programação usada para criar etiquetas em impressoras térmicas Zebra. 
+                Converter ZPL para PDF permite visualizar as etiquetas antes da impressão, compartilhar com pessoas sem impressoras térmicas, 
+                ou arquivar etiquetas digitalmente.
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="item-2">
+              <AccordionTrigger>
+                Como funciona o processo de conversão?
+              </AccordionTrigger>
+              <AccordionContent>
+                Nosso sistema analisa o código ZPL, interpreta os comandos e renderiza uma representação visual precisa 
+                da etiqueta em formato PDF. Todo o processamento acontece na nuvem, então você não precisa instalar 
+                nenhum software ou driver.
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="item-3">
+              <AccordionTrigger>
+                É possível fazer conversão em lote?
+              </AccordionTrigger>
+              <AccordionContent>
+                Sim! Você pode enviar múltiplos arquivos ZPL ou um arquivo ZIP contendo vários arquivos ZPL para 
+                conversão simultânea. Esta funcionalidade está disponível em nossos planos pagos.
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="item-4">
+              <AccordionTrigger>
+                Como posso integrar com o meu sistema?
+              </AccordionTrigger>
+              <AccordionContent>
+                Oferecemos uma API RESTful completa que permite integrar a conversão ZPL-PDF diretamente no seu sistema. 
+                Consulte nossa documentação de API para detalhes sobre endpoints, autenticação e exemplos de código.
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="item-5">
+              <AccordionTrigger>
+                Vocês armazenam minhas etiquetas?
+              </AccordionTrigger>
+              <AccordionContent>
+                Por padrão, mantemos as etiquetas convertidas por um período limitado para permitir que você as baixe novamente. 
+                Nos planos premium, você pode configurar por quanto tempo deseja manter o histórico ou desativar completamente o armazenamento.
+              </AccordionContent>
+            </AccordionItem>
           </Accordion>
         </div>
       </div>

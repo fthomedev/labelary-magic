@@ -180,10 +180,6 @@ const translations = {
   downloadUnavailableAfterRefresh: 'Download indisponível após atualizar a página',
   deleteRecordConfirm: 'Excluir Registro',
   deleteRecordWarning: 'Tem certeza de que deseja excluir este registro? Esta ação não pode ser desfeita.',
-  today: 'Hoje',
-  yesterday: 'Ontem',
-  labels: 'etiquetas',
-  searchByDate: 'Buscar por data...',
   
   // Dashboard
   title: 'ZPL Easy',
@@ -228,19 +224,17 @@ const translations = {
   // Formato de impressão
   printFormat: 'Formato de Impressão',
   standardFormat: 'Padrão',
-  hdFormat: 'Nitidez+',
+  hdFormat: 'Alta Qualidade (HD)',
   selectPrintFormat: 'Selecione como deseja imprimir suas etiquetas',
   formatDescription: 'Escolha o formato que melhor se adapta à sua impressora',
-  hdFormatDescription: 'Nitidez maximizada com IA',
+  hdFormatDescription: 'Etiquetas com qualidade aprimorada via IA',
   standardFormatDescription: 'Etiquetas individuais em sequência',
-  hdFormatWarning: 'Atenção: Nitidez+ é mais lento',
-  hdFormatWarningMessage: 'O modo Nitidez+ utiliza IA para maximizar a nitidez de cada etiqueta. Este processo pode levar mais tempo que o modo padrão.',
+  hdFormatWarning: 'Atenção: Processo Mais Demorado',
+  hdFormatWarningMessage: 'O modo Alta Qualidade utiliza inteligência artificial para melhorar cada etiqueta individualmente. Este processo pode levar significativamente mais tempo que o modo padrão.',
   
   // Pagination
   previous: 'Anterior',
   next: 'Próximo',
-  firstPage: 'Primeira página',
-  lastPage: 'Última página',
   
   // Multiple file upload
   dragAndDropMultiple: 'Arraste e solte seus arquivos aqui (múltiplos arquivos suportados)',
@@ -253,7 +247,7 @@ const translations = {
   errorProcessingFiles: 'Erro ao processar um ou mais arquivos',
   
   // Process Again
-  processAgain: 'Reprocessar',
+  processAgain: 'Processar Novamente',
   
   // Beta Notice
   betaNotice: '🚧 Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.',
@@ -274,7 +268,6 @@ const translations = {
   
   // Donation
   supportProject: 'Apoiar o Projeto',
-  support: 'Apoiar',
   donationDescription: 'Sua contribuição ajuda a manter o ZPL Easy gratuito e em constante evolução. Escolha um valor para doar:',
   donationHelpMessage: 'Sua doação mantém o projeto gratuito e em evolução. Obrigado!',
   donateNow: 'Doar Agora',
@@ -291,10 +284,8 @@ const translations = {
   
   // Donation CTA in History
   donationCta: {
-    title: 'Apoie o projeto!',
-    subtitle: 'Contribua via PIX',
-    message: 'Escaneie com a câmera do app do seu banco',
-    otherMethods: 'Outras formas de doar',
+    title: 'Gostou do que usou até agora?',
+    message: 'Ajude a manter esta ferramenta gratuita! Sua contribuição via PIX garante a evolução e sustentação do projeto. Escaneie o QR code ao lado.',
   },
 
   // History retention note

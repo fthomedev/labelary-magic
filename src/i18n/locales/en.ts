@@ -180,10 +180,6 @@ const translations = {
   downloadUnavailableAfterRefresh: 'Download unavailable after page refresh',
   deleteRecordConfirm: 'Delete Record',
   deleteRecordWarning: 'Are you sure you want to delete this record? This action cannot be undone.',
-  today: 'Today',
-  yesterday: 'Yesterday',
-  labels: 'labels',
-  searchByDate: 'Search by date...',
   
   // Dashboard
   title: 'ZPL Easy',
@@ -228,19 +224,17 @@ const translations = {
   // Formato de impressão
   printFormat: 'Print Format',
   standardFormat: 'Standard',
-  hdFormat: 'Sharpness+',
+  hdFormat: 'High Quality (HD)',
   selectPrintFormat: 'Select how you want to print your labels',
   formatDescription: 'Choose the format that best suits your printer',
-  hdFormatDescription: 'AI-enhanced sharpness',
+  hdFormatDescription: 'Labels with AI-enhanced quality',
   standardFormatDescription: 'Individual labels in sequence',
-  hdFormatWarning: 'Note: Sharpness+ is slower',
-  hdFormatWarningMessage: 'Sharpness+ mode uses AI to maximize the sharpness of each label. This process may take longer than standard mode.',
+  hdFormatWarning: 'Warning: Slower Process',
+  hdFormatWarningMessage: 'High Quality mode uses artificial intelligence to enhance each label individually. This process may take significantly longer than standard mode.',
   
   // Pagination
   previous: 'Previous',
   next: 'Next',
-  firstPage: 'First page',
-  lastPage: 'Last page',
   
   // Multiple file upload
   dragAndDropMultiple: 'Drag and drop your files here (multiple files supported)',
@@ -253,7 +247,7 @@ const translations = {
   errorProcessingFiles: 'Error processing one or more files',
   
   // Process Again
-  processAgain: 'Reprocess',
+  processAgain: 'Process Again',
   
   // Beta Notice
   betaNotice: '🚧 This tool is in BETA and under DEVELOPMENT. For issues or suggestions, use the Feedback button.',
@@ -274,7 +268,6 @@ const translations = {
   
   // Donation
   supportProject: 'Support Project',
-  support: 'Support',
   donationDescription: 'Your contribution helps keep ZPL Easy free and constantly evolving. Choose an amount to donate:',
   donationHelpMessage: 'Your donation keeps the project free and evolving. Thank you!',
   donateNow: 'Donate Now',
@@ -291,10 +284,8 @@ const translations = {
   
   // Donation CTA in History
   donationCta: {
-    title: 'Support the project!',
-    subtitle: 'Contribute via PIX',
-    message: 'Scan with your bank app camera',
-    otherMethods: 'Other ways to donate',
+    title: 'Enjoying the tool so far?',
+    message: 'Help keep this tool free! Your PIX contribution ensures the project\'s evolution and sustainability. Scan the QR code.',
   },
 
   // History retention note
