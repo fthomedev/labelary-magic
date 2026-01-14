@@ -61,6 +61,7 @@ export function HistoryDateFilter({ value, onChange }: HistoryDateFilterProps) {
           mode="single"
           selected={value}
           onSelect={onChange}
+          defaultMonth={value}
           initialFocus
           locale={locale}
           className={cn("p-3 pointer-events-auto")}
