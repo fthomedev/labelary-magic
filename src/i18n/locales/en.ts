@@ -239,6 +239,8 @@ const translations = {
   // Pagination
   previous: 'Previous',
   next: 'Next',
+  firstPage: 'First page',
+  lastPage: 'Last page',
   
   // Multiple file upload
   dragAndDropMultiple: 'Drag and drop your files here (multiple files supported)',
