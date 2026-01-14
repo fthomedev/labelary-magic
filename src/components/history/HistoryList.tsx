@@ -52,7 +52,7 @@ export function HistoryList({ records, onDownload, onDelete }: HistoryListProps)
   }, [groupedRecords]);
 
   return (
-    <div className="space-y-4 max-h-[400px] overflow-y-auto px-2 py-2">
+    <div className="space-y-4 max-h-[600px] overflow-y-auto px-2 py-2">
       {sortedGroupKeys.map((dateKey) => {
         const group = groupedRecords[dateKey];
         return (
