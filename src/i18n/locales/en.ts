@@ -180,6 +180,10 @@ const translations = {
   downloadUnavailableAfterRefresh: 'Download unavailable after page refresh',
   deleteRecordConfirm: 'Delete Record',
   deleteRecordWarning: 'Are you sure you want to delete this record? This action cannot be undone.',
+  today: 'Today',
+  yesterday: 'Yesterday',
+  labels: 'labels',
+  searchByDate: 'Search by date...',
   
   // Dashboard
   title: 'ZPL Easy',

@@ -1,17 +1,18 @@
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, History, Heart } from 'lucide-react';
 import qrCodePix from '@/assets/qrcode-pix.png';
 import { CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useProcessingHistory } from '@/hooks/useProcessingHistory';
-import { HistoryTable } from './history/HistoryTable';
+import { HistoryList } from './history/HistoryList';
+import { HistoryDateFilter } from './history/HistoryDateFilter';
 import { HistoryPagination } from './history/HistoryPagination';
 import { PdfViewerModal } from './history/PdfViewerModal';
 import { DeleteConfirmDialog } from './history/DeleteConfirmDialog';
 import { DonationButton } from './DonationButton';
-
+import { useDateFormatter } from '@/hooks/history/useDateFormatter';
 
 interface ProcessingHistoryProps {
   records?: ProcessingRecord[];
@@ -20,17 +21,17 @@ interface ProcessingHistoryProps {
 
 export function ProcessingHistory({ records: localRecords, localOnly = false }: ProcessingHistoryProps) {
   const { t } = useTranslation();
+  const [searchFilter, setSearchFilter] = useState('');
+  const { formatDateHuman, formatTimeOnly, getRelativeDate } = useDateFormatter();
+  
   const {
     isLoading,
     records,
-    formatDate,
     handleDownload,
-    isMobile,
     currentPage,
     totalPages,
     handlePageChange,
     totalRecords,
-    refreshData,
     // PDF modal state and handlers
     isModalOpen,
     currentPdfUrl,
@@ -39,11 +40,30 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     // Delete functionality
     isDeleting,
     deleteDialogOpen,
-    recordToDelete,
     handleDeleteClick,
     handleDeleteConfirm,
     closeDeleteDialog,
   } = useProcessingHistory(localRecords, localOnly);
+
+  // Filter records based on search
+  const filteredRecords = useMemo(() => {
+    if (!records || !searchFilter.trim()) return records;
+    
+    const search = searchFilter.toLowerCase().trim();
+    return records.filter((record) => {
+      const dateHuman = formatDateHuman(record.date).toLowerCase();
+      const time = formatTimeOnly(record.date).toLowerCase();
+      const relativeDate = getRelativeDate(record.date).toLowerCase();
+      const labelCount = String(record.labelCount);
+      
+      return (
+        dateHuman.includes(search) ||
+        time.includes(search) ||
+        relativeDate.includes(search) ||
+        labelCount.includes(search)
+      );
+    });
+  }, [records, searchFilter, formatDateHuman, formatTimeOnly, getRelativeDate]);
 
   if (isLoading) {
     return (
@@ -93,16 +113,23 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-        <HistoryTable
-          records={records}
-          formatDate={formatDate}
-          onDownload={handleDownload}
-          onDelete={handleDeleteClick}
-          isMobile={isMobile}
-        />
+      <CardContent className="p-3 space-y-3">
+        <HistoryDateFilter value={searchFilter} onChange={setSearchFilter} />
+        
+        {filteredRecords && filteredRecords.length > 0 ? (
+          <HistoryList
+            records={filteredRecords}
+            onDownload={handleDownload}
+            onDelete={handleDeleteClick}
+          />
+        ) : (
+          <div className="text-center py-6 text-sm text-muted-foreground">
+            {t('noHistory')}
+          </div>
+        )}
+        
         {!localOnly && (
-          <p className="text-[10px] text-muted-foreground/70 px-4 py-2 italic">
+          <p className="text-[10px] text-muted-foreground/70 italic">
             {t('historyRetentionNote')}
           </p>
         )}

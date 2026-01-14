@@ -180,6 +180,10 @@ const translations = {
   downloadUnavailableAfterRefresh: 'Download indisponível após atualizar a página',
   deleteRecordConfirm: 'Excluir Registro',
   deleteRecordWarning: 'Tem certeza de que deseja excluir este registro? Esta ação não pode ser desfeita.',
+  today: 'Hoje',
+  yesterday: 'Ontem',
+  labels: 'etiquetas',
+  searchByDate: 'Buscar por data...',
   
   // Dashboard
   title: 'ZPL Easy',
