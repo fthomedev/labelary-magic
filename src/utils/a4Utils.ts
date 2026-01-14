@@ -145,15 +145,10 @@ export const organizeImagesInA4PDF = async (imageBlobs: Blob[]): Promise<{ pdfBl
 };
 
 // Generate PDF with one label per page (for HD mode)
+// Uses chunked processing to avoid "Invalid string length" error with large datasets
 export const organizeImagesInSeparatePDF = async (imageBlobs: Blob[]): Promise<{ pdfBlob: Blob; labelsAdded: number; failedLabels: number[] }> => {
   console.log(`\n========== HD PDF GENERATION START ==========`);
   console.log(`📄 Input images: ${imageBlobs.length}`);
-  
-  // OPTIMIZATION: Pre-convert all blobs to dataURLs in parallel
-  const conversionStart = Date.now();
-  console.log(`🔄 Converting ${imageBlobs.length} blobs to dataURLs in parallel...`);
-  const dataUrls = await blobsToDataURLs(imageBlobs);
-  console.log(`✅ Blob conversion completed in ${Date.now() - conversionStart}ms`);
   
   // Standard label dimensions (4x6 inches)
   const labelWidthMM = 101.6; // 4 inches in mm
@@ -168,46 +163,66 @@ export const organizeImagesInSeparatePDF = async (imageBlobs: Blob[]): Promise<{
   let labelsAdded = 0;
   const failedLabels: number[] = [];
   
-  for (let i = 0; i < imageBlobs.length; i++) {
-    // Validate blob before processing
-    if (!imageBlobs[i] || imageBlobs[i].size === 0) {
-      console.error(`🚨 [PDF] Label ${i + 1}: Invalid/empty blob (size: ${imageBlobs[i]?.size || 0})`);
-      failedLabels.push(i + 1);
-      continue;
-    }
+  // Process images in smaller chunks to avoid memory issues
+  // Convert and add one image at a time to prevent "Invalid string length" error
+  const CHUNK_SIZE = 20; // Process 20 images at a time
+  const totalChunks = Math.ceil(imageBlobs.length / CHUNK_SIZE);
+  
+  console.log(`📦 Processing in ${totalChunks} chunks of up to ${CHUNK_SIZE} images`);
+  
+  for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+    const chunkStart = chunkIndex * CHUNK_SIZE;
+    const chunkEnd = Math.min(chunkStart + CHUNK_SIZE, imageBlobs.length);
+    const chunkBlobs = imageBlobs.slice(chunkStart, chunkEnd);
     
-    // Add new page for each label after the first
-    if (labelsAdded > 0) {
-      pdf.addPage([labelWidthMM, labelHeightMM]);
-    }
+    // Convert this chunk to dataURLs
+    const chunkDataUrls = await blobsToDataURLs(chunkBlobs, 5);
     
-    try {
-      // Use pre-converted dataURL
-      const imageDataUrl = dataUrls[i];
+    for (let i = 0; i < chunkBlobs.length; i++) {
+      const globalIndex = chunkStart + i;
       
-      if (!imageDataUrl || !imageDataUrl.startsWith('data:')) {
-        console.error(`🚨 [PDF] Label ${i + 1}: Failed to convert to data URL`);
-        failedLabels.push(i + 1);
+      // Validate blob before processing
+      if (!chunkBlobs[i] || chunkBlobs[i].size === 0) {
+        console.error(`🚨 [PDF] Label ${globalIndex + 1}: Invalid/empty blob (size: ${chunkBlobs[i]?.size || 0})`);
+        failedLabels.push(globalIndex + 1);
         continue;
       }
       
-      // Add image to fill the entire page
-      pdf.addImage(
-        imageDataUrl,
-        'PNG',
-        0,
-        0,
-        labelWidthMM,
-        labelHeightMM
-      );
+      // Add new page for each label after the first
+      if (labelsAdded > 0) {
+        pdf.addPage([labelWidthMM, labelHeightMM]);
+      }
       
-      console.log(`📋 Added label ${i + 1} to page ${labelsAdded + 1}`);
-      labelsAdded++;
-      
-    } catch (error) {
-      console.error(`🚨 [PDF] Label ${i + 1}: Error adding to PDF:`, error);
-      failedLabels.push(i + 1);
+      try {
+        const imageDataUrl = chunkDataUrls[i];
+        
+        if (!imageDataUrl || !imageDataUrl.startsWith('data:')) {
+          console.error(`🚨 [PDF] Label ${globalIndex + 1}: Failed to convert to data URL`);
+          failedLabels.push(globalIndex + 1);
+          continue;
+        }
+        
+        // Add image to fill the entire page
+        pdf.addImage(
+          imageDataUrl,
+          'PNG',
+          0,
+          0,
+          labelWidthMM,
+          labelHeightMM
+        );
+        
+        console.log(`📋 Added label ${globalIndex + 1} to page ${labelsAdded + 1}`);
+        labelsAdded++;
+        
+      } catch (error) {
+        console.error(`🚨 [PDF] Label ${globalIndex + 1}: Error adding to PDF:`, error);
+        failedLabels.push(globalIndex + 1);
+      }
     }
+    
+    // Log chunk progress
+    console.log(`✅ Chunk ${chunkIndex + 1}/${totalChunks} processed (${labelsAdded} labels added so far)`);
   }
   
   // Generate PDF blob
