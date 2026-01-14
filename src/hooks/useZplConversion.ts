@@ -46,7 +46,8 @@ export const useZplConversion = () => {
     lastPdfUrl,
     lastPdfPath,
     processPdfs,
-    downloadPdf
+    downloadPdf,
+    resetPdfState
   } = usePdfOperations();
 
   const convertToPDF = async (zplContent: string, useOptimizedTiming: boolean = true) => {
@@ -55,8 +56,9 @@ export const useZplConversion = () => {
     const conversionStartTime = Date.now();
     
     try {
+      // Clear previous PDF state before starting new conversion
+      resetPdfState();
       startConversion();
-      setPdfUrls([]);
 
       // Parse labels ONCE at the beginning and use this count throughout
       const labels = parseLabelsFromZpl(zplContent);
@@ -111,9 +113,6 @@ export const useZplConversion = () => {
         }
         
         updateProgress({ percentage: calculateProgress('standard', 'complete', 100), stage: 'complete' });
-        
-        // Download the file
-        downloadPdf(blobUrl);
 
         logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount);
 
@@ -159,5 +158,6 @@ export const useZplConversion = () => {
     convertToPDF,
     historyRefreshTrigger,
     resetProcessingStatus,
+    resetPdfState,
   };
 };

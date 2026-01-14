@@ -27,38 +27,94 @@ const faqItems = [
   },
   {
     id: 'item-4',
-    questionPtBr: 'Preciso pagar algo para começar?',
-    questionEn: 'Do I need to pay anything to start?',
-    answerPtBr: 'Você pode criar uma conta gratuita para testar a conversão. Consulte nossos planos premium para maior volume.',
-    answerEn: 'You can create a free account to test the conversion. Check our premium plans for higher volume.'
+    questionPtBr: 'O ZPL Easy é gratuito?',
+    questionEn: 'Is ZPL Easy free?',
+    answerPtBr: 'Sim! O ZPL Easy é 100% gratuito. Mantemos a ferramenta através de doações voluntárias de usuários que desejam apoiar o projeto.',
+    answerEn: 'Yes! ZPL Easy is 100% free. We keep the tool running through voluntary donations from users who want to support the project.'
   },
   {
     id: 'item-5',
-    questionPtBr: 'Quais plataformas de marketplace e e-commerce utilizam etiquetas ZPL?',
-    questionEn: 'Which marketplace and e-commerce platforms use ZPL labels?',
-    answerPtBr: 'Muitas plataformas populares de e-commerce e marketplace utilizam ou permitem a conversão de etiquetas para o formato ZPL (Zebra Programming Language), ideal para impressão em impressoras térmicas Zebra. Veja algumas:\n\nMercado Livre\n\nShopee\n\nAmazon (FBA/FBM)\n\nShopify (via apps como ShipStation e EasyPost)\n\nNuvemshop e Loja Integrada\n\nWooCommerce, Magento e PrestaShop\n\nGateways logísticos como Melhor Envio, Frenet, Intelipost, Kangu, Total Express, Loggi e Correios\n\nCom nossa ferramenta, você pode converter rapidamente etiquetas PDF para ZPL e imprimir direto em sua impressora térmica.',
-    answerEn: 'Many popular e-commerce and marketplace platforms use or allow the conversion of labels to ZPL format (Zebra Programming Language), ideal for printing on Zebra thermal printers. Here are some:\n\nMercado Livre\n\nShopee\n\nAmazon (FBA/FBM)\n\nShopify (via apps like ShipStation and EasyPost)\n\nNuvemshop and Loja Integrada\n\nWooCommerce, Magento, and PrestaShop\n\nLogistics gateways like Melhor Envio, Frenet, Intelipost, Kangu, Total Express, Loggi, and Correios\n\nWith our tool, you can quickly convert PDF labels to ZPL and print directly on your thermal printer.'
+    questionPtBr: 'Qual a diferença entre o formato Standard e HD?',
+    questionEn: 'What is the difference between Standard and HD format?',
+    answerPtBr: 'O formato Standard gera as etiquetas rapidamente. O formato HD (Alta Qualidade) utiliza inteligência artificial para melhorar a qualidade de cada etiqueta, resultando em impressões mais nítidas. O processo HD leva mais tempo, mas oferece resultados superiores.',
+    answerEn: 'Standard format generates labels quickly. HD (High Quality) format uses artificial intelligence to enhance each label\'s quality, resulting in sharper prints. The HD process takes longer but offers superior results.'
   },
   {
     id: 'item-6',
-    questionPtBr: 'Por que usar etiquetas ZPL em vez de PDF?',
-    questionEn: 'Why use ZPL labels instead of PDF?',
-    answerPtBr: 'Etiquetas no formato ZPL são ideais para impressoras térmicas, especialmente da marca Zebra. Diferente do PDF, o ZPL é leve, rápido, e compatível com sistemas de automação. Isso significa:\n\nImpressão mais rápida\n\nMenor uso de memória da impressora\n\nMaior controle do layout e da qualidade da impressão\n\nRedução de erros em grandes volumes de etiquetas\n\nSe você trabalha com alto volume de pedidos, usar ZPL pode melhorar significativamente sua operação logística.',
-    answerEn: 'Labels in ZPL format are ideal for thermal printers, especially from Zebra. Unlike PDF, ZPL is lightweight, fast, and compatible with automation systems. This means:\n\nFaster printing\n\nLower printer memory usage\n\nGreater control over layout and print quality\n\nReduction of errors in large volumes of labels\n\nIf you work with high order volumes, using ZPL can significantly improve your logistics operation.'
+    questionPtBr: 'Posso fazer upload de múltiplos arquivos ao mesmo tempo?',
+    questionEn: 'Can I upload multiple files at once?',
+    answerPtBr: 'Sim! Você pode enviar vários arquivos TXT ou ZPL de uma só vez, ou ainda um arquivo ZIP contendo múltiplos arquivos. Todos serão processados e combinados em um único PDF.',
+    answerEn: 'Yes! You can upload multiple TXT or ZPL files at once, or even a ZIP file containing multiple files. All will be processed and combined into a single PDF.'
   },
   {
     id: 'item-7',
-    questionPtBr: 'Minha impressora térmica Zebra é compatível com a conversão ZPL?',
-    questionEn: 'Is my Zebra thermal printer compatible with ZPL conversion?',
-    answerPtBr: 'Sim! Toda impressora que suporte o padrão ZPL II (como os modelos GK420t, ZD220, ZT230, entre outros) é compatível com as etiquetas geradas por nossa ferramenta. Basta colar ou enviar o conteúdo ZPL e imprimir.\n\nVocê também pode ajustar o tamanho, margens e resolução antes de imprimir, garantindo que a etiqueta fique perfeita.',
-    answerEn: 'Yes! Any printer that supports the ZPL II standard (such as models GK420t, ZD220, ZT230, among others) is compatible with the labels generated by our tool. Just paste or send the ZPL content and print.\n\nYou can also adjust the size, margins, and resolution before printing, ensuring that the label looks perfect.'
+    questionPtBr: 'Quais formatos de arquivo posso enviar?',
+    questionEn: 'What file formats can I upload?',
+    answerPtBr: 'Aceitamos arquivos .txt contendo código ZPL, arquivos .zpl e arquivos .zip com múltiplos arquivos ZPL. Você também pode enviar PDFs com etiquetas para conversão.',
+    answerEn: 'We accept .txt files containing ZPL code, .zpl files, and .zip files with multiple ZPL files. You can also upload PDFs with labels for conversion.'
   },
   {
     id: 'item-8',
-    questionPtBr: 'Como funciona a conversão de etiquetas para ZPL?',
-    questionEn: 'How does label conversion to ZPL work?',
-    answerPtBr: 'Com nossa ferramenta, você faz o upload de arquivos PDF, imagens ou até códigos ZPL brutos e recebe a versão otimizada para impressão. Você pode:\n\nVisualizar a etiqueta antes de imprimir\n\nAjustar configurações de tamanho e resolução\n\nSalvar etiquetas para reimpressão futura\n\nExportar lotes inteiros em ZPL\n\nIdeal para sellers de marketplaces e operadores logísticos que precisam imprimir em massa.',
-    answerEn: 'With our tool, you upload PDF files, images, or even raw ZPL code and receive the optimized version for printing. You can:\n\nPreview the label before printing\n\nAdjust size and resolution settings\n\nSave labels for future reprinting\n\nExport entire batches in ZPL\n\nIdeal for marketplace sellers and logistics operators who need to print in bulk.'
+    questionPtBr: 'Como funciona o download em ZIP?',
+    questionEn: 'How does the ZIP download work?',
+    answerPtBr: 'Após a conversão, você pode baixar todas as etiquetas em um único arquivo ZIP, facilitando o armazenamento e organização. Ideal para quem processa grandes volumes de etiquetas.',
+    answerEn: 'After conversion, you can download all labels in a single ZIP file, making storage and organization easier. Ideal for those who process large volumes of labels.'
+  },
+  {
+    id: 'item-9',
+    questionPtBr: 'Por quanto tempo minhas etiquetas ficam salvas?',
+    questionEn: 'How long are my labels stored?',
+    answerPtBr: 'Os registros e arquivos são mantidos no histórico por até 60 dias. Após esse período, são excluídos automaticamente para garantir a limpeza do sistema.',
+    answerEn: 'Records and files are kept in history for up to 60 days. After this period, they are automatically deleted to ensure system cleanliness.'
+  },
+  {
+    id: 'item-10',
+    questionPtBr: 'Meus dados estão seguros?',
+    questionEn: 'Is my data secure?',
+    answerPtBr: 'Sim! Utilizamos conexões seguras (HTTPS) e seus arquivos são processados de forma isolada. Não compartilhamos seus dados com terceiros e você pode excluir seu histórico a qualquer momento.',
+    answerEn: 'Yes! We use secure connections (HTTPS) and your files are processed in isolation. We don\'t share your data with third parties and you can delete your history at any time.'
+  },
+  {
+    id: 'item-11',
+    questionPtBr: 'Posso acessar meu histórico de conversões?',
+    questionEn: 'Can I access my conversion history?',
+    answerPtBr: 'Sim! Após fazer login, você tem acesso completo ao seu histórico de processamento, podendo visualizar, baixar novamente ou excluir etiquetas convertidas anteriormente.',
+    answerEn: 'Yes! After logging in, you have full access to your processing history, where you can view, re-download, or delete previously converted labels.'
+  },
+  {
+    id: 'item-12',
+    questionPtBr: 'Como posso enviar feedback ou reportar um problema?',
+    questionEn: 'How can I send feedback or report a problem?',
+    answerPtBr: 'Você pode usar o botão "Feedback" disponível no aplicativo para enviar sugestões, reportar bugs ou fazer reclamações. Respondemos o mais rápido possível!',
+    answerEn: 'You can use the "Feedback" button available in the app to send suggestions, report bugs, or make complaints. We respond as quickly as possible!'
+  },
+  {
+    id: 'item-13',
+    questionPtBr: 'A plataforma funciona em outros idiomas?',
+    questionEn: 'Does the platform work in other languages?',
+    answerPtBr: 'Sim! O ZPL Easy está disponível em Português e Inglês. Você pode alternar entre os idiomas usando o seletor de idioma na interface.',
+    answerEn: 'Yes! ZPL Easy is available in Portuguese and English. You can switch between languages using the language selector in the interface.'
+  },
+  {
+    id: 'item-14',
+    questionPtBr: 'Como posso apoiar o projeto?',
+    questionEn: 'How can I support the project?',
+    answerPtBr: 'Você pode nos apoiar com uma doação via PIX ou cartão de crédito. Cada contribuição ajuda a manter o ZPL Easy gratuito e em constante evolução!',
+    answerEn: 'You can support us with a donation via PIX or credit card. Every contribution helps keep ZPL Easy free and constantly evolving!'
+  },
+  {
+    id: 'item-15',
+    questionPtBr: 'Quais plataformas de marketplace e e-commerce utilizam etiquetas ZPL?',
+    questionEn: 'Which marketplace and e-commerce platforms use ZPL labels?',
+    answerPtBr: 'Muitas plataformas populares utilizam ZPL: Mercado Livre, Shopee, Amazon (FBA/FBM), Shopify, Nuvemshop, Loja Integrada, WooCommerce, Magento, PrestaShop, além de gateways logísticos como Melhor Envio, Frenet, Intelipost, Kangu, Total Express, Loggi e Correios.',
+    answerEn: 'Many popular platforms use ZPL: Mercado Livre, Shopee, Amazon (FBA/FBM), Shopify, Nuvemshop, Loja Integrada, WooCommerce, Magento, PrestaShop, as well as logistics gateways like Melhor Envio, Frenet, Intelipost, Kangu, Total Express, Loggi, and Correios.'
+  },
+  {
+    id: 'item-16',
+    questionPtBr: 'Minha impressora térmica Zebra é compatível?',
+    questionEn: 'Is my Zebra thermal printer compatible?',
+    answerPtBr: 'Sim! Toda impressora que suporte o padrão ZPL II (como GK420t, ZD220, ZT230, entre outros) é compatível. Os PDFs gerados são otimizados para resolução de 203 DPI.',
+    answerEn: 'Yes! Any printer that supports the ZPL II standard (such as GK420t, ZD220, ZT230, among others) is compatible. Generated PDFs are optimized for 203 DPI resolution.'
   }
 ];
 
@@ -107,3 +163,6 @@ export const FAQSection: React.FC = () => {
     </section>
   );
 };
+
+// Export faqItems for reuse in FAQ page
+export { faqItems };

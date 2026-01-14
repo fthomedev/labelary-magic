@@ -23,11 +23,12 @@ const DONATION_OPTIONS = [
 ];
 
 interface DonationButtonProps {
-  variant?: 'default' | 'compact' | 'success' | 'header';
+  variant?: 'default' | 'compact' | 'success' | 'header' | 'link';
   className?: string;
+  children?: React.ReactNode;
 }
 
-export const DonationButton = ({ variant = 'default', className = '' }: DonationButtonProps) => {
+export const DonationButton = ({ variant = 'default', className = '', children }: DonationButtonProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -79,10 +80,19 @@ export const DonationButton = ({ variant = 'default', className = '' }: Donation
             {t('supportProject')}
           </Button>
         ) : variant === 'header' ? (
-          <Button variant="ghost" size="sm" className={`gap-1.5 text-muted-foreground hover:text-foreground ${className}`}>
-            <Heart className="h-4 w-4 text-red-500" />
-            <span className="hidden sm:inline">{t('supportProject')}</span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className={`gap-1.5 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/50 dark:text-emerald-400 ${className}`}
+          >
+            <Heart className="h-4 w-4 text-red-500 animate-pulse" />
+            <span className="hidden sm:inline font-medium">{t('support')}</span>
+            <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold">PIX</span>
           </Button>
+        ) : variant === 'link' ? (
+          <button type="button" className={`underline-offset-4 hover:underline ${className}`}>
+            {children || t('supportProject')}
+          </button>
         ) : (
           <Button variant="outline" className={`gap-2 ${className}`}>
             <Heart className="h-4 w-4 text-red-500" />

@@ -70,6 +70,12 @@ export const usePdfOperations = () => {
     document.body.removeChild(a);
   };
 
+  const resetPdfState = () => {
+    setPdfUrls([]);
+    setLastPdfUrl(undefined);
+    setLastPdfPath(undefined);
+  };
+
   return {
     pdfUrls,
     setPdfUrls,
@@ -78,6 +84,7 @@ export const usePdfOperations = () => {
     setLastPdfUrl,
     setLastPdfPath,
     processPdfs,
-    downloadPdf
+    downloadPdf,
+    resetPdfState
   };
 };

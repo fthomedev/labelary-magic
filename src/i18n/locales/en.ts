@@ -224,13 +224,13 @@ const translations = {
   // Formato de impressão
   printFormat: 'Print Format',
   standardFormat: 'Standard',
-  hdFormat: 'High Quality (HD)',
+  hdFormat: 'Sharpness+',
   selectPrintFormat: 'Select how you want to print your labels',
   formatDescription: 'Choose the format that best suits your printer',
-  hdFormatDescription: 'Labels with AI-enhanced quality',
+  hdFormatDescription: 'AI-enhanced sharpness',
   standardFormatDescription: 'Individual labels in sequence',
-  hdFormatWarning: 'Warning: Slower Process',
-  hdFormatWarningMessage: 'High Quality mode uses artificial intelligence to enhance each label individually. This process may take significantly longer than standard mode.',
+  hdFormatWarning: 'Note: Sharpness+ is slower',
+  hdFormatWarningMessage: 'Sharpness+ mode uses AI to maximize the sharpness of each label. This process may take longer than standard mode.',
   
   // Pagination
   previous: 'Previous',
@@ -247,7 +247,7 @@ const translations = {
   errorProcessingFiles: 'Error processing one or more files',
   
   // Process Again
-  processAgain: 'Process Again',
+  processAgain: 'Reprocess',
   
   // Beta Notice
   betaNotice: '🚧 This tool is in BETA and under DEVELOPMENT. For issues or suggestions, use the Feedback button.',
@@ -268,6 +268,7 @@ const translations = {
   
   // Donation
   supportProject: 'Support Project',
+  support: 'Support',
   donationDescription: 'Your contribution helps keep ZPL Easy free and constantly evolving. Choose an amount to donate:',
   donationHelpMessage: 'Your donation keeps the project free and evolving. Thank you!',
   donateNow: 'Donate Now',
@@ -284,8 +285,10 @@ const translations = {
   
   // Donation CTA in History
   donationCta: {
-    title: 'Enjoying the tool so far?',
-    message: 'Help keep this tool free! Your PIX contribution ensures the project\'s evolution and sustainability. Scan the QR code.',
+    title: 'Support the project!',
+    subtitle: 'Contribute via PIX',
+    message: 'Scan with your bank app camera',
+    otherMethods: 'Other ways to donate',
   },
 
   // History retention note

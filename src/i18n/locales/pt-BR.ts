@@ -224,13 +224,13 @@ const translations = {
   // Formato de impressão
   printFormat: 'Formato de Impressão',
   standardFormat: 'Padrão',
-  hdFormat: 'Alta Qualidade (HD)',
+  hdFormat: 'Nitidez+',
   selectPrintFormat: 'Selecione como deseja imprimir suas etiquetas',
   formatDescription: 'Escolha o formato que melhor se adapta à sua impressora',
-  hdFormatDescription: 'Etiquetas com qualidade aprimorada via IA',
+  hdFormatDescription: 'Nitidez maximizada com IA',
   standardFormatDescription: 'Etiquetas individuais em sequência',
-  hdFormatWarning: 'Atenção: Processo Mais Demorado',
-  hdFormatWarningMessage: 'O modo Alta Qualidade utiliza inteligência artificial para melhorar cada etiqueta individualmente. Este processo pode levar significativamente mais tempo que o modo padrão.',
+  hdFormatWarning: 'Atenção: Nitidez+ é mais lento',
+  hdFormatWarningMessage: 'O modo Nitidez+ utiliza IA para maximizar a nitidez de cada etiqueta. Este processo pode levar mais tempo que o modo padrão.',
   
   // Pagination
   previous: 'Anterior',
@@ -247,7 +247,7 @@ const translations = {
   errorProcessingFiles: 'Erro ao processar um ou mais arquivos',
   
   // Process Again
-  processAgain: 'Processar Novamente',
+  processAgain: 'Reprocessar',
   
   // Beta Notice
   betaNotice: '🚧 Esta ferramenta está em fase BETA e em DESENVOLVIMENTO. Para problemas ou sugestões, use o botão de Feedback.',
@@ -268,6 +268,7 @@ const translations = {
   
   // Donation
   supportProject: 'Apoiar o Projeto',
+  support: 'Apoiar',
   donationDescription: 'Sua contribuição ajuda a manter o ZPL Easy gratuito e em constante evolução. Escolha um valor para doar:',
   donationHelpMessage: 'Sua doação mantém o projeto gratuito e em evolução. Obrigado!',
   donateNow: 'Doar Agora',
@@ -284,8 +285,10 @@ const translations = {
   
   // Donation CTA in History
   donationCta: {
-    title: 'Gostou do que usou até agora?',
-    message: 'Ajude a manter esta ferramenta gratuita! Sua contribuição via PIX garante a evolução e sustentação do projeto. Escaneie o QR code ao lado.',
+    title: 'Apoie o projeto!',
+    subtitle: 'Contribua via PIX',
+    message: 'Escaneie com a câmera do app do seu banco',
+    otherMethods: 'Outras formas de doar',
   },
 
   // History retention note
