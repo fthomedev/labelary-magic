@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, History, Heart } from 'lucide-react';
 import qrCodePix from '@/assets/qrcode-pix.png';
@@ -36,6 +36,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     totalPages,
     handlePageChange,
     totalRecords,
+    totalLabels,
     refreshData,
     // PDF modal state and handlers
     isModalOpen,
@@ -73,14 +74,11 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     hasActiveFilters,
   } = useHistoryFilters(records);
 
-  // Stats calculations
-  const stats = useMemo(() => {
-    const totalLabels = records.reduce((sum, r) => sum + r.labelCount, 0);
-    return {
-      totalLabels,
-      totalConversions: records.length,
-    };
-  }, [records]);
+  // Use aggregated stats from the database (all records, not just current page)
+  const stats = {
+    totalLabels: totalLabels,
+    totalConversions: totalRecords,
+  };
 
   // Bulk actions handlers
   const handleBulkDownload = async () => {

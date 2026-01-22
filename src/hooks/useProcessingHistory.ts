@@ -42,7 +42,8 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
   const { 
     isLoading, 
     records, 
-    totalRecords, 
+    totalRecords,
+    totalLabels,
     refreshData 
   } = useHistoryData(localRecords, localOnly, currentPage, recordsPerPage);
 
@@ -75,6 +76,7 @@ export function useProcessingHistory(localRecords?: ProcessingRecord[], localOnl
     totalPages: Math.ceil(totalRecords / recordsPerPage),
     handlePageChange,
     totalRecords,
+    totalLabels,
     refreshData,
     // PDF modal state and handlers
     isModalOpen,
