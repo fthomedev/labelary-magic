@@ -100,34 +100,18 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
 
   if (isLoading) {
     return (
-      <>
-        <CardHeader className="pb-1 pt-3 border-b">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <History className="h-4 w-4 text-primary" />
-            {t('processingHistory')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center py-6 flex flex-col items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
-          <span className="text-sm text-muted-foreground">{t('loadingHistory')}</span>
-        </CardContent>
-      </>
+      <CardContent className="text-center py-6 flex flex-col items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
+        <span className="text-sm text-muted-foreground">{t('loadingHistory')}</span>
+      </CardContent>
     );
   }
 
   if (!records || records.length === 0) {
     return (
-      <>
-        <CardHeader className="pb-1 pt-3 border-b">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <History className="h-4 w-4 text-primary" />
-            {t('processingHistory')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center py-6 text-sm text-muted-foreground">
-          {t('noHistory')}
-        </CardContent>
-      </>
+      <CardContent className="text-center py-6 text-sm text-muted-foreground">
+        {t('noHistory')}
+      </CardContent>
     );
   }
 
@@ -135,13 +119,6 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
 
   return (
     <>
-      <CardHeader className="pb-1 pt-3 border-b">
-        <CardTitle className="text-base font-medium flex items-center gap-2">
-          <History className="h-4 w-4 text-primary" />
-          <span>{t('processingHistory')}</span>
-        </CardTitle>
-      </CardHeader>
-
       {/* Stats bar */}
       {!localOnly && records.length > 0 && (
         <HistoryStats
