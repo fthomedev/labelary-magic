@@ -1,4 +1,3 @@
-
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
@@ -8,6 +7,7 @@ import { useConversionState } from '@/hooks/conversion/useConversionState';
 import { useConversionMetrics } from '@/hooks/conversion/useConversionMetrics';
 import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 import { calculateProgress } from '@/hooks/conversion/useProgressCalculator';
+import { parseZplWithCount } from '@/utils/zplUtils';
 
 export interface ProcessingRecord {
   id: string;
@@ -60,14 +60,12 @@ export const useZplConversion = () => {
       resetPdfState();
       startConversion();
 
-      // Parse labels ONCE at the beginning and use this count throughout
-      const labels = parseLabelsFromZpl(zplContent);
-      // Divide by 2 to get the correct final count as each label has 2 ^XA markers
-      const finalLabelCount = Math.ceil(labels.length / 2);
+      // Parse labels ONCE at the beginning using centralized utility
+      const { blocks: labels, labelCount: finalLabelCount } = parseZplWithCount(zplContent);
       
       updateProgress({ totalLabels: finalLabelCount, stage: 'converting' });
       
-      console.log(`🎯 Starting conversion of ${finalLabelCount} labels (FINAL COUNT CORRECTED - ${labels.length} blocks / 2)`);
+      console.log(`🎯 Starting conversion of ${finalLabelCount} labels (${labels.length} blocks / 2)`);
       console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
       
       // Choose configuration based on label count and user preference
