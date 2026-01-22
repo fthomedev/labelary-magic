@@ -8,10 +8,12 @@ export interface ProcessedFileResult {
   content: string;
 }
 
-// Count labels in ZPL content (by counting ^XA markers)
+// Count labels in ZPL content (by counting ^XA markers, divided by 2)
+// Same logic as standard processing - each label has 2 ^XA markers
 const countLabels = (content: string): number => {
   const matches = content.match(/\^XA/gi);
-  return matches ? matches.length : 0;
+  const xaCount = matches ? matches.length : 0;
+  return Math.ceil(xaCount / 2);
 };
 
 export const processZipFile = async (
