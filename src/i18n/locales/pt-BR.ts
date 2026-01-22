@@ -307,7 +307,7 @@ const translations = {
     title: 'Apoie o projeto!',
     subtitle: 'Contribua via PIX',
     message: 'Escaneie com a câmera do app do seu banco',
-    otherMethods: 'Outras formas de doar',
+    otherMethods: 'Ou doe com Cartão de Crédito',
   },
 
   // History retention note

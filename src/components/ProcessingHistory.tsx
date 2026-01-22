@@ -218,12 +218,12 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
                   {t('donationCta.subtitle')}
                 </p>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mb-2">
                 {t('donationCta.message')}
               </p>
               <DonationButton 
-                variant="link" 
-                className="h-auto p-0 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300"
+                variant="card" 
+                defaultTab="card"
               >
                 {t('donationCta.otherMethods')}
               </DonationButton>

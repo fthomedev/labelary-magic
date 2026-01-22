@@ -23,12 +23,13 @@ const DONATION_OPTIONS = [
 ];
 
 interface DonationButtonProps {
-  variant?: 'default' | 'compact' | 'success' | 'header' | 'link';
+  variant?: 'default' | 'compact' | 'success' | 'header' | 'link' | 'card';
   className?: string;
   children?: React.ReactNode;
+  defaultTab?: 'pix' | 'card';
 }
 
-export const DonationButton = ({ variant = 'default', className = '', children }: DonationButtonProps) => {
+export const DonationButton = ({ variant = 'default', className = '', children, defaultTab }: DonationButtonProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -88,6 +89,16 @@ export const DonationButton = ({ variant = 'default', className = '', children }
             <Heart className="h-4 w-4 text-red-500 animate-pulse" />
             <span className="hidden sm:inline font-medium">{t('support')}</span>
             <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold">PIX</span>
+            <span className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold hidden sm:inline">CC</span>
+          </Button>
+        ) : variant === 'card' ? (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className={`gap-2 border-blue-200 bg-blue-50/50 hover:bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:hover:bg-blue-900/50 dark:text-blue-400 ${className}`}
+          >
+            <CreditCard className="h-4 w-4" />
+            <span className="font-medium">{children || t('donateWithCard')}</span>
           </Button>
         ) : variant === 'link' ? (
           <button type="button" className={`underline-offset-4 hover:underline ${className}`}>
@@ -111,7 +122,7 @@ export const DonationButton = ({ variant = 'default', className = '', children }
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="pix" className="w-full">
+        <Tabs defaultValue={defaultTab || 'pix'} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="pix" className="gap-2">
               <span className="font-bold text-primary">PIX</span>
