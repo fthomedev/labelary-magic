@@ -172,7 +172,11 @@ const translations = {
   
   // Histórico
   date: 'Date',
+  dateShort: 'Date',
   labelCount: 'Label Count',
+  labelsShort: 'Qty',
+  typeShort: 'Type',
+  timeShort: 'Time',
   view: 'View',
   download: 'Download',
   viewPdf: 'View PDF',

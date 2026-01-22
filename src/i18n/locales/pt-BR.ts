@@ -172,7 +172,11 @@ const translations = {
   
   // Histórico
   date: 'Data',
+  dateShort: 'Data',
   labelCount: 'Quantidade de Etiquetas',
+  labelsShort: 'Qtd',
+  typeShort: 'Tipo',
+  timeShort: 'Tempo',
   view: 'Visualizar',
   download: 'Baixar',
   viewPdf: 'Visualizar PDF',
