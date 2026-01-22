@@ -136,16 +136,9 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
   return (
     <>
       <CardHeader className="pb-1 pt-3 border-b">
-        <CardTitle className="text-base font-medium flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <History className="h-4 w-4 text-primary" />
-            <span>{t('processingHistory')}</span>
-          </div>
-          {!localOnly && totalRecords > 0 && (
-            <span className="text-xs font-normal text-muted-foreground">
-              {t('totalRecords', { count: totalRecords })}
-            </span>
-          )}
+        <CardTitle className="text-base font-medium flex items-center gap-2">
+          <History className="h-4 w-4 text-primary" />
+          <span>{t('processingHistory')}</span>
         </CardTitle>
       </CardHeader>
 
