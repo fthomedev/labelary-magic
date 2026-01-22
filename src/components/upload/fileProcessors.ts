@@ -1,6 +1,19 @@
 import { toast } from '@/hooks/use-toast';
 import JSZip from 'jszip';
 
+export interface ProcessedFileResult {
+  fileName: string;
+  fileSize: number;
+  labelCount: number;
+  content: string;
+}
+
+// Count labels in ZPL content (by counting ^XA markers)
+const countLabels = (content: string): number => {
+  const matches = content.match(/\^XA/gi);
+  return matches ? matches.length : 0;
+};
+
 export const processZipFile = async (
   file: File,
   onContentExtracted: (content: string, type: 'zip', count: number) => void,
@@ -111,6 +124,55 @@ export const processTextFile = (
     });
   };
   reader.readAsText(file);
+};
+
+// Process a single file and return detailed info
+export const processSingleFile = async (
+  file: File,
+  t: (key: string, options?: any) => string
+): Promise<ProcessedFileResult | null> => {
+  try {
+    if (file.name.toLowerCase().endsWith('.zip')) {
+      const zip = new JSZip();
+      const zipContents = await zip.loadAsync(file);
+      
+      const zplFiles = Object.keys(zipContents.files).filter(
+        filename => filename.endsWith('.txt') || filename.endsWith('.zpl')
+      );
+      
+      const allContents: string[] = [];
+      for (const filename of zplFiles) {
+        const content = await zipContents.files[filename].async('text');
+        if (content.includes('^XA') && content.includes('^XZ')) {
+          allContents.push(content);
+        }
+      }
+      
+      if (allContents.length === 0) return null;
+      
+      const combinedContent = allContents.join('\n');
+      return {
+        fileName: file.name,
+        fileSize: file.size,
+        labelCount: countLabels(combinedContent),
+        content: combinedContent,
+      };
+    } else {
+      const content = await readFileAsText(file);
+      if (content.includes('^XA') && content.includes('^XZ')) {
+        return {
+          fileName: file.name,
+          fileSize: file.size,
+          labelCount: countLabels(content),
+          content,
+        };
+      }
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error processing file ${file.name}:`, error);
+    return null;
+  }
 };
 
 export const processMultipleFiles = async (

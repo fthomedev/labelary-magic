@@ -246,6 +246,21 @@ const translations = {
   multipleFilesExtracted: '{{fileCount}} files processed, {{labelCount}} labels extracted',
   errorProcessingFiles: 'Error processing one or more files',
   
+  // File Tray
+  fileTray: 'Selected Files',
+  viewDetails: 'View details',
+  hideDetails: 'Hide',
+  file: 'file',
+  files: 'files',
+  label: 'label',
+  labels: 'labels',
+  clearAll: 'Clear all',
+  clearAllConfirm: 'Clear all files?',
+  clearAllConfirmMessage: 'This will remove {{count}} selected file(s). This action cannot be undone.',
+  addMoreFiles: 'Add more',
+  readyToProcess: 'Ready',
+  removeFile: 'Remove file',
+  
   // Process Again
   processAgain: 'Reprocess',
   

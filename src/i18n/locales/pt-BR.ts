@@ -246,6 +246,21 @@ const translations = {
   multipleFilesExtracted: '{{fileCount}} arquivos processados, {{labelCount}} etiquetas extraídas',
   errorProcessingFiles: 'Erro ao processar um ou mais arquivos',
   
+  // File Tray
+  fileTray: 'Arquivos Selecionados',
+  viewDetails: 'Ver detalhes',
+  hideDetails: 'Ocultar',
+  file: 'arquivo',
+  files: 'arquivos',
+  label: 'etiqueta',
+  labels: 'etiquetas',
+  clearAll: 'Limpar tudo',
+  clearAllConfirm: 'Limpar todos os arquivos?',
+  clearAllConfirmMessage: 'Isso removerá {{count}} arquivo(s) selecionado(s). Esta ação não pode ser desfeita.',
+  addMoreFiles: 'Adicionar mais',
+  readyToProcess: 'Pronto',
+  removeFile: 'Remover arquivo',
+  
   // Process Again
   processAgain: 'Reprocessar',
   
