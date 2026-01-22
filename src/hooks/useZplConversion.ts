@@ -16,7 +16,7 @@ export interface ProcessingRecord {
   pdfUrl: string;
   pdfPath?: string;
   processingTime?: number;
-  processingType?: 'standard' | 'a4';
+  processingType?: 'standard' | 'a4' | 'hd';
 }
 
 export const useZplConversion = () => {

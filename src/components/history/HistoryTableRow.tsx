@@ -34,7 +34,7 @@ export function HistoryTableRow({
   const hasValidUrl = !isBlobUrl || record.pdfUrl.startsWith('http');
   const isAvailable = hasStoragePath || hasValidUrl;
   
-  const isHD = record.processingType === 'a4';
+  const isHD = record.processingType === 'a4' || record.processingType === 'hd';
   const processingTimeSeconds = record.processingTime ? (record.processingTime / 1000).toFixed(1) : null;
 
   return (

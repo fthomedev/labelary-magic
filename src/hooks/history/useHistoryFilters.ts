@@ -42,6 +42,10 @@ export function useHistoryFilters(records: ProcessingRecord[]) {
     if (typeFilter !== 'all') {
       result = result.filter(record => {
         const recordType = record.processingType || 'standard';
+        if (typeFilter === 'a4') {
+          // Include both 'a4' and 'hd' types for HD filter
+          return recordType === 'a4' || recordType === 'hd';
+        }
         return recordType === typeFilter;
       });
     }
