@@ -308,6 +308,48 @@ const translations = {
 
   // History retention note
   historyRetentionNote: 'Registros e arquivos com mais de 60 dias são excluídos automaticamente.',
+
+  // History Stats
+  historyStats: {
+    summary: 'Resumo',
+    totalLabels: '{{count}} etiquetas',
+    totalConversions: '{{count}} conversões',
+  },
+
+  // History Filters
+  historyFilters: {
+    search: 'Buscar...',
+    allDates: 'Todas as datas',
+    today: 'Hoje',
+    last7Days: 'Últimos 7 dias',
+    last30Days: 'Últimos 30 dias',
+    allTypes: 'Todos os tipos',
+    standard: 'Padrão',
+    hd: 'Nitidez+',
+  },
+
+  // Bulk Actions
+  bulkActions: {
+    selected: '{{count}} selecionado(s)',
+    downloadSelected: 'Baixar',
+    deleteSelected: 'Excluir',
+    clearSelection: 'Limpar seleção',
+  },
+
+  // Conversion Type
+  conversionType: {
+    standard: 'Padrão',
+    hd: 'Nitidez+',
+  },
+
+  // History Status
+  historyStatus: {
+    ready: 'Pronto',
+    unavailable: 'Indisponível',
+  },
+
+  // Processing time
+  processingTimeLabel: '{{time}}s',
 };
 
 export default translations;

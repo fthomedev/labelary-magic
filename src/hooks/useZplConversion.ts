@@ -15,6 +15,8 @@ export interface ProcessingRecord {
   labelCount: number;
   pdfUrl: string;
   pdfPath?: string;
+  processingTime?: number;
+  processingType?: 'standard' | 'a4';
 }
 
 export const useZplConversion = () => {
