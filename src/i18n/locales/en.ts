@@ -308,6 +308,48 @@ const translations = {
 
   // History retention note
   historyRetentionNote: 'Records and files older than 60 days are automatically deleted.',
+
+  // History Stats
+  historyStats: {
+    summary: 'Summary',
+    totalLabels: '{{count}} labels',
+    totalConversions: '{{count}} conversions',
+  },
+
+  // History Filters
+  historyFilters: {
+    search: 'Search...',
+    allDates: 'All dates',
+    today: 'Today',
+    last7Days: 'Last 7 days',
+    last30Days: 'Last 30 days',
+    allTypes: 'All types',
+    standard: 'Standard',
+    hd: 'Sharpness+',
+  },
+
+  // Bulk Actions
+  bulkActions: {
+    selected: '{{count}} selected',
+    downloadSelected: 'Download',
+    deleteSelected: 'Delete',
+    clearSelection: 'Clear selection',
+  },
+
+  // Conversion Type
+  conversionType: {
+    standard: 'Standard',
+    hd: 'Sharpness+',
+  },
+
+  // History Status
+  historyStatus: {
+    ready: 'Ready',
+    unavailable: 'Unavailable',
+  },
+
+  // Processing time
+  processingTimeLabel: '{{time}}s',
 };
 
 export default translations;

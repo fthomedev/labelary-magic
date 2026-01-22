@@ -1,13 +1,19 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, History, Heart } from 'lucide-react';
 import qrCodePix from '@/assets/qrcode-pix.png';
 import { CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useProcessingHistory } from '@/hooks/useProcessingHistory';
+import { useHistorySelection } from '@/hooks/history/useHistorySelection';
+import { useHistoryFilters } from '@/hooks/history/useHistoryFilters';
+import { HistoryStats } from './history/HistoryStats';
+import { HistoryFilters } from './history/HistoryFilters';
 import { HistoryTable } from './history/HistoryTable';
+import { HistoryCard } from './history/HistoryCard';
 import { HistoryPagination } from './history/HistoryPagination';
+import { BulkActionBar } from './history/BulkActionBar';
 import { PdfViewerModal } from './history/PdfViewerModal';
 import { DeleteConfirmDialog } from './history/DeleteConfirmDialog';
 import { DonationButton } from './DonationButton';
@@ -45,6 +51,55 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     closeDeleteDialog,
   } = useProcessingHistory(localRecords, localOnly);
 
+  // Selection state
+  const {
+    selectedIds,
+    selectedCount,
+    selectRecord,
+    selectAll,
+    clearSelection,
+    getSelectedRecords,
+  } = useHistorySelection(records);
+
+  // Filter state
+  const {
+    searchQuery,
+    setSearchQuery,
+    dateFilter,
+    setDateFilter,
+    typeFilter,
+    setTypeFilter,
+    filteredRecords,
+    hasActiveFilters,
+  } = useHistoryFilters(records);
+
+  // Stats calculations
+  const stats = useMemo(() => {
+    const totalLabels = records.reduce((sum, r) => sum + r.labelCount, 0);
+    return {
+      totalLabels,
+      totalConversions: records.length,
+    };
+  }, [records]);
+
+  // Bulk actions handlers
+  const handleBulkDownload = async () => {
+    const selected = getSelectedRecords();
+    // Download each selected record
+    for (const record of selected) {
+      handleDownload(record);
+    }
+    clearSelection();
+  };
+
+  const handleBulkDelete = async () => {
+    const selected = getSelectedRecords();
+    // Delete each selected record
+    for (const record of selected) {
+      handleDeleteClick(record);
+    }
+  };
+
   if (isLoading) {
     return (
       <>
@@ -78,6 +133,8 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     );
   }
 
+  const displayRecords = hasActiveFilters ? filteredRecords : records;
+
   return (
     <>
       <CardHeader className="pb-1 pt-3 border-b">
@@ -93,20 +150,71 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-        <HistoryTable
-          records={records}
-          formatDate={formatDate}
-          onDownload={handleDownload}
-          onDelete={handleDeleteClick}
-          isMobile={isMobile}
+
+      {/* Stats bar */}
+      {!localOnly && records.length > 0 && (
+        <HistoryStats
+          totalLabels={stats.totalLabels}
+          totalConversions={stats.totalConversions}
         />
+      )}
+
+      {/* Filters */}
+      {!localOnly && records.length > 3 && (
+        <HistoryFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          dateFilter={dateFilter}
+          onDateFilterChange={setDateFilter}
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
+        />
+      )}
+
+      <CardContent className="p-0">
+        {/* Mobile: Cards view */}
+        {isMobile ? (
+          <div className="p-3 space-y-2">
+            {displayRecords.map((record) => (
+              <HistoryCard
+                key={record.id}
+                record={record}
+                formatDate={formatDate}
+                onDownload={handleDownload}
+                onDelete={handleDeleteClick}
+                isSelected={selectedIds.has(record.id)}
+                onSelect={selectRecord}
+              />
+            ))}
+          </div>
+        ) : (
+          /* Desktop: Table view */
+          <HistoryTable
+            records={displayRecords}
+            formatDate={formatDate}
+            onDownload={handleDownload}
+            onDelete={handleDeleteClick}
+            isMobile={isMobile}
+            selectedIds={selectedIds}
+            onSelectRecord={selectRecord}
+            onSelectAll={selectAll}
+            showCheckbox={!localOnly}
+          />
+        )}
+
+        {displayRecords.length === 0 && hasActiveFilters && (
+          <div className="text-center py-6 text-sm text-muted-foreground">
+            {t('noHistory')}
+          </div>
+        )}
+
         {!localOnly && (
           <p className="text-[10px] text-muted-foreground/70 px-4 py-2 italic">
             {t('historyRetentionNote')}
           </p>
         )}
       </CardContent>
+
       {!localOnly && totalPages > 1 && (
         <CardFooter className="py-2 px-4 flex justify-center border-t">
           <HistoryPagination
@@ -154,6 +262,17 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
             </div>
           </div>
         </div>
+      )}
+
+      {/* Bulk Action Bar */}
+      {!localOnly && (
+        <BulkActionBar
+          selectedCount={selectedCount}
+          onDownloadSelected={handleBulkDownload}
+          onDeleteSelected={handleBulkDelete}
+          onClearSelection={clearSelection}
+          isDeleting={isDeleting}
+        />
       )}
 
       {/* PDF Viewer Modal */}

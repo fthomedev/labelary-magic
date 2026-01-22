@@ -59,7 +59,9 @@ export function useHistoryData(
             date: new Date(record.date),
             labelCount: record.label_count,
             pdfUrl: record.pdf_url,
-            pdfPath: record.pdf_path
+            pdfPath: record.pdf_path,
+            processingTime: record.processing_time,
+            processingType: record.processing_type || 'standard'
           }))
         );
       }
