@@ -42,11 +42,11 @@ export function HistoryTable({
 
   return (
     <div className="overflow-x-auto max-h-[500px]">
-      <Table className="compact-table">
+      <Table className="compact-table table-fixed w-full">
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
             {showCheckbox && (
-              <TableHead className="w-8 py-1">
+              <TableHead className="w-8 py-1 px-2">
                 <Checkbox
                   checked={allSelected}
                   ref={(ref) => {
@@ -58,22 +58,22 @@ export function HistoryTable({
                 />
               </TableHead>
             )}
-            <TableHead className="font-medium text-foreground py-1 text-xs">
-              {isMobile ? t('date').substring(0, 4) : t('date')}
+            <TableHead className="font-medium text-foreground py-1 px-2 text-[11px] w-[85px]">
+              {t('dateShort')}
             </TableHead>
-            <TableHead className="font-medium text-foreground py-1 text-xs">
-              {isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}
+            <TableHead className="font-medium text-foreground py-1 px-2 text-[11px] w-[50px]">
+              {t('labelsShort')}
             </TableHead>
-            <TableHead className="font-medium text-foreground py-1 text-xs">
-              {t('printFormat')}
+            <TableHead className="font-medium text-foreground py-1 px-2 text-[11px] w-[70px]">
+              {t('typeShort')}
             </TableHead>
-            <TableHead className="font-medium text-foreground py-1 text-xs hidden sm:table-cell">
-              {t('processing')}
+            <TableHead className="font-medium text-foreground py-1 px-2 text-[11px] w-[50px] hidden sm:table-cell">
+              {t('timeShort')}
             </TableHead>
-            <TableHead className="font-medium text-foreground py-1 text-xs hidden md:table-cell">
+            <TableHead className="font-medium text-foreground py-1 px-2 text-[11px] w-[60px] hidden md:table-cell">
               {t('status')}
             </TableHead>
-            <TableHead className="w-[80px] py-1"></TableHead>
+            <TableHead className="w-[70px] py-1 px-1"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
