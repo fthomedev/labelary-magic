@@ -1,5 +1,6 @@
 import { toast } from '@/hooks/use-toast';
 import JSZip from 'jszip';
+import { countZplLabels } from '@/utils/zplUtils';
 
 export interface ProcessedFileResult {
   fileName: string;
@@ -7,14 +8,6 @@ export interface ProcessedFileResult {
   labelCount: number;
   content: string;
 }
-
-// Count labels in ZPL content (by counting ^XA markers, divided by 2)
-// Same logic as standard processing - each label has 2 ^XA markers
-const countLabels = (content: string): number => {
-  const matches = content.match(/\^XA/gi);
-  const xaCount = matches ? matches.length : 0;
-  return Math.ceil(xaCount / 2);
-};
 
 export const processZipFile = async (
   file: File,
@@ -156,7 +149,7 @@ export const processSingleFile = async (
       return {
         fileName: file.name,
         fileSize: file.size,
-        labelCount: countLabels(combinedContent),
+        labelCount: countZplLabels(combinedContent),
         content: combinedContent,
       };
     } else {
@@ -165,7 +158,7 @@ export const processSingleFile = async (
         return {
           fileName: file.name,
           fileSize: file.size,
-          labelCount: countLabels(content),
+          labelCount: countZplLabels(content),
           content,
         };
       }

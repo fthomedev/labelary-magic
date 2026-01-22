@@ -1,4 +1,3 @@
-
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
@@ -12,6 +11,7 @@ import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 import { calculateProgress } from './useProgressCalculator';
+import { parseZplWithCount } from '@/utils/zplUtils';
 
 export const useA4ZplConversion = () => {
   const { toast } = useToast();
@@ -178,10 +178,8 @@ export const useA4ZplConversion = () => {
       resetPdfState();
       startConversion();
       
-      // Parse labels (keep label counting identical to Standard)
-      const labelBlocks = parseLabelsFromZpl(zplContent);
-      // Divide by 2 to get the correct final count as many files contain 2 ^XA blocks per printed label
-      const finalLabelCount = Math.ceil(labelBlocks.length / 2);
+      // Parse labels using centralized utility (keeps counting identical to Standard)
+      const { blocks: labelBlocks, labelCount: finalLabelCount } = parseZplWithCount(zplContent);
       
       console.log(`\n========== HD CONVERSION ==========`);
       console.log(`📊 Parsed blocks: ${labelBlocks.length} (final count: ${finalLabelCount})`);

@@ -1,7 +1,7 @@
-
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
-import { splitZPLIntoBlocks, delay } from '@/utils/pdfUtils';
+import { delay } from '@/utils/pdfUtils';
+import { parseZplBlocks, countZplLabelsWithLog } from '@/utils/zplUtils';
 import { DEFAULT_CONFIG, ProcessingMetricsTracker, ProcessingConfig } from '@/config/processingConfig';
 
 export const useZplApiConversion = () => {
@@ -147,17 +147,13 @@ export const useZplApiConversion = () => {
   };
 
   const parseLabelsFromZpl = (zplContent: string) => {
-    const labels = splitZPLIntoBlocks(zplContent);
-    console.log(`🔍 parseLabelsFromZpl: Found ${labels.length} labels in ZPL content`);
+    const labels = parseZplBlocks(zplContent);
+    console.log(`🔍 parseLabelsFromZpl: Found ${labels.length} blocks in ZPL content`);
     return labels;
   };
 
   const countLabelsInZpl = (zplContent: string): number => {
-    const labels = splitZPLIntoBlocks(zplContent);
-    // Divide by 2 to get the correct count as each label has 2 ^XA markers
-    const correctCount = Math.ceil(labels.length / 2);
-    console.log(`🔢 countLabelsInZpl: Counted ${correctCount} labels in ZPL content (${labels.length} blocks / 2)`);
-    return correctCount;
+    return countZplLabelsWithLog(zplContent, 'useZplApiConversion');
   };
 
   return {
