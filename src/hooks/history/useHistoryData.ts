@@ -13,6 +13,7 @@ export function useHistoryData(
   const [dbRecords, setDbRecords] = useState<ProcessingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(!localOnly);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [totalLabels, setTotalLabels] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
   
   const fetchProcessingHistory = useCallback(async () => {
@@ -39,6 +40,19 @@ export function useHistoryData(
         console.error('Error counting processing history:', countError);
       } else if (count !== null) {
         setTotalRecords(count);
+      }
+      
+      // Get total labels count from ALL records (not just current page)
+      const { data: allLabelsData, error: labelsError } = await supabase
+        .from('processing_history')
+        .select('label_count')
+        .eq('user_id', sessionData.session.user.id);
+        
+      if (labelsError) {
+        console.error('Error fetching total labels:', labelsError);
+      } else if (allLabelsData) {
+        const labelsSum = allLabelsData.reduce((sum, r) => sum + (r.label_count || 0), 0);
+        setTotalLabels(labelsSum);
       }
       
       // Then get paginated records
@@ -92,6 +106,7 @@ export function useHistoryData(
     isLoading,
     records,
     totalRecords,
+    totalLabels,
     refreshData
   };
 }
