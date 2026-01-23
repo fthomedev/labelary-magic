@@ -7,12 +7,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Configuration
+// Configuration - optimized for Labelary rate limits
 const MAX_LABELS_PER_REQUEST = 20;
-const LABELARY_CONCURRENT = 4;
+const LABELARY_CONCURRENT = 2; // Reduced from 4 to avoid 429s
 const UPSCALE_FACTOR = 2;
 const MAX_RETRIES = 4;
-const RETRY_DELAYS = [1500, 3000, 6000, 12000];
+const RETRY_DELAYS = [2000, 4000, 8000, 16000]; // More conservative backoff
 
 // Semaphore for controlling concurrent requests
 class Semaphore {
@@ -400,20 +400,40 @@ serve(async (req) => {
 
     const semaphore = new Semaphore(LABELARY_CONCURRENT);
     
-    // Process all labels in parallel (controlled by semaphore)
+    // First pass: process all labels
     const results = await Promise.all(
       labels.map((zpl, index) => 
         processLabel(zpl, semaphore, index).then(result => ({ index, result }))
       )
     );
 
-    // Build response preserving order
+    // Build response preserving order and track failures
     const images: (string | null)[] = new Array(labels.length).fill(null);
+    const failedIndices: number[] = [];
     let successCount = 0;
     
     for (const { index, result } of results) {
       images[index] = result;
-      if (result) successCount++;
+      if (result) {
+        successCount++;
+      } else {
+        failedIndices.push(index);
+      }
+    }
+
+    // Second pass: retry failed labels with extra delay
+    if (failedIndices.length > 0 && failedIndices.length <= 10) {
+      console.log(`🔄 Retrying ${failedIndices.length} failed labels after cooldown...`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      for (const idx of failedIndices) {
+        const retryResult = await processLabel(labels[idx], semaphore, idx);
+        if (retryResult) {
+          images[idx] = retryResult;
+          successCount++;
+          console.log(`✅ Retry success for label ${idx}`);
+        }
+      }
     }
 
     const elapsed = Date.now() - startTime;

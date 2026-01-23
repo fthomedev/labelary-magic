@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const BATCH_SIZE = 12; // Labels per Edge Function request
-const PARALLEL_BATCHES = 2; // Concurrent Edge Function calls
+const BATCH_SIZE = 15; // Labels per Edge Function request
+const PARALLEL_BATCHES = 1; // Sequential to avoid Labelary rate limits
 
 /**
  * Hook for server-side ZPL to HD PNG conversion.
