@@ -12,6 +12,7 @@ import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 import { A4_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 import { calculateProgress } from './useProgressCalculator';
 import { parseZplWithCount } from '@/utils/zplUtils';
+import { useServerZplConversion } from './useServerZplConversion';
 
 export const useA4ZplConversion = () => {
   const { toast } = useToast();
@@ -22,6 +23,7 @@ export const useA4ZplConversion = () => {
   const { logPerformanceMetrics } = useConversionMetrics();
   const { uploadPDFToStorage } = useUploadPdf();
   const { ensurePdfBucketExists } = useStorageOperations();
+  const { convertZplToHdImages } = useServerZplConversion();
   
   const {
     isConverting,
@@ -167,9 +169,9 @@ export const useA4ZplConversion = () => {
     }
   };
 
-  // HD conversion with AI upscaling - one label per page
+  // HD conversion with server-side processing - one label per page
   const convertToHdPDF = async (zplContent: string) => {
-    console.log('\n✨ HD MODE (With Upscaling) - Quality Conversion');
+    console.log('\n✨ HD MODE (Server-Side Pipeline) - Quality Conversion');
     
     const conversionStartTime = Date.now();
     
@@ -181,23 +183,23 @@ export const useA4ZplConversion = () => {
       // Parse labels using centralized utility (keeps counting identical to Standard)
       const { blocks: labelBlocks, labelCount: finalLabelCount } = parseZplWithCount(zplContent);
       
-      console.log(`\n========== HD CONVERSION ==========`);
+      console.log(`\n========== HD CONVERSION (SERVER) ==========`);
       console.log(`📊 Parsed blocks: ${labelBlocks.length} (final count: ${finalLabelCount})`);
       
       updateProgress({ totalLabels: finalLabelCount, stage: 'converting' });
       
-      const config: ProcessingConfig = A4_CONFIG;
       const conversionPhaseStart = Date.now();
 
-      // Convert to PNG images at high DPI (24dpmm = 600 DPI)
-      const images = await convertZplToA4Images(labelBlocks, (progressValue, currentBlock) => {
-        // Keep the displayed counter identical to Standard by mapping blocks -> labels
-        const displayCurrent = currentBlock ? Math.min(finalLabelCount, Math.ceil(currentBlock / 2)) : 0;
-        updateProgress({ percentage: progressValue, currentLabel: displayCurrent, stage: 'converting' });
-      }, config, true); // enhanceLabels = true (uses 24dpmm)
+      // Use server-side conversion (Labelary + Upscale in Edge Function)
+      const images = await convertZplToHdImages(labelBlocks, (current, total) => {
+        const displayCurrent = Math.min(finalLabelCount, Math.ceil(current / 2));
+        const stageProgress = (current / total) * 100;
+        const overallProgress = calculateProgress('hd', 'converting', stageProgress);
+        updateProgress({ percentage: overallProgress, currentLabel: displayCurrent, stage: 'converting' });
+      });
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
-      console.log(`⚡ HD image conversion (600 DPI) completed in ${conversionPhaseTime}ms`);
+      console.log(`⚡ Server HD conversion completed in ${conversionPhaseTime}ms`);
       console.log(`📊 PNG images generated: ${images.length}`);
 
       try {
