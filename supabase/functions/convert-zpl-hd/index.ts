@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
+import pako from "https://esm.sh/pako@2.1.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,7 +9,7 @@ const corsHeaders = {
 
 // Configuration
 const MAX_LABELS_PER_REQUEST = 20;
-const LABELARY_CONCURRENT = 4; // Conservative to avoid 429s
+const LABELARY_CONCURRENT = 4;
 const UPSCALE_FACTOR = 2;
 const MAX_RETRIES = 4;
 const RETRY_DELAYS = [1500, 3000, 6000, 12000];
@@ -90,57 +91,7 @@ function crc32(data: Uint8Array): number {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-// Simple deflate (stored blocks)
-function deflateSync(data: Uint8Array): Uint8Array {
-  const chunks: Uint8Array[] = [];
-  chunks.push(new Uint8Array([0x78, 0x9c])); // zlib header
-  
-  const BLOCK_SIZE = 65535;
-  let pos = 0;
-  
-  while (pos < data.length) {
-    const remaining = data.length - pos;
-    const blockLen = Math.min(BLOCK_SIZE, remaining);
-    const isLast = pos + blockLen >= data.length;
-    
-    const header = new Uint8Array(5);
-    header[0] = isLast ? 0x01 : 0x00;
-    header[1] = blockLen & 0xff;
-    header[2] = (blockLen >> 8) & 0xff;
-    header[3] = ~blockLen & 0xff;
-    header[4] = (~blockLen >> 8) & 0xff;
-    
-    chunks.push(header);
-    chunks.push(data.slice(pos, pos + blockLen));
-    pos += blockLen;
-  }
-  
-  // Adler-32 checksum
-  let a = 1, b = 0;
-  for (let i = 0; i < data.length; i++) {
-    a = (a + data[i]) % 65521;
-    b = (b + a) % 65521;
-  }
-  const adler = ((b << 16) | a) >>> 0;
-  const adlerBytes = new Uint8Array(4);
-  adlerBytes[0] = (adler >> 24) & 0xff;
-  adlerBytes[1] = (adler >> 16) & 0xff;
-  adlerBytes[2] = (adler >> 8) & 0xff;
-  adlerBytes[3] = adler & 0xff;
-  chunks.push(adlerBytes);
-  
-  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-  
-  return result;
-}
-
-// PNG encoder
+// PNG encoder with proper zlib compression using pako
 function encodePNG(data: Uint8ClampedArray, width: number, height: number): Uint8Array {
   const signature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
   
@@ -155,10 +106,10 @@ function encodePNG(data: Uint8ClampedArray, width: number, height: number): Uint
   const ihdrCrc = crc32(ihdr.slice(4, 21));
   ihdrData.setUint32(21, ihdrCrc);
   
-  // Prepare raw image data
+  // Prepare raw image data with filter bytes
   const rawData = new Uint8Array(height * (1 + width * 4));
   for (let y = 0; y < height; y++) {
-    rawData[y * (1 + width * 4)] = 0;
+    rawData[y * (1 + width * 4)] = 0; // Filter type: None
     for (let x = 0; x < width; x++) {
       const srcIdx = (y * width + x) * 4;
       const dstIdx = y * (1 + width * 4) + 1 + x * 4;
@@ -169,7 +120,8 @@ function encodePNG(data: Uint8ClampedArray, width: number, height: number): Uint
     }
   }
   
-  const compressed = deflateSync(rawData);
+  // Compress with pako (zlib format)
+  const compressed = pako.deflate(rawData, { level: 6 });
   
   // IDAT chunk
   const idat = new Uint8Array(12 + compressed.length);
@@ -199,7 +151,17 @@ function encodePNG(data: Uint8ClampedArray, width: number, height: number): Uint
   return png;
 }
 
-// PNG decoder
+function paethPredictor(a: number, b: number, c: number): number {
+  const p = a + b - c;
+  const pa = Math.abs(p - a);
+  const pb = Math.abs(p - b);
+  const pc = Math.abs(p - c);
+  if (pa <= pb && pa <= pc) return a;
+  if (pb <= pc) return b;
+  return c;
+}
+
+// PNG decoder using pako for decompression
 function decodePNG(pngData: Uint8Array): { data: Uint8ClampedArray; width: number; height: number } {
   // Verify PNG signature
   const signature = [137, 80, 78, 71, 13, 10, 26, 10];
@@ -231,6 +193,7 @@ function decodePNG(pngData: Uint8Array): { data: Uint8ClampedArray; width: numbe
     pos += 12 + length;
   }
 
+  // Combine all IDAT chunks
   const totalCompressed = compressedData.reduce((sum, chunk) => sum + chunk.length, 0);
   const allCompressed = new Uint8Array(totalCompressed);
   let offset = 0;
@@ -239,16 +202,19 @@ function decodePNG(pngData: Uint8Array): { data: Uint8ClampedArray; width: numbe
     offset += chunk.length;
   }
 
-  const decompressed = inflateSync(allCompressed);
+  // Decompress using pako
+  const decompressed = pako.inflate(allCompressed);
 
+  // Calculate bytes per pixel
   let bytesPerPixel = 1;
-  if (colorType === 2) bytesPerPixel = 3;
-  else if (colorType === 4) bytesPerPixel = 2;
-  else if (colorType === 6) bytesPerPixel = 4;
+  if (colorType === 2) bytesPerPixel = 3; // RGB
+  else if (colorType === 4) bytesPerPixel = 2; // Grayscale + Alpha
+  else if (colorType === 6) bytesPerPixel = 4; // RGBA
 
-  const rowBytes = width * bytesPerPixel + 1;
+  const rowBytes = width * bytesPerPixel + 1; // +1 for filter byte
   const imageData = new Uint8ClampedArray(width * height * 4);
 
+  // Decode with filter reconstruction
   let prevRow = new Uint8Array(width * bytesPerPixel);
   
   for (let y = 0; y < height; y++) {
@@ -260,36 +226,37 @@ function decodePNG(pngData: Uint8Array): { data: Uint8ClampedArray; width: numbe
       const raw = decompressed[rowStart + 1 + i];
       let val = raw;
       
-      const a = i >= bytesPerPixel ? currentRow[i - bytesPerPixel] : 0;
-      const b = prevRow[i];
-      const c = i >= bytesPerPixel ? prevRow[i - bytesPerPixel] : 0;
+      const a = i >= bytesPerPixel ? currentRow[i - bytesPerPixel] : 0; // Left
+      const b = prevRow[i]; // Above
+      const c = i >= bytesPerPixel ? prevRow[i - bytesPerPixel] : 0; // Upper left
       
       switch (filterType) {
-        case 0: val = raw; break;
-        case 1: val = (raw + a) & 0xff; break;
-        case 2: val = (raw + b) & 0xff; break;
-        case 3: val = (raw + Math.floor((a + b) / 2)) & 0xff; break;
-        case 4: val = (raw + paethPredictor(a, b, c)) & 0xff; break;
+        case 0: val = raw; break; // None
+        case 1: val = (raw + a) & 0xff; break; // Sub
+        case 2: val = (raw + b) & 0xff; break; // Up
+        case 3: val = (raw + Math.floor((a + b) / 2)) & 0xff; break; // Average
+        case 4: val = (raw + paethPredictor(a, b, c)) & 0xff; break; // Paeth
       }
       
       currentRow[i] = val;
     }
 
+    // Convert to RGBA
     for (let x = 0; x < width; x++) {
       const dstIdx = (y * width + x) * 4;
       
-      if (colorType === 0) {
+      if (colorType === 0) { // Grayscale
         imageData[dstIdx] = imageData[dstIdx + 1] = imageData[dstIdx + 2] = currentRow[x];
         imageData[dstIdx + 3] = 255;
-      } else if (colorType === 2) {
+      } else if (colorType === 2) { // RGB
         imageData[dstIdx] = currentRow[x * 3];
         imageData[dstIdx + 1] = currentRow[x * 3 + 1];
         imageData[dstIdx + 2] = currentRow[x * 3 + 2];
         imageData[dstIdx + 3] = 255;
-      } else if (colorType === 4) {
+      } else if (colorType === 4) { // Grayscale + Alpha
         imageData[dstIdx] = imageData[dstIdx + 1] = imageData[dstIdx + 2] = currentRow[x * 2];
         imageData[dstIdx + 3] = currentRow[x * 2 + 1];
-      } else if (colorType === 6) {
+      } else if (colorType === 6) { // RGBA
         imageData[dstIdx] = currentRow[x * 4];
         imageData[dstIdx + 1] = currentRow[x * 4 + 1];
         imageData[dstIdx + 2] = currentRow[x * 4 + 2];
@@ -301,41 +268,6 @@ function decodePNG(pngData: Uint8Array): { data: Uint8ClampedArray; width: numbe
   }
 
   return { data: imageData, width, height };
-}
-
-function paethPredictor(a: number, b: number, c: number): number {
-  const p = a + b - c;
-  const pa = Math.abs(p - a);
-  const pb = Math.abs(p - b);
-  const pc = Math.abs(p - c);
-  if (pa <= pb && pa <= pc) return a;
-  if (pb <= pc) return b;
-  return c;
-}
-
-function inflateSync(data: Uint8Array): Uint8Array {
-  let pos = 2; // Skip zlib header
-  const output: number[] = [];
-  
-  while (pos < data.length - 4) {
-    const header = data[pos++];
-    const bfinal = header & 0x01;
-    const btype = (header >> 1) & 0x03;
-    
-    if (btype === 0) {
-      const len = data[pos] | (data[pos + 1] << 8);
-      pos += 4;
-      for (let i = 0; i < len; i++) {
-        output.push(data[pos++]);
-      }
-    } else {
-      throw new Error('Compressed PNG data not supported');
-    }
-    
-    if (bfinal) break;
-  }
-  
-  return new Uint8Array(output);
 }
 
 // Convert ZPL to PNG using Labelary API
@@ -386,9 +318,12 @@ async function convertZplToPng(zpl: string, semaphore: Semaphore): Promise<Uint8
 }
 
 // Process a single label: ZPL → PNG → Upscale → Base64
-async function processLabel(zpl: string, semaphore: Semaphore): Promise<string | null> {
+async function processLabel(zpl: string, semaphore: Semaphore, index: number): Promise<string | null> {
   const pngData = await convertZplToPng(zpl, semaphore);
-  if (!pngData) return null;
+  if (!pngData) {
+    console.error(`❌ [${index}] Failed to get PNG from Labelary`);
+    return null;
+  }
   
   try {
     const decoded = decodePNG(pngData);
@@ -402,9 +337,10 @@ async function processLabel(zpl: string, semaphore: Semaphore): Promise<string |
       const chunk = outputPng.slice(i, i + chunkSize);
       outputBase64 += String.fromCharCode(...chunk);
     }
+    console.log(`✅ [${index}] PNG processed (${(outputPng.length / 1024).toFixed(1)}KB)`);
     return btoa(outputBase64);
   } catch (error) {
-    console.error('Failed to process PNG:', error);
+    console.error(`❌ [${index}] Failed to process PNG:`, error.message);
     return null;
   }
 }
@@ -467,7 +403,7 @@ serve(async (req) => {
     // Process all labels in parallel (controlled by semaphore)
     const results = await Promise.all(
       labels.map((zpl, index) => 
-        processLabel(zpl, semaphore).then(result => ({ index, result }))
+        processLabel(zpl, semaphore, index).then(result => ({ index, result }))
       )
     );
 
