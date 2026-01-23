@@ -23,6 +23,3 @@ verify_jwt = false
 
 [functions.upscale-image]
 verify_jwt = false
-
-[functions.convert-zpl-hd]
-verify_jwt = false
