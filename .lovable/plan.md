@@ -1,176 +1,115 @@
 
 
-## Implementação: Feedback e Cooldown no Envio de Link de Recuperação
+## Correcao: Redirecionamento do Link de Reset de Senha para Ambiente Correto
 
-### Situacao Atual
+### Problema Identificado
 
-O código já possui o modal de confirmação (`showResetPasswordModal`) que aparece após enviar o link de recuperação, mas:
+O link de recuperacao de senha no email esta usando `window.location.origin` para definir o `redirectTo`, o que faz com que:
 
-1. O botao "Enviar Link de Recuperacao" pode ser clicado multiplas vezes sem restricao
-2. O modal de confirmacao nao oferece opcao de reenviar com cooldown (diferente do modal de confirmacao de cadastro)
+- Se o usuario solicita o reset no ambiente de preview (`id-preview--*.lovable.app`), o link direciona para o preview
+- Se o usuario solicita no ambiente de producao (`zpleasy.com`), o link direciona corretamente
 
-### Alteracoes Necessarias
+O problema ocorre porque o ambiente de preview Lovable e diferente do ambiente de producao publicado.
+
+### Locais Afetados no Codigo
 
 **Arquivo:** `src/components/AuthForm.tsx`
 
-#### 1. Adicionar estado de cooldown para reset de senha
-
-Adicionar um novo estado para controlar o cooldown especifico do reset de senha:
-
+1. **Linha 160** - `handleAuth` (solicitacao inicial):
 ```typescript
-const [resetPasswordCooldown, setResetPasswordCooldown] = useState(0);
+redirectTo: `${window.location.origin}/auth/reset-password`,
 ```
 
-#### 2. Atualizar o useEffect do timer
-
-Modificar o useEffect existente para tambem controlar o cooldown do reset de senha:
-
+2. **Linha 398** - `handleResendResetPassword` (reenvio):
 ```typescript
-useEffect(() => {
-  if (resendCooldown > 0) {
-    const timer = setTimeout(() => {
-      setResendCooldown(resendCooldown - 1);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }
-}, [resendCooldown]);
-
-useEffect(() => {
-  if (resetPasswordCooldown > 0) {
-    const timer = setTimeout(() => {
-      setResetPasswordCooldown(resetPasswordCooldown - 1);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }
-}, [resetPasswordCooldown]);
+redirectTo: `${window.location.origin}/auth/reset-password`,
 ```
 
-#### 3. Iniciar cooldown apos envio bem-sucedido
+### Solucao Proposta
 
-No handleAuth, apos enviar o link de recuperacao com sucesso:
+Criar uma funcao utilitaria que determina a URL correta baseada no ambiente atual. A logica sera:
 
+1. Se estiver no dominio de producao (`zpleasy.com`) -> usar `https://zpleasy.com`
+2. Se estiver no dominio Lovable publicado (`labelary-magic.lovable.app`) -> usar `https://zpleasy.com` (redireciona para producao)
+3. Se estiver em ambiente de desenvolvimento/preview -> usar `window.location.origin` (para testes locais)
+
+### Alteracoes no Codigo
+
+**Arquivo:** `src/components/AuthForm.tsx`
+
+#### 1. Adicionar funcao utilitaria para obter a URL de redirecionamento
+
+```typescript
+// Helper function to get the correct redirect URL based on environment
+const getAuthRedirectUrl = (path: string): string => {
+  const origin = window.location.origin;
+  const hostname = window.location.hostname;
+  
+  // Production domains
+  const productionDomains = ['zpleasy.com', 'www.zpleasy.com'];
+  const lovablePublishedDomain = 'labelary-magic.lovable.app';
+  const productionUrl = 'https://zpleasy.com';
+  
+  // If on production domain, use production URL
+  if (productionDomains.includes(hostname)) {
+    return `${productionUrl}${path}`;
+  }
+  
+  // If on Lovable published domain, redirect to production
+  if (hostname === lovablePublishedDomain) {
+    return `${productionUrl}${path}`;
+  }
+  
+  // For development/preview environments, use current origin
+  // This allows testing in preview and local environments
+  return `${origin}${path}`;
+};
+```
+
+#### 2. Atualizar as chamadas de resetPasswordForEmail
+
+**Na funcao handleAuth (linha 159-162):**
 ```typescript
 if (isResetPassword) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/auth/reset-password`,
+    redirectTo: getAuthRedirectUrl('/auth/reset-password'),
     captchaToken: captchaToken || undefined,
   });
-  if (error) throw error;
-  
-  setLastEmailSent(email);
-  setShowResetPasswordModal(true);
-  setResetPasswordCooldown(60); // Iniciar cooldown de 60 segundos
+  // ...
 }
 ```
 
-#### 4. Desabilitar botao durante cooldown
-
-No formulario de reset (linhas 307-309), atualizar o botao:
-
+**Na funcao handleResendResetPassword (linha 397-399):**
 ```typescript
-<Button 
-  type="submit" 
-  className="w-full" 
-  disabled={isLoading || !captchaToken || !!emailError || resetPasswordCooldown > 0}
->
-  {isLoading ? t("sending") : resetPasswordCooldown > 0 ? t("resendIn", { seconds: resetPasswordCooldown }) : t("sendResetLink")}
-</Button>
+const { error } = await supabase.auth.resetPasswordForEmail(lastEmailSent, {
+  redirectTo: getAuthRedirectUrl('/auth/reset-password'),
+});
 ```
 
-#### 5. Adicionar botao de reenvio no modal de confirmacao
+### Comportamento Esperado
 
-No modal `showResetPasswordModal` (linhas 427-448), adicionar botao de reenvio similar ao modal de confirmacao de email:
+| Ambiente | URL de Origem | URL no Email |
+|----------|---------------|--------------|
+| Producao | `https://zpleasy.com` | `https://zpleasy.com/auth/reset-password` |
+| Lovable Published | `https://labelary-magic.lovable.app` | `https://zpleasy.com/auth/reset-password` |
+| Lovable Preview | `https://id-preview--*.lovable.app` | `https://id-preview--*.lovable.app/auth/reset-password` |
+| Local | `http://localhost:8080` | `http://localhost:8080/auth/reset-password` |
 
-```typescript
-<div className="flex flex-col gap-2 mt-2">
-  <Button onClick={handleCloseResetPasswordModal} className="w-full">
-    {t("goToLogin")}
-  </Button>
-  <Button 
-    variant="outline" 
-    onClick={handleResendResetPassword}
-    disabled={isResending || resetPasswordCooldown > 0}
-    className="w-full"
-  >
-    {isResending ? (
-      <>
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        {t("sending")}
-      </>
-    ) : resetPasswordCooldown > 0 ? (
-      <>
-        <RefreshCw className="h-4 w-4 mr-2" />
-        {t("resendIn", { seconds: resetPasswordCooldown })}
-      </>
-    ) : (
-      <>
-        <RefreshCw className="h-4 w-4 mr-2" />
-        {t("resendEmail")}
-      </>
-    )}
-  </Button>
-</div>
-```
+### Consideracoes Importantes
 
-#### 6. Criar funcao de reenvio de email de reset
+1. **Dominio no Supabase**: Certifique-se de que `https://zpleasy.com` esta configurado como URL permitida nas configuracoes de autenticacao do Supabase (Site URL e Redirect URLs)
 
-Adicionar nova funcao para reenviar o email de recuperacao:
+2. **PKCE e Navegadores**: Mesmo com essa correcao, o usuario ainda precisa abrir o link no mesmo navegador onde solicitou o reset (limitacao do PKCE). Isso ja foi tratado anteriormente.
 
-```typescript
-const handleResendResetPassword = async () => {
-  if (isResending || resetPasswordCooldown > 0 || !lastEmailSent) return;
-  
-  setIsResending(true);
-  try {
-    const { error } = await supabase.auth.resetPasswordForEmail(lastEmailSent, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
-    
-    if (error) throw error;
-    
-    toast({
-      title: t("resendEmailSuccess"),
-      description: t("checkYourEmail"),
-    });
-    
-    setResetPasswordCooldown(60);
-  } catch (error: any) {
-    toast({
-      variant: "destructive",
-      title: t("error"),
-      description: error.message,
-    });
-  } finally {
-    setIsResending(false);
-  }
-};
-```
+3. **Testes**: O ambiente de preview continuara funcionando independentemente para testes.
 
-#### 7. Resetar cooldown ao fechar modal
+### Resumo
 
-Atualizar `handleCloseResetPasswordModal`:
-
-```typescript
-const handleCloseResetPasswordModal = () => {
-  setShowResetPasswordModal(false);
-  setEmail("");
-  setEmailTouched(false);
-  setLastEmailSent("");
-  setIsResetPassword(false);
-  setResetPasswordCooldown(0); // Resetar cooldown
-  captchaRef.current?.reset();
-  setCaptchaToken(null);
-};
-```
-
-### Resumo das Alteracoes
-
-| Item | Descricao |
-|------|-----------|
+| Item | Detalhes |
+|------|----------|
 | Arquivo | `src/components/AuthForm.tsx` |
-| Novo estado | `resetPasswordCooldown` |
-| Timer | Cooldown de 60 segundos entre envios |
-| UI do botao | Mostra contador regressivo durante cooldown |
-| Modal | Adiciona botao de reenvio com cooldown |
-| Traducoes | Reutiliza traducoes existentes (`resendIn`, `resendEmail`, etc.) |
+| Funcao nova | `getAuthRedirectUrl()` |
+| Linhas afetadas | 160, 398 |
+| Dominios de producao | `zpleasy.com`, `labelary-magic.lovable.app` |
+| Comportamento em dev | Mantem URL de origem para testes |
 
