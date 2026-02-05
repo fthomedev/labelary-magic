@@ -41,6 +41,15 @@ const ResetPassword = () => {
       // Check for PKCE code in URL (used with flowType: 'pkce')
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
+      const errorParam = urlParams.get('error');
+      const errorDescription = urlParams.get('error_description');
+
+      // Handle error from Supabase redirect
+      if (errorParam) {
+        console.error('❌ Auth error from redirect:', errorParam, errorDescription);
+        setIsValidSession(false);
+        return;
+      }
 
       if (code) {
         console.log('🔐 Found PKCE code, exchanging for session...');
@@ -49,6 +58,12 @@ const ResetPassword = () => {
           
           if (error) {
             console.error('❌ Error exchanging code for session:', error.message);
+            
+            // Check if it's a code_verifier issue (link opened in different browser/tab)
+            if (error.message.includes('code verifier') || error.message.includes('PKCE')) {
+              console.log('⚠️ PKCE code_verifier not found - likely opened in different browser');
+            }
+            
             setIsValidSession(false);
             return;
           }
@@ -76,13 +91,44 @@ const ResetPassword = () => {
         return;
       }
 
-      // Listen for auth state changes (PASSWORD_RECOVERY event from hash-based flow)
+      // Check for hash-based tokens (legacy flow)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      
+      if (accessToken && refreshToken) {
+        console.log('🔐 Found hash-based tokens, setting session...');
+        try {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          
+          if (!error) {
+            console.log('✅ Session set from hash tokens');
+            setIsValidSession(true);
+            window.history.replaceState({}, '', '/auth/reset-password');
+            return;
+          }
+        } catch (e) {
+          console.error('❌ Error setting session from hash:', e);
+        }
+      }
+
+      // Listen for auth state changes (PASSWORD_RECOVERY event)
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         console.log('🔄 Auth state change:', event);
         if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
           setIsValidSession(true);
         }
       });
+
+      // If no code in URL and no session, mark as invalid immediately
+      if (!code && !accessToken) {
+        console.log('⚠️ No auth code or tokens found in URL');
+        setIsValidSession(false);
+        return () => subscription.unsubscribe();
+      }
 
       // Give a moment for auth state to settle, then mark as invalid
       setTimeout(() => {
