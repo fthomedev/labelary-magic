@@ -65,6 +65,7 @@ const translations = {
   linkExpiredTitle: 'Link Expirado',
   linkExpiredDescription: 'Este link de recuperação é inválido ou expirou. Por favor, solicite um novo link.',
   requestNewLink: 'Solicitar Novo Link',
+  saveNewPassword: 'Salvar Nova Senha',
 
   // Conta de usuário
   myAccount: 'Minha Conta',

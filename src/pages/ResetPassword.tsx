@@ -208,6 +208,9 @@ const ResetPassword = () => {
 
       if (error) throw error;
 
+      // IMPORTANTE: Fazer logout para forçar o usuário a logar novamente
+      await supabase.auth.signOut();
+
       toast({
         title: t("passwordResetSuccess"),
         description: t("passwordResetSuccessDesc"),
@@ -410,7 +413,7 @@ const ResetPassword = () => {
                         {t("loading")}
                       </>
                     ) : (
-                      t("resetPassword")
+                      t("saveNewPassword")
                     )}
                   </Button>
                 </form>
