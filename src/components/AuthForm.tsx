@@ -123,6 +123,31 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
     }
   };
 
+  // Helper function to get the correct redirect URL based on environment
+  const getAuthRedirectUrl = (path: string): string => {
+    const origin = window.location.origin;
+    const hostname = window.location.hostname;
+    
+    // Production domains
+    const productionDomains = ['zpleasy.com', 'www.zpleasy.com'];
+    const lovablePublishedDomain = 'labelary-magic.lovable.app';
+    const productionUrl = 'https://zpleasy.com';
+    
+    // If on production domain, use production URL
+    if (productionDomains.includes(hostname)) {
+      return `${productionUrl}${path}`;
+    }
+    
+    // If on Lovable published domain, redirect to production
+    if (hostname === lovablePublishedDomain) {
+      return `${productionUrl}${path}`;
+    }
+    
+    // For development/preview environments, use current origin
+    // This allows testing in preview and local environments
+    return `${origin}${path}`;
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -157,7 +182,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
     try {
       if (isResetPassword) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/reset-password`,
+          redirectTo: getAuthRedirectUrl('/auth/reset-password'),
           captchaToken: captchaToken || undefined,
         });
         if (error) throw error;
@@ -395,7 +420,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
     setIsResending(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(lastEmailSent, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: getAuthRedirectUrl('/auth/reset-password'),
       });
       
       if (error) throw error;
