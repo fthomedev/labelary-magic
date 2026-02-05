@@ -38,9 +38,10 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const handleRecoveryFlow = async () => {
-      // Check for PKCE code in URL (used with flowType: 'pkce')
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
+      const tokenHash = urlParams.get('token_hash');
+      const type = urlParams.get('type');
       const errorParam = urlParams.get('error');
       const errorDescription = urlParams.get('error_description');
 
@@ -51,6 +52,35 @@ const ResetPassword = () => {
         return;
       }
 
+      // Method 1: Try token_hash with verifyOtp (more reliable, doesn't require code_verifier)
+      if (tokenHash && type === 'recovery') {
+        console.log('🔐 Found token_hash, verifying with verifyOtp...');
+        try {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: 'recovery',
+          });
+          
+          if (error) {
+            console.error('❌ Error verifying token_hash:', error.message);
+            setIsValidSession(false);
+            return;
+          }
+          
+          if (data.session) {
+            console.log('✅ Session established via verifyOtp');
+            setIsValidSession(true);
+            window.history.replaceState({}, '', '/auth/reset-password');
+            return;
+          }
+        } catch (error: any) {
+          console.error('❌ Exception verifying token_hash:', error.message);
+          setIsValidSession(false);
+          return;
+        }
+      }
+
+      // Method 2: Try PKCE code exchange
       if (code) {
         console.log('🔐 Found PKCE code, exchanging for session...');
         try {
@@ -60,8 +90,10 @@ const ResetPassword = () => {
             console.error('❌ Error exchanging code for session:', error.message);
             
             // Check if it's a code_verifier issue (link opened in different browser/tab)
-            if (error.message.includes('code verifier') || error.message.includes('PKCE')) {
-              console.log('⚠️ PKCE code_verifier not found - likely opened in different browser');
+            if (error.message.includes('code verifier') || 
+                error.message.includes('PKCE') ||
+                error.message.includes('non-empty')) {
+              console.log('⚠️ PKCE code_verifier not found - likely opened in different browser or localStorage cleared');
             }
             
             setIsValidSession(false);
@@ -69,9 +101,8 @@ const ResetPassword = () => {
           }
           
           if (data.session) {
-            console.log('✅ Session established successfully');
+            console.log('✅ Session established via PKCE');
             setIsValidSession(true);
-            // Clean URL to prevent code reuse
             window.history.replaceState({}, '', '/auth/reset-password');
             return;
           }
@@ -123,23 +154,23 @@ const ResetPassword = () => {
         }
       });
 
-      // If no code in URL and no session, mark as invalid immediately
-      if (!code && !accessToken) {
+      // If no auth method found in URL, mark as invalid immediately
+      if (!code && !tokenHash && !accessToken) {
         console.log('⚠️ No auth code or tokens found in URL');
         setIsValidSession(false);
         return () => subscription.unsubscribe();
       }
 
-      // Give a moment for auth state to settle, then mark as invalid
+      // Give more time for auth state to settle (30 seconds for slow connections)
       setTimeout(() => {
         setIsValidSession(prev => {
           if (prev === null) {
-            console.log('⏱️ Timeout reached, no valid session found');
+            console.log('⏱️ Timeout reached (30s), no valid session found');
             return false;
           }
           return prev;
         });
-      }, 3000);
+      }, 30000);
 
       return () => subscription.unsubscribe();
     };
