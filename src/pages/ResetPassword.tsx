@@ -37,35 +37,68 @@ const ResetPassword = () => {
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
 
   useEffect(() => {
-    // Check if we have a valid recovery session
-    const checkSession = async () => {
+    const handleRecoveryFlow = async () => {
+      // Check for PKCE code in URL (used with flowType: 'pkce')
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+
+      if (code) {
+        console.log('🔐 Found PKCE code, exchanging for session...');
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (error) {
+            console.error('❌ Error exchanging code for session:', error.message);
+            setIsValidSession(false);
+            return;
+          }
+          
+          if (data.session) {
+            console.log('✅ Session established successfully');
+            setIsValidSession(true);
+            // Clean URL to prevent code reuse
+            window.history.replaceState({}, '', '/auth/reset-password');
+            return;
+          }
+        } catch (error: any) {
+          console.error('❌ Exception exchanging code:', error.message);
+          setIsValidSession(false);
+          return;
+        }
+      }
+
+      // Fallback: Check for existing session (in case user refreshes after code exchange)
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Listen for auth state changes (recovery event)
+      if (session) {
+        console.log('✅ Existing session found');
+        setIsValidSession(true);
+        return;
+      }
+
+      // Listen for auth state changes (PASSWORD_RECOVERY event from hash-based flow)
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          setIsValidSession(true);
-        } else if (session) {
+        console.log('🔄 Auth state change:', event);
+        if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
           setIsValidSession(true);
         }
       });
 
-      // If there's already a session, we can proceed
-      if (session) {
-        setIsValidSession(true);
-      } else {
-        // Give a moment for the auth state to update
-        setTimeout(() => {
-          if (isValidSession === null) {
-            setIsValidSession(false);
+      // Give a moment for auth state to settle, then mark as invalid
+      setTimeout(() => {
+        setIsValidSession(prev => {
+          if (prev === null) {
+            console.log('⏱️ Timeout reached, no valid session found');
+            return false;
           }
-        }, 2000);
-      }
+          return prev;
+        });
+      }, 3000);
 
       return () => subscription.unsubscribe();
     };
 
-    checkSession();
+    handleRecoveryFlow();
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
