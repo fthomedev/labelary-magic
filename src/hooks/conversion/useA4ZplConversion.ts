@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
+import { useErrorRecords } from '@/hooks/history/useErrorRecords';
 import { useA4Conversion } from './useA4Conversion';
 import { useA4DirectConversion, A4ConversionError } from './useA4DirectConversion';
 import { usePdfOperations } from './usePdfOperations';
@@ -17,6 +18,7 @@ export const useA4ZplConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const { addToProcessingHistory } = useHistoryRecords();
+  const { logFatalError } = useErrorRecords();
   const { convertZplToA4Images, parseLabelsFromZpl } = useA4Conversion();
   const { convertZplToA4PDFDirect } = useA4DirectConversion();
   const { logPerformanceMetrics } = useConversionMetrics();
@@ -135,6 +137,18 @@ export const useA4ZplConversion = () => {
         
         finishConversion();
       } catch (uploadError) {
+        const processingTime = Date.now() - conversionStartTime;
+        
+        // Log fatal upload error
+        await logFatalError({
+          errorType: 'upload_error',
+          errorMessage: uploadError instanceof Error ? uploadError.message : 'Upload failed',
+          errorStack: uploadError instanceof Error ? uploadError.stack : undefined,
+          processingType: 'a4',
+          labelCountAttempted: labels.length,
+          processingTimeMs: processingTime,
+        });
+        
         console.error('Error uploading A4 PDF:', uploadError);
         toast({
           variant: "destructive",
@@ -144,6 +158,18 @@ export const useA4ZplConversion = () => {
         });
       }
     } catch (error) {
+      const processingTime = Date.now() - conversionStartTime;
+      
+      // Log fatal conversion error
+      await logFatalError({
+        errorType: error instanceof A4ConversionError ? 'api_error' : 'conversion_error',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : undefined,
+        processingType: 'a4',
+        labelCountAttempted: undefined, // labels not yet parsed
+        processingTimeMs: processingTime,
+      });
+      
       console.error('A4 fast conversion error:', error);
       
       // Extract specific error message
@@ -262,6 +288,18 @@ export const useA4ZplConversion = () => {
         
         finishConversion();
       } catch (uploadError) {
+        const processingTime = Date.now() - conversionStartTime;
+        
+        // Log fatal upload error
+        await logFatalError({
+          errorType: 'upload_error',
+          errorMessage: uploadError instanceof Error ? uploadError.message : 'Upload failed',
+          errorStack: uploadError instanceof Error ? uploadError.stack : undefined,
+          processingType: 'hd',
+          labelCountAttempted: finalLabelCount,
+          processingTimeMs: processingTime,
+        });
+        
         console.error('Error uploading HD PDF:', uploadError);
         toast({
           variant: "destructive",
@@ -271,6 +309,18 @@ export const useA4ZplConversion = () => {
         });
       }
     } catch (error) {
+      const processingTime = Date.now() - conversionStartTime;
+      
+      // Log fatal conversion error
+      await logFatalError({
+        errorType: 'conversion_error',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : undefined,
+        processingType: 'hd',
+        labelCountAttempted: undefined, // may not have parsed yet
+        processingTimeMs: processingTime,
+      });
+      
       console.error('HD conversion error:', error);
       toast({
         variant: "destructive",

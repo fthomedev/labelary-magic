@@ -98,6 +98,45 @@ export type Database = {
         }
         Relationships: []
       }
+      processing_errors: {
+        Row: {
+          created_at: string
+          error_message: string
+          error_stack: string | null
+          error_type: string
+          id: string
+          label_count_attempted: number | null
+          metadata: Json | null
+          processing_time_ms: number | null
+          processing_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message: string
+          error_stack?: string | null
+          error_type: string
+          id?: string
+          label_count_attempted?: number | null
+          metadata?: Json | null
+          processing_time_ms?: number | null
+          processing_type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string
+          error_stack?: string | null
+          error_type?: string
+          id?: string
+          label_count_attempted?: number | null
+          metadata?: Json | null
+          processing_time_ms?: number | null
+          processing_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       processing_history: {
         Row: {
           date: string

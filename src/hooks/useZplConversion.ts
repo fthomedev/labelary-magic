@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
+import { useErrorRecords } from '@/hooks/history/useErrorRecords';
 import { useZplApiConversion } from '@/hooks/conversion/useZplApiConversion';
 import { usePdfOperations } from '@/hooks/conversion/usePdfOperations';
 import { useConversionState } from '@/hooks/conversion/useConversionState';
@@ -8,7 +9,6 @@ import { useConversionMetrics } from '@/hooks/conversion/useConversionMetrics';
 import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 import { calculateProgress } from '@/hooks/conversion/useProgressCalculator';
 import { parseZplWithCount } from '@/utils/zplUtils';
-
 export interface ProcessingRecord {
   id: string;
   date: Date;
@@ -24,6 +24,7 @@ export const useZplConversion = () => {
   const { t } = useTranslation();
 
   const { addToProcessingHistory } = useHistoryRecords();
+  const { logFatalError } = useErrorRecords();
   const { convertZplBlocksToPdfs, parseLabelsFromZpl } = useZplApiConversion();
   const { logPerformanceMetrics } = useConversionMetrics();
   
@@ -56,6 +57,7 @@ export const useZplConversion = () => {
     if (!zplContent) return;
     
     const conversionStartTime = Date.now();
+    let labelCountAttempted: number | undefined;
     
     try {
       // Clear previous PDF state before starting new conversion
@@ -64,6 +66,7 @@ export const useZplConversion = () => {
 
       // Parse labels ONCE at the beginning using centralized utility
       const { blocks: labels, labelCount: finalLabelCount } = parseZplWithCount(zplContent);
+      labelCountAttempted = finalLabelCount;
       
       updateProgress({ totalLabels: finalLabelCount, stage: 'converting' });
       
@@ -134,6 +137,19 @@ export const useZplConversion = () => {
         });
       }
     } catch (error) {
+      const processingTime = Date.now() - conversionStartTime;
+      
+      // Log fatal error to database
+      await logFatalError({
+        errorType: 'conversion_error',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : undefined,
+        processingType: 'standard',
+        labelCountAttempted,
+        processingTimeMs: processingTime,
+        metadata: { useOptimizedTiming }
+      });
+      
       console.error('Conversion error:', error);
       toast({
         variant: "destructive",
