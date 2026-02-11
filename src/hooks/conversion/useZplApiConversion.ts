@@ -139,6 +139,10 @@ export const useZplApiConversion = () => {
     console.log(`🏆 Conversion completed in ${totalTime}ms`);
     console.log(`📊 Final: ${pdfs.length}/${batches.length} batches successful, ${labels.length} labels processed`);
     
+    if (pdfs.length === 0) {
+      throw new Error(`All ${batches.length} batches failed. No PDFs were generated after ${totalTime}ms. Labels attempted: ${labels.length}`);
+    }
+    
     if (pdfs.length < batches.length) {
       console.warn(`⚠️ Warning: ${batches.length - pdfs.length} batches failed and were not included in the final PDF`);
     }

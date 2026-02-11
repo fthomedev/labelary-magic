@@ -128,6 +128,18 @@ export const useZplConversion = () => {
         // Set processing complete to show the completion UI
         finishConversion();
       } catch (uploadError) {
+        const processingTime = Date.now() - conversionStartTime;
+        
+        // Log fatal error for upload/merge failures (including "No PDFs generated")
+        await logFatalError({
+          errorType: 'upload_error',
+          errorMessage: uploadError instanceof Error ? uploadError.message : 'Upload/merge failed',
+          errorStack: uploadError instanceof Error ? uploadError.stack : undefined,
+          processingType: 'standard',
+          labelCountAttempted,
+          processingTimeMs: processingTime,
+        });
+        
         console.error('Error uploading to storage:', uploadError);
         toast({
           variant: "destructive",
