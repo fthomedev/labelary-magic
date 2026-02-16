@@ -355,6 +355,36 @@ const translations = {
 
   // Processing time
   processingTimeLabel: '{{time}}s',
+
+  // Shopee Calculator
+  shopeeCalc: {
+    title: 'Shopee Calculator 2026',
+    button: 'Calculator',
+    inputTitle: 'Product Data',
+    salePrice: 'Sale Price',
+    productCost: 'Product Cost',
+    sellerType: 'Seller Type',
+    taxRate: 'Tax Rate',
+    packagingCost: 'Packaging Cost',
+    featuredCampaign: 'Featured Campaign (+2.5%)',
+    exceededOrders: 'Exceeded 450 orders in 90 days (+R$ 3.00)',
+    resultTitle: 'Result',
+    commission: 'Shopee Commission ({{pct}}%)',
+    fixedFee: 'Fixed Fee',
+    campaignFeeLabel: 'Featured Campaign (2.5%)',
+    pixSubsidy: 'Pix Subsidy',
+    cpfExtraFee: 'CPF Extra Fee',
+    tax: 'Tax',
+    packaging: 'Packaging',
+    netValue: 'Net Value',
+    profit: 'Profit',
+    margin: 'Profit Margin',
+    feeTableTitle: 'Fee Table – March 2026',
+    priceRange: 'Price Range',
+    commissionCol: 'Commission',
+    pixSubsidyCol: 'Pix Subsidy',
+    feeTableNote: 'CPF sellers: additional R$ 3.00/item fee above 450 orders in 90 days. Featured Campaign: +2.5%.',
+  },
 };
 
 export default translations;
