@@ -5,6 +5,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { mergePDFs } from '@/utils/pdfUtils';
 import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
+import { supabase } from '@/integrations/supabase/client';
 
 export const usePdfOperations = () => {
   const [pdfUrls, setPdfUrls] = useState<string[]>([]);
@@ -44,6 +45,9 @@ export const usePdfOperations = () => {
     
     // Ensure bucket exists
     await ensurePdfBucketExists();
+    
+    // Refresh session before upload to prevent expired token errors
+    await supabase.auth.getSession();
     
     onProgress(95);
     const uploadStartTime = Date.now();

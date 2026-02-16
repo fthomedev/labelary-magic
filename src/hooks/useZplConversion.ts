@@ -151,7 +151,11 @@ export const useZplConversion = () => {
     } catch (error) {
       const processingTime = Date.now() - conversionStartTime;
       
-      // Log fatal error to database
+      // Extract API context from enriched error
+      const apiContext = (error as any)?.apiContext || {};
+      const failureType = apiContext.failureType || 'unknown';
+      
+      // Log fatal error to database with enriched metadata
       await logFatalError({
         errorType: 'conversion_error',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
@@ -159,15 +163,31 @@ export const useZplConversion = () => {
         processingType: 'standard',
         labelCountAttempted,
         processingTimeMs: processingTime,
-        metadata: { useOptimizedTiming }
+        metadata: { 
+          useOptimizedTiming,
+          lastHttpStatus: apiContext.status,
+          lastErrorBody: apiContext.body,
+          failureType,
+        }
       });
       
       console.error('Conversion error:', error);
+      
+      // Contextual error message based on failure type
+      let errorDescription = t('errorMessage');
+      if (failureType === 'timeout') {
+        errorDescription = t('errorTimeout', 'A API de conversão está lenta. Tente novamente em alguns minutos.');
+      } else if (failureType === 'rate_limit') {
+        errorDescription = t('errorRateLimit', 'Muitas requisições. Aguarde 1 minuto e tente novamente.');
+      } else if (failureType === 'network_error') {
+        errorDescription = t('errorNetwork', 'Não foi possível conectar ao serviço. Verifique sua conexão.');
+      }
+      
       toast({
         variant: "destructive",
         title: t('error'),
-        description: t('errorMessage'),
-        duration: 5000,
+        description: errorDescription,
+        duration: 7000,
       });
     } finally {
       setIsConverting(false);
