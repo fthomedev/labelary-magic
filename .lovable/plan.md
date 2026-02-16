@@ -1,106 +1,125 @@
 
-## Calculadora Shopee - Nova Pagina de Ferramentas
 
-### Objetivo
+## Analise de Erros e Plano de Mitigacao
 
-Criar uma nova pagina com uma calculadora de lucro para vendedores da Shopee, baseada nas **novas taxas que entram em vigor em 01/03/2026**. Adicionar um botao de acesso rapido no header da pagina principal (/app).
+### Diagnostico dos Erros Encontrados
 
-### Novas Taxas Shopee (Março 2026) - Base do Calculo
+Foram encontrados **22 erros fatais** entre 11 e 13 de fevereiro, afetando **11 usuarios distintos**.
 
-**Vendedores CNPJ:**
+#### Distribuicao por Tipo
 
-| Faixa de Valor | Comissao | Subsidio Pix |
-|---|---|---|
-| Ate R$ 79,99 | 20% + R$ 4,00 | -- |
-| R$ 80 a R$ 99,99 | 14% + R$ 16,00 | 5% |
-| R$ 100 a R$ 199,99 | 14% + R$ 20,00 | 5% |
-| R$ 200 a R$ 499,99 | 14% + R$ 26,00 | 5% |
-| Acima de R$ 500 | 14% + R$ 28,00 | 8% |
+| Tipo | Quantidade | Descricao |
+|------|-----------|-----------|
+| `conversion_error` | 21 (95%) | Todas as tentativas de conversao falharam |
+| `upload_error` | 1 (5%) | Resposta HTML em vez de JSON do storage |
 
-**Vendedores CPF:**
-- Mesma tabela, porem com taxa adicional de R$ 3,00 por item se ultrapassar 450 pedidos em 90 dias.
+#### Padrao Critico Identificado
 
-**Campanhas de Destaque:** +2,5% sobre a comissao.
+**Todos os 21 erros de conversao sao identicos**: "All X batches failed. No PDFs were generated after ~10-13s"
 
-### Campos da Calculadora (baseado no video)
+Isso revela que:
 
-1. **Preco de Venda** (R$) - obrigatorio
-2. **Custo do Produto** (R$) - opcional
-3. **Tipo de Vendedor** (CPF / CNPJ) - radio button
-4. **Taxa de Imposto** (%) - input com default 0%
-5. **Custo de Embalagem** (R$) - input com default R$ 0,00
-6. **Participa de Campanha de Destaque?** - checkbox (+2,5%)
+1. **A API Labelary esta retornando erro ou timeout consistentemente** - o tempo de ~10s sugere timeout de rede
+2. **Nao ha informacao do erro real da API** - o codigo descarta a resposta HTTP quando falha, impossibilitando diagnostico
+3. **Discrepancia nos dados**: `label_count_attempted` e a mensagem de erro mostram numeros diferentes (ex: attempted=7, mensagem="Labels attempted: 13"), indicando um bug no logging
+4. **Sem mecanismo de fallback** - quando a API Labelary falha, o usuario fica completamente bloqueado
 
-### Resultados Exibidos
+#### Erro de Upload (1 caso)
 
-- Comissao Shopee (valor e %)
-- Taxa fixa
-- Subsidio Pix (quando aplicavel)
-- Imposto calculado
-- Custo de embalagem
-- **Valor liquido** (destaque)
-- **Lucro** (preco venda - custo - taxas)
-- **Margem de lucro** (%)
-- Indicador visual: verde (margem > 15%), amarelo (5-15%), vermelho (< 5% ou negativo)
+A mensagem `Unexpected token '<', "<html><h"... is not valid JSON` indica que o Supabase Storage retornou uma pagina HTML de erro em vez de resposta JSON. Isso ocorre tipicamente quando:
+- O token de autenticacao expirou durante um processamento longo (64 segundos)
+- O storage esta temporariamente indisponivel
 
-### Detalhes Tecnicos
+### Plano de Melhorias
 
-#### Arquivos a Criar
+#### 1. Capturar detalhes reais do erro da API Labelary
 
-1. **`src/pages/ShopeeCalculator.tsx`** - Pagina principal com a calculadora
-   - Header com botao de voltar
-   - Formulario com os campos descritos acima
-   - Calculo em tempo real (sem botao de calcular)
-   - Card de resultados com breakdown detalhado
-   - Design responsivo seguindo o padrao do app
+**Arquivo**: `src/hooks/conversion/useZplApiConversion.ts`
 
-2. **`src/utils/shopeeCalculator.ts`** - Logica de calculo isolada
-   - Funcao para determinar faixa de comissao com base no valor
-   - Funcao para calcular todas as taxas
-   - Funcao para calcular lucro e margem
+Atualmente, quando a API retorna erro (status != 200), o codigo apenas lanca `HTTP error! status: XXX` sem capturar o corpo da resposta. Precisamos:
 
-#### Arquivos a Modificar
+- Ler o body da resposta mesmo em caso de erro
+- Salvar o status HTTP e corpo da resposta no metadata do erro
+- Diferenciar timeout de rede vs erro HTTP vs erro de parsing
 
-3. **`src/App.tsx`** - Adicionar rota `/shopee-calculator`
-4. **`src/pages/Index.tsx`** - Adicionar botao no header para acessar a calculadora
-5. **`src/i18n/locales/pt-BR.ts`** e **`src/i18n/locales/en.ts`** - Adicionar traducoes
-
-#### Estrutura da Pagina
-
-```text
-+--------------------------------------------------+
-| <- Voltar    Calculadora Shopee 2026              |
-+--------------------------------------------------+
-|                                                    |
-|  [Preco de Venda: R$ _______ ]                    |
-|  [Custo do Produto: R$ _______ ]                  |
-|                                                    |
-|  Tipo: (o) CNPJ  ( ) CPF                         |
-|                                                    |
-|  [Imposto (%): _______ ]                          |
-|  [Embalagem (R$): _______ ]                       |
-|  [ ] Campanha de Destaque (+2,5%)                 |
-|                                                    |
-+--------------------------------------------------+
-|  RESULTADO                                         |
-|                                                    |
-|  Comissao Shopee:      -R$ XX,XX (XX%)            |
-|  Taxa Fixa:            -R$ XX,XX                  |
-|  Subsidio Pix:         +R$ XX,XX                  |
-|  Imposto:              -R$ XX,XX                  |
-|  Embalagem:            -R$ XX,XX                  |
-|  ─────────────────────────────                    |
-|  Valor Liquido:        R$ XX,XX                   |
-|  Lucro:                R$ XX,XX                   |
-|  Margem:               XX,X%   [INDICADOR]        |
-+--------------------------------------------------+
+```typescript
+// No catch do processBatch, capturar mais contexto:
+if (!response.ok) {
+  const errorBody = await response.text().catch(() => 'Could not read body');
+  throw new Error(`HTTP ${response.status}: ${errorBody.substring(0, 200)}`);
+}
 ```
 
-#### Botao no Header (/app)
+#### 2. Adicionar timeout explicito nas chamadas fetch
 
-Adicionar um botao com icone de calculadora (Calculator do lucide-react) ao lado dos botoes existentes no header da pagina Index, antes do DonationButton.
+**Arquivo**: `src/hooks/conversion/useZplApiConversion.ts`
 
-#### Rota
+O fetch atual nao tem timeout. Adicionar `AbortController` com timeout de 30 segundos para evitar que chamadas fiquem presas indefinidamente e permitir retry mais rapido:
 
-- Rota publica: `/shopee-calculator` (nao requer autenticacao)
-- Acessivel tanto da pagina /app quanto da landing
+```typescript
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+const response = await fetch(url, {
+  ...options,
+  signal: controller.signal,
+});
+clearTimeout(timeoutId);
+```
+
+#### 3. Corrigir discrepancia no label_count_attempted
+
+**Arquivo**: `src/hooks/useZplConversion.ts`
+
+O `labelCountAttempted` esta sendo definido como `finalLabelCount` (que vem de `parseZplWithCount`), mas a mensagem de erro mostra `labels.length`. Precisamos garantir que ambos usem o mesmo valor consistente.
+
+#### 4. Salvar contexto da API no metadata do erro
+
+**Arquivo**: `src/hooks/conversion/useZplApiConversion.ts` e `src/hooks/useZplConversion.ts`
+
+Quando a conversao falha, incluir no metadata:
+- Status HTTP da ultima tentativa
+- Corpo da resposta (truncado)
+- Numero de retries feitos
+- Se foi timeout ou erro HTTP
+
+```typescript
+metadata: {
+  useOptimizedTiming,
+  lastHttpStatus: 429,
+  lastErrorBody: "Rate limit exceeded",
+  retriesAttempted: 3,
+  failureType: 'timeout' | 'http_error' | 'network_error'
+}
+```
+
+#### 5. Renovar token antes de upload longo
+
+**Arquivo**: `src/hooks/conversion/usePdfOperations.ts`
+
+Para evitar o `upload_error` com resposta HTML, adicionar uma chamada `supabase.auth.getSession()` antes do upload para garantir que o token esta valido, especialmente apos processamentos longos (>30s).
+
+#### 6. Adicionar mensagem de erro mais informativa ao usuario
+
+**Arquivo**: `src/hooks/useZplConversion.ts`
+
+Atualmente o toast mostra apenas a mensagem generica `t('errorMessage')`. Melhorar para mostrar orientacoes especificas:
+- Se timeout: "A API de conversao esta lenta. Tente novamente em alguns minutos."
+- Se rate limit: "Muitas requisicoes. Aguarde 1 minuto e tente novamente."
+- Se todas falharam: "Nao foi possivel conectar ao servico. Verifique sua conexao."
+
+### Resumo das Alteracoes
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `useZplApiConversion.ts` | Timeout explicito, captura do body de erro, metadata detalhado |
+| `useZplConversion.ts` | Corrigir label count, mensagens de erro contextuais, metadata enriquecido |
+| `usePdfOperations.ts` | Renovar sessao antes de upload |
+
+### Impacto Esperado
+
+- **Diagnostico**: Erros futuros terao informacoes suficientes para identificar a causa raiz (status HTTP, corpo da resposta)
+- **Resiliencia**: Timeout explicito evita chamadas presas e permite retry mais rapido
+- **Experiencia**: Usuario recebe orientacao especifica sobre o que fazer em caso de erro
+- **Dados**: Correcao da discrepancia no label_count garante metricas confiaveis
+
