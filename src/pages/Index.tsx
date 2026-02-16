@@ -17,9 +17,11 @@ import { PrintFormat } from '@/components/format/FormatSelector';
 import { SharePromoBanner } from '@/components/SharePromoBanner';
 import { useUserAccessLog } from '@/hooks/useUserAccessLog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { Info, Calculator } from 'lucide-react';
 import { PdfViewerModal } from '@/components/history/PdfViewerModal';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
@@ -30,6 +32,7 @@ const Index = () => {
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
   const fileUploadRef = useRef<FileUploadRef>(null);
   
@@ -178,6 +181,15 @@ const Index = () => {
               {t('title')}
             </h1>
             <div className="flex items-center gap-1 sm:gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/shopee-calculator')}
+                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950/30"
+              >
+                <Calculator className="h-4 w-4" />
+                {!isMobile && <span className="ml-1 text-xs">{t('shopeeCalc.button')}</span>}
+              </Button>
               <DonationButton variant="header" />
               <FeedbackModal />
               <LanguageSelector />

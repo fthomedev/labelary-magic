@@ -355,6 +355,36 @@ const translations = {
 
   // Processing time
   processingTimeLabel: '{{time}}s',
+
+  // Shopee Calculator
+  shopeeCalc: {
+    title: 'Calculadora Shopee 2026',
+    button: 'Calculadora',
+    inputTitle: 'Dados do Produto',
+    salePrice: 'Preço de Venda',
+    productCost: 'Custo do Produto',
+    sellerType: 'Tipo de Vendedor',
+    taxRate: 'Imposto',
+    packagingCost: 'Custo de Embalagem',
+    featuredCampaign: 'Campanha de Destaque (+2,5%)',
+    exceededOrders: 'Ultrapassou 450 pedidos em 90 dias (+R$ 3,00)',
+    resultTitle: 'Resultado',
+    commission: 'Comissão Shopee ({{pct}}%)',
+    fixedFee: 'Taxa Fixa',
+    campaignFeeLabel: 'Campanha Destaque (2,5%)',
+    pixSubsidy: 'Subsídio Pix',
+    cpfExtraFee: 'Taxa Extra CPF',
+    tax: 'Imposto',
+    packaging: 'Embalagem',
+    netValue: 'Valor Líquido',
+    profit: 'Lucro',
+    margin: 'Margem de Lucro',
+    feeTableTitle: 'Tabela de Taxas – Março 2026',
+    priceRange: 'Faixa de Preço',
+    commissionCol: 'Comissão',
+    pixSubsidyCol: 'Subsídio Pix',
+    feeTableNote: 'Vendedores CPF: taxa adicional de R$ 3,00/item acima de 450 pedidos em 90 dias. Campanha de Destaque: +2,5%.',
+  },
 };
 
 export default translations;
