@@ -181,15 +181,7 @@ const Index = () => {
               {t('title')}
             </h1>
             <div className="flex items-center gap-1 sm:gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/shopee-calculator')}
-                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950/30"
-              >
-                <Calculator className="h-4 w-4" />
-                {!isMobile && <span className="ml-1 text-xs">{t('shopeeCalc.button')}</span>}
-              </Button>
+              {/* Calculator button hidden temporarily */}
               <DonationButton variant="header" />
               <FeedbackModal />
               <LanguageSelector />
