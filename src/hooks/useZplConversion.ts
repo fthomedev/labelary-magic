@@ -65,22 +65,28 @@ export const useZplConversion = () => {
       startConversion();
 
       // Parse labels ONCE at the beginning using centralized utility
-      const { blocks: labels, labelCount: finalLabelCount } = parseZplWithCount(zplContent);
+      const { blocks: labels, labelCount: finalLabelCount, safeBatchSize } = parseZplWithCount(zplContent);
       labelCountAttempted = finalLabelCount;
       
       updateProgress({ totalLabels: finalLabelCount, stage: 'converting' });
       
-      console.log(`🎯 Starting conversion of ${finalLabelCount} labels (${labels.length} blocks / 2)`);
+      console.log(`🎯 Starting conversion of ${finalLabelCount} labels (${labels.length} blocks / 2)${safeBatchSize ? ` [^PQ detected, safe batch: ${safeBatchSize}]` : ''}`);
       console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
       
       // Choose configuration based on label count and user preference
       let config: ProcessingConfig;
       if (!useOptimizedTiming) {
-        config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 }; // Original conservative timing
+        config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 };
       } else if (finalLabelCount > 100) {
-        config = DEFAULT_CONFIG; // Moderate optimization for large batches
+        config = DEFAULT_CONFIG;
       } else {
-        config = FAST_CONFIG; // Aggressive optimization for smaller batches
+        config = FAST_CONFIG;
+      }
+      
+      // Override batch size if ^PQ requires smaller batches
+      if (safeBatchSize && safeBatchSize < config.labelsPerBatch) {
+        config = { ...config, labelsPerBatch: safeBatchSize };
+        console.log(`📦 Batch size overridden to ${safeBatchSize} due to ^PQ command`);
       }
       
       console.log(`📋 Using configuration:`, config);
