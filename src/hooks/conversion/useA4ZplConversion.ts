@@ -138,11 +138,13 @@ export const useA4ZplConversion = () => {
         finishConversion();
       } catch (uploadError) {
         const processingTime = Date.now() - conversionStartTime;
+        const errorMsg = uploadError instanceof Error ? uploadError.message : 'Upload failed';
+        const isSizeError = errorMsg.includes('muito grande') || errorMsg.includes('exceeded') || errorMsg.includes('too large');
         
         // Log fatal upload error
         await logFatalError({
           errorType: 'upload_error',
-          errorMessage: uploadError instanceof Error ? uploadError.message : 'Upload failed',
+          errorMessage: errorMsg,
           errorStack: uploadError instanceof Error ? uploadError.stack : undefined,
           processingType: 'a4',
           labelCountAttempted: labels.length,
@@ -153,8 +155,8 @@ export const useA4ZplConversion = () => {
         toast({
           variant: "destructive",
           title: t('error'),
-          description: t('errorMessage'),
-          duration: 5000,
+          description: isSizeError ? 'O PDF gerado é muito grande. Tente com menos etiquetas.' : t('errorMessage'),
+          duration: 8000,
         });
       }
     } catch (error) {
@@ -289,11 +291,13 @@ export const useA4ZplConversion = () => {
         finishConversion();
       } catch (uploadError) {
         const processingTime = Date.now() - conversionStartTime;
+        const errorMsg = uploadError instanceof Error ? uploadError.message : 'Upload failed';
+        const isSizeError = errorMsg.includes('muito grande') || errorMsg.includes('exceeded') || errorMsg.includes('too large');
         
         // Log fatal upload error
         await logFatalError({
           errorType: 'upload_error',
-          errorMessage: uploadError instanceof Error ? uploadError.message : 'Upload failed',
+          errorMessage: errorMsg,
           errorStack: uploadError instanceof Error ? uploadError.stack : undefined,
           processingType: 'hd',
           labelCountAttempted: finalLabelCount,
@@ -304,8 +308,8 @@ export const useA4ZplConversion = () => {
         toast({
           variant: "destructive",
           title: t('error'),
-          description: t('errorMessage'),
-          duration: 5000,
+          description: isSizeError ? 'O PDF gerado é muito grande. Tente com menos etiquetas.' : t('errorMessage'),
+          duration: 8000,
         });
       }
     } catch (error) {

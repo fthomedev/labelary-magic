@@ -14,6 +14,8 @@ export const useUploadPdf = () => {
       const fileName = `label-${uuidv4()}.pdf`;
       // Store files in user-specific folder for RLS policy compliance
       const filePath = `${user.id}/${fileName}`;
+      const sizeMB = (pdfBlob.size / (1024 * 1024)).toFixed(2);
+      console.log(`📦 PDF size before upload: ${sizeMB}MB (${pdfBlob.size} bytes)`);
       
       const { data, error } = await supabase.storage
         .from('pdfs')
@@ -25,6 +27,9 @@ export const useUploadPdf = () => {
       
       if (error) {
         console.error('Error uploading PDF to storage:', error);
+        if (error.message?.includes('exceeded') || error.message?.includes('maximum allowed size') || error.message?.includes('too large')) {
+          throw new Error(`PDF muito grande para upload (${sizeMB}MB). Limite: 50MB.`);
+        }
         throw error;
       }
       
