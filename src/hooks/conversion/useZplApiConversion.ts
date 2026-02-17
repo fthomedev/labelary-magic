@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { delay } from '@/utils/pdfUtils';
-import { parseZplBlocks, countZplLabelsWithLog } from '@/utils/zplUtils';
+import { parseZplBlocks, countZplLabelsWithLog, calculateSafeBatchSize } from '@/utils/zplUtils';
 import { DEFAULT_CONFIG, ProcessingMetricsTracker, ProcessingConfig } from '@/config/processingConfig';
 
 export const useZplApiConversion = () => {
@@ -15,15 +15,21 @@ export const useZplApiConversion = () => {
   ): Promise<Blob[]> => {
     const totalStartTime = Date.now();
     
-    console.log(`🏁 Starting conversion of ${labels.length} labels with config:`, config);
+    // Adjust batch size based on ^PQ commands in the labels
+    const effectiveBatchSize = calculateSafeBatchSize(labels, config.labelsPerBatch);
+    const actualConfig = effectiveBatchSize < config.labelsPerBatch 
+      ? { ...config, labelsPerBatch: effectiveBatchSize }
+      : config;
+    
+    console.log(`🏁 Starting conversion of ${labels.length} labels with batch size ${actualConfig.labelsPerBatch}`);
     
     // Create batches
     const batches: string[][] = [];
-    for (let i = 0; i < labels.length; i += config.labelsPerBatch) {
-      batches.push(labels.slice(i, i + config.labelsPerBatch));
+    for (let i = 0; i < labels.length; i += actualConfig.labelsPerBatch) {
+      batches.push(labels.slice(i, i + actualConfig.labelsPerBatch));
     }
     
-    console.log(`📦 Created ${batches.length} batches of ~${config.labelsPerBatch} labels each`);
+    console.log(`📦 Created ${batches.length} batches of ~${actualConfig.labelsPerBatch} labels each`);
     
     const PARALLEL_BATCHES = 2; // Reduced from 3 to avoid rate limits
     const results: (Blob | null)[] = new Array(batches.length).fill(null);
@@ -33,7 +39,7 @@ export const useZplApiConversion = () => {
     // Track last error context for metadata enrichment
     let lastErrorContext: { status?: number; body?: string; failureType?: string } = {};
 
-    const processBatch = async (batchLabels: string[], batchIndex: number, maxRetries: number = config.maxRetries, baseDelay: number = config.delayBetweenBatches): Promise<Blob | null> => {
+    const processBatch = async (batchLabels: string[], batchIndex: number, maxRetries: number = actualConfig.maxRetries, baseDelay: number = actualConfig.delayBetweenBatches): Promise<Blob | null> => {
       let retryCount = 0;
       
       while (retryCount < maxRetries) {
@@ -58,11 +64,19 @@ export const useZplApiConversion = () => {
 
           if (response.status === 429) {
             retryCount++;
-            const waitTime = config.fallbackDelay * retryCount;
+            const waitTime = actualConfig.fallbackDelay * retryCount;
             console.log(`⏳ Rate limited on batch ${batchIndex + 1}, waiting ${waitTime}ms...`);
             lastErrorContext = { status: 429, body: 'Rate limit exceeded', failureType: 'rate_limit' };
             await delay(waitTime);
             continue;
+          }
+
+          if (response.status === 413) {
+            const errorBody = await response.text().catch(() => 'Payload too large');
+            console.error(`📏 Batch ${batchIndex + 1} exceeded Labelary limit (413). Labels in batch: ${batchLabels.length}`);
+            lastErrorContext = { status: 413, body: errorBody.substring(0, 200), failureType: 'payload_too_large' };
+            // Don't retry with same batch size - it will fail again
+            return null;
           }
 
           if (!response.ok) {
@@ -129,7 +143,7 @@ export const useZplApiConversion = () => {
       
       // Delay between parallel groups
       if (i + PARALLEL_BATCHES < batches.length) {
-        await delay(config.delayBetweenBatches);
+        await delay(actualConfig.delayBetweenBatches);
       }
     }
     
@@ -138,9 +152,9 @@ export const useZplApiConversion = () => {
       console.log(`🔄 Retrying ${failedBatches.length} failed batches sequentially...`);
       
       for (const batchIndex of failedBatches) {
-        await delay(config.fallbackDelay); // Wait before retry
+        await delay(actualConfig.fallbackDelay); // Wait before retry
         
-        const result = await processBatch(batches[batchIndex], batchIndex, 3, config.fallbackDelay);
+        const result = await processBatch(batches[batchIndex], batchIndex, 3, actualConfig.fallbackDelay);
         
         if (result) {
           results[batchIndex] = result;
