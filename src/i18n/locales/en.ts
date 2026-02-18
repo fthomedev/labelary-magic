@@ -385,20 +385,6 @@ const translations = {
     pixSubsidyCol: 'Pix Subsidy',
     feeTableNote: 'CPF sellers: additional R$ 3.00/item fee above 450 orders in 90 days. Featured Campaign: +2.5%.',
   },
-
-  // Onboarding
-  onboarding: {
-    skip: 'Skip tour',
-    next: 'Next',
-    finish: 'Finish',
-    step1Title: 'Upload your ZPL files',
-    step1Desc: 'Drag your .txt or .zip files with ZPL code to this area, or click to select. You can upload multiple files at once.',
-    step2Title: 'Choose the output format',
-    step2Desc: 'Select between standard format (individual label) or HD (A4 sheet with enhanced quality). The format selector appears after uploading a file.',
-    step3Title: 'Conversion history',
-    step3Desc: 'All your conversions are saved here. You can download again, view or delete them at any time.',
-    reviewTour: 'Review tour',
-  },
 };
 
 export default translations;

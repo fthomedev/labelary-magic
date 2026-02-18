@@ -16,11 +16,7 @@ import { NavigationButtons } from "./user-menu/NavigationButtons";
 import { DeleteAccountButton } from "./user-menu/DeleteAccountButton";
 import { useUserData } from "./user-menu/useUserData";
 
-interface UserMenuProps {
-  onStartTour?: () => void;
-}
-
-export const UserMenu = ({ onStartTour }: UserMenuProps) => {
+export const UserMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -58,7 +54,7 @@ export const UserMenu = ({ onStartTour }: UserMenuProps) => {
             <UserProfileCard userData={userData} />
           </div>
           <div className="space-y-3">
-            <NavigationButtons onClose={() => setIsOpen(false)} onStartTour={onStartTour} />
+            <NavigationButtons onClose={() => setIsOpen(false)} />
             <DeleteAccountButton />
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileUpload, FileUploadRef } from '@/components/FileUpload';
 import { ZPLPreview } from '@/components/ZPLPreview';
@@ -22,8 +22,6 @@ import { PdfViewerModal } from '@/components/history/PdfViewerModal';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
-
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
@@ -32,7 +30,6 @@ const Index = () => {
   const [selectedFormat, setSelectedFormat] = useState<PrintFormat>('standard');
   const [fileUploadKey, setFileUploadKey] = useState(0);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -188,7 +185,7 @@ const Index = () => {
               <DonationButton variant="header" />
               <FeedbackModal />
               <LanguageSelector />
-              <UserMenu onStartTour={() => setShowOnboarding(true)} />
+              <UserMenu />
             </div>
           </div>
         </div>
@@ -216,7 +213,7 @@ const Index = () => {
 
           <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-3">
             <div className="space-y-3">
-              <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow" data-onboarding="upload">
+              <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
                 <div className="p-3">
                   <FileUpload key={fileUploadKey} ref={fileUploadRef} onFileSelect={handleFileSelect} />
                 </div>
@@ -224,7 +221,7 @@ const Index = () => {
               
               {zplContent && (
                 <div className="space-y-3">
-                  <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow" data-onboarding="format">
+                  <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow">
                     <div className="p-3">
                       <ZPLPreview 
                         content={zplContent} 
@@ -260,7 +257,7 @@ const Index = () => {
               )}
             </div>
 
-            <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow" ref={processingHistoryRef} data-onboarding="history">
+            <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow" ref={processingHistoryRef}>
               <ProcessingHistory key={historyRefreshTrigger} />
             </div>
           </div>
@@ -272,11 +269,6 @@ const Index = () => {
         isOpen={isPdfModalOpen}
         onClose={closePdfModal}
         onDownload={handleDownload}
-      />
-
-      <OnboardingTour
-        forceShow={showOnboarding}
-        onComplete={() => setShowOnboarding(false)}
       />
     </div>
   );
