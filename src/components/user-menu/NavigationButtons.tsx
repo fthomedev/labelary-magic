@@ -1,5 +1,5 @@
 
-import { CreditCard, Home, LogOut } from "lucide-react";
+import { CreditCard, Home, LogOut, HelpCircle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface NavigationButtonsProps {
   onClose: () => void;
+  onStartTour?: () => void;
 }
 
-export const NavigationButtons = ({ onClose }: NavigationButtonsProps) => {
+export const NavigationButtons = ({ onClose, onStartTour }: NavigationButtonsProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,6 +61,20 @@ export const NavigationButtons = ({ onClose }: NavigationButtonsProps) => {
           {t("subscriptionPage")}
         </Button>
       )} */}
+
+      {location.pathname === "/app" && onStartTour && (
+        <Button
+          variant="outline"
+          className="w-full justify-start gap-2 text-base font-normal"
+          onClick={() => {
+            onClose();
+            onStartTour();
+          }}
+        >
+          <HelpCircle className="h-4 w-4" />
+          {t("onboarding.reviewTour")}
+        </Button>
+      )}
 
       <Button
         variant="outline"
