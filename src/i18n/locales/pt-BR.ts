@@ -385,6 +385,20 @@ const translations = {
     pixSubsidyCol: 'Subsídio Pix',
     feeTableNote: 'Vendedores CPF: taxa adicional de R$ 3,00/item acima de 450 pedidos em 90 dias. Campanha de Destaque: +2,5%.',
   },
+
+  // Onboarding
+  onboarding: {
+    skip: 'Pular tour',
+    next: 'Próximo',
+    finish: 'Concluir',
+    step1Title: 'Envie seus arquivos ZPL',
+    step1Desc: 'Arraste seus arquivos .txt ou .zip com código ZPL para esta área, ou clique para selecionar. Você pode enviar vários arquivos de uma vez.',
+    step2Title: 'Escolha o formato de saída',
+    step2Desc: 'Selecione entre o formato padrão (etiqueta individual) ou HD (folha A4 com qualidade aprimorada). O formato aparece após enviar um arquivo.',
+    step3Title: 'Histórico de conversões',
+    step3Desc: 'Todas as suas conversões ficam salvas aqui. Você pode baixar novamente, visualizar ou excluir a qualquer momento.',
+    reviewTour: 'Ver tour novamente',
+  },
 };
 
 export default translations;
