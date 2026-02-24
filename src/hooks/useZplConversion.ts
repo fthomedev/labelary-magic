@@ -65,28 +65,22 @@ export const useZplConversion = () => {
       startConversion();
 
       // Parse labels ONCE at the beginning using centralized utility
-      const { blocks: labels, labelCount: finalLabelCount, safeBatchSize } = parseZplWithCount(zplContent);
+      const { blocks: labels, labelCount: finalLabelCount } = parseZplWithCount(zplContent);
       labelCountAttempted = finalLabelCount;
       
       updateProgress({ totalLabels: finalLabelCount, stage: 'converting' });
       
-      console.log(`🎯 Starting conversion of ${finalLabelCount} labels (${labels.length} blocks / 2)${safeBatchSize ? ` [^PQ detected, safe batch: ${safeBatchSize}]` : ''}`);
+      console.log(`🎯 Starting conversion of ${finalLabelCount} labels (${labels.length} blocks / 2)`);
       console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
       
       // Choose configuration based on label count and user preference
       let config: ProcessingConfig;
       if (!useOptimizedTiming) {
-        config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 };
+        config = { ...DEFAULT_CONFIG, delayBetweenBatches: 3000 }; // Original conservative timing
       } else if (finalLabelCount > 100) {
-        config = DEFAULT_CONFIG;
+        config = DEFAULT_CONFIG; // Moderate optimization for large batches
       } else {
-        config = FAST_CONFIG;
-      }
-      
-      // Override batch size if ^PQ requires smaller batches
-      if (safeBatchSize && safeBatchSize < config.labelsPerBatch) {
-        config = { ...config, labelsPerBatch: safeBatchSize };
-        console.log(`📦 Batch size overridden to ${safeBatchSize} due to ^PQ command`);
+        config = FAST_CONFIG; // Aggressive optimization for smaller batches
       }
       
       console.log(`📋 Using configuration:`, config);
@@ -181,9 +175,7 @@ export const useZplConversion = () => {
       
       // Contextual error message based on failure type
       let errorDescription = t('errorMessage');
-      if (failureType === 'image_size_limit') {
-        errorDescription = 'Uma ou mais etiquetas contêm imagens muito grandes. Reduza o tamanho das imagens embutidas no ZPL.';
-      } else if (failureType === 'timeout') {
+      if (failureType === 'timeout') {
         errorDescription = t('errorTimeout', 'A API de conversão está lenta. Tente novamente em alguns minutos.');
       } else if (failureType === 'rate_limit') {
         errorDescription = t('errorRateLimit', 'Muitas requisições. Aguarde 1 minuto e tente novamente.');

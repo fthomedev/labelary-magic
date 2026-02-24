@@ -138,13 +138,11 @@ export const useA4ZplConversion = () => {
         finishConversion();
       } catch (uploadError) {
         const processingTime = Date.now() - conversionStartTime;
-        const errorMsg = uploadError instanceof Error ? uploadError.message : 'Upload failed';
-        const isSizeError = errorMsg.includes('muito grande') || errorMsg.includes('exceeded') || errorMsg.includes('too large');
         
         // Log fatal upload error
         await logFatalError({
           errorType: 'upload_error',
-          errorMessage: errorMsg,
+          errorMessage: uploadError instanceof Error ? uploadError.message : 'Upload failed',
           errorStack: uploadError instanceof Error ? uploadError.stack : undefined,
           processingType: 'a4',
           labelCountAttempted: labels.length,
@@ -155,8 +153,8 @@ export const useA4ZplConversion = () => {
         toast({
           variant: "destructive",
           title: t('error'),
-          description: isSizeError ? 'O PDF gerado é muito grande. Tente com menos etiquetas.' : t('errorMessage'),
-          duration: 8000,
+          description: t('errorMessage'),
+          duration: 5000,
         });
       }
     } catch (error) {
@@ -251,47 +249,17 @@ export const useA4ZplConversion = () => {
         
         updateProgress({ percentage: calculateProgress('hd', 'uploading', 50), stage: 'uploading' });
         
-        // Upload PDF to storage - split if exceeds 45MB
+        // Upload PDF to storage
         const uploadStartTime = Date.now();
-        const hdPdfSizeMB = hdPdf.size / (1024 * 1024);
-        console.log(`📦 HD PDF size: ${hdPdfSizeMB.toFixed(2)}MB`);
-        
-        let pdfPath: string;
-        if (hdPdfSizeMB > 45 && images.length > 50) {
-          // Split into smaller PDFs and upload each part
-          const maxLabelsPerPart = Math.floor(images.length / Math.ceil(hdPdfSizeMB / 40));
-          console.log(`✂️ PDF too large (${hdPdfSizeMB.toFixed(0)}MB), splitting into parts of ~${maxLabelsPerPart} labels`);
-          
-          const parts: Blob[] = [];
-          for (let partStart = 0; partStart < images.length; partStart += maxLabelsPerPart) {
-            const partImages = images.slice(partStart, partStart + maxLabelsPerPart);
-            const { pdfBlob: partPdf } = await organizeImagesInSeparatePDF(partImages);
-            parts.push(partPdf);
-          }
-          
-          // Upload first part (main PDF for history)
-          pdfPath = await uploadPDFToStorage(parts[0]);
-          console.log(`☁️ Part 1/${parts.length} uploaded: ${pdfPath}`);
-          
-          // Upload remaining parts
-          for (let p = 1; p < parts.length; p++) {
-            const partPath = await uploadPDFToStorage(parts[p]);
-            console.log(`☁️ Part ${p + 1}/${parts.length} uploaded: ${partPath}`);
-          }
-          
-          // Use first part blob for download preview
-          const blobUrl = window.URL.createObjectURL(parts[0]);
-          setLastPdfUrl(blobUrl);
-        } else {
-          pdfPath = await uploadPDFToStorage(hdPdf);
-          // Create blob URL for download
-          const blobUrl = window.URL.createObjectURL(hdPdf);
-          setLastPdfUrl(blobUrl);
-        }
+        const pdfPath = await uploadPDFToStorage(hdPdf);
         const uploadTime = Date.now() - uploadStartTime;
         
         console.log(`☁️ HD PDF upload completed in ${uploadTime}ms:`, pdfPath);
         setLastPdfPath(pdfPath);
+        
+        // Create blob URL for download
+        const blobUrl = window.URL.createObjectURL(hdPdf);
+        setLastPdfUrl(blobUrl);
         
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
@@ -321,13 +289,11 @@ export const useA4ZplConversion = () => {
         finishConversion();
       } catch (uploadError) {
         const processingTime = Date.now() - conversionStartTime;
-        const errorMsg = uploadError instanceof Error ? uploadError.message : 'Upload failed';
-        const isSizeError = errorMsg.includes('muito grande') || errorMsg.includes('exceeded') || errorMsg.includes('too large');
         
         // Log fatal upload error
         await logFatalError({
           errorType: 'upload_error',
-          errorMessage: errorMsg,
+          errorMessage: uploadError instanceof Error ? uploadError.message : 'Upload failed',
           errorStack: uploadError instanceof Error ? uploadError.stack : undefined,
           processingType: 'hd',
           labelCountAttempted: finalLabelCount,
@@ -338,8 +304,8 @@ export const useA4ZplConversion = () => {
         toast({
           variant: "destructive",
           title: t('error'),
-          description: isSizeError ? 'O PDF gerado é muito grande. Tente com menos etiquetas.' : t('errorMessage'),
-          duration: 8000,
+          description: t('errorMessage'),
+          duration: 5000,
         });
       }
     } catch (error) {

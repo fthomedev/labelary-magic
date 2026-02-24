@@ -6,64 +6,7 @@ interface ImageDimensions {
   height: number;
 }
 
-// Compress a PNG blob to JPEG via Canvas for smaller PDF file sizes
-const compressImageBlob = (blob: Blob, quality: number = 0.85): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(blob);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('Failed to get canvas context'));
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
-      resolve(jpegDataUrl);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Failed to load image for compression'));
-    };
-    img.src = url;
-  });
-};
-
-// Parallel blob compression with concurrency control
-const compressBlobsToDataURLs = async (blobs: Blob[], quality: number = 0.85, concurrency: number = 10): Promise<(string | null)[]> => {
-  const results: (string | null)[] = new Array(blobs.length).fill(null);
-  let index = 0;
-  
-  const processNext = async (): Promise<void> => {
-    while (index < blobs.length) {
-      const currentIndex = index++;
-      try {
-        if (blobs[currentIndex] && blobs[currentIndex].size > 0) {
-          results[currentIndex] = await compressImageBlob(blobs[currentIndex], quality);
-        }
-      } catch (error) {
-        console.error(`❌ Failed to compress blob ${currentIndex + 1}:`, error);
-        // Fallback to uncompressed dataURL
-        try {
-          results[currentIndex] = await blobToDataURL(blobs[currentIndex]);
-        } catch {
-          console.error(`❌ Fallback also failed for blob ${currentIndex + 1}`);
-        }
-      }
-    }
-  };
-  
-  const workers = Array(Math.min(concurrency, blobs.length)).fill(null).map(() => processNext());
-  await Promise.all(workers);
-  
-  return results;
-};
-
-// Parallel blob to dataURL conversion with concurrency control (kept for fallback)
+// Parallel blob to dataURL conversion with concurrency control
 const blobsToDataURLs = async (blobs: Blob[], concurrency: number = 10): Promise<(string | null)[]> => {
   const results: (string | null)[] = new Array(blobs.length).fill(null);
   let index = 0;
@@ -92,11 +35,11 @@ export const organizeImagesInA4PDF = async (imageBlobs: Blob[]): Promise<{ pdfBl
   console.log(`\n========== A4 PDF GENERATION START ==========`);
   console.log(`📄 Input images: ${imageBlobs.length}`);
   
-  // OPTIMIZATION: Compress PNG to JPEG and convert in parallel
+  // OPTIMIZATION: Pre-convert all blobs to dataURLs in parallel
   const conversionStart = Date.now();
-  console.log(`🔄 Compressing ${imageBlobs.length} images (PNG→JPEG) in parallel...`);
-  const dataUrls = await compressBlobsToDataURLs(imageBlobs);
-  console.log(`✅ Image compression completed in ${Date.now() - conversionStart}ms`);
+  console.log(`🔄 Converting ${imageBlobs.length} blobs to dataURLs in parallel...`);
+  const dataUrls = await blobsToDataURLs(imageBlobs);
+  console.log(`✅ Blob conversion completed in ${Date.now() - conversionStart}ms`);
   
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -156,11 +99,10 @@ export const organizeImagesInA4PDF = async (imageBlobs: Blob[]): Promise<{ pdfBl
       // Get position for current label on page
       const position = positions[labelsOnCurrentPage];
       
-      // Add image to PDF (JPEG format from compression)
-      const imgFormat = imageDataUrl.startsWith('data:image/jpeg') ? 'JPEG' : 'PNG';
+      // Add image to PDF
       pdf.addImage(
         imageDataUrl,
-        imgFormat,
+        'PNG',
         position.x,
         position.y,
         labelWidth,
@@ -207,11 +149,11 @@ export const organizeImagesInSeparatePDF = async (imageBlobs: Blob[]): Promise<{
   console.log(`\n========== HD PDF GENERATION START ==========`);
   console.log(`📄 Input images: ${imageBlobs.length}`);
   
-  // OPTIMIZATION: Compress PNG to JPEG with lower quality for HD (larger files)
+  // OPTIMIZATION: Pre-convert all blobs to dataURLs in parallel
   const conversionStart = Date.now();
-  console.log(`🔄 Compressing ${imageBlobs.length} images (PNG→JPEG q=0.75) for HD PDF...`);
-  const dataUrls = await compressBlobsToDataURLs(imageBlobs, 0.75);
-  console.log(`✅ Image compression completed in ${Date.now() - conversionStart}ms`);
+  console.log(`🔄 Converting ${imageBlobs.length} blobs to dataURLs in parallel...`);
+  const dataUrls = await blobsToDataURLs(imageBlobs);
+  console.log(`✅ Blob conversion completed in ${Date.now() - conversionStart}ms`);
   
   // Standard label dimensions (4x6 inches)
   const labelWidthMM = 101.6; // 4 inches in mm
@@ -249,11 +191,10 @@ export const organizeImagesInSeparatePDF = async (imageBlobs: Blob[]): Promise<{
         continue;
       }
       
-      // Add image to fill the entire page (JPEG format from compression)
-      const imgFormat = imageDataUrl.startsWith('data:image/jpeg') ? 'JPEG' : 'PNG';
+      // Add image to fill the entire page
       pdf.addImage(
         imageDataUrl,
-        imgFormat,
+        'PNG',
         0,
         0,
         labelWidthMM,
