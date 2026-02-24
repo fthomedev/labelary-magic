@@ -181,7 +181,9 @@ export const useZplConversion = () => {
       
       // Contextual error message based on failure type
       let errorDescription = t('errorMessage');
-      if (failureType === 'timeout') {
+      if (failureType === 'image_size_limit') {
+        errorDescription = 'Uma ou mais etiquetas contêm imagens muito grandes. Reduza o tamanho das imagens embutidas no ZPL.';
+      } else if (failureType === 'timeout') {
         errorDescription = t('errorTimeout', 'A API de conversão está lenta. Tente novamente em alguns minutos.');
       } else if (failureType === 'rate_limit') {
         errorDescription = t('errorRateLimit', 'Muitas requisições. Aguarde 1 minuto e tente novamente.');
