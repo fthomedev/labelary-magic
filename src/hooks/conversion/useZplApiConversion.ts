@@ -40,7 +40,6 @@ export const useZplApiConversion = () => {
         try {
           const blockZPL = batchLabels.join('');
 
-          // Explicit timeout with AbortController (30s)
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 30000);
 
@@ -65,6 +64,26 @@ export const useZplApiConversion = () => {
             continue;
           }
 
+          // Auto-split on 413 Payload Too Large
+          if (response.status === 413 && batchLabels.length > 1) {
+            console.log(`📦 Batch ${batchIndex + 1} too large (${batchLabels.length} labels), splitting in half...`);
+            const mid = Math.ceil(batchLabels.length / 2);
+            const firstHalf = batchLabels.slice(0, mid);
+            const secondHalf = batchLabels.slice(mid);
+            
+            await delay(config.delayBetweenBatches);
+            const result1 = await processBatch(firstHalf, batchIndex, maxRetries, baseDelay);
+            await delay(config.delayBetweenBatches);
+            const result2 = await processBatch(secondHalf, batchIndex, maxRetries, baseDelay);
+            
+            // Merge the two sub-batch PDFs
+            if (result1 && result2) {
+              const { mergePDFs } = await import('@/utils/pdfUtils');
+              return await mergePDFs([result1, result2]);
+            }
+            return result1 || result2;
+          }
+
           if (!response.ok) {
             const errorBody = await response.text().catch(() => 'Could not read body');
             lastErrorContext = { status: response.status, body: errorBody.substring(0, 200), failureType: 'http_error' };
@@ -83,12 +102,10 @@ export const useZplApiConversion = () => {
         } catch (error) {
           retryCount++;
           
-          // Classify error type
           if (error instanceof DOMException && error.name === 'AbortError') {
             lastErrorContext = { failureType: 'timeout', body: 'Request timed out after 30s' };
             console.error(`⏰ Batch ${batchIndex + 1} attempt ${retryCount} timed out`);
           } else if (!lastErrorContext.failureType || lastErrorContext.failureType === 'rate_limit') {
-            // Network error (no response received)
             if (error instanceof TypeError) {
               lastErrorContext = { failureType: 'network_error', body: error.message?.substring(0, 200) };
             }
