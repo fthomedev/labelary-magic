@@ -1,79 +1,55 @@
 
 
-## Analise dos Erros de Conversao - Tabela `processing_errors`
+## Analise de Performance - Modo Standard
 
-### Resumo Geral
+### Causa da Lentidao
 
-**60 erros** registrados desde 26/02, afetando **26 usuarios**.
+As mudancas recentes introduziram **3 fatores de degradacao**:
 
-| Tipo | Qtd | % |
-|------|-----|---|
-| `conversion_error` | 43 | 72% |
-| `upload_error` | 17 | 28% |
+#### 1. `labelsPerBatch` reduzido de 25 para 15 (maior impacto)
 
----
+Exemplo com 188 labels (conversao de hoje, 39.6s):
 
-### 1. Erros de Conversao (43 ocorrencias)
+| Metrica | Antes (25/batch) | Agora (15/batch) | Diferenca |
+|---------|-------------------|-------------------|-----------|
+| Batches | 8 | 13 | +62% |
+| Requests HTTP | 8 | 13 | +62% |
+| Overhead delays | ~2.4s | ~4.8s | +100% |
 
-Os metadados enriquecidos que implementamos estao funcionando e revelam **3 categorias claras**:
+Cada batch adicional soma ~800ms de delay + tempo de request HTTP. Isso explica a lentidao.
 
-#### 1a. **Payload Too Large - HTTP 413** (22 erros, 51%)
-- **Causa**: A API Labelary recusa batches com mais de 50 labels (`^XA...^XZ` pairs).
-- **Problema no codigo**: O `labelsPerBatch` esta configurado em 25-30 no config, mas o ZPL desse usuario tem labels com `^PQ` (duplicacao), fazendo com que 25 blocks virem 100+ labels na API.
-- **Evidencia**: `label_count_attempted: 100-207` mas a mensagem diz "Labels attempted: 1" (1 batch de muitos labels).
-- **Solucao**: Limitar o batch para no maximo ~15 labels, ou fazer pre-analise do `^PQ` para estimar labels reais por batch.
+#### 2. `PARALLEL_BATCHES` reduzido de 3 para 2
 
-#### 1b. **HTTP 400 - Bad Request** (18 erros, 42%)
-- **Causa**: ZPL malformado ou incompativel com a API. O metadata agora captura o body do erro, permitindo diagnostico.
-- **Solucao**: Adicionar validacao pre-envio do ZPL e mostrar mensagem especifica ao usuario.
+| Metrica | Antes (3 paralelos) | Agora (2 paralelos) | Diferenca |
+|---------|---------------------|---------------------|-----------|
+| Grupos sequenciais (188 labels) | 3 | 7 | +133% |
+| Delays entre grupos | 2 × 800ms | 6 × 800ms | +3.2s |
 
-#### 1c. **Rate Limit 429** (2 erros) e **Network Error** (1 erro)
-- Baixa incidencia, os mecanismos de retry existentes parecem funcionar.
+#### 3. `refreshSession()` antes de upload (impacto menor)
 
----
+Adiciona ~200-500ms, mas ocorre apenas 1 vez. Impacto negligivel.
 
-### 2. Erros de Upload (17 ocorrencias)
+### Solucao Proposta
 
-#### 2a. **"User not authenticated"** (7 erros, 41%)
-- **Causa**: Token expira durante processamento longo (24-124s).
-- **Nota**: Ja implementamos `supabase.auth.getSession()` antes do upload, mas ainda ocorre. O `getSession()` pode falhar silenciosamente ou o token pode expirar entre o refresh e o upload.
-- **Solucao**: Verificar se o `getSession()` retorna erro e forcar refresh com `supabase.auth.refreshSession()`.
+**Restaurar batch size e paralelismo**, confiando no auto-split de 413 como rede de seguranca (ja implementado). O auto-split so sera acionado quando necessario, evitando penalizar todos os usuarios.
 
-#### 2b. **"Unexpected token '<'"** (6 erros, 35%)
-- **Causa**: Supabase Storage retorna HTML (pagina de erro/manutencao) em vez de JSON. Ocorre em processamentos de 2s a 82s.
-- **Solucao**: Detectar resposta HTML antes de tentar parse JSON e implementar retry com backoff.
+#### Alteracoes em `src/config/processingConfig.ts`:
 
-#### 2c. **"PDF muito grande para upload"** (2 erros)
-- 460 e 444 labels gerando PDFs de ~51MB. Limite do Storage e 50MB.
-- **Solucao**: Comprimir PDF antes do upload ou segmentar em multiplos arquivos.
+- `DEFAULT_CONFIG.labelsPerBatch`: 15 → **25** (restaurar)
+- `FAST_CONFIG.labelsPerBatch`: 20 → **30** (restaurar)
 
-#### 2d. **"Failed to fetch"** (1 erro)
-- Erro de rede generico durante upload.
+#### Alteracoes em `src/hooks/conversion/useZplApiConversion.ts`:
 
----
+- `PARALLEL_BATCHES`: 2 → **3** (restaurar)
 
-### Plano de Correcoes
+#### Resultado esperado (188 labels):
 
-#### Prioridade 1: Payload Too Large (maior incidencia)
+| Metrica | Atual | Corrigido |
+|---------|-------|-----------|
+| Batches | 13 | 8 |
+| Grupos paralelos | 7 | 3 |
+| Delay total estimado | ~4.8s | ~1.6s |
+| **Economia estimada** | -- | **~3-5s mais rapido** |
 
-**Arquivo**: `src/hooks/conversion/useZplApiConversion.ts`
-- Tratar HTTP 413 especificamente no `processBatch`: ao receber 413, subdividir o batch atual em batches menores e retentar automaticamente.
-- Reduzir `labelsPerBatch` padrao de 25 para 15 em `processingConfig.ts`.
-
-#### Prioridade 2: Sessao expirada durante upload
-
-**Arquivo**: `src/hooks/pdf/useUploadPdf.ts`
-- Substituir `getUser()` por `refreshSession()` + `getUser()` para garantir token valido.
-- Adicionar retry (1x) ao upload em caso de falha de autenticacao.
-
-#### Prioridade 3: Resposta HTML do Storage
-
-**Arquivo**: `src/hooks/pdf/useUploadPdf.ts`
-- Adicionar deteccao de resposta HTML no erro de upload e retry automatico (ate 2x com delay de 3s).
-
-#### Prioridade 4: PDF grande demais
-
-**Arquivo**: `src/hooks/conversion/usePdfOperations.ts`
-- Verificar tamanho do PDF mergeado antes do upload.
-- Se > 45MB, mostrar mensagem ao usuario sugerindo processar em lotes menores.
+A seguranca contra 413 continua garantida pelo auto-split recursivo ja implementado.
 
