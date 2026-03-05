@@ -1,125 +1,79 @@
 
 
-## Analise de Erros e Plano de Mitigacao
+## Analise dos Erros de Conversao - Tabela `processing_errors`
 
-### Diagnostico dos Erros Encontrados
+### Resumo Geral
 
-Foram encontrados **22 erros fatais** entre 11 e 13 de fevereiro, afetando **11 usuarios distintos**.
+**60 erros** registrados desde 26/02, afetando **26 usuarios**.
 
-#### Distribuicao por Tipo
+| Tipo | Qtd | % |
+|------|-----|---|
+| `conversion_error` | 43 | 72% |
+| `upload_error` | 17 | 28% |
 
-| Tipo | Quantidade | Descricao |
-|------|-----------|-----------|
-| `conversion_error` | 21 (95%) | Todas as tentativas de conversao falharam |
-| `upload_error` | 1 (5%) | Resposta HTML em vez de JSON do storage |
+---
 
-#### Padrao Critico Identificado
+### 1. Erros de Conversao (43 ocorrencias)
 
-**Todos os 21 erros de conversao sao identicos**: "All X batches failed. No PDFs were generated after ~10-13s"
+Os metadados enriquecidos que implementamos estao funcionando e revelam **3 categorias claras**:
 
-Isso revela que:
+#### 1a. **Payload Too Large - HTTP 413** (22 erros, 51%)
+- **Causa**: A API Labelary recusa batches com mais de 50 labels (`^XA...^XZ` pairs).
+- **Problema no codigo**: O `labelsPerBatch` esta configurado em 25-30 no config, mas o ZPL desse usuario tem labels com `^PQ` (duplicacao), fazendo com que 25 blocks virem 100+ labels na API.
+- **Evidencia**: `label_count_attempted: 100-207` mas a mensagem diz "Labels attempted: 1" (1 batch de muitos labels).
+- **Solucao**: Limitar o batch para no maximo ~15 labels, ou fazer pre-analise do `^PQ` para estimar labels reais por batch.
 
-1. **A API Labelary esta retornando erro ou timeout consistentemente** - o tempo de ~10s sugere timeout de rede
-2. **Nao ha informacao do erro real da API** - o codigo descarta a resposta HTTP quando falha, impossibilitando diagnostico
-3. **Discrepancia nos dados**: `label_count_attempted` e a mensagem de erro mostram numeros diferentes (ex: attempted=7, mensagem="Labels attempted: 13"), indicando um bug no logging
-4. **Sem mecanismo de fallback** - quando a API Labelary falha, o usuario fica completamente bloqueado
+#### 1b. **HTTP 400 - Bad Request** (18 erros, 42%)
+- **Causa**: ZPL malformado ou incompativel com a API. O metadata agora captura o body do erro, permitindo diagnostico.
+- **Solucao**: Adicionar validacao pre-envio do ZPL e mostrar mensagem especifica ao usuario.
 
-#### Erro de Upload (1 caso)
+#### 1c. **Rate Limit 429** (2 erros) e **Network Error** (1 erro)
+- Baixa incidencia, os mecanismos de retry existentes parecem funcionar.
 
-A mensagem `Unexpected token '<', "<html><h"... is not valid JSON` indica que o Supabase Storage retornou uma pagina HTML de erro em vez de resposta JSON. Isso ocorre tipicamente quando:
-- O token de autenticacao expirou durante um processamento longo (64 segundos)
-- O storage esta temporariamente indisponivel
+---
 
-### Plano de Melhorias
+### 2. Erros de Upload (17 ocorrencias)
 
-#### 1. Capturar detalhes reais do erro da API Labelary
+#### 2a. **"User not authenticated"** (7 erros, 41%)
+- **Causa**: Token expira durante processamento longo (24-124s).
+- **Nota**: Ja implementamos `supabase.auth.getSession()` antes do upload, mas ainda ocorre. O `getSession()` pode falhar silenciosamente ou o token pode expirar entre o refresh e o upload.
+- **Solucao**: Verificar se o `getSession()` retorna erro e forcar refresh com `supabase.auth.refreshSession()`.
+
+#### 2b. **"Unexpected token '<'"** (6 erros, 35%)
+- **Causa**: Supabase Storage retorna HTML (pagina de erro/manutencao) em vez de JSON. Ocorre em processamentos de 2s a 82s.
+- **Solucao**: Detectar resposta HTML antes de tentar parse JSON e implementar retry com backoff.
+
+#### 2c. **"PDF muito grande para upload"** (2 erros)
+- 460 e 444 labels gerando PDFs de ~51MB. Limite do Storage e 50MB.
+- **Solucao**: Comprimir PDF antes do upload ou segmentar em multiplos arquivos.
+
+#### 2d. **"Failed to fetch"** (1 erro)
+- Erro de rede generico durante upload.
+
+---
+
+### Plano de Correcoes
+
+#### Prioridade 1: Payload Too Large (maior incidencia)
 
 **Arquivo**: `src/hooks/conversion/useZplApiConversion.ts`
+- Tratar HTTP 413 especificamente no `processBatch`: ao receber 413, subdividir o batch atual em batches menores e retentar automaticamente.
+- Reduzir `labelsPerBatch` padrao de 25 para 15 em `processingConfig.ts`.
 
-Atualmente, quando a API retorna erro (status != 200), o codigo apenas lanca `HTTP error! status: XXX` sem capturar o corpo da resposta. Precisamos:
+#### Prioridade 2: Sessao expirada durante upload
 
-- Ler o body da resposta mesmo em caso de erro
-- Salvar o status HTTP e corpo da resposta no metadata do erro
-- Diferenciar timeout de rede vs erro HTTP vs erro de parsing
+**Arquivo**: `src/hooks/pdf/useUploadPdf.ts`
+- Substituir `getUser()` por `refreshSession()` + `getUser()` para garantir token valido.
+- Adicionar retry (1x) ao upload em caso de falha de autenticacao.
 
-```typescript
-// No catch do processBatch, capturar mais contexto:
-if (!response.ok) {
-  const errorBody = await response.text().catch(() => 'Could not read body');
-  throw new Error(`HTTP ${response.status}: ${errorBody.substring(0, 200)}`);
-}
-```
+#### Prioridade 3: Resposta HTML do Storage
 
-#### 2. Adicionar timeout explicito nas chamadas fetch
+**Arquivo**: `src/hooks/pdf/useUploadPdf.ts`
+- Adicionar deteccao de resposta HTML no erro de upload e retry automatico (ate 2x com delay de 3s).
 
-**Arquivo**: `src/hooks/conversion/useZplApiConversion.ts`
-
-O fetch atual nao tem timeout. Adicionar `AbortController` com timeout de 30 segundos para evitar que chamadas fiquem presas indefinidamente e permitir retry mais rapido:
-
-```typescript
-const controller = new AbortController();
-const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-const response = await fetch(url, {
-  ...options,
-  signal: controller.signal,
-});
-clearTimeout(timeoutId);
-```
-
-#### 3. Corrigir discrepancia no label_count_attempted
-
-**Arquivo**: `src/hooks/useZplConversion.ts`
-
-O `labelCountAttempted` esta sendo definido como `finalLabelCount` (que vem de `parseZplWithCount`), mas a mensagem de erro mostra `labels.length`. Precisamos garantir que ambos usem o mesmo valor consistente.
-
-#### 4. Salvar contexto da API no metadata do erro
-
-**Arquivo**: `src/hooks/conversion/useZplApiConversion.ts` e `src/hooks/useZplConversion.ts`
-
-Quando a conversao falha, incluir no metadata:
-- Status HTTP da ultima tentativa
-- Corpo da resposta (truncado)
-- Numero de retries feitos
-- Se foi timeout ou erro HTTP
-
-```typescript
-metadata: {
-  useOptimizedTiming,
-  lastHttpStatus: 429,
-  lastErrorBody: "Rate limit exceeded",
-  retriesAttempted: 3,
-  failureType: 'timeout' | 'http_error' | 'network_error'
-}
-```
-
-#### 5. Renovar token antes de upload longo
+#### Prioridade 4: PDF grande demais
 
 **Arquivo**: `src/hooks/conversion/usePdfOperations.ts`
-
-Para evitar o `upload_error` com resposta HTML, adicionar uma chamada `supabase.auth.getSession()` antes do upload para garantir que o token esta valido, especialmente apos processamentos longos (>30s).
-
-#### 6. Adicionar mensagem de erro mais informativa ao usuario
-
-**Arquivo**: `src/hooks/useZplConversion.ts`
-
-Atualmente o toast mostra apenas a mensagem generica `t('errorMessage')`. Melhorar para mostrar orientacoes especificas:
-- Se timeout: "A API de conversao esta lenta. Tente novamente em alguns minutos."
-- Se rate limit: "Muitas requisicoes. Aguarde 1 minuto e tente novamente."
-- Se todas falharam: "Nao foi possivel conectar ao servico. Verifique sua conexao."
-
-### Resumo das Alteracoes
-
-| Arquivo | Alteracao |
-|---------|-----------|
-| `useZplApiConversion.ts` | Timeout explicito, captura do body de erro, metadata detalhado |
-| `useZplConversion.ts` | Corrigir label count, mensagens de erro contextuais, metadata enriquecido |
-| `usePdfOperations.ts` | Renovar sessao antes de upload |
-
-### Impacto Esperado
-
-- **Diagnostico**: Erros futuros terao informacoes suficientes para identificar a causa raiz (status HTTP, corpo da resposta)
-- **Resiliencia**: Timeout explicito evita chamadas presas e permite retry mais rapido
-- **Experiencia**: Usuario recebe orientacao especifica sobre o que fazer em caso de erro
-- **Dados**: Correcao da discrepancia no label_count garante metricas confiaveis
+- Verificar tamanho do PDF mergeado antes do upload.
+- Se > 45MB, mostrar mensagem ao usuario sugerindo processar em lotes menores.
 
