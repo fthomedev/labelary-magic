@@ -17,7 +17,7 @@ export interface ProcessingMetrics {
 // Configuração padrão - equilibra velocidade e confiabilidade
 export const DEFAULT_CONFIG: ProcessingConfig = {
   delayBetweenBatches: 800,
-  labelsPerBatch: 15, // Reduced to prevent HTTP 413 with ^PQ labels
+  labelsPerBatch: 25, // Restored: auto-split on 413 handles edge cases
   maxRetries: 3,
   fallbackDelay: 2500,
 };
@@ -33,7 +33,7 @@ export const A4_CONFIG: ProcessingConfig = {
 // Configuração rápida (para poucos labels)
 export const FAST_CONFIG: ProcessingConfig = {
   delayBetweenBatches: 500,
-  labelsPerBatch: 20, // Reduced from 30
+  labelsPerBatch: 30, // Restored: auto-split on 413 handles edge cases
   maxRetries: 3,
   fallbackDelay: 2000,
 };

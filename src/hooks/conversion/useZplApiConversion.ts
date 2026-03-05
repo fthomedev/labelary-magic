@@ -25,7 +25,7 @@ export const useZplApiConversion = () => {
     
     console.log(`📦 Created ${batches.length} batches of ~${config.labelsPerBatch} labels each`);
     
-    const PARALLEL_BATCHES = 2; // Reduced from 3 to avoid rate limits
+    const PARALLEL_BATCHES = 3; // Restored: auto-split on 413 handles edge cases
     const results: (Blob | null)[] = new Array(batches.length).fill(null);
     const failedBatches: number[] = [];
     let completed = 0;
