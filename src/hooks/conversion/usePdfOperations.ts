@@ -42,20 +42,13 @@ export const usePdfOperations = () => {
     
     onProgress(90);
     
-    // Check PDF size before upload (Supabase Storage limit ~50MB)
-    const MAX_PDF_SIZE = 45 * 1024 * 1024; // 45MB safety margin
-    if (mergedPdf.size > MAX_PDF_SIZE) {
-      const sizeMB = (mergedPdf.size / (1024 * 1024)).toFixed(1);
-      throw new Error(`PDF muito grande para upload (${sizeMB}MB). Máximo: 45MB. Tente processar em lotes menores.`);
-    }
-    
     // Ensure bucket exists
     await ensurePdfBucketExists();
     
     onProgress(95);
     const uploadStartTime = Date.now();
     
-    // Upload PDF to storage (session refresh handled inside useUploadPdf)
+    // Upload PDF to storage
     const pdfPath = await uploadPDFToStorage(mergedPdf);
     const uploadTime = Date.now() - uploadStartTime;
     console.log(`☁️ PDF upload completed in ${uploadTime}ms:`, pdfPath);

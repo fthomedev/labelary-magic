@@ -65,7 +65,6 @@ const translations = {
   linkExpiredTitle: 'Link Expired',
   linkExpiredDescription: 'This recovery link is invalid or has expired. Please request a new link.',
   requestNewLink: 'Request New Link',
-  saveNewPassword: 'Save New Password',
 
   // Conta de usuário
   myAccount: 'My Account',
@@ -173,11 +172,7 @@ const translations = {
   
   // Histórico
   date: 'Date',
-  dateShort: 'Date',
   labelCount: 'Label Count',
-  labelsShort: 'Qty',
-  typeShort: 'Type',
-  timeShort: 'Time',
   view: 'View',
   download: 'Download',
   viewPdf: 'View PDF',
@@ -308,7 +303,7 @@ const translations = {
     title: 'Support the project!',
     subtitle: 'Contribute via PIX',
     message: 'Scan with your bank app camera',
-    otherMethods: 'Or donate with Credit Card',
+    otherMethods: 'Other ways to donate',
   },
 
   // History retention note
@@ -355,36 +350,6 @@ const translations = {
 
   // Processing time
   processingTimeLabel: '{{time}}s',
-
-  // Shopee Calculator
-  shopeeCalc: {
-    title: 'Shopee Calculator 2026',
-    button: 'Calculator',
-    inputTitle: 'Product Data',
-    salePrice: 'Sale Price',
-    productCost: 'Product Cost',
-    sellerType: 'Seller Type',
-    taxRate: 'Tax Rate',
-    packagingCost: 'Packaging Cost',
-    featuredCampaign: 'Featured Campaign (+2.5%)',
-    exceededOrders: 'Exceeded 450 orders in 90 days (+R$ 3.00)',
-    resultTitle: 'Result',
-    commission: 'Shopee Commission ({{pct}}%)',
-    fixedFee: 'Fixed Fee',
-    campaignFeeLabel: 'Featured Campaign (2.5%)',
-    pixSubsidy: 'Pix Subsidy',
-    cpfExtraFee: 'CPF Extra Fee',
-    tax: 'Tax',
-    packaging: 'Packaging',
-    netValue: 'Net Value',
-    profit: 'Profit',
-    margin: 'Profit Margin',
-    feeTableTitle: 'Fee Table – March 2026',
-    priceRange: 'Price Range',
-    commissionCol: 'Commission',
-    pixSubsidyCol: 'Pix Subsidy',
-    feeTableNote: 'CPF sellers: additional R$ 3.00/item fee above 450 orders in 90 days. Featured Campaign: +2.5%.',
-  },
 };
 
 export default translations;

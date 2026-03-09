@@ -100,18 +100,34 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
 
   if (isLoading) {
     return (
-      <CardContent className="text-center py-6 flex flex-col items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
-        <span className="text-sm text-muted-foreground">{t('loadingHistory')}</span>
-      </CardContent>
+      <>
+        <CardHeader className="pb-1 pt-3 border-b">
+          <CardTitle className="text-base font-medium flex items-center gap-2">
+            <History className="h-4 w-4 text-primary" />
+            {t('processingHistory')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center py-6 flex flex-col items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
+          <span className="text-sm text-muted-foreground">{t('loadingHistory')}</span>
+        </CardContent>
+      </>
     );
   }
 
   if (!records || records.length === 0) {
     return (
-      <CardContent className="text-center py-6 text-sm text-muted-foreground">
-        {t('noHistory')}
-      </CardContent>
+      <>
+        <CardHeader className="pb-1 pt-3 border-b">
+          <CardTitle className="text-base font-medium flex items-center gap-2">
+            <History className="h-4 w-4 text-primary" />
+            {t('processingHistory')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center py-6 text-sm text-muted-foreground">
+          {t('noHistory')}
+        </CardContent>
+      </>
     );
   }
 
@@ -119,6 +135,20 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
 
   return (
     <>
+      <CardHeader className="pb-1 pt-3 border-b">
+        <CardTitle className="text-base font-medium flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <History className="h-4 w-4 text-primary" />
+            <span>{t('processingHistory')}</span>
+          </div>
+          {!localOnly && totalRecords > 0 && (
+            <span className="text-xs font-normal text-muted-foreground">
+              {t('totalRecords', { count: totalRecords })}
+            </span>
+          )}
+        </CardTitle>
+      </CardHeader>
+
       {/* Stats bar */}
       {!localOnly && records.length > 0 && (
         <HistoryStats
@@ -218,12 +248,12 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
                   {t('donationCta.subtitle')}
                 </p>
               </div>
-              <p className="text-xs text-muted-foreground mb-2">
+              <p className="text-xs text-muted-foreground">
                 {t('donationCta.message')}
               </p>
               <DonationButton 
-                variant="card" 
-                defaultTab="card"
+                variant="link" 
+                className="h-auto p-0 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300"
               >
                 {t('donationCta.otherMethods')}
               </DonationButton>

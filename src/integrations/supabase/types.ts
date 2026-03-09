@@ -98,45 +98,6 @@ export type Database = {
         }
         Relationships: []
       }
-      processing_errors: {
-        Row: {
-          created_at: string
-          error_message: string
-          error_stack: string | null
-          error_type: string
-          id: string
-          label_count_attempted: number | null
-          metadata: Json | null
-          processing_time_ms: number | null
-          processing_type: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          error_message: string
-          error_stack?: string | null
-          error_type: string
-          id?: string
-          label_count_attempted?: number | null
-          metadata?: Json | null
-          processing_time_ms?: number | null
-          processing_type?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          error_message?: string
-          error_stack?: string | null
-          error_type?: string
-          id?: string
-          label_count_attempted?: number | null
-          metadata?: Json | null
-          processing_time_ms?: number | null
-          processing_type?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       processing_history: {
         Row: {
           date: string
@@ -244,21 +205,18 @@ export type Database = {
           created_at: string
           id: string
           name: string | null
-          onboarding_completed: boolean
           updated_at: string
         }
         Insert: {
           created_at?: string
           id: string
           name?: string | null
-          onboarding_completed?: boolean
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
           name?: string | null
-          onboarding_completed?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -346,10 +304,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      check_free_tier_usage: {
-        Args: { user_id_param: string }
-        Returns: number
-      }
       create_file_access_token: {
         Args: {
           p_bucket_name?: string
@@ -371,10 +325,6 @@ export type Database = {
       delete_user: { Args: never; Returns: Json }
       generate_secure_token: { Args: never; Returns: string }
       get_completed_donations_count: { Args: never; Returns: number }
-      increment_usage_count: {
-        Args: { increment_amount?: number; user_id_param: string }
-        Returns: boolean
-      }
       insert_processing_history:
         | { Args: never; Returns: undefined }
         | {
@@ -398,7 +348,6 @@ export type Database = {
       purge_old_processing_history:
         | { Args: never; Returns: number }
         | { Args: { retention_days?: number }; Returns: number }
-      reset_all_usage_counts: { Args: never; Returns: undefined }
       reset_daily_usage: { Args: never; Returns: undefined }
       run_purge_old_processing_history: { Args: never; Returns: number }
     }

@@ -37,7 +37,6 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [resetPasswordCooldown, setResetPasswordCooldown] = useState(0);
   const [lastEmailSent, setLastEmailSent] = useState("");
   
   // Validation states
@@ -123,31 +122,6 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
     }
   };
 
-  // Helper function to get the correct redirect URL based on environment
-  const getAuthRedirectUrl = (path: string): string => {
-    const origin = window.location.origin;
-    const hostname = window.location.hostname;
-    
-    // Production domains
-    const productionDomains = ['zpleasy.com', 'www.zpleasy.com'];
-    const lovablePublishedDomain = 'labelary-magic.lovable.app';
-    const productionUrl = 'https://zpleasy.com';
-    
-    // If on production domain, use production URL
-    if (productionDomains.includes(hostname)) {
-      return `${productionUrl}${path}`;
-    }
-    
-    // If on Lovable published domain, redirect to production
-    if (hostname === lovablePublishedDomain) {
-      return `${productionUrl}${path}`;
-    }
-    
-    // For development/preview environments, use current origin
-    // This allows testing in preview and local environments
-    return `${origin}${path}`;
-  };
-
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -182,7 +156,7 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
     try {
       if (isResetPassword) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: getAuthRedirectUrl('/auth/reset-password'),
+          redirectTo: `${window.location.origin}/auth/reset-password`,
           captchaToken: captchaToken || undefined,
         });
         if (error) throw error;
@@ -190,7 +164,6 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
         // Show reset password confirmation modal
         setLastEmailSent(email);
         setShowResetPasswordModal(true);
-        setResetPasswordCooldown(60); // Start 60 second cooldown
       } else if (isSignUp) {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -269,16 +242,6 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
     }
   }, [resendCooldown]);
 
-  // Reset password cooldown timer effect
-  useEffect(() => {
-    if (resetPasswordCooldown > 0) {
-      const timer = setTimeout(() => {
-        setResetPasswordCooldown(resetPasswordCooldown - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [resetPasswordCooldown]);
-
   // Password strength indicator component
   const PasswordStrengthIndicator = () => {
     if (!isSignUp || !passwordTouched || password.length === 0) return null;
@@ -341,8 +304,8 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
             />
           </div>
           
-          <Button type="submit" className="w-full" disabled={isLoading || !captchaToken || !!emailError || resetPasswordCooldown > 0}>
-            {isLoading ? t("sending") : resetPasswordCooldown > 0 ? t("resendIn", { seconds: resetPasswordCooldown }) : t("sendResetLink")}
+          <Button type="submit" className="w-full" disabled={isLoading || !captchaToken || !!emailError}>
+            {isLoading ? t("sending") : t("sendResetLink")}
           </Button>
           <Button
             type="button"
@@ -409,37 +372,8 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
     setEmailTouched(false);
     setLastEmailSent("");
     setIsResetPassword(false);
-    setResetPasswordCooldown(0);
     captchaRef.current?.reset();
     setCaptchaToken(null);
-  };
-
-  const handleResendResetPassword = async () => {
-    if (isResending || resetPasswordCooldown > 0 || !lastEmailSent) return;
-    
-    setIsResending(true);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(lastEmailSent, {
-        redirectTo: getAuthRedirectUrl('/auth/reset-password'),
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: t("resendEmailSuccess"),
-        description: t("checkYourEmail"),
-      });
-      
-      setResetPasswordCooldown(60);
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: t("error"),
-        description: error.message,
-      });
-    } finally {
-      setIsResending(false);
-    }
   };
 
   return (
@@ -508,29 +442,6 @@ export const AuthForm = ({ initialTab = 'login' }: AuthFormProps) => {
           <div className="flex flex-col gap-2 mt-2">
             <Button onClick={handleCloseResetPasswordModal} className="w-full">
               {t("goToLogin")}
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleResendResetPassword}
-              disabled={isResending || resetPasswordCooldown > 0}
-              className="w-full"
-            >
-              {isResending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  {t("sending")}
-                </>
-              ) : resetPasswordCooldown > 0 ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  {t("resendIn", { seconds: resetPasswordCooldown })}
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  {t("resendEmail")}
-                </>
-              )}
             </Button>
           </div>
         </DialogContent>

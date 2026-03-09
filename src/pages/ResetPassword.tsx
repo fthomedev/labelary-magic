@@ -37,145 +37,35 @@ const ResetPassword = () => {
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
 
   useEffect(() => {
-    const handleRecoveryFlow = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      const tokenHash = urlParams.get('token_hash');
-      const type = urlParams.get('type');
-      const errorParam = urlParams.get('error');
-      const errorDescription = urlParams.get('error_description');
-
-      // Handle error from Supabase redirect
-      if (errorParam) {
-        console.error('❌ Auth error from redirect:', errorParam, errorDescription);
-        setIsValidSession(false);
-        return;
-      }
-
-      // Method 1: Try token_hash with verifyOtp (more reliable, doesn't require code_verifier)
-      if (tokenHash && type === 'recovery') {
-        console.log('🔐 Found token_hash, verifying with verifyOtp...');
-        try {
-          const { data, error } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: 'recovery',
-          });
-          
-          if (error) {
-            console.error('❌ Error verifying token_hash:', error.message);
-            setIsValidSession(false);
-            return;
-          }
-          
-          if (data.session) {
-            console.log('✅ Session established via verifyOtp');
-            setIsValidSession(true);
-            window.history.replaceState({}, '', '/auth/reset-password');
-            return;
-          }
-        } catch (error: any) {
-          console.error('❌ Exception verifying token_hash:', error.message);
-          setIsValidSession(false);
-          return;
-        }
-      }
-
-      // Method 2: Try PKCE code exchange
-      if (code) {
-        console.log('🔐 Found PKCE code, exchanging for session...');
-        try {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          
-          if (error) {
-            console.error('❌ Error exchanging code for session:', error.message);
-            
-            // Check if it's a code_verifier issue (link opened in different browser/tab)
-            if (error.message.includes('code verifier') || 
-                error.message.includes('PKCE') ||
-                error.message.includes('non-empty')) {
-              console.log('⚠️ PKCE code_verifier not found - likely opened in different browser or localStorage cleared');
-            }
-            
-            setIsValidSession(false);
-            return;
-          }
-          
-          if (data.session) {
-            console.log('✅ Session established via PKCE');
-            setIsValidSession(true);
-            window.history.replaceState({}, '', '/auth/reset-password');
-            return;
-          }
-        } catch (error: any) {
-          console.error('❌ Exception exchanging code:', error.message);
-          setIsValidSession(false);
-          return;
-        }
-      }
-
-      // Fallback: Check for existing session (in case user refreshes after code exchange)
+    // Check if we have a valid recovery session
+    const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
-      if (session) {
-        console.log('✅ Existing session found');
-        setIsValidSession(true);
-        return;
-      }
-
-      // Check for hash-based tokens (legacy flow)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
-      
-      if (accessToken && refreshToken) {
-        console.log('🔐 Found hash-based tokens, setting session...');
-        try {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          
-          if (!error) {
-            console.log('✅ Session set from hash tokens');
-            setIsValidSession(true);
-            window.history.replaceState({}, '', '/auth/reset-password');
-            return;
-          }
-        } catch (e) {
-          console.error('❌ Error setting session from hash:', e);
-        }
-      }
-
-      // Listen for auth state changes (PASSWORD_RECOVERY event)
+      // Listen for auth state changes (recovery event)
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        console.log('🔄 Auth state change:', event);
-        if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        if (event === 'PASSWORD_RECOVERY') {
+          setIsValidSession(true);
+        } else if (session) {
           setIsValidSession(true);
         }
       });
 
-      // If no auth method found in URL, mark as invalid immediately
-      if (!code && !tokenHash && !accessToken) {
-        console.log('⚠️ No auth code or tokens found in URL');
-        setIsValidSession(false);
-        return () => subscription.unsubscribe();
-      }
-
-      // Give more time for auth state to settle (30 seconds for slow connections)
-      setTimeout(() => {
-        setIsValidSession(prev => {
-          if (prev === null) {
-            console.log('⏱️ Timeout reached (30s), no valid session found');
-            return false;
+      // If there's already a session, we can proceed
+      if (session) {
+        setIsValidSession(true);
+      } else {
+        // Give a moment for the auth state to update
+        setTimeout(() => {
+          if (isValidSession === null) {
+            setIsValidSession(false);
           }
-          return prev;
-        });
-      }, 30000);
+        }, 2000);
+      }
 
       return () => subscription.unsubscribe();
     };
 
-    handleRecoveryFlow();
+    checkSession();
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -207,9 +97,6 @@ const ResetPassword = () => {
       });
 
       if (error) throw error;
-
-      // IMPORTANTE: Fazer logout para forçar o usuário a logar novamente
-      await supabase.auth.signOut();
 
       toast({
         title: t("passwordResetSuccess"),
@@ -413,7 +300,7 @@ const ResetPassword = () => {
                         {t("loading")}
                       </>
                     ) : (
-                      t("saveNewPassword")
+                      t("resetPassword")
                     )}
                   </Button>
                 </form>

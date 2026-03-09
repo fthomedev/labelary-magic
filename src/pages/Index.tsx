@@ -17,11 +17,9 @@ import { PrintFormat } from '@/components/format/FormatSelector';
 import { SharePromoBanner } from '@/components/SharePromoBanner';
 import { useUserAccessLog } from '@/hooks/useUserAccessLog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, Calculator } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { PdfViewerModal } from '@/components/history/PdfViewerModal';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
@@ -32,7 +30,6 @@ const Index = () => {
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
   const processingHistoryRef = useRef<HTMLDivElement>(null);
   const fileUploadRef = useRef<FileUploadRef>(null);
   
@@ -181,7 +178,6 @@ const Index = () => {
               {t('title')}
             </h1>
             <div className="flex items-center gap-1 sm:gap-2">
-              {/* Calculator button hidden temporarily */}
               <DonationButton variant="header" />
               <FeedbackModal />
               <LanguageSelector />

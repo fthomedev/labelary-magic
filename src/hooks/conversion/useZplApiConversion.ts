@@ -25,13 +25,10 @@ export const useZplApiConversion = () => {
     
     console.log(`📦 Created ${batches.length} batches of ~${config.labelsPerBatch} labels each`);
     
-    const PARALLEL_BATCHES = 3; // Restored: auto-split on 413 handles edge cases
+    const PARALLEL_BATCHES = 2; // Reduced from 3 to avoid rate limits
     const results: (Blob | null)[] = new Array(batches.length).fill(null);
     const failedBatches: number[] = [];
     let completed = 0;
-
-    // Track last error context for metadata enrichment
-    let lastErrorContext: { status?: number; body?: string; failureType?: string } = {};
 
     const processBatch = async (batchLabels: string[], batchIndex: number, maxRetries: number = config.maxRetries, baseDelay: number = config.delayBetweenBatches): Promise<Blob | null> => {
       let retryCount = 0;
@@ -40,9 +37,6 @@ export const useZplApiConversion = () => {
         try {
           const blockZPL = batchLabels.join('');
 
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000);
-
           const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
             method: 'POST',
             headers: {
@@ -50,44 +44,18 @@ export const useZplApiConversion = () => {
               'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: blockZPL,
-            signal: controller.signal,
           });
-
-          clearTimeout(timeoutId);
 
           if (response.status === 429) {
             retryCount++;
             const waitTime = config.fallbackDelay * retryCount;
             console.log(`⏳ Rate limited on batch ${batchIndex + 1}, waiting ${waitTime}ms...`);
-            lastErrorContext = { status: 429, body: 'Rate limit exceeded', failureType: 'rate_limit' };
             await delay(waitTime);
             continue;
           }
 
-          // Auto-split on 413 Payload Too Large
-          if (response.status === 413 && batchLabels.length > 1) {
-            console.log(`📦 Batch ${batchIndex + 1} too large (${batchLabels.length} labels), splitting in half...`);
-            const mid = Math.ceil(batchLabels.length / 2);
-            const firstHalf = batchLabels.slice(0, mid);
-            const secondHalf = batchLabels.slice(mid);
-            
-            await delay(config.delayBetweenBatches);
-            const result1 = await processBatch(firstHalf, batchIndex, maxRetries, baseDelay);
-            await delay(config.delayBetweenBatches);
-            const result2 = await processBatch(secondHalf, batchIndex, maxRetries, baseDelay);
-            
-            // Merge the two sub-batch PDFs
-            if (result1 && result2) {
-              const { mergePDFs } = await import('@/utils/pdfUtils');
-              return await mergePDFs([result1, result2]);
-            }
-            return result1 || result2;
-          }
-
           if (!response.ok) {
-            const errorBody = await response.text().catch(() => 'Could not read body');
-            lastErrorContext = { status: response.status, body: errorBody.substring(0, 200), failureType: 'http_error' };
-            throw new Error(`HTTP ${response.status}: ${errorBody.substring(0, 200)}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
 
           const blob = await response.blob();
@@ -101,18 +69,7 @@ export const useZplApiConversion = () => {
           
         } catch (error) {
           retryCount++;
-          
-          if (error instanceof DOMException && error.name === 'AbortError') {
-            lastErrorContext = { failureType: 'timeout', body: 'Request timed out after 30s' };
-            console.error(`⏰ Batch ${batchIndex + 1} attempt ${retryCount} timed out`);
-          } else if (!lastErrorContext.failureType || lastErrorContext.failureType === 'rate_limit') {
-            if (error instanceof TypeError) {
-              lastErrorContext = { failureType: 'network_error', body: error.message?.substring(0, 200) };
-            }
-            console.error(`❌ Batch ${batchIndex + 1} attempt ${retryCount} failed:`, error);
-          } else {
-            console.error(`❌ Batch ${batchIndex + 1} attempt ${retryCount} failed:`, error);
-          }
+          console.error(`❌ Batch ${batchIndex + 1} attempt ${retryCount} failed:`, error);
           
           if (retryCount < maxRetries) {
             await delay(baseDelay * retryCount);
@@ -181,12 +138,6 @@ export const useZplApiConversion = () => {
     
     console.log(`🏆 Conversion completed in ${totalTime}ms`);
     console.log(`📊 Final: ${pdfs.length}/${batches.length} batches successful, ${labels.length} labels processed`);
-    
-    if (pdfs.length === 0) {
-      const errorWithContext = new Error(`All ${batches.length} batches failed. No PDFs were generated after ${totalTime}ms. Labels attempted: ${labels.length}`);
-      (errorWithContext as any).apiContext = lastErrorContext;
-      throw errorWithContext;
-    }
     
     if (pdfs.length < batches.length) {
       console.warn(`⚠️ Warning: ${batches.length - pdfs.length} batches failed and were not included in the final PDF`);

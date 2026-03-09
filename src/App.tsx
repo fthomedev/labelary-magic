@@ -18,7 +18,6 @@ import Landing from "./pages/Landing";
 import Pricing from "./pages/Pricing";
 import Documentation from "./pages/Documentation";
 import FAQ from "./pages/FAQ";
-import ShopeeCalculator from "./pages/ShopeeCalculator";
 import { useEffect, useMemo } from "react";
 
 // Layout component to wrap pages with footer
@@ -110,7 +109,6 @@ const App = () => {
               <PageWithFooter><DonationSuccess /></PageWithFooter>
             }
           />
-          <Route path="/shopee-calculator" element={<ShopeeCalculator />} />
           <Route path="*" element={<PageWithFooter><NotFound /></PageWithFooter>} />
 
         </Routes>
