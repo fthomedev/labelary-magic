@@ -1,52 +1,40 @@
+# Corrigir fechamento abrupto do painel "Custom" no seletor de tamanho
 
-# Remoção do fluxo A4
+## Problema
 
-Vou remover todo o caminho de conversão A4 (formato A4 com 2 etiquetas por página via Labelary direto + montagem A4 via jsPDF), mantendo intactos os dois formatos que você usa: **Standard** e **HD (Nitidez+)**.
+Ao abrir a opção **Custom** no seletor de tamanho da etiqueta, digitar a **largura** e clicar na **altura**, o painel de inputs desaparece (o modo volta para um preset). O usuário perde o foco e não consegue terminar de digitar a altura.
 
-## O que será removido
+## Causa
 
-### Arquivos deletados
-- `src/hooks/conversion/useA4DirectConversion.ts` — conversão direta via Labelary com layout A4 2x1 (não usado no HD).
-- `src/utils/a4Utils.ts` — funções `organizeImagesInA4PDF` (montagem A4) e helpers relacionados. **Atenção:** a função `organizeImagesInSeparatePDF` é usada pelo HD, então ela será **movida** para um novo arquivo `src/utils/pdfPageUtils.ts` (ou consolidada em `pdfUtils.ts`) antes do `a4Utils.ts` ser apagado.
-- `src/config/processingConfig.ts` → remover a constante `A4_CONFIG` (manter `DEFAULT_CONFIG` e `FAST_CONFIG`). HD passará a usar `DEFAULT_CONFIG`.
+No `LabelSizeSelector.tsx`:
 
-### Arquivo refatorado e renomeado
-- `src/hooks/conversion/useA4ZplConversion.ts` → renomeado para `src/hooks/conversion/useHdConversion.ts`.
-  - Remove a função `convertToA4PDFDirect` e o roteador `convertToA4PDF`.
-  - Mantém apenas `convertToHdPDF` (renomeado de forma limpa) exportando `convertToHdPDF` direto.
-  - Remove imports de `useA4DirectConversion`, `A4ConversionError`, `organizeImagesInA4PDF`, `A4_CONFIG`.
+1. Cada input chama `commitCustom` no `onBlur`, que dispara `onChange` para o pai com o novo `LabelSize`.
+2. Um `useEffect` observa `value` e re-executa `matchPresetId(value)`. Se o novo par largura/altura coincidir com um preset (ex.: usuário em Custom com 10×15, ou digita 10×10 que é preset), `selectedId` muda de `'custom'` para o id do preset.
+3. Como o bloco dos inputs está condicionado a `selectedId === 'custom'`, ele **desmonta** no meio da interação — fechando o painel antes do segundo campo receber o foco.
 
-### Arquivos atualizados
-- `src/pages/Index.tsx`:
-  - Trocar `useA4ZplConversion` por `useHdConversion`.
-  - Trocar `convertToA4PDF: convertToHdPDF` por `convertToHdPDF` direto.
-  - Chamada `convertToHdPDF(zplContent, true)` vira `convertToHdPDF(zplContent)`.
-- `src/hooks/conversion/useA4Conversion.ts`:
-  - Renomeado para `src/hooks/conversion/useHdImageConversion.ts` (é o que gera os PNGs do HD).
-  - Substituir referências a `A4_CONFIG` por `DEFAULT_CONFIG`.
-  - Remover o parâmetro `enhanceLabels` (HD sempre usa upscaling) — simplifica a função.
-- `src/hooks/useZplConversion.ts`:
-  - No tipo `ProcessingRecord`, remover `'a4'` de `processingType` (fica `'standard' | 'hd'`).
-- `src/hooks/history/useHistoryFilters.ts`:
-  - Remover o fallback `recordType === 'a4'` no filtro de tipo HD (registros antigos de A4 ainda existem no histórico — ver pergunta abaixo).
-- `src/components/history/HistoryTableRow.tsx` e `src/components/history/HistoryCard.tsx`:
-  - Remover o check `|| record.processingType === 'a4'`.
+Há também um detalhe relacionado: o erro de runtime `Failed to execute 'removeChild'` é compatível com esse desmonte abrupto durante transição de foco.
 
-### Não será tocado
-- `useZplConversion` (Standard) — intacto.
-- `useServerUpscaler`, `useZplApiConversion`, `useZplValidator`, `usePdfOperations`, `useConversionState`, `useConversionMetrics`, `useProgressCalculator` — intactos.
-- `FormatSelector.tsx` — continua oferecendo apenas Standard e HD (já é o caso hoje).
+## Correção
 
-## Tratamento dos registros antigos no histórico
+Tornar o modo "Custom" **sticky**: uma vez que o usuário entrou em Custom, o painel só sai dali se ele clicar explicitamente em outro preset.
 
-Existem possivelmente registros gravados com `processingType = 'a4'`. Eles **não serão apagados do banco**. Após a refatoração, eles aparecerão no filtro como tipo desconhecido. Tenho duas opções — me diga qual prefere:
+### Mudanças em `src/components/format/LabelSizeSelector.tsx`
 
-1. **Tratar registros 'a4' antigos como 'hd' na UI** (badge HD, filtro HD inclui eles). Mantém o histórico legível.
-2. **Tratar como 'standard'** (já que A4 rápido não usava upscaling).
-3. **Migration SQL** que atualiza `processing_type = 'hd'` (ou `'standard'`) onde for `'a4'`.
+1. **Não sincronizar `selectedId` automaticamente quando o usuário está em Custom.**
+   Substituir o `useEffect` que faz `setSelectedId(matchPresetId(value))` por uma lógica que:
+   - Só atualiza `selectedId` a partir de `value` se o `selectedId` atual **não** for `'custom'`.
+   - Mantém o usuário em Custom mesmo se a combinação largura/altura coincidir com um preset.
 
-Recomendo a **opção 1 + migration** para limpar os dados.
+2. **Ao clicar em "Custom", inicializar os inputs com o valor corrente uma única vez** (já existe), mas garantir que cliques subsequentes em "Custom" não resetem os campos enquanto o usuário edita.
 
-## Próximo passo após esta remoção
+3. **Evitar `commitCustom` redundante**: só chamar `onChange` se o valor realmente mudou e for válido, reduzindo re-renders que possam interferir no foco.
 
-Depois desta limpeza, retomamos o plano do **seletor de tamanho de etiqueta em cm** que ficou pendente, agora muito mais simples porque só precisamos parametrizar dois caminhos (Standard e HD) em vez de quatro.
+4. **(Opcional, defensivo)** Trocar `onBlur` por commit em `onChange` com debounce curto OU manter `onBlur` mas envolver o commit em `requestAnimationFrame` para não competir com a transição de foco entre inputs. Manter `onBlur` é suficiente após a correção #1.
+
+Nenhuma outra parte do app precisa mudar — `useLabelSize`, `Index.tsx` e os hooks de conversão continuam recebendo `LabelSize` normalmente.
+
+## Resultado esperado
+
+- Abrir "Custom", digitar largura, clicar em altura, digitar altura → painel permanece aberto durante toda a edição.
+- Valores são commitados ao sair de cada campo, sem fechar o painel.
+- O painel só sai do modo Custom quando o usuário clicar em um dos botões de preset.

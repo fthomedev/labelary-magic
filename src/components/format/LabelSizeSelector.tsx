@@ -29,15 +29,24 @@ export function LabelSizeSelector({ value, onChange }: LabelSizeSelectorProps) {
   const [customW, setCustomW] = useState<string>(value.widthCm.toString());
   const [customH, setCustomH] = useState<string>(value.heightCm.toString());
 
+  // Sync selectedId from external value changes ONLY when the user is not in custom mode.
+  // Once in custom, stay there until the user explicitly clicks another preset —
+  // otherwise typing values that happen to match a preset would unmount the inputs
+  // mid-edit and steal focus.
   useEffect(() => {
-    setSelectedId(matchPresetId(value));
-  }, [value]);
+    if (selectedId === 'custom') return;
+    const next = matchPresetId(value);
+    if (next !== selectedId) setSelectedId(next);
+  }, [value, selectedId]);
 
   const handlePresetClick = (id: string) => {
     if (id === 'custom') {
-      setSelectedId('custom');
-      setCustomW(value.widthCm.toString());
-      setCustomH(value.heightCm.toString());
+      // Only initialize the custom inputs when entering custom mode, not on re-clicks.
+      if (selectedId !== 'custom') {
+        setCustomW(value.widthCm.toString());
+        setCustomH(value.heightCm.toString());
+        setSelectedId('custom');
+      }
       return;
     }
     const preset = LABEL_SIZE_PRESETS.find(p => p.id === id);
@@ -51,9 +60,10 @@ export function LabelSizeSelector({ value, onChange }: LabelSizeSelectorProps) {
     const widthCm = parseFloat(w.replace(',', '.'));
     const heightCm = parseFloat(h.replace(',', '.'));
     const next: LabelSize = { widthCm, heightCm };
-    if (isValidLabelSize(next)) {
-      onChange(next);
-    }
+    if (!isValidLabelSize(next)) return;
+    // Avoid redundant onChange that triggers re-renders during focus transitions.
+    if (next.widthCm === value.widthCm && next.heightCm === value.heightCm) return;
+    onChange(next);
   };
 
   const customInvalid =
