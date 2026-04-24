@@ -77,23 +77,37 @@ export function FormatSelector({
           key={resetKey}
           value={selectedFormat} 
           onValueChange={handleFormatChange}
-          className="flex items-center justify-center gap-6"
+          className="grid grid-cols-2 gap-3 max-w-md mx-auto"
         >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="standard" id="standard" />
-            <Label htmlFor="standard" className="flex items-center gap-2 text-sm cursor-pointer">
-              <FileText className="h-4 w-4" />
+          <Label
+            htmlFor="standard"
+            className={`relative flex items-center justify-center gap-2 rounded-lg border-2 p-3 cursor-pointer transition-all hover:border-primary/60 hover:bg-accent/50 ${
+              selectedFormat === 'standard'
+                ? 'border-primary bg-primary/5 shadow-sm'
+                : 'border-border bg-background'
+            }`}
+          >
+            <RadioGroupItem value="standard" id="standard" className="sr-only" />
+            <FileText className={`h-4 w-4 ${selectedFormat === 'standard' ? 'text-primary' : 'text-muted-foreground'}`} />
+            <span className={`text-sm font-medium ${selectedFormat === 'standard' ? 'text-primary' : 'text-foreground'}`}>
               {t('standardFormat')}
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="hd" id="hd" />
-            <Label htmlFor="hd" className="flex items-center gap-2 text-sm cursor-pointer">
-              <Sparkles className="h-4 w-4" />
+            </span>
+          </Label>
+
+          <Label
+            htmlFor="hd"
+            className={`relative flex items-center justify-center gap-2 rounded-lg border-2 p-3 cursor-pointer transition-all hover:border-primary/60 hover:bg-accent/50 ${
+              selectedFormat === 'hd'
+                ? 'border-primary bg-primary/5 shadow-sm'
+                : 'border-border bg-background'
+            }`}
+          >
+            <RadioGroupItem value="hd" id="hd" className="sr-only" />
+            <Sparkles className={`h-4 w-4 ${selectedFormat === 'hd' ? 'text-primary' : 'text-muted-foreground'}`} />
+            <span className={`text-sm font-medium ${selectedFormat === 'hd' ? 'text-primary' : 'text-foreground'}`}>
               {t('hdFormat')}
-            </Label>
-          </div>
+            </span>
+          </Label>
         </RadioGroup>
       </div>
 
