@@ -30,7 +30,8 @@ export function HistoryCard({
   const hasValidUrl = !isBlobUrl || record.pdfUrl.startsWith('http');
   const isAvailable = hasStoragePath || hasValidUrl;
   
-  const isHD = record.processingType === 'hd' || record.processingType === 'a4';
+  // Legacy 'a4' records are still treated as HD for display
+  const isHD = record.processingType === 'hd' || (record.processingType as string) === 'a4';
   const formatProcessingTime = (ms: number): string => {
     const totalSeconds = ms / 1000;
     if (totalSeconds < 60) return `${totalSeconds.toFixed(1)}s`;

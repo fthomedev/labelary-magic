@@ -1,84 +1,52 @@
-## Objetivo
 
-Deixar a tabela do "Histórico de Processamento" mais arrumada, eliminando quebras de linha em headers longos e encurtando a data (já que o histórico só guarda 30 dias, o ano é redundante).
+# Remoção do fluxo A4
 
----
+Vou remover todo o caminho de conversão A4 (formato A4 com 2 etiquetas por página via Labelary direto + montagem A4 via jsPDF), mantendo intactos os dois formatos que você usa: **Standard** e **HD (Nitidez+)**.
 
-## Mudanças
+## O que será removido
 
-### 1. `src/i18n/locales/pt-BR.ts` e `src/i18n/locales/en.ts`
+### Arquivos deletados
+- `src/hooks/conversion/useA4DirectConversion.ts` — conversão direta via Labelary com layout A4 2x1 (não usado no HD).
+- `src/utils/a4Utils.ts` — funções `organizeImagesInA4PDF` (montagem A4) e helpers relacionados. **Atenção:** a função `organizeImagesInSeparatePDF` é usada pelo HD, então ela será **movida** para um novo arquivo `src/utils/pdfPageUtils.ts` (ou consolidada em `pdfUtils.ts`) antes do `a4Utils.ts` ser apagado.
+- `src/config/processingConfig.ts` → remover a constante `A4_CONFIG` (manter `DEFAULT_CONFIG` e `FAST_CONFIG`). HD passará a usar `DEFAULT_CONFIG`.
 
-Adicionar um bloco `historyTable` com chaves curtas, isolado das demais traduções para não impactar outros componentes que usam `labelCount`, `printFormat`, `processing`:
+### Arquivo refatorado e renomeado
+- `src/hooks/conversion/useA4ZplConversion.ts` → renomeado para `src/hooks/conversion/useHdConversion.ts`.
+  - Remove a função `convertToA4PDFDirect` e o roteador `convertToA4PDF`.
+  - Mantém apenas `convertToHdPDF` (renomeado de forma limpa) exportando `convertToHdPDF` direto.
+  - Remove imports de `useA4DirectConversion`, `A4ConversionError`, `organizeImagesInA4PDF`, `A4_CONFIG`.
 
-**pt-BR:**
-```ts
-historyTable: {
-  date: 'Data',
-  labels: 'Etq',
-  format: 'Formato',
-  time: 'Tempo',
-  status: 'Status',
-},
-```
+### Arquivos atualizados
+- `src/pages/Index.tsx`:
+  - Trocar `useA4ZplConversion` por `useHdConversion`.
+  - Trocar `convertToA4PDF: convertToHdPDF` por `convertToHdPDF` direto.
+  - Chamada `convertToHdPDF(zplContent, true)` vira `convertToHdPDF(zplContent)`.
+- `src/hooks/conversion/useA4Conversion.ts`:
+  - Renomeado para `src/hooks/conversion/useHdImageConversion.ts` (é o que gera os PNGs do HD).
+  - Substituir referências a `A4_CONFIG` por `DEFAULT_CONFIG`.
+  - Remover o parâmetro `enhanceLabels` (HD sempre usa upscaling) — simplifica a função.
+- `src/hooks/useZplConversion.ts`:
+  - No tipo `ProcessingRecord`, remover `'a4'` de `processingType` (fica `'standard' | 'hd'`).
+- `src/hooks/history/useHistoryFilters.ts`:
+  - Remover o fallback `recordType === 'a4'` no filtro de tipo HD (registros antigos de A4 ainda existem no histórico — ver pergunta abaixo).
+- `src/components/history/HistoryTableRow.tsx` e `src/components/history/HistoryCard.tsx`:
+  - Remover o check `|| record.processingType === 'a4'`.
 
-**en:**
-```ts
-historyTable: {
-  date: 'Date',
-  labels: 'Labels',
-  format: 'Format',
-  time: 'Time',
-  status: 'Status',
-},
-```
+### Não será tocado
+- `useZplConversion` (Standard) — intacto.
+- `useServerUpscaler`, `useZplApiConversion`, `useZplValidator`, `usePdfOperations`, `useConversionState`, `useConversionMetrics`, `useProgressCalculator` — intactos.
+- `FormatSelector.tsx` — continua oferecendo apenas Standard e HD (já é o caso hoje).
 
-### 2. `src/components/history/HistoryTable.tsx`
+## Tratamento dos registros antigos no histórico
 
-Substituir os headers atuais pelos novos, removendo a lógica de `isMobile ? t('date').substring(0,4) : ...`:
+Existem possivelmente registros gravados com `processingType = 'a4'`. Eles **não serão apagados do banco**. Após a refatoração, eles aparecerão no filtro como tipo desconhecido. Tenho duas opções — me diga qual prefere:
 
-```tsx
-<TableHead className="font-medium text-foreground py-1 text-xs">
-  {t('historyTable.date')}
-</TableHead>
-<TableHead className="font-medium text-foreground py-1 text-xs">
-  {t('historyTable.labels')}
-</TableHead>
-<TableHead className="font-medium text-foreground py-1 text-xs">
-  {t('historyTable.format')}
-</TableHead>
-<TableHead className="font-medium text-foreground py-1 text-xs hidden sm:table-cell">
-  {t('historyTable.time')}
-</TableHead>
-<TableHead className="font-medium text-foreground py-1 text-xs hidden md:table-cell">
-  {t('historyTable.status')}
-</TableHead>
-```
+1. **Tratar registros 'a4' antigos como 'hd' na UI** (badge HD, filtro HD inclui eles). Mantém o histórico legível.
+2. **Tratar como 'standard'** (já que A4 rápido não usava upscaling).
+3. **Migration SQL** que atualiza `processing_type = 'hd'` (ou `'standard'`) onde for `'a4'`.
 
-### 3. `src/hooks/history/useDateFormatter.ts`
+Recomendo a **opção 1 + migration** para limpar os dados.
 
-Unificar o formato (desktop e mobile) em **`DD/MM HH:mm`**, removendo o ano:
+## Próximo passo após esta remoção
 
-```ts
-const formatDate = useCallback((date: Date) => {
-  try {
-    const locale = i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US';
-    return date.toLocaleString(locale, {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).replace(',', '');
-  } catch (e) {
-    console.error('Error formatting date:', e);
-    return String(date);
-  }
-}, [i18n.language]);
-```
-
----
-
-## Impacto
-
-- Headers mais curtos → sem wrapping, layout mais limpo em desktop e mobile.
-- Data sem ano → coluna mais estreita, dá mais espaço para as outras colunas.
-- Nenhuma alteração em outros componentes (chaves antigas `labelCount`, `printFormat`, `processing` continuam intactas).
+Depois desta limpeza, retomamos o plano do **seletor de tamanho de etiqueta em cm** que ficou pendente, agora muito mais simples porque só precisamos parametrizar dois caminhos (Standard e HD) em vez de quatro.

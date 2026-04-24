@@ -8,7 +8,7 @@ import { UserMenu } from '@/components/UserMenu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ProcessingHistory } from '@/components/ProcessingHistory';
 import { useZplConversion } from '@/hooks/useZplConversion';
-import { useA4ZplConversion } from '@/hooks/conversion/useA4ZplConversion';
+import { useHdConversion } from '@/hooks/conversion/useHdConversion';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/SEO';
 import { FeedbackModal } from '@/components/FeedbackModal';
@@ -58,11 +58,11 @@ const Index = () => {
     progressInfo: hdProgressInfo,
     isProcessingComplete: isHdComplete,
     lastPdfUrl: hdPdfUrl,
-    convertToA4PDF: convertToHdPDF,
+    convertToHdPDF,
     historyRefreshTrigger: hdHistoryRefresh,
     resetProcessingStatus: resetHdStatus,
     resetPdfState: resetHdPdfState
-  } = useA4ZplConversion();
+  } = useHdConversion();
 
   // Determine which conversion is active
   const isConverting = isStandardConverting || isHdConverting;
@@ -114,9 +114,8 @@ const Index = () => {
     resetHdStatus();
     
     if (selectedFormat === 'hd') {
-      console.log(`🔧 DEBUG: Calling convertToHdPDF with upscaling enabled`);
-      // HD mode always uses upscaling (enhanceLabels = true)
-      await convertToHdPDF(zplContent, true);
+      console.log(`🔧 DEBUG: Calling convertToHdPDF`);
+      await convertToHdPDF(zplContent);
     } else {
       await convertToPDF(zplContent);
     }
