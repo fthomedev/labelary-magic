@@ -35,7 +35,14 @@ export function HistoryTableRow({
   const isAvailable = hasStoragePath || hasValidUrl;
   
   const isHD = record.processingType === 'hd' || record.processingType === 'a4';
-  const processingTimeSeconds = record.processingTime ? (record.processingTime / 1000).toFixed(1) : null;
+  const formatProcessingTime = (ms: number): string => {
+    const totalSeconds = ms / 1000;
+    if (totalSeconds < 60) return `${totalSeconds.toFixed(1)}s`;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.round(totalSeconds % 60);
+    return seconds === 0 ? `${minutes}min` : `${minutes}min ${seconds}s`;
+  };
+  const processingTimeDisplay = record.processingTime ? formatProcessingTime(record.processingTime) : null;
 
   return (
     <TableRow className={`hover:bg-accent/30 transition-colors ${isSelected ? 'bg-accent/40' : ''}`}>
@@ -82,10 +89,10 @@ export function HistoryTableRow({
       
       {/* Time column */}
       <TableCell className="py-2 text-xs hidden sm:table-cell">
-        {processingTimeSeconds && (
+        {processingTimeDisplay && (
           <div className="flex items-center gap-1 text-muted-foreground">
             <Clock className="h-3 w-3" />
-            <span>{processingTimeSeconds}s</span>
+            <span>{processingTimeDisplay}</span>
           </div>
         )}
       </TableCell>
