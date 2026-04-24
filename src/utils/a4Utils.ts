@@ -196,11 +196,12 @@ export const organizeImagesInSeparatePDF = async (imageBlobs: Blob[]): Promise<{
   console.log(`\n========== HD PDF GENERATION START ==========`);
   console.log(`📄 Input images: ${imageBlobs.length}`);
   
-  // OPTIMIZATION: Pre-convert all blobs to dataURLs in parallel
+  // OPTIMIZATION: Pre-convert all blobs to compressed JPEG dataURLs in parallel
+  // Quality 0.82 — slightly higher fidelity for HD/Nitidez+ mode (1 label per page)
   const conversionStart = Date.now();
-  console.log(`🔄 Converting ${imageBlobs.length} blobs to dataURLs in parallel...`);
-  const dataUrls = await blobsToDataURLs(imageBlobs);
-  console.log(`✅ Blob conversion completed in ${Date.now() - conversionStart}ms`);
+  console.log(`🔄 Compressing ${imageBlobs.length} PNGs → JPEGs (q=0.82) in parallel...`);
+  const dataUrls = await blobsToJpegDataURLs(imageBlobs, 0.82);
+  console.log(`✅ JPEG compression completed in ${Date.now() - conversionStart}ms`);
   
   // Standard label dimensions (4x6 inches)
   const labelWidthMM = 101.6; // 4 inches in mm
