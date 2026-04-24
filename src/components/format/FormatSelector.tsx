@@ -29,6 +29,7 @@ export function FormatSelector({
   const { t } = useTranslation();
   const [showWarning, setShowWarning] = useState(false);
   const [pendingFormat, setPendingFormat] = useState<PrintFormat | null>(null);
+  const [resetKey, setResetKey] = useState(0);
 
   const handleFormatChange = (format: PrintFormat) => {
     if (format === 'hd') {
@@ -50,6 +51,17 @@ export function FormatSelector({
   const handleCancelHd = () => {
     setShowWarning(false);
     setPendingFormat(null);
+    // Force RadioGroup to re-render so visual selection matches actual state
+    setResetKey(k => k + 1);
+  };
+
+  const handleWarningOpenChange = (open: boolean) => {
+    setShowWarning(open);
+    if (!open && pendingFormat) {
+      // Dialog closed without confirming (cancel, ESC, click outside)
+      setPendingFormat(null);
+      setResetKey(k => k + 1);
+    }
   };
 
   return (
