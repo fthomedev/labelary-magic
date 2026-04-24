@@ -3,7 +3,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 
 export type DateFilter = 'all' | 'today' | '7days' | '30days';
-export type TypeFilter = 'all' | 'standard' | 'a4';
+export type TypeFilter = 'all' | 'standard' | 'hd';
 
 export function useHistoryFilters(records: ProcessingRecord[]) {
   const [searchQuery, setSearchQuery] = useState('');
