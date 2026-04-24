@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 
 export type DateFilter = 'all' | 'today' | '7days' | '30days';
-export type TypeFilter = 'all' | 'standard' | 'a4';
+export type TypeFilter = 'all' | 'standard' | 'hd';
 
 interface HistoryFiltersProps {
   searchQuery: string;
@@ -65,7 +65,7 @@ export function HistoryFilters({
         <SelectContent>
           <SelectItem value="all" className="text-xs">{t('historyFilters.allTypes')}</SelectItem>
           <SelectItem value="standard" className="text-xs">{t('historyFilters.standard')}</SelectItem>
-          <SelectItem value="a4" className="text-xs">{t('historyFilters.hd')}</SelectItem>
+          <SelectItem value="hd" className="text-xs">{t('historyFilters.hd')}</SelectItem>
         </SelectContent>
       </Select>
     </div>
