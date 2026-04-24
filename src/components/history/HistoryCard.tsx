@@ -76,10 +76,10 @@ export function HistoryCard({
           <span className="text-sm font-medium">{record.labelCount} {t('labels')}</span>
         </div>
         
-        {processingTimeSeconds && (
+        {processingTimeDisplay && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
-            <span>{processingTimeSeconds}s</span>
+            <span>{processingTimeDisplay}</span>
           </div>
         )}
         
