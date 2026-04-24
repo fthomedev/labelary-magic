@@ -89,10 +89,10 @@ export function HistoryTableRow({
       
       {/* Time column */}
       <TableCell className="py-2 text-xs hidden sm:table-cell">
-        {processingTimeSeconds && (
+        {processingTimeDisplay && (
           <div className="flex items-center gap-1 text-muted-foreground">
             <Clock className="h-3 w-3" />
-            <span>{processingTimeSeconds}s</span>
+            <span>{processingTimeDisplay}</span>
           </div>
         )}
       </TableCell>
