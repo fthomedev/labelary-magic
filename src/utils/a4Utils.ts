@@ -6,29 +6,73 @@ interface ImageDimensions {
   height: number;
 }
 
-// Parallel blob to dataURL conversion with concurrency control
-const blobsToDataURLs = async (blobs: Blob[], concurrency: number = 10): Promise<(string | null)[]> => {
+// Compress PNG blob to JPEG dataURL using Canvas (white background, no transparency)
+const compressPngToJpeg = async (pngBlob: Blob, quality: number = 0.85): Promise<string> => {
+  const img = await createImageBitmap(pngBlob);
+  try {
+    // Prefer OffscreenCanvas when available (worker-friendly, faster)
+    if (typeof OffscreenCanvas !== 'undefined') {
+      const canvas = new OffscreenCanvas(img.width, img.height);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('No 2D context');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, img.width, img.height);
+      ctx.drawImage(img, 0, 0);
+      const jpegBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+      return await blobToDataURL(jpegBlob);
+    }
+    // Fallback to HTMLCanvasElement
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('No 2D context');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, img.width, img.height);
+    ctx.drawImage(img, 0, 0);
+    return canvas.toDataURL('image/jpeg', quality);
+  } finally {
+    img.close?.();
+  }
+};
+
+// Parallel blob → JPEG dataURL conversion with concurrency control
+const blobsToJpegDataURLs = async (
+  blobs: Blob[],
+  quality: number = 0.85,
+  concurrency: number = 8
+): Promise<(string | null)[]> => {
   const results: (string | null)[] = new Array(blobs.length).fill(null);
   let index = 0;
-  
+
   const processNext = async (): Promise<void> => {
     while (index < blobs.length) {
       const currentIndex = index++;
       try {
         if (blobs[currentIndex] && blobs[currentIndex].size > 0) {
-          results[currentIndex] = await blobToDataURL(blobs[currentIndex]);
+          results[currentIndex] = await compressPngToJpeg(blobs[currentIndex], quality);
         }
       } catch (error) {
-        console.error(`❌ Failed to convert blob ${currentIndex + 1} to dataURL:`, error);
+        console.error(`❌ Failed to compress blob ${currentIndex + 1} to JPEG:`, error);
+        // Fallback: use original PNG dataURL so we don't lose the label
+        try {
+          results[currentIndex] = await blobToDataURL(blobs[currentIndex]);
+        } catch (fallbackError) {
+          console.error(`❌ Fallback PNG dataURL also failed for blob ${currentIndex + 1}:`, fallbackError);
+        }
       }
     }
   };
-  
-  // Start concurrent workers
+
   const workers = Array(Math.min(concurrency, blobs.length)).fill(null).map(() => processNext());
   await Promise.all(workers);
-  
+
   return results;
+};
+
+// Detect format from dataURL (so we pass the correct hint to jsPDF.addImage)
+const detectImageFormat = (dataUrl: string): 'JPEG' | 'PNG' => {
+  return dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
 };
 
 export const organizeImagesInA4PDF = async (imageBlobs: Blob[]): Promise<{ pdfBlob: Blob; labelsAdded: number; failedLabels: number[] }> => {
