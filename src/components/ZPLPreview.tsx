@@ -5,6 +5,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { PreviewHeader } from './preview/PreviewHeader';
 import { countLabels } from './preview/ZplLabelCounter';
 import { FormatSelector, PrintFormat } from './format/FormatSelector';
+import { LabelSizeSelector } from './format/LabelSizeSelector';
+import { LabelSize } from '@/types/labelSize';
 
 interface ZPLPreviewProps {
   content: string;
@@ -15,6 +17,8 @@ interface ZPLPreviewProps {
   onDownload?: () => void;
   selectedFormat: PrintFormat;
   onFormatChange: (format: PrintFormat) => void;
+  labelSize: LabelSize;
+  onLabelSizeChange: (size: LabelSize) => void;
 }
 
 export function ZPLPreview({ 
@@ -25,7 +29,9 @@ export function ZPLPreview({
   lastPdfUrl,
   onDownload,
   selectedFormat,
-  onFormatChange
+  onFormatChange,
+  labelSize,
+  onLabelSizeChange,
 }: ZPLPreviewProps) {
   const isMobile = useIsMobile();
   const totalLabels = countLabels(content);
@@ -45,6 +51,13 @@ export function ZPLPreview({
             <FormatSelector 
               selectedFormat={selectedFormat}
               onFormatChange={onFormatChange}
+            />
+          </div>
+
+          <div className="border-t pt-3">
+            <LabelSizeSelector
+              value={labelSize}
+              onChange={onLabelSizeChange}
             />
           </div>
         </CardContent>
