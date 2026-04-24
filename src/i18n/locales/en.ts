@@ -238,6 +238,13 @@ const translations = {
   standardFormatDescription: 'Individual labels in sequence',
   hdFormatWarning: 'Note: Sharpness+ is slower',
   hdFormatWarningMessage: 'Sharpness+ mode uses AI to maximize the sharpness of each label. This process may take longer than standard mode.',
+
+  // Label size
+  labelSize: 'Label size',
+  labelSizeCustom: 'Custom',
+  labelWidth: 'Width',
+  labelHeight: 'Height',
+  labelSizeRangeHint: 'Values between {{min}} and {{max}} cm.',
   
   // Pagination
   previous: 'Previous',

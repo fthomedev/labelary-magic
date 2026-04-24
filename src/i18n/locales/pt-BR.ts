@@ -238,6 +238,13 @@ const translations = {
   standardFormatDescription: 'Etiquetas individuais em sequência',
   hdFormatWarning: 'Atenção: Nitidez+ é mais lento',
   hdFormatWarningMessage: 'O modo Nitidez+ utiliza IA para maximizar a nitidez de cada etiqueta. Este processo pode levar mais tempo que o modo padrão.',
+
+  // Tamanho da etiqueta
+  labelSize: 'Tamanho da etiqueta',
+  labelSizeCustom: 'Personalizado',
+  labelWidth: 'Largura',
+  labelHeight: 'Altura',
+  labelSizeRangeHint: 'Valores entre {{min}} e {{max}} cm.',
   
   // Pagination
   previous: 'Anterior',
