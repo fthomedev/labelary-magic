@@ -74,6 +74,7 @@ export function FormatSelector({
         </div>
 
         <RadioGroup 
+          key={resetKey}
           value={selectedFormat} 
           onValueChange={handleFormatChange}
           className="flex items-center justify-center gap-6"
@@ -96,7 +97,7 @@ export function FormatSelector({
         </RadioGroup>
       </div>
 
-      <AlertDialog open={showWarning} onOpenChange={setShowWarning}>
+      <AlertDialog open={showWarning} onOpenChange={handleWarningOpenChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
