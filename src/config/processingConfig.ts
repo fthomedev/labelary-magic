@@ -22,14 +22,6 @@ export const DEFAULT_CONFIG: ProcessingConfig = {
   fallbackDelay: 2500, // Longer delay for retries
 };
 
-// Configuração para A4
-export const A4_CONFIG: ProcessingConfig = {
-  delayBetweenBatches: 800,
-  labelsPerBatch: 25,
-  maxRetries: 3,
-  fallbackDelay: 2500,
-};
-
 // Configuração rápida (para poucos labels)
 export const FAST_CONFIG: ProcessingConfig = {
   delayBetweenBatches: 500,
