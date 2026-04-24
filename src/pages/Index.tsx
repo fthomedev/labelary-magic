@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 import { PdfViewerModal } from '@/components/history/PdfViewerModal';
 import { useToast } from '@/hooks/use-toast';
+import { useLabelSize } from '@/hooks/useLabelSize';
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
@@ -37,6 +38,7 @@ const Index = () => {
   useUserAccessLog();
   
   const { toast } = useToast();
+  const { labelSize, setLabelSize } = useLabelSize();
   
   // Standard conversion hook
   const {
@@ -114,10 +116,10 @@ const Index = () => {
     resetHdStatus();
     
     if (selectedFormat === 'hd') {
-      console.log(`🔧 DEBUG: Calling convertToHdPDF`);
-      await convertToHdPDF(zplContent);
+      console.log(`🔧 DEBUG: Calling convertToHdPDF with size ${labelSize.widthCm}×${labelSize.heightCm}cm`);
+      await convertToHdPDF(zplContent, labelSize);
     } else {
-      await convertToPDF(zplContent);
+      await convertToPDF(zplContent, true, labelSize);
     }
   };
 
@@ -227,6 +229,8 @@ const Index = () => {
                         onDownload={handleDownload}
                         selectedFormat={selectedFormat}
                         onFormatChange={handleFormatChange}
+                        labelSize={labelSize}
+                        onLabelSizeChange={setLabelSize}
                       />
                     </div>
                   </div>
