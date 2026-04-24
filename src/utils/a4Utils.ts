@@ -144,14 +144,16 @@ export const organizeImagesInA4PDF = async (imageBlobs: Blob[]): Promise<{ pdfBl
       // Get position for current label on page
       const position = positions[labelsOnCurrentPage];
       
-      // Add image to PDF
+      // Add image to PDF (auto-detect format: JPEG when compression succeeded, PNG fallback)
       pdf.addImage(
         imageDataUrl,
-        'PNG',
+        detectImageFormat(imageDataUrl),
         position.x,
         position.y,
         labelWidth,
-        labelHeight
+        labelHeight,
+        undefined,
+        'FAST'
       );
       
       console.log(`📋 Added label ${i + 1} to page ${currentPage + 1} at position ${labelsOnCurrentPage + 1}`);
