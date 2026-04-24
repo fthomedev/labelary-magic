@@ -8,6 +8,7 @@ import { useConversionMetrics } from '@/hooks/conversion/useConversionMetrics';
 import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 import { calculateProgress } from '@/hooks/conversion/useProgressCalculator';
 import { parseZplWithCount } from '@/utils/zplUtils';
+import { LabelSize, DEFAULT_LABEL_SIZE } from '@/types/labelSize';
 
 export interface ProcessingRecord {
   id: string;
@@ -52,7 +53,7 @@ export const useZplConversion = () => {
     resetPdfState
   } = usePdfOperations();
 
-  const convertToPDF = async (zplContent: string, useOptimizedTiming: boolean = true) => {
+  const convertToPDF = async (zplContent: string, useOptimizedTiming: boolean = true, labelSize: LabelSize = DEFAULT_LABEL_SIZE) => {
     if (!zplContent) return;
     
     const conversionStartTime = Date.now();
@@ -89,7 +90,7 @@ export const useZplConversion = () => {
         const percentage = calculateProgress('standard', 'converting', progressValue);
         const currentLabel = Math.floor((progressValue / 100) * finalLabelCount);
         updateProgress({ percentage, currentLabel, stage: 'converting' });
-      }, config);
+      }, config, labelSize);
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
