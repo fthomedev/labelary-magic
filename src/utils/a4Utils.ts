@@ -6,40 +6,85 @@ interface ImageDimensions {
   height: number;
 }
 
-// Parallel blob to dataURL conversion with concurrency control
-const blobsToDataURLs = async (blobs: Blob[], concurrency: number = 10): Promise<(string | null)[]> => {
+// Compress PNG blob to JPEG dataURL using Canvas (white background, no transparency)
+const compressPngToJpeg = async (pngBlob: Blob, quality: number = 0.85): Promise<string> => {
+  const img = await createImageBitmap(pngBlob);
+  try {
+    // Prefer OffscreenCanvas when available (worker-friendly, faster)
+    if (typeof OffscreenCanvas !== 'undefined') {
+      const canvas = new OffscreenCanvas(img.width, img.height);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('No 2D context');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, img.width, img.height);
+      ctx.drawImage(img, 0, 0);
+      const jpegBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+      return await blobToDataURL(jpegBlob);
+    }
+    // Fallback to HTMLCanvasElement
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('No 2D context');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, img.width, img.height);
+    ctx.drawImage(img, 0, 0);
+    return canvas.toDataURL('image/jpeg', quality);
+  } finally {
+    img.close?.();
+  }
+};
+
+// Parallel blob → JPEG dataURL conversion with concurrency control
+const blobsToJpegDataURLs = async (
+  blobs: Blob[],
+  quality: number = 0.85,
+  concurrency: number = 8
+): Promise<(string | null)[]> => {
   const results: (string | null)[] = new Array(blobs.length).fill(null);
   let index = 0;
-  
+
   const processNext = async (): Promise<void> => {
     while (index < blobs.length) {
       const currentIndex = index++;
       try {
         if (blobs[currentIndex] && blobs[currentIndex].size > 0) {
-          results[currentIndex] = await blobToDataURL(blobs[currentIndex]);
+          results[currentIndex] = await compressPngToJpeg(blobs[currentIndex], quality);
         }
       } catch (error) {
-        console.error(`❌ Failed to convert blob ${currentIndex + 1} to dataURL:`, error);
+        console.error(`❌ Failed to compress blob ${currentIndex + 1} to JPEG:`, error);
+        // Fallback: use original PNG dataURL so we don't lose the label
+        try {
+          results[currentIndex] = await blobToDataURL(blobs[currentIndex]);
+        } catch (fallbackError) {
+          console.error(`❌ Fallback PNG dataURL also failed for blob ${currentIndex + 1}:`, fallbackError);
+        }
       }
     }
   };
-  
-  // Start concurrent workers
+
   const workers = Array(Math.min(concurrency, blobs.length)).fill(null).map(() => processNext());
   await Promise.all(workers);
-  
+
   return results;
+};
+
+// Detect format from dataURL (so we pass the correct hint to jsPDF.addImage)
+const detectImageFormat = (dataUrl: string): 'JPEG' | 'PNG' => {
+  return dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
 };
 
 export const organizeImagesInA4PDF = async (imageBlobs: Blob[]): Promise<{ pdfBlob: Blob; labelsAdded: number; failedLabels: number[] }> => {
   console.log(`\n========== A4 PDF GENERATION START ==========`);
   console.log(`📄 Input images: ${imageBlobs.length}`);
   
-  // OPTIMIZATION: Pre-convert all blobs to dataURLs in parallel
+  // OPTIMIZATION: Pre-convert all blobs to compressed JPEG dataURLs in parallel
+  // Quality 0.85 — ~70-80% smaller than PNG, preserves barcode readability
   const conversionStart = Date.now();
-  console.log(`🔄 Converting ${imageBlobs.length} blobs to dataURLs in parallel...`);
-  const dataUrls = await blobsToDataURLs(imageBlobs);
-  console.log(`✅ Blob conversion completed in ${Date.now() - conversionStart}ms`);
+  console.log(`🔄 Compressing ${imageBlobs.length} PNGs → JPEGs (q=0.85) in parallel...`);
+  const dataUrls = await blobsToJpegDataURLs(imageBlobs, 0.85);
+  console.log(`✅ JPEG compression completed in ${Date.now() - conversionStart}ms`);
   
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -99,14 +144,16 @@ export const organizeImagesInA4PDF = async (imageBlobs: Blob[]): Promise<{ pdfBl
       // Get position for current label on page
       const position = positions[labelsOnCurrentPage];
       
-      // Add image to PDF
+      // Add image to PDF (auto-detect format: JPEG when compression succeeded, PNG fallback)
       pdf.addImage(
         imageDataUrl,
-        'PNG',
+        detectImageFormat(imageDataUrl),
         position.x,
         position.y,
         labelWidth,
-        labelHeight
+        labelHeight,
+        undefined,
+        'FAST'
       );
       
       console.log(`📋 Added label ${i + 1} to page ${currentPage + 1} at position ${labelsOnCurrentPage + 1}`);
@@ -149,11 +196,12 @@ export const organizeImagesInSeparatePDF = async (imageBlobs: Blob[]): Promise<{
   console.log(`\n========== HD PDF GENERATION START ==========`);
   console.log(`📄 Input images: ${imageBlobs.length}`);
   
-  // OPTIMIZATION: Pre-convert all blobs to dataURLs in parallel
+  // OPTIMIZATION: Pre-convert all blobs to compressed JPEG dataURLs in parallel
+  // Quality 0.82 — slightly higher fidelity for HD/Nitidez+ mode (1 label per page)
   const conversionStart = Date.now();
-  console.log(`🔄 Converting ${imageBlobs.length} blobs to dataURLs in parallel...`);
-  const dataUrls = await blobsToDataURLs(imageBlobs);
-  console.log(`✅ Blob conversion completed in ${Date.now() - conversionStart}ms`);
+  console.log(`🔄 Compressing ${imageBlobs.length} PNGs → JPEGs (q=0.82) in parallel...`);
+  const dataUrls = await blobsToJpegDataURLs(imageBlobs, 0.82);
+  console.log(`✅ JPEG compression completed in ${Date.now() - conversionStart}ms`);
   
   // Standard label dimensions (4x6 inches)
   const labelWidthMM = 101.6; // 4 inches in mm
@@ -191,14 +239,16 @@ export const organizeImagesInSeparatePDF = async (imageBlobs: Blob[]): Promise<{
         continue;
       }
       
-      // Add image to fill the entire page
+      // Add image to fill the entire page (auto-detect format)
       pdf.addImage(
         imageDataUrl,
-        'PNG',
+        detectImageFormat(imageDataUrl),
         0,
         0,
         labelWidthMM,
-        labelHeightMM
+        labelHeightMM,
+        undefined,
+        'FAST'
       );
       
       console.log(`📋 Added label ${i + 1} to page ${labelsAdded + 1}`);
