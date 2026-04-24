@@ -79,11 +79,12 @@ export const organizeImagesInA4PDF = async (imageBlobs: Blob[]): Promise<{ pdfBl
   console.log(`\n========== A4 PDF GENERATION START ==========`);
   console.log(`📄 Input images: ${imageBlobs.length}`);
   
-  // OPTIMIZATION: Pre-convert all blobs to dataURLs in parallel
+  // OPTIMIZATION: Pre-convert all blobs to compressed JPEG dataURLs in parallel
+  // Quality 0.85 — ~70-80% smaller than PNG, preserves barcode readability
   const conversionStart = Date.now();
-  console.log(`🔄 Converting ${imageBlobs.length} blobs to dataURLs in parallel...`);
-  const dataUrls = await blobsToDataURLs(imageBlobs);
-  console.log(`✅ Blob conversion completed in ${Date.now() - conversionStart}ms`);
+  console.log(`🔄 Compressing ${imageBlobs.length} PNGs → JPEGs (q=0.85) in parallel...`);
+  const dataUrls = await blobsToJpegDataURLs(imageBlobs, 0.85);
+  console.log(`✅ JPEG compression completed in ${Date.now() - conversionStart}ms`);
   
   const pdf = new jsPDF({
     orientation: 'portrait',
