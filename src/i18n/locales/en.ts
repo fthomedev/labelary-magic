@@ -173,6 +173,13 @@ const translations = {
   // Histórico
   date: 'Date',
   labelCount: 'Label Count',
+  historyTable: {
+    date: 'Date',
+    labels: 'Labels',
+    format: 'Format',
+    time: 'Time',
+    status: 'Status',
+  },
   view: 'View',
   download: 'Download',
   viewPdf: 'View PDF',

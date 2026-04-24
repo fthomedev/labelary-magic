@@ -9,29 +9,20 @@ export function useDateFormatter() {
   
   const formatDate = useCallback((date: Date) => {
     try {
-      if (isMobile) {
-        // More compact date format for mobile view
-        return date.toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', { 
-          day: '2-digit', 
-          month: '2-digit', 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        }).replace(',', '');
-      }
-      
-      // Format without commas
-      const dateStr = date.toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US').replace(',', '');
-      const timeStr = date.toLocaleTimeString(i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      // Histórico mantém apenas 30 dias, então o ano é redundante.
+      // Formato compacto unificado: DD/MM HH:mm
+      const locale = i18n.language === 'pt-BR' ? 'pt-BR' : 'en-US';
+      return date.toLocaleString(locale, {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
       }).replace(',', '');
-      
-      return dateStr + ' ' + timeStr;
     } catch (e) {
       console.error('Error formatting date:', e);
       return String(date);
     }
-  }, [isMobile, i18n.language]);
+  }, [i18n.language]);
 
   return { formatDate, isMobile };
 }
