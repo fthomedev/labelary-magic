@@ -314,7 +314,7 @@ const translations = {
   },
 
   // History retention note
-  historyRetentionNote: 'Registros e arquivos com mais de 60 dias são excluídos automaticamente.',
+  historyRetentionNote: 'Registros e arquivos com mais de 15 dias são excluídos automaticamente.',
 
   // History Stats
   historyStats: {

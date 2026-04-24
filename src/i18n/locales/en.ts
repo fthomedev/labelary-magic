@@ -314,7 +314,7 @@ const translations = {
   },
 
   // History retention note
-  historyRetentionNote: 'Records and files older than 60 days are automatically deleted.',
+  historyRetentionNote: 'Records and files older than 15 days are automatically deleted.',
 
   // History Stats
   historyStats: {
