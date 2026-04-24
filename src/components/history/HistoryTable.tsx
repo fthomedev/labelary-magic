@@ -58,20 +58,20 @@ export function HistoryTable({
                 />
               </TableHead>
             )}
-            <TableHead className="font-medium text-foreground py-1 text-xs">
-              {isMobile ? t('date').substring(0, 4) : t('date')}
+            <TableHead className="font-medium text-foreground py-1 text-xs whitespace-nowrap">
+              {t('historyTable.date')}
             </TableHead>
-            <TableHead className="font-medium text-foreground py-1 text-xs">
-              {isMobile ? t('labelCount').split(' ')[0] : t('labelCount')}
+            <TableHead className="font-medium text-foreground py-1 text-xs whitespace-nowrap">
+              {t('historyTable.labels')}
             </TableHead>
-            <TableHead className="font-medium text-foreground py-1 text-xs">
-              {t('printFormat')}
+            <TableHead className="font-medium text-foreground py-1 text-xs whitespace-nowrap">
+              {t('historyTable.format')}
             </TableHead>
-            <TableHead className="font-medium text-foreground py-1 text-xs hidden sm:table-cell">
-              {t('processing')}
+            <TableHead className="font-medium text-foreground py-1 text-xs whitespace-nowrap hidden sm:table-cell">
+              {t('historyTable.time')}
             </TableHead>
-            <TableHead className="font-medium text-foreground py-1 text-xs hidden md:table-cell">
-              {t('status')}
+            <TableHead className="font-medium text-foreground py-1 text-xs whitespace-nowrap hidden md:table-cell">
+              {t('historyTable.status')}
             </TableHead>
             <TableHead className="w-[80px] py-1"></TableHead>
           </TableRow>
