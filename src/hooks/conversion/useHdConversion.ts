@@ -11,6 +11,7 @@ import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 import { calculateProgress } from './useProgressCalculator';
 import { parseZplWithCount } from '@/utils/zplUtils';
+import { LabelSize, DEFAULT_LABEL_SIZE } from '@/types/labelSize';
 
 export const useHdConversion = () => {
   const { toast } = useToast();
@@ -45,7 +46,7 @@ export const useHdConversion = () => {
     resetPdfState,
   } = usePdfOperations();
 
-  const convertToHdPDF = async (zplContent: string) => {
+  const convertToHdPDF = async (zplContent: string, labelSize: LabelSize = DEFAULT_LABEL_SIZE) => {
     if (!zplContent) return;
 
     console.log('\n✨ HD MODE (With Upscaling) - Quality Conversion');
@@ -69,7 +70,7 @@ export const useHdConversion = () => {
       const images = await convertZplToHdImages(labelBlocks, (progressValue, currentBlock) => {
         const displayCurrent = currentBlock ? Math.min(finalLabelCount, Math.ceil(currentBlock / 2)) : 0;
         updateProgress({ percentage: progressValue, currentLabel: displayCurrent, stage: 'converting' });
-      }, config);
+      }, config, labelSize);
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ HD image conversion completed in ${conversionPhaseTime}ms`);
@@ -83,7 +84,7 @@ export const useHdConversion = () => {
         updateProgress({ percentage: calculateProgress('hd', 'uploading', 0), stage: 'uploading' });
 
         const mergeStartTime = Date.now();
-        const { pdfBlob: hdPdf, labelsAdded, failedLabels } = await organizeImagesInSeparatePDF(images);
+        const { pdfBlob: hdPdf, labelsAdded, failedLabels } = await organizeImagesInSeparatePDF(images, labelSize);
         const mergeTime = Date.now() - mergeStartTime;
 
         console.log(`📄 HD PDF organization completed in ${mergeTime}ms`);
