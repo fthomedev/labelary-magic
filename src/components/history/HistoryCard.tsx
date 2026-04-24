@@ -31,7 +31,14 @@ export function HistoryCard({
   const isAvailable = hasStoragePath || hasValidUrl;
   
   const isHD = record.processingType === 'hd' || record.processingType === 'a4';
-  const processingTimeSeconds = record.processingTime ? (record.processingTime / 1000).toFixed(1) : null;
+  const formatProcessingTime = (ms: number): string => {
+    const totalSeconds = ms / 1000;
+    if (totalSeconds < 60) return `${totalSeconds.toFixed(1)}s`;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.round(totalSeconds % 60);
+    return seconds === 0 ? `${minutes}min` : `${minutes}min ${seconds}s`;
+  };
+  const processingTimeDisplay = record.processingTime ? formatProcessingTime(record.processingTime) : null;
 
   return (
     <div className="flex flex-col gap-3 p-3 border rounded-lg bg-card hover:bg-accent/30 transition-colors">
