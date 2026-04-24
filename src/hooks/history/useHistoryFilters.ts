@@ -42,7 +42,7 @@ export function useHistoryFilters(records: ProcessingRecord[]) {
     // Legacy 'a4' records are surfaced under the HD filter to keep history readable
     if (typeFilter !== 'all') {
       result = result.filter(record => {
-        const rawType = record.processingType || 'standard';
+        const rawType = (record.processingType as string) || 'standard';
         const normalizedType = rawType === 'a4' ? 'hd' : rawType;
         return normalizedType === typeFilter;
       });
