@@ -29,6 +29,7 @@ export function FormatSelector({
   const { t } = useTranslation();
   const [showWarning, setShowWarning] = useState(false);
   const [pendingFormat, setPendingFormat] = useState<PrintFormat | null>(null);
+  const [resetKey, setResetKey] = useState(0);
 
   const handleFormatChange = (format: PrintFormat) => {
     if (format === 'hd') {
@@ -50,6 +51,17 @@ export function FormatSelector({
   const handleCancelHd = () => {
     setShowWarning(false);
     setPendingFormat(null);
+    // Force RadioGroup to re-render so visual selection matches actual state
+    setResetKey(k => k + 1);
+  };
+
+  const handleWarningOpenChange = (open: boolean) => {
+    setShowWarning(open);
+    if (!open && pendingFormat) {
+      // Dialog closed without confirming (cancel, ESC, click outside)
+      setPendingFormat(null);
+      setResetKey(k => k + 1);
+    }
   };
 
   return (
@@ -62,6 +74,7 @@ export function FormatSelector({
         </div>
 
         <RadioGroup 
+          key={resetKey}
           value={selectedFormat} 
           onValueChange={handleFormatChange}
           className="flex items-center justify-center gap-6"
@@ -84,7 +97,7 @@ export function FormatSelector({
         </RadioGroup>
       </div>
 
-      <AlertDialog open={showWarning} onOpenChange={setShowWarning}>
+      <AlertDialog open={showWarning} onOpenChange={handleWarningOpenChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
