@@ -3,6 +3,7 @@ import { useZplValidator } from './useZplValidator';
 import { useServerUpscaler } from './useServerUpscaler';
 import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 import { calculateProgress } from './useProgressCalculator';
+import { LabelSize, DEFAULT_LABEL_SIZE, buildLabelarySize } from '@/types/labelSize';
 
 // Semaphore for controlling concurrent requests
 class Semaphore {
@@ -39,7 +40,8 @@ export const useHdImageConversion = () => {
   const convertZplToHdImages = async (
     labels: string[],
     onProgress: (progress: number, currentLabel?: number) => void,
-    config: ProcessingConfig = DEFAULT_CONFIG
+    config: ProcessingConfig = DEFAULT_CONFIG,
+    labelSize: LabelSize = DEFAULT_LABEL_SIZE
   ): Promise<Blob[]> => {
     console.log(`\n🔧 convertZplToHdImages: HD mode (with upscaling)`);
 
@@ -50,7 +52,10 @@ export const useHdImageConversion = () => {
     }
 
     const dpmm = '8dpmm';
-    console.log(`📊 Using Labelary API at ${dpmm} (203 DPI), then 2x server upscale`);
+    const labelarySize = buildLabelarySize(labelSize);
+    const labelaryUrl = `https://api.labelary.com/v1/printers/${dpmm}/labels/${labelarySize}/0/`;
+    console.log(`📊 Using Labelary API at ${dpmm} (${labelSize.widthCm}×${labelSize.heightCm} cm), then 2x server upscale`);
+    console.log(`📐 Labelary URL (HD PNG): ${labelaryUrl}`);
 
     const MAX_CONCURRENT = 5;
     const semaphore = new Semaphore(MAX_CONCURRENT);
@@ -75,7 +80,7 @@ export const useHdImageConversion = () => {
           try {
             console.log(`🔄 [${index + 1}/${validLabels.length}] Attempt ${attempt + 1}/${maxRetries}${isRetryPass ? ' (retry pass)' : ''}`);
 
-            const response = await fetch(`https://api.labelary.com/v1/printers/${dpmm}/labels/4x6/0/`, {
+            const response = await fetch(labelaryUrl, {
               method: 'POST',
               headers: {
                 'Accept': 'image/png',

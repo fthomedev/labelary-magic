@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { LabelSize, DEFAULT_LABEL_SIZE, cmToMm } from '@/types/labelSize';
 
 // Compress PNG blob to JPEG dataURL using Canvas (white background, no transparency)
 const compressPngToJpeg = async (pngBlob: Blob, quality: number = 0.85): Promise<string> => {
@@ -66,21 +67,24 @@ const detectImageFormat = (dataUrl: string): 'JPEG' | 'PNG' => {
 };
 
 // Generate PDF with one label per page (used by HD mode)
-export const organizeImagesInSeparatePDF = async (imageBlobs: Blob[]): Promise<{ pdfBlob: Blob; labelsAdded: number; failedLabels: number[] }> => {
+export const organizeImagesInSeparatePDF = async (
+  imageBlobs: Blob[],
+  labelSize: LabelSize = DEFAULT_LABEL_SIZE
+): Promise<{ pdfBlob: Blob; labelsAdded: number; failedLabels: number[] }> => {
   console.log(`\n========== HD PDF GENERATION START ==========`);
   console.log(`📄 Input images: ${imageBlobs.length}`);
+  console.log(`📐 Label size: ${labelSize.widthCm}×${labelSize.heightCm} cm`);
 
   const conversionStart = Date.now();
   console.log(`🔄 Compressing ${imageBlobs.length} PNGs → JPEGs (q=0.82) in parallel...`);
   const dataUrls = await blobsToJpegDataURLs(imageBlobs, 0.82);
   console.log(`✅ JPEG compression completed in ${Date.now() - conversionStart}ms`);
 
-  // Standard label dimensions (4x6 inches)
-  const labelWidthMM = 101.6;
-  const labelHeightMM = 152.4;
+  const labelWidthMM = cmToMm(labelSize.widthCm);
+  const labelHeightMM = cmToMm(labelSize.heightCm);
 
   const pdf = new jsPDF({
-    orientation: 'portrait',
+    orientation: labelHeightMM >= labelWidthMM ? 'portrait' : 'landscape',
     unit: 'mm',
     format: [labelWidthMM, labelHeightMM],
   });

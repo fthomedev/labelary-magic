@@ -3,6 +3,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { delay } from '@/utils/pdfUtils';
 import { parseZplBlocks, countZplLabelsWithLog } from '@/utils/zplUtils';
 import { DEFAULT_CONFIG, ProcessingMetricsTracker, ProcessingConfig } from '@/config/processingConfig';
+import { LabelSize, DEFAULT_LABEL_SIZE, buildLabelarySize } from '@/types/labelSize';
 
 export const useZplApiConversion = () => {
   const { toast } = useToast();
@@ -11,8 +12,12 @@ export const useZplApiConversion = () => {
   const convertZplBlocksToPdfs = async (
     labels: string[],
     onProgress: (progress: number) => void,
-    config: ProcessingConfig = DEFAULT_CONFIG
+    config: ProcessingConfig = DEFAULT_CONFIG,
+    labelSize: LabelSize = DEFAULT_LABEL_SIZE
   ): Promise<Blob[]> => {
+    const labelarySize = buildLabelarySize(labelSize);
+    const labelaryUrl = `https://api.labelary.com/v1/printers/8dpmm/labels/${labelarySize}/`;
+    console.log(`📐 Labelary URL (PDF): ${labelaryUrl} (${labelSize.widthCm}×${labelSize.heightCm} cm)`);
     const totalStartTime = Date.now();
     
     console.log(`🏁 Starting conversion of ${labels.length} labels with config:`, config);
@@ -37,7 +42,7 @@ export const useZplApiConversion = () => {
         try {
           const blockZPL = batchLabels.join('');
 
-          const response = await fetch('https://api.labelary.com/v1/printers/8dpmm/labels/4x6/', {
+          const response = await fetch(labelaryUrl, {
             method: 'POST',
             headers: {
               'Accept': 'application/pdf',
