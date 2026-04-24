@@ -239,14 +239,16 @@ export const organizeImagesInSeparatePDF = async (imageBlobs: Blob[]): Promise<{
         continue;
       }
       
-      // Add image to fill the entire page
+      // Add image to fill the entire page (auto-detect format)
       pdf.addImage(
         imageDataUrl,
-        'PNG',
+        detectImageFormat(imageDataUrl),
         0,
         0,
         labelWidthMM,
-        labelHeightMM
+        labelHeightMM,
+        undefined,
+        'FAST'
       );
       
       console.log(`📋 Added label ${i + 1} to page ${labelsAdded + 1}`);
