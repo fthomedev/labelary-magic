@@ -54,12 +54,16 @@ export function ZPLPreview({
             />
           </div>
 
-          <div className="border-t pt-3">
-            <LabelSizeSelector
-              value={labelSize}
-              onChange={onLabelSizeChange}
-            />
-          </div>
+          {/* Seletor de tamanho oculto temporariamente — Labelary não escala conteúdo do ZPL.
+              Retomar quando a escala via pdf-lib/jsPDF (com letterbox) estiver implementada. */}
+          {false && (
+            <div className="border-t pt-3">
+              <LabelSizeSelector
+                value={labelSize}
+                onChange={onLabelSizeChange}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
