@@ -227,6 +227,13 @@ const translations = {
   errorSendingFeedback: 'Erro ao enviar mensagem',
   tryAgainLater: 'Tente novamente mais tarde ou entre em contato diretamente.',
   sendFeedbackButton: 'Enviar Mensagem',
+  attachFile: 'Anexar arquivo do erro (opcional)',
+  attachFileDescription: 'Quer aumentar muito as chances de resolvermos rápido? Anexe o arquivo ZPL/ZIP que você estava tentando processar. Sem ele, normalmente não conseguimos reproduzir o problema.',
+  attachFilePrivacy: 'Usado apenas para análise técnica. Não compartilhamos seu arquivo.',
+  attachFileSelect: 'Selecionar arquivo',
+  attachFileBenefit: '✓ Ótimo! Isso vai acelerar muito o diagnóstico.',
+  attachFileTooLarge: 'Arquivo muito grande. O limite é de 9MB. Tente compactar em ZIP.',
+  attachFileRemove: 'Remover anexo',
   
   // Formato de impressão
   printFormat: 'Formato de Impressão',
