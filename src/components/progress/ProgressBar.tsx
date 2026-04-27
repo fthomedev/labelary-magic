@@ -71,10 +71,6 @@ export function ProgressBar({
     return t('etaMinutes', { minutes, seconds });
   }, [totalLabels, progress, stage, conversionMode, t]);
   
-  if (!shouldShow) {
-    return null;
-  }
-
   const getStageMessage = (): string => {
     switch (stage) {
       case 'parsing':
@@ -110,7 +106,11 @@ export function ProgressBar({
     if (!step) return null;
     return t('progressStepIndicator', { current: step[0], total: step[1] });
   }, [conversionMode, stage, t]);
-  
+
+  if (!shouldShow) {
+    return null;
+  }
+
   return (
     <div className="space-y-3 transition-opacity duration-300">
       <div className="overflow-hidden rounded-full bg-secondary">
