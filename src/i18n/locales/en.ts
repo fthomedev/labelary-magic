@@ -227,6 +227,13 @@ const translations = {
   errorSendingFeedback: 'Error sending message',
   tryAgainLater: 'Try again later or contact us directly.',
   sendFeedbackButton: 'Send Message',
+  attachFile: 'Attach the file with the error (optional)',
+  attachFileDescription: 'Want to dramatically increase the chances of a quick fix? Attach the ZPL/ZIP file you were trying to process. Without it, we usually cannot reproduce the issue.',
+  attachFilePrivacy: 'Used only for technical analysis. We do not share your file.',
+  attachFileSelect: 'Select file',
+  attachFileBenefit: '✓ Great! This will speed up diagnosis a lot.',
+  attachFileTooLarge: 'File too large. The limit is 9MB. Try compressing into a ZIP.',
+  attachFileRemove: 'Remove attachment',
   
   // Formato de impressão
   printFormat: 'Print Format',
