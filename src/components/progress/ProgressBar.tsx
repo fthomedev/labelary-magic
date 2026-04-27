@@ -71,10 +71,6 @@ export function ProgressBar({
     return t('etaMinutes', { minutes, seconds });
   }, [totalLabels, progress, stage, conversionMode, t]);
   
-  if (!shouldShow) {
-    return null;
-  }
-
   const getStageMessage = (): string => {
     switch (stage) {
       case 'parsing':
