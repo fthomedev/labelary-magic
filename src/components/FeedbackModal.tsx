@@ -175,14 +175,14 @@ export const FeedbackModal = () => {
           <span className="hidden sm:inline">{t('feedback')}</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)]">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto overflow-x-hidden w-[calc(100vw-2rem)]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle size={20} />
             {t('sendFeedback')}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 min-w-0">
           <div className="space-y-2">
             <label htmlFor="feedback-type" className="text-sm font-medium">
               {t('feedbackType')} *
