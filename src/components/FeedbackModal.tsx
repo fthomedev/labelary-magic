@@ -175,7 +175,7 @@ export const FeedbackModal = () => {
           <span className="hidden sm:inline">{t('feedback')}</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle size={20} />
@@ -216,12 +216,12 @@ export const FeedbackModal = () => {
           </div>
 
           {isBug && (
-            <div className="rounded-lg border-2 border-dashed border-border bg-muted/30 p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="flex items-start gap-2">
+            <div className="rounded-lg border-2 border-dashed border-border bg-muted/30 p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300 min-w-0">
+              <div className="flex items-start gap-2 min-w-0">
                 <Paperclip size={16} className="text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div className="space-y-1 flex-1">
-                  <p className="text-sm font-medium">{t('attachFile')}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                <div className="space-y-1 flex-1 min-w-0">
+                  <p className="text-sm font-medium break-words">{t('attachFile')}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed break-words">
                     {t('attachFileDescription')}
                   </p>
                 </div>
