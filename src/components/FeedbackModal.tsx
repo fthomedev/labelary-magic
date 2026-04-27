@@ -252,7 +252,7 @@ export const FeedbackModal = () => {
                   <div className="flex items-center gap-2 rounded-md border border-border bg-background p-2">
                     <FileText size={16} className="text-primary flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">{attachment.name}</p>
+                      <p className="text-xs font-medium break-all line-clamp-2">{attachment.name}</p>
                       <p className="text-xs text-muted-foreground">{formatBytes(attachment.size)}</p>
                     </div>
                     <Button
