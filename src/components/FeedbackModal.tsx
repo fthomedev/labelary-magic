@@ -182,7 +182,7 @@ export const FeedbackModal = () => {
             {t('sendFeedback')}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 min-w-0">
           <div className="space-y-2">
             <label htmlFor="feedback-type" className="text-sm font-medium">
               {t('feedbackType')} *
