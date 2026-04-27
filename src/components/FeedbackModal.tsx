@@ -72,7 +72,7 @@ export const FeedbackModal = () => {
 
       // Create form data for FormSubmit
       const formData = new FormData();
-      formData.append('_subject', `Feedback ZPL Easy - ${feedbackData.type}`);
+      formData.append('_subject', 'Feedback ZPL Easy');
       formData.append('_next', window.location.href); // Redirect back to current page
       formData.append('_captcha', 'false'); // Disable captcha
       formData.append('tipo', feedbackData.type);
