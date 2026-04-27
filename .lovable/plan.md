@@ -1,101 +1,53 @@
+## Diagnóstico
 
-# Melhorar progresso visual do modo HD
+Você recebe **a mesma mensagem repetida com tipos diferentes** (ex.: o usuário escolheu "Sugestão", mas chegam emails como "Reclamação" ou "Bug" com o mesmo texto). Isso acontece por causa de **duas causas combinadas** no `FeedbackModal.tsx`:
 
-## Problema identificado
+### Causa 1 — Threading do Gmail por assunto
 
-No modo HD existem 3 fases que atualizam a barra de progresso:
+A linha 72 monta o assunto assim:
+```ts
+formData.append('_subject', `Feedback ZPL Easy - ${feedbackData.type}`);
+```
 
-1. **Converting** (5% → 45%) — texto: "Convertendo X/N etiquetas..."
-2. **Upscaling** (45% → 70%) — texto: "Melhorando X/N etiquetas..."
-3. **Organizing/Uploading** (70% → 95%)
+Como o assunto **muda conforme o tipo**, o Gmail cria threads separadas por categoria. Mas o FormSubmit.co, na **primeira vez** que cada novo assunto é usado, envia um email de **ativação/confirmação** repetindo o conteúdo — gerando a impressão de "mesma mensagem com motivos diferentes". Também é comum ele reencaminhar com variações de assunto, o que confunde a leitura.
 
-O usuário percebe um "reinício" porque:
+### Causa 2 — Sem proteção contra duplo envio
 
-- O **contador de etiquetas reseta de N/N para 1/N** ao mudar de fase (converting → upscaling), mesmo que a barra geral continue avançando.
-- O **ETA salta para cima** (de "Finalizando..." para vários segundos) porque é calculado como `(totalLabels - currentLabel) * tempoPorEtiqueta` e `currentLabel` volta a 1 no upscaling.
-- A transição visual cai em 45% (no meio da barra), o que torna o "salto de texto" muito perceptível.
+Não há uma guarda imediata em `handleSubmit`. O estado `isSubmitting` é setado **dentro** do `try`, mas o `Button type="submit"` permite múltiplos cliques rápidos antes do React rerender. Se o usuário clica 2x rápido (ou pressiona Enter + clica), o form é enviado **2 vezes** com o mesmo conteúdo. Se nesse meio tempo o `feedbackType` foi atualizado (ou o reset parcial ocorreu), o segundo envio pode sair com tipo diferente.
+
+Mais importante: o `Select` do shadcn/Radix dispara `onValueChange` em cada interação. Se o usuário "passar" pelas opções antes de confirmar (em alguns devices touch), múltiplos envios podem ser disparados se o submit acontecer entre transições.
 
 ## Solução proposta
 
-Tornar o progresso **contínuo e auto-explicativo**, deixando claro ao usuário que existem **etapas** sem que pareça um reinício.
+Aplicar **duas correções** em `src/components/FeedbackModal.tsx`:
 
-### 1. ETA contínuo entre fases (correção principal)
+### 1. Assunto fixo (corpo carrega o tipo)
 
-Em `ProgressBar.tsx`, calcular o ETA com base no **percentual global da barra** (`progress`), não em `currentLabel/totalLabels`:
-
-- Calibrar tempo total estimado para HD (já temos `TIME_PER_LABEL.hd = 0.93s`).
-- ETA = `tempoTotalEstimado * (1 - progress/100)`.
-- Isso elimina o salto do ETA na transição converting→upscaling.
-
-### 2. Mensagem de etapa com indicador "Etapa X de Y"
-
-No `ProgressBar.tsx`, quando o modo for HD, prefixar a mensagem com a etapa atual para deixar explícito que há fases:
-
-- "Etapa 1 de 3 · Convertendo 25/50 etiquetas..."
-- "Etapa 2 de 3 · Melhorando qualidade 25/50..."
-- "Etapa 3 de 3 · Finalizando PDF..."
-
-Para o modo Standard manter o texto atual (sem prefixo), pois só há uma fase relevante para o usuário.
-
-### 3. Contador unificado (não resetar visualmente)
-
-Quando entrar no estágio `upscaling`, manter exibindo `N/N` por um instante antes de passar para o novo contador, OU melhor: trocar o texto da fase de upscaling para **não exibir contador X/N** e sim apenas "Melhorando qualidade..." com a barra avançando suavemente. Isso evita a sensação de reinício de números.
-
-Aplicar em `getStageMessage()`: na fase `upscaling`, usar sempre `progressUpscalingSimple` ("Melhorando qualidade...") em vez do contador.
-
-### 4. Suavizar transição visual da barra
-
-A barra já tem `transition-all duration-300`. Garantir que `updateProgress` na transição converting→upscaling não emita um valor menor que o último visto (clamp monotônico):
-
-- Em `useConversionState.updateProgress`, se `info.percentage` for menor que o `progressInfo.percentage` atual, ignorar o decremento (a barra nunca anda para trás).
-
-## Arquivos afetados
-
-- `src/components/progress/ProgressBar.tsx` — novo cálculo de ETA baseado em `progress`; prefixo "Etapa X de Y" para HD; trocar mensagem de upscaling para versão sem contador.
-- `src/hooks/conversion/useConversionState.ts` — clamp monotônico em `updateProgress` para o `percentage`.
-- `src/i18n/locales/pt-BR.ts` e `src/i18n/locales/en.ts` — adicionar chaves para "Etapa {{current}} de {{total}}" (`progressStepIndicator`).
-
-## Detalhes técnicos
-
-**ETA contínuo (HD e Standard):**
 ```ts
-const totalEstimatedSeconds = totalLabels * TIME_PER_LABEL[mode] * STAGES_MULTIPLIER;
-// HD: multiplicar por ~1.55 para cobrir upscaling+organizing+uploading proporcionalmente
-// (já está embutido no TIME_PER_LABEL.hd que foi medido end-to-end)
-const remainingSeconds = Math.ceil(totalEstimatedSeconds * (1 - progress / 100));
+// linha 72
+formData.append('_subject', 'Feedback ZPL Easy');
 ```
 
-**Mapa de etapas para indicador:**
+O tipo já vai no campo `tipo` do corpo (linha 75), então a informação não se perde — só sai do título. Resultado: 1 thread única no Gmail, sem ativações repetidas do FormSubmit, sem variações de assunto.
+
+### 2. Guarda anti-duplo-envio (idempotência local)
+
+No início do `handleSubmit`, antes de qualquer validação:
 ```ts
-const HD_STEPS: Record<ConversionStage, [number, number] | null> = {
-  parsing:    [1, 3],
-  converting: [1, 3],
-  upscaling:  [2, 3],
-  organizing: [3, 3],
-  uploading:  [3, 3],
-  finalizing: [3, 3],
-  complete:   null,
-  idle:       null,
-};
+if (isSubmitting) return;
+setIsSubmitting(true);
 ```
 
-**Clamp monotônico:**
-```ts
-const updateProgress = (info: Partial<ProgressInfo>) => {
-  setProgressInfo(prev => {
-    const next = { ...prev, ...info };
-    if (info.percentage !== undefined && info.percentage < prev.percentage) {
-      next.percentage = prev.percentage; // nunca recua
-    }
-    return next;
-  });
-  if (info.percentage !== undefined) {
-    setProgress(p => Math.max(p, info.percentage!));
-  }
-};
-```
+E garantir que o `setIsSubmitting(false)` no `finally` continue funcionando. Isso elimina qualquer chance de o mesmo formulário ser enviado 2x com o mesmo (ou diferente) tipo.
 
-## Fora do escopo
+## Arquivos alterados
 
-- Não alterar a lógica de conversão/upscaling em si (ranges 5–45% / 45–70% / 70–95% permanecem).
-- Não alterar o modo Standard além do clamp monotônico e do novo cálculo de ETA.
+- `src/components/FeedbackModal.tsx` — linhas ~50-72 (guarda no início do handler + assunto fixo).
+
+## Resultado esperado
+
+- **1 envio = 1 email**, com o tipo correto escolhido pelo usuário.
+- Sem mensagens repetidas com motivos diferentes.
+- Sem emails de ativação extras do FormSubmit.
+
+Posso aplicar?

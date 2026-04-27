@@ -44,7 +44,10 @@ export const FeedbackModal = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // Guard against double submissions (rapid clicks, Enter + click, etc.)
+    if (isSubmitting) return;
+
     if (!feedbackType || !message.trim()) {
       toast({
         title: t('requiredFields'),
