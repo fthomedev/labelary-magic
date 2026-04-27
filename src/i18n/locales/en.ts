@@ -210,23 +210,23 @@ const translations = {
   mergePdfError: 'Error merging PDF files',
   
   // Feedback
-  feedback: 'Feedback',
-  sendFeedback: 'Send Feedback',
-  feedbackType: 'Feedback Type',
-  selectFeedbackType: 'Select feedback type',
+  feedback: 'Contact Us',
+  sendFeedback: 'Contact Us',
+  feedbackType: 'Subject',
+  selectFeedbackType: 'Select subject',
   feedbackMessage: 'Message',
-  feedbackMessagePlaceholder: 'Describe your feedback in detail...',
+  feedbackMessagePlaceholder: 'Write your message in detail...',
   feedbackSuggestion: 'Suggestion',
   feedbackBug: 'Bug',
   feedbackComplaint: 'Complaint',
   feedbackOther: 'Other',
   requiredFields: 'Required Fields',
   fillAllFields: 'Please fill in all fields.',
-  feedbackSent: 'Feedback Sent!',
-  feedbackThankYou: 'Thank you for your feedback. We will get back to you soon.',
-  errorSendingFeedback: 'Error sending feedback',
+  feedbackSent: 'Message Sent!',
+  feedbackThankYou: 'Thank you for your message. We will get back to you soon.',
+  errorSendingFeedback: 'Error sending message',
   tryAgainLater: 'Try again later or contact us directly.',
-  sendFeedbackButton: 'Send Feedback',
+  sendFeedbackButton: 'Send Message',
   
   // Formato de impressão
   printFormat: 'Print Format',
@@ -279,7 +279,7 @@ const translations = {
   processAgain: 'Reprocess',
   
   // Beta Notice
-  betaNotice: '🚧 This tool is in BETA and under DEVELOPMENT. For issues or suggestions, use the Feedback button.',
+  betaNotice: '🚧 This tool is in BETA and under DEVELOPMENT. For issues or suggestions, use the Contact Us button.',
   
   // Progress Messages
   progressParsing: 'Analyzing labels...',

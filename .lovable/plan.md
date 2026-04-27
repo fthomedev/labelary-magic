@@ -1,50 +1,48 @@
-## Diagnóstico
+## Mudança
 
-O envio de feedback falha com `TypeError: Failed to fetch` (visível no console em `2026-04-27T21:25:06Z`). A request POST para `https://formsubmit.co/fernandothome@gmail.com` é bloqueada pelo navegador por **falta de headers CORS** na resposta do FormSubmit.
+Trocar a palavra "Feedback" (que é técnica e nem todo usuário entende) pelo termo **"Fale Conosco"** (PT-BR) e **"Contact Us"** (EN), que são universalmente reconhecidos como canal direto de comunicação com o desenvolvedor/proprietário.
 
-### Causa raiz
+## Arquivos alterados
 
-O FormSubmit.co tem **dois endpoints**:
+### `src/i18n/locales/pt-BR.ts` (linhas 213-229 + 282)
 
-1. `https://formsubmit.co/<email>` — espera POST de **formulário HTML clássico** (`<form action="...">`). Não retorna CORS, logo `fetch` falha.
-2. `https://formsubmit.co/ajax/<email>` — endpoint **AJAX** que retorna headers CORS e aceita JSON.
+| Chave | Antes | Depois |
+|---|---|---|
+| `feedback` | "Feedback" | "Fale Conosco" |
+| `sendFeedback` | "Enviar Feedback" | "Fale Conosco" |
+| `feedbackType` | "Tipo de feedback" | "Assunto" |
+| `selectFeedbackType` | "Selecione o tipo de feedback" | "Selecione o assunto" |
+| `feedbackMessagePlaceholder` | "Descreva seu feedback detalhadamente..." | "Escreva sua mensagem detalhadamente..." |
+| `feedbackSent` | "Feedback enviado!" | "Mensagem enviada!" |
+| `feedbackThankYou` | "Obrigado pelo seu feedback. Entraremos em contato em breve." | "Obrigado pela sua mensagem. Entraremos em contato em breve." |
+| `errorSendingFeedback` | "Erro ao enviar feedback" | "Erro ao enviar mensagem" |
+| `sendFeedbackButton` | "Enviar Feedback" | "Enviar Mensagem" |
+| `betaNotice` | "...use o botão de Feedback." | "...use o botão Fale Conosco." |
 
-O código atual usa o endpoint #1 com `fetch` + `FormData`, daí o `Failed to fetch`.
+(Chaves não alteradas: `feedbackMessage`, `feedbackSuggestion`, `feedbackBug`, `feedbackComplaint`, `feedbackOther` — já estão claras.)
 
-## Correção
+### `src/i18n/locales/en.ts` (linhas 213-229 + 282)
 
-Trocar a chamada em `src/components/FeedbackModal.tsx` para usar o endpoint AJAX com JSON:
+| Chave | Antes | Depois |
+|---|---|---|
+| `feedback` | "Feedback" | "Contact Us" |
+| `sendFeedback` | "Send Feedback" | "Contact Us" |
+| `feedbackType` | "Feedback Type" | "Subject" |
+| `selectFeedbackType` | "Select feedback type" | "Select subject" |
+| `feedbackMessagePlaceholder` | "Describe your feedback in detail..." | "Write your message in detail..." |
+| `feedbackSent` | "Feedback Sent!" | "Message Sent!" |
+| `feedbackThankYou` | "Thank you for your feedback. We will get back to you soon." | "Thank you for your message. We will get back to you soon." |
+| `errorSendingFeedback` | "Error sending feedback" | "Error sending message" |
+| `sendFeedbackButton` | "Send Feedback" | "Send Message" |
+| `betaNotice` | "...use the Feedback button." | "...use the Contact Us button." |
 
-```ts
-const response = await fetch('https://formsubmit.co/ajax/fernandothome@gmail.com', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-  body: JSON.stringify({
-    _subject: 'Feedback ZPL Easy',
-    _captcha: 'false',
-    tipo: feedbackData.type,
-    mensagem: feedbackData.message,
-    email_usuario: feedbackData.userEmail,
-  }),
-});
-```
+### `src/components/FeedbackModal.tsx` (apenas string interna do email)
 
-Mudanças:
-- URL passa a ser `/ajax/<email>` (com CORS).
-- Body vira JSON com `Content-Type: application/json`.
-- Remover `_next` (só faz sentido em form HTML clássico — não se aplica a chamadas AJAX).
-- Manter `_subject` fixo (já corrigido anteriormente) e o `tipo` no corpo.
+- `_subject`: trocar `'Feedback ZPL Easy'` por `'Contato ZPL Easy'` para padronizar o assunto do email recebido com o novo nome do canal.
 
-## Arquivo alterado
+## Notas
 
-- `src/components/FeedbackModal.tsx` — bloco do `fetch` (linhas ~70-83).
-
-## Resultado esperado
-
-- Envio de feedback funciona sem erro de CORS.
-- Continua chegando 1 email por envio, com tipo correto no corpo.
+- Nomes das chaves de tradução (`feedback*`) **não são alterados** — apenas os textos exibidos. Isso evita refatoração em todos os componentes que consomem essas chaves.
+- Nome do arquivo `FeedbackModal.tsx` permanece (é interno, sem impacto na UX).
 
 Posso aplicar?
