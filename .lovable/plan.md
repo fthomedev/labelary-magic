@@ -1,48 +1,65 @@
-## Mudança
+## Objetivo
 
-Trocar a palavra "Feedback" (que é técnica e nem todo usuário entende) pelo termo **"Fale Conosco"** (PT-BR) e **"Contact Us"** (EN), que são universalmente reconhecidos como canal direto de comunicação com o desenvolvedor/proprietário.
+Quando o usuário escolher **"Erro"** como assunto no Fale Conosco, exibir um campo opcional de **anexar arquivo ZPL/ZIP** que ele estava tentando processar. UX precisa ser persuasiva sem ser invasiva — incentivando o envio sem bloquear quem prefere não anexar.
 
-## Arquivos alterados
+## UX proposta
 
-### `src/i18n/locales/pt-BR.ts` (linhas 213-229 + 282)
+### 1. Campo só aparece se "Erro" for selecionado
 
-| Chave | Antes | Depois |
-|---|---|---|
-| `feedback` | "Feedback" | "Fale Conosco" |
-| `sendFeedback` | "Enviar Feedback" | "Fale Conosco" |
-| `feedbackType` | "Tipo de feedback" | "Assunto" |
-| `selectFeedbackType` | "Selecione o tipo de feedback" | "Selecione o assunto" |
-| `feedbackMessagePlaceholder` | "Descreva seu feedback detalhadamente..." | "Escreva sua mensagem detalhadamente..." |
-| `feedbackSent` | "Feedback enviado!" | "Mensagem enviada!" |
-| `feedbackThankYou` | "Obrigado pelo seu feedback. Entraremos em contato em breve." | "Obrigado pela sua mensagem. Entraremos em contato em breve." |
-| `errorSendingFeedback` | "Erro ao enviar feedback" | "Erro ao enviar mensagem" |
-| `sendFeedbackButton` | "Enviar Feedback" | "Enviar Mensagem" |
-| `betaNotice` | "...use o botão de Feedback." | "...use o botão Fale Conosco." |
+Mantém o modal limpo para sugestão/reclamação/outro. O campo "expande" suavemente quando o usuário troca o assunto para Erro.
 
-(Chaves não alteradas: `feedbackMessage`, `feedbackSuggestion`, `feedbackBug`, `feedbackComplaint`, `feedbackOther` — já estão claras.)
+### 2. Visual e copy persuasivos
 
-### `src/i18n/locales/en.ts` (linhas 213-229 + 282)
+Bloco destacado (border tracejada, fundo sutil em `bg-muted/30`, ícone `Paperclip`) com:
 
-| Chave | Antes | Depois |
-|---|---|---|
-| `feedback` | "Feedback" | "Contact Us" |
-| `sendFeedback` | "Send Feedback" | "Contact Us" |
-| `feedbackType` | "Feedback Type" | "Subject" |
-| `selectFeedbackType` | "Select feedback type" | "Select subject" |
-| `feedbackMessagePlaceholder` | "Describe your feedback in detail..." | "Write your message in detail..." |
-| `feedbackSent` | "Feedback Sent!" | "Message Sent!" |
-| `feedbackThankYou` | "Thank you for your feedback. We will get back to you soon." | "Thank you for your message. We will get back to you soon." |
-| `errorSendingFeedback` | "Error sending feedback" | "Error sending message" |
-| `sendFeedbackButton` | "Send Feedback" | "Send Message" |
-| `betaNotice` | "...use the Feedback button." | "...use the Contact Us button." |
+- **Título**: "Anexar arquivo do erro (opcional)"
+- **Texto curto persuasivo**: "📎 Quer aumentar muito as chances de resolvermos rápido? Anexe o arquivo ZPL/ZIP que você estava tentando processar. Sem ele, normalmente não conseguimos reproduzir o problema."
+- **Microcopy de privacidade** (small/muted): "Usado apenas para análise técnica. Não compartilhamos seu arquivo."
+- Após selecionar: mostra nome + tamanho + botão de remover (X).
 
-### `src/components/FeedbackModal.tsx` (apenas string interna do email)
+### 3. Validações
 
-- `_subject`: trocar `'Feedback ZPL Easy'` por `'Contato ZPL Easy'` para padronizar o assunto do email recebido com o novo nome do canal.
+- Aceitar `.zpl, .txt, .zip` (mesmos formatos do uploader principal).
+- Limite **9MB** (margem segura abaixo do teto de 10MB do FormSubmit).
+- Se exceder: toast de erro com instrução para reduzir/zipar.
+- Botão "Enviar Mensagem" continua habilitado mesmo sem anexo (campo é opcional).
 
-## Notas
+### 4. Reforço pós-seleção
 
-- Nomes das chaves de tradução (`feedback*`) **não são alterados** — apenas os textos exibidos. Isso evita refatoração em todos os componentes que consomem essas chaves.
-- Nome do arquivo `FeedbackModal.tsx` permanece (é interno, sem impacto na UX).
+Quando o anexo é adicionado, exibir abaixo dele um pequeno texto verde: "✓ Ótimo! Isso vai acelerar muito o diagnóstico." (positivo, recompensa o comportamento).
+
+## Mudança técnica
+
+### Backend de envio (importante)
+
+O endpoint AJAX atual (`/ajax/<email>` + JSON) **não aceita anexos**. O FormSubmit só suporta arquivos via `multipart/form-data` no endpoint clássico (`/<email>`). Esse endpoint clássico, porém, faz **redirect** após submit (não é CORS-friendly).
+
+**Solução**: usar abordagem dupla no `handleSubmit`:
+
+- **Sem anexo** → continua usando endpoint AJAX/JSON (funciona como hoje).
+- **Com anexo** → usa `fetch` com `FormData` no endpoint clássico (`https://formsubmit.co/fernandothome@gmail.com`) **com `mode: 'no-cors'`**. A request é enviada com sucesso (FormSubmit recebe), mas a resposta fica opaca — então tratamos como sucesso otimista após o `await fetch` retornar sem throw.
+
+Trade-off aceito: com anexo não conseguimos confirmar 200 OK, mas o envio funciona. Mostramos o toast de sucesso normalmente.
+
+### Arquivos alterados
+
+**`src/components/FeedbackModal.tsx`** — principais mudanças:
+1. Novo estado: `attachment: File | null`.
+2. Novo input `<input type="file" accept=".zpl,.txt,.zip">` (oculto, acionado por botão estilizado).
+3. Bloco condicional renderizado apenas quando `feedbackType === 'bug'`.
+4. Validação de tamanho (9MB) com toast de erro.
+5. Em `handleSubmit`: branch para envio com FormData + `no-cors` quando há anexo; senão mantém JSON atual.
+6. Reset do `attachment` junto com os outros campos após sucesso.
+
+**`src/i18n/locales/pt-BR.ts`** e **`src/i18n/locales/en.ts`** — novas chaves:
+- `attachFile`, `attachFileDescription`, `attachFilePrivacy`, `attachFileSelect`, `attachFileBenefit`, `attachFileTooLarge`, `attachFileSuccess`.
+
+## Resultado esperado
+
+- Modal continua simples para a maioria dos casos.
+- Quando usuário relata erro, vê um convite claro e amigável para anexar o arquivo.
+- Copy explica o "porquê" (resolução rápida) e a privacidade (uso técnico apenas).
+- Reforço positivo após anexar aumenta a sensação de progresso.
+- Tecnicamente compatível com o limite de 10MB do FormSubmit.
 
 Posso aplicar?
