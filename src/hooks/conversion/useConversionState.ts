@@ -58,9 +58,16 @@ export const useConversionState = () => {
   };
 
   const updateProgress = (info: Partial<ProgressInfo>) => {
-    setProgressInfo(prev => ({ ...prev, ...info }));
+    setProgressInfo(prev => {
+      const next = { ...prev, ...info };
+      // Clamp monotônico: a barra nunca recua.
+      if (info.percentage !== undefined && info.percentage < prev.percentage) {
+        next.percentage = prev.percentage;
+      }
+      return next;
+    });
     if (info.percentage !== undefined) {
-      setProgress(info.percentage);
+      setProgress(prev => Math.max(prev, info.percentage!));
     }
   };
 
