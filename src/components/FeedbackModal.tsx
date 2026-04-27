@@ -78,7 +78,7 @@ export const FeedbackModal = () => {
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          _subject: 'Feedback ZPL Easy',
+          _subject: 'Contato ZPL Easy',
           _captcha: 'false',
           tipo: feedbackData.type,
           mensagem: feedbackData.message,
