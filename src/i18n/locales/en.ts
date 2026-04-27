@@ -291,6 +291,7 @@ const translations = {
   progressUploading: 'Finishing...',
   progressFinalizing: 'Releasing memory...',
   progressComplete: 'Complete!',
+  progressStepIndicator: 'Step {{current}} of {{total}}',
   etaSeconds: '~{{seconds}}s remaining',
   etaMinutes: '~{{minutes}}min {{seconds}}s remaining',
   etaFinalizing: 'Finalizing...',
