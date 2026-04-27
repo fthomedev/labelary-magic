@@ -279,7 +279,7 @@ const translations = {
   processAgain: 'Reprocess',
   
   // Beta Notice
-  betaNotice: '🚧 This tool is in BETA and under DEVELOPMENT. For issues or suggestions, use the Feedback button.',
+  betaNotice: '🚧 This tool is in BETA and under DEVELOPMENT. For issues or suggestions, use the Contact Us button.',
   
   // Progress Messages
   progressParsing: 'Analyzing labels...',
