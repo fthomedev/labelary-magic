@@ -70,19 +70,20 @@ export const FeedbackModal = () => {
         userEmail,
       };
 
-      // Create form data for FormSubmit
-      const formData = new FormData();
-      formData.append('_subject', 'Feedback ZPL Easy');
-      formData.append('_next', window.location.href); // Redirect back to current page
-      formData.append('_captcha', 'false'); // Disable captcha
-      formData.append('tipo', feedbackData.type);
-      formData.append('mensagem', feedbackData.message);
-      formData.append('email_usuario', feedbackData.userEmail);
-
-      // Send to FormSubmit.co
-      const response = await fetch('https://formsubmit.co/fernandothome@gmail.com', {
+      // Send to FormSubmit.co AJAX endpoint (returns CORS headers, accepts JSON)
+      const response = await fetch('https://formsubmit.co/ajax/fernandothome@gmail.com', {
         method: 'POST',
-        body: formData
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          _subject: 'Feedback ZPL Easy',
+          _captcha: 'false',
+          tipo: feedbackData.type,
+          mensagem: feedbackData.message,
+          email_usuario: feedbackData.userEmail,
+        }),
       });
 
       if (response.ok) {

@@ -1,53 +1,50 @@
 ## Diagnóstico
 
-Você recebe **a mesma mensagem repetida com tipos diferentes** (ex.: o usuário escolheu "Sugestão", mas chegam emails como "Reclamação" ou "Bug" com o mesmo texto). Isso acontece por causa de **duas causas combinadas** no `FeedbackModal.tsx`:
+O envio de feedback falha com `TypeError: Failed to fetch` (visível no console em `2026-04-27T21:25:06Z`). A request POST para `https://formsubmit.co/fernandothome@gmail.com` é bloqueada pelo navegador por **falta de headers CORS** na resposta do FormSubmit.
 
-### Causa 1 — Threading do Gmail por assunto
+### Causa raiz
 
-A linha 72 monta o assunto assim:
-```ts
-formData.append('_subject', `Feedback ZPL Easy - ${feedbackData.type}`);
-```
+O FormSubmit.co tem **dois endpoints**:
 
-Como o assunto **muda conforme o tipo**, o Gmail cria threads separadas por categoria. Mas o FormSubmit.co, na **primeira vez** que cada novo assunto é usado, envia um email de **ativação/confirmação** repetindo o conteúdo — gerando a impressão de "mesma mensagem com motivos diferentes". Também é comum ele reencaminhar com variações de assunto, o que confunde a leitura.
+1. `https://formsubmit.co/<email>` — espera POST de **formulário HTML clássico** (`<form action="...">`). Não retorna CORS, logo `fetch` falha.
+2. `https://formsubmit.co/ajax/<email>` — endpoint **AJAX** que retorna headers CORS e aceita JSON.
 
-### Causa 2 — Sem proteção contra duplo envio
+O código atual usa o endpoint #1 com `fetch` + `FormData`, daí o `Failed to fetch`.
 
-Não há uma guarda imediata em `handleSubmit`. O estado `isSubmitting` é setado **dentro** do `try`, mas o `Button type="submit"` permite múltiplos cliques rápidos antes do React rerender. Se o usuário clica 2x rápido (ou pressiona Enter + clica), o form é enviado **2 vezes** com o mesmo conteúdo. Se nesse meio tempo o `feedbackType` foi atualizado (ou o reset parcial ocorreu), o segundo envio pode sair com tipo diferente.
+## Correção
 
-Mais importante: o `Select` do shadcn/Radix dispara `onValueChange` em cada interação. Se o usuário "passar" pelas opções antes de confirmar (em alguns devices touch), múltiplos envios podem ser disparados se o submit acontecer entre transições.
-
-## Solução proposta
-
-Aplicar **duas correções** em `src/components/FeedbackModal.tsx`:
-
-### 1. Assunto fixo (corpo carrega o tipo)
+Trocar a chamada em `src/components/FeedbackModal.tsx` para usar o endpoint AJAX com JSON:
 
 ```ts
-// linha 72
-formData.append('_subject', 'Feedback ZPL Easy');
+const response = await fetch('https://formsubmit.co/ajax/fernandothome@gmail.com', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  body: JSON.stringify({
+    _subject: 'Feedback ZPL Easy',
+    _captcha: 'false',
+    tipo: feedbackData.type,
+    mensagem: feedbackData.message,
+    email_usuario: feedbackData.userEmail,
+  }),
+});
 ```
 
-O tipo já vai no campo `tipo` do corpo (linha 75), então a informação não se perde — só sai do título. Resultado: 1 thread única no Gmail, sem ativações repetidas do FormSubmit, sem variações de assunto.
+Mudanças:
+- URL passa a ser `/ajax/<email>` (com CORS).
+- Body vira JSON com `Content-Type: application/json`.
+- Remover `_next` (só faz sentido em form HTML clássico — não se aplica a chamadas AJAX).
+- Manter `_subject` fixo (já corrigido anteriormente) e o `tipo` no corpo.
 
-### 2. Guarda anti-duplo-envio (idempotência local)
+## Arquivo alterado
 
-No início do `handleSubmit`, antes de qualquer validação:
-```ts
-if (isSubmitting) return;
-setIsSubmitting(true);
-```
-
-E garantir que o `setIsSubmitting(false)` no `finally` continue funcionando. Isso elimina qualquer chance de o mesmo formulário ser enviado 2x com o mesmo (ou diferente) tipo.
-
-## Arquivos alterados
-
-- `src/components/FeedbackModal.tsx` — linhas ~50-72 (guarda no início do handler + assunto fixo).
+- `src/components/FeedbackModal.tsx` — bloco do `fetch` (linhas ~70-83).
 
 ## Resultado esperado
 
-- **1 envio = 1 email**, com o tipo correto escolhido pelo usuário.
-- Sem mensagens repetidas com motivos diferentes.
-- Sem emails de ativação extras do FormSubmit.
+- Envio de feedback funciona sem erro de CORS.
+- Continua chegando 1 email por envio, com tipo correto no corpo.
 
 Posso aplicar?
