@@ -175,8 +175,8 @@ export const FeedbackModal = () => {
           <span className="hidden sm:inline">{t('feedback')}</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto overflow-x-hidden w-[calc(100vw-2rem)]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto overflow-x-hidden w-[calc(100vw-2rem)] [&>*]:min-w-0">
+        <DialogHeader className="min-w-0">
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle size={20} />
             {t('sendFeedback')}
@@ -252,7 +252,7 @@ export const FeedbackModal = () => {
                   <div className="flex items-center gap-2 rounded-md border border-border bg-background p-2">
                     <FileText size={16} className="text-primary flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">{attachment.name}</p>
+                      <p className="text-xs font-medium break-all line-clamp-2">{attachment.name}</p>
                       <p className="text-xs text-muted-foreground">{formatBytes(attachment.size)}</p>
                     </div>
                     <Button
