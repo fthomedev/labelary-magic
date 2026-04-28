@@ -1,34 +1,36 @@
-# Causa do erro
+## Problema identificado
 
-O arquivo do TikTok contém **20 etiquetas com imagens grandes embutidas** (`^GFA` com ~36 KB cada). O pipeline padrão envia todas de uma vez para a Labelary API, que retorna **HTTP 400** com a mensagem:
+A usuária reportou: *"modifiquei uma única vez as medidas, depois nunca mais apareceu a opção para voltar à anterior, tudo se converte errado agora."*
 
-> "Total size of all embedded fonts and images exceeds the maximum allowed (2 MB); please reduce the size of any embedded images or fonts, or eliminate their use completely, or submit fewer labels per request"
+### Causa raiz
 
-Reproduzido em teste direto contra a Labelary:
-- 15 etiquetas TikTok → OK
-- 20 etiquetas TikTok → 400 (limite 2 MB excedido)
+1. O componente `LabelSizeSelector` foi **ocultado via `{false && ...}`** em `src/components/ZPLPreview.tsx` (linhas 57–66), com comentário: *"Seletor de tamanho oculto temporariamente — Labelary não escala conteúdo do ZPL."*
+2. **Porém**, o hook `useLabelSize` (`src/hooks/useLabelSize.ts`) continua:
+   - Lendo o valor salvo no `localStorage` (chave `zpl-label-size`) na inicialização.
+   - Passando esse valor para `convertToPDF` / `convertToHdPDF` em `src/pages/Index.tsx` (linhas 120 e 122).
+3. **Resultado**: usuárias que mexeram no seletor antes dele ser ocultado ficaram com um tamanho personalizado salvo no `localStorage`. Como a UI sumiu, elas **não têm como voltar para `10×15 cm` (default)** — todas as conversões saem com o tamanho errado para sempre.
 
-A lógica de "dynamic batch sizing" já existe para o fluxo A4 (memória `a4-dynamic-batch-sizing`), mas **não foi aplicada ao fluxo Padrão** (`useZplApiConversion.ts`), que é o que o TikTok usa.
+## Correção
 
-# O que vou fazer
+Como o seletor está intencionalmente oculto até a escala via pdf-lib/jsPDF estar pronta, a conversão **nunca deveria** estar usando um valor persistido. A correção mais segura é forçar o uso do tamanho padrão enquanto a UI estiver oculta, e limpar resíduos do `localStorage`.
 
-1. Detectar ZPLs com imagens pesadas (`^GFA` ou `^GFB`) em `useZplApiConversion.ts`.
-2. Quando detectado, reduzir automaticamente o `labelsPerBatch` para um tamanho seguro (10 etiquetas), seguindo o mesmo padrão do A4.
-3. Adicionar log claro no console quando o auto-ajuste acontecer, para facilitar diagnóstico.
-4. Manter o comportamento atual (batches de 25–30) para ZPLs sem imagens — sem regressão de performance.
+### Mudanças
 
-# Detalhes técnicos
+**`src/hooks/useLabelSize.ts`**
+- Sempre retornar `DEFAULT_LABEL_SIZE` (10×15 cm) — ignorar o `localStorage`.
+- Na inicialização, **remover** a chave `zpl-label-size` do `localStorage` para limpar o estado corrompido das usuárias afetadas.
+- `setLabelSize` vira um no-op (mantém a assinatura para não quebrar chamadores) ou apenas atualiza estado em memória sem persistir.
 
-**Arquivo:** `src/hooks/conversion/useZplApiConversion.ts`
+**`src/components/ZPLPreview.tsx`**
+- Sem mudanças necessárias (o seletor já está oculto e continuará oculto).
 
-- Antes de criar os batches, escanear `labels` procurando ocorrências de `^GFA` ou `^GFB`.
-- Se a proporção de etiquetas com imagem for ≥ 30%, aplicar `effectiveBatchSize = Math.max(1, Math.floor(config.labelsPerBatch / 3))` com teto de 10.
-- Usar `effectiveBatchSize` no loop de criação de batches (linhas 27–29).
-- Logar: `🖼️ Imagens pesadas detectadas — reduzindo batch de X para Y etiquetas`.
+### Quando reativar o seletor
 
-Não mexer em `processingConfig.ts` nem no fluxo HD/A4 (que já tratam isso).
+Quando a escala via pdf-lib/jsPDF estiver implementada, basta:
+1. Trocar `{false && ...}` por `{true && ...}` em `ZPLPreview.tsx`.
+2. Restaurar a leitura/escrita do `localStorage` em `useLabelSize.ts`.
 
-# O que NÃO vou fazer
+## Resultado esperado
 
-- Não vou tentar "limpar" as vírgulas estranhas do ZPL do TikTok — testei e a Labelary aceita o formato. Não é o problema.
-- Não vou aumentar retries: o erro 400 não é transitório, retry não resolve.
+- Todas as usuárias (incluindo a que reportou) voltam a ter conversões em **10×15 cm** automaticamente, sem precisar fazer nada.
+- O resíduo no `localStorage` é limpo no próximo carregamento da página.
