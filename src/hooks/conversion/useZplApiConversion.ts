@@ -21,14 +21,26 @@ export const useZplApiConversion = () => {
     const totalStartTime = Date.now();
     
     console.log(`🏁 Starting conversion of ${labels.length} labels with config:`, config);
-    
+
+    // Detect heavy embedded graphics (^GFA / ^GFB) — Labelary rejects requests
+    // whose decoded embedded images/fonts exceed 2 MB total. When a significant
+    // share of labels contains embedded graphics, shrink the batch size so each
+    // request stays well below that limit.
+    const labelsWithGraphics = labels.filter(l => /\^GF[AB]/.test(l)).length;
+    const graphicsRatio = labels.length > 0 ? labelsWithGraphics / labels.length : 0;
+    let effectiveBatchSize = config.labelsPerBatch;
+    if (graphicsRatio >= 0.3) {
+      effectiveBatchSize = Math.min(10, Math.max(1, Math.floor(config.labelsPerBatch / 3)));
+      console.log(`🖼️ Imagens pesadas detectadas (${labelsWithGraphics}/${labels.length} etiquetas com ^GFA/^GFB) — reduzindo batch de ${config.labelsPerBatch} para ${effectiveBatchSize} etiquetas`);
+    }
+
     // Create batches
     const batches: string[][] = [];
-    for (let i = 0; i < labels.length; i += config.labelsPerBatch) {
-      batches.push(labels.slice(i, i + config.labelsPerBatch));
+    for (let i = 0; i < labels.length; i += effectiveBatchSize) {
+      batches.push(labels.slice(i, i + effectiveBatchSize));
     }
-    
-    console.log(`📦 Created ${batches.length} batches of ~${config.labelsPerBatch} labels each`);
+
+    console.log(`📦 Created ${batches.length} batches of ~${effectiveBatchSize} labels each`);
     
     const PARALLEL_BATCHES = 2; // Reduced from 3 to avoid rate limits
     const results: (Blob | null)[] = new Array(batches.length).fill(null);

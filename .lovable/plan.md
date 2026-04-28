@@ -1,65 +1,34 @@
-## Objetivo
+# Causa do erro
 
-Quando o usuário escolher **"Erro"** como assunto no Fale Conosco, exibir um campo opcional de **anexar arquivo ZPL/ZIP** que ele estava tentando processar. UX precisa ser persuasiva sem ser invasiva — incentivando o envio sem bloquear quem prefere não anexar.
+O arquivo do TikTok contém **20 etiquetas com imagens grandes embutidas** (`^GFA` com ~36 KB cada). O pipeline padrão envia todas de uma vez para a Labelary API, que retorna **HTTP 400** com a mensagem:
 
-## UX proposta
+> "Total size of all embedded fonts and images exceeds the maximum allowed (2 MB); please reduce the size of any embedded images or fonts, or eliminate their use completely, or submit fewer labels per request"
 
-### 1. Campo só aparece se "Erro" for selecionado
+Reproduzido em teste direto contra a Labelary:
+- 15 etiquetas TikTok → OK
+- 20 etiquetas TikTok → 400 (limite 2 MB excedido)
 
-Mantém o modal limpo para sugestão/reclamação/outro. O campo "expande" suavemente quando o usuário troca o assunto para Erro.
+A lógica de "dynamic batch sizing" já existe para o fluxo A4 (memória `a4-dynamic-batch-sizing`), mas **não foi aplicada ao fluxo Padrão** (`useZplApiConversion.ts`), que é o que o TikTok usa.
 
-### 2. Visual e copy persuasivos
+# O que vou fazer
 
-Bloco destacado (border tracejada, fundo sutil em `bg-muted/30`, ícone `Paperclip`) com:
+1. Detectar ZPLs com imagens pesadas (`^GFA` ou `^GFB`) em `useZplApiConversion.ts`.
+2. Quando detectado, reduzir automaticamente o `labelsPerBatch` para um tamanho seguro (10 etiquetas), seguindo o mesmo padrão do A4.
+3. Adicionar log claro no console quando o auto-ajuste acontecer, para facilitar diagnóstico.
+4. Manter o comportamento atual (batches de 25–30) para ZPLs sem imagens — sem regressão de performance.
 
-- **Título**: "Anexar arquivo do erro (opcional)"
-- **Texto curto persuasivo**: "📎 Quer aumentar muito as chances de resolvermos rápido? Anexe o arquivo ZPL/ZIP que você estava tentando processar. Sem ele, normalmente não conseguimos reproduzir o problema."
-- **Microcopy de privacidade** (small/muted): "Usado apenas para análise técnica. Não compartilhamos seu arquivo."
-- Após selecionar: mostra nome + tamanho + botão de remover (X).
+# Detalhes técnicos
 
-### 3. Validações
+**Arquivo:** `src/hooks/conversion/useZplApiConversion.ts`
 
-- Aceitar `.zpl, .txt, .zip` (mesmos formatos do uploader principal).
-- Limite **9MB** (margem segura abaixo do teto de 10MB do FormSubmit).
-- Se exceder: toast de erro com instrução para reduzir/zipar.
-- Botão "Enviar Mensagem" continua habilitado mesmo sem anexo (campo é opcional).
+- Antes de criar os batches, escanear `labels` procurando ocorrências de `^GFA` ou `^GFB`.
+- Se a proporção de etiquetas com imagem for ≥ 30%, aplicar `effectiveBatchSize = Math.max(1, Math.floor(config.labelsPerBatch / 3))` com teto de 10.
+- Usar `effectiveBatchSize` no loop de criação de batches (linhas 27–29).
+- Logar: `🖼️ Imagens pesadas detectadas — reduzindo batch de X para Y etiquetas`.
 
-### 4. Reforço pós-seleção
+Não mexer em `processingConfig.ts` nem no fluxo HD/A4 (que já tratam isso).
 
-Quando o anexo é adicionado, exibir abaixo dele um pequeno texto verde: "✓ Ótimo! Isso vai acelerar muito o diagnóstico." (positivo, recompensa o comportamento).
+# O que NÃO vou fazer
 
-## Mudança técnica
-
-### Backend de envio (importante)
-
-O endpoint AJAX atual (`/ajax/<email>` + JSON) **não aceita anexos**. O FormSubmit só suporta arquivos via `multipart/form-data` no endpoint clássico (`/<email>`). Esse endpoint clássico, porém, faz **redirect** após submit (não é CORS-friendly).
-
-**Solução**: usar abordagem dupla no `handleSubmit`:
-
-- **Sem anexo** → continua usando endpoint AJAX/JSON (funciona como hoje).
-- **Com anexo** → usa `fetch` com `FormData` no endpoint clássico (`https://formsubmit.co/fernandothome@gmail.com`) **com `mode: 'no-cors'`**. A request é enviada com sucesso (FormSubmit recebe), mas a resposta fica opaca — então tratamos como sucesso otimista após o `await fetch` retornar sem throw.
-
-Trade-off aceito: com anexo não conseguimos confirmar 200 OK, mas o envio funciona. Mostramos o toast de sucesso normalmente.
-
-### Arquivos alterados
-
-**`src/components/FeedbackModal.tsx`** — principais mudanças:
-1. Novo estado: `attachment: File | null`.
-2. Novo input `<input type="file" accept=".zpl,.txt,.zip">` (oculto, acionado por botão estilizado).
-3. Bloco condicional renderizado apenas quando `feedbackType === 'bug'`.
-4. Validação de tamanho (9MB) com toast de erro.
-5. Em `handleSubmit`: branch para envio com FormData + `no-cors` quando há anexo; senão mantém JSON atual.
-6. Reset do `attachment` junto com os outros campos após sucesso.
-
-**`src/i18n/locales/pt-BR.ts`** e **`src/i18n/locales/en.ts`** — novas chaves:
-- `attachFile`, `attachFileDescription`, `attachFilePrivacy`, `attachFileSelect`, `attachFileBenefit`, `attachFileTooLarge`, `attachFileSuccess`.
-
-## Resultado esperado
-
-- Modal continua simples para a maioria dos casos.
-- Quando usuário relata erro, vê um convite claro e amigável para anexar o arquivo.
-- Copy explica o "porquê" (resolução rápida) e a privacidade (uso técnico apenas).
-- Reforço positivo após anexar aumenta a sensação de progresso.
-- Tecnicamente compatível com o limite de 10MB do FormSubmit.
-
-Posso aplicar?
+- Não vou tentar "limpar" as vírgulas estranhas do ZPL do TikTok — testei e a Labelary aceita o formato. Não é o problema.
+- Não vou aumentar retries: o erro 400 não é transitório, retry não resolve.
