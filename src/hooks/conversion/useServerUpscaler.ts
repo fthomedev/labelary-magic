@@ -63,58 +63,43 @@ export const useServerUpscaler = () => {
   ): Promise<Blob[]> => {
     console.log(`🔄 Starting server-side upscaling: ${images.length} images at ${scale}x`);
     const startTime = Date.now();
-    const results: Blob[] = new Array(images.length);
-
-    // Continuous worker pool — no batch barrier, keeps all slots busy
-    const MAX_CONCURRENT = 6;
-    let nextIndex = 0;
+    const results: Blob[] = [];
+    
+    // Atomic counter for accurate progress tracking across parallel operations
     let completedCount = 0;
-
-    // Throttled progress via rAF (or setTimeout fallback)
-    let pendingFrame = false;
-    const reportProgress = () => {
-      if (!onProgress) return;
-      if (pendingFrame) return;
-      pendingFrame = true;
-      const flush = () => {
-        pendingFrame = false;
-        onProgress(completedCount, images.length);
-      };
-      if (typeof requestAnimationFrame !== 'undefined') {
-        requestAnimationFrame(flush);
-      } else {
-        setTimeout(flush, 16);
-      }
-    };
-
-    const worker = async () => {
-      while (true) {
-        const i = nextIndex++;
-        if (i >= images.length) return;
-        try {
-          results[i] = await upscaleSingleImage(images[i], scale);
-          console.log(`✅ [${i + 1}/${images.length}] Upscaled successfully`);
-        } catch (error) {
-          console.warn(`⚠️ [${i + 1}/${images.length}] Upscale failed, using original:`, error);
-          results[i] = images[i];
-        }
-        completedCount++;
-        reportProgress();
-      }
-    };
-
-    const workers = Array.from(
-      { length: Math.min(MAX_CONCURRENT, images.length) },
-      () => worker()
-    );
-    await Promise.all(workers);
-
-    // Ensure final 100% update fires (bypass throttle)
-    onProgress?.(completedCount, images.length);
-
+    
+    // Process in batches of 6 for optimized parallel processing
+    const BATCH_SIZE = 6;
+    
+    for (let i = 0; i < images.length; i += BATCH_SIZE) {
+      const batch = images.slice(i, Math.min(i + BATCH_SIZE, images.length));
+      
+      const batchResults = await Promise.all(
+        batch.map(async (image, batchIndex) => {
+          const globalIndex = i + batchIndex;
+          try {
+            const upscaled = await upscaleSingleImage(image, scale);
+            console.log(`✅ [${globalIndex + 1}/${images.length}] Upscaled successfully`);
+            // Increment atomic counter and report progress
+            completedCount++;
+            onProgress?.(completedCount, images.length);
+            return upscaled;
+          } catch (error) {
+            console.warn(`⚠️ [${globalIndex + 1}/${images.length}] Upscale failed, using original:`, error);
+            // Increment counter even on fallback
+            completedCount++;
+            onProgress?.(completedCount, images.length);
+            return image;
+          }
+        })
+      );
+      
+      results.push(...batchResults);
+    }
+    
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log(`✅ Server upscaling complete: ${results.length} images in ${elapsed}s`);
-
+    
     return results;
   }, [upscaleSingleImage]);
 
