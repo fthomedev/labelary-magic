@@ -268,36 +268,6 @@ function paethPredictor(a: number, b: number, c: number): number {
   return c;
 }
 
-function inflateSync(data: Uint8Array): Uint8Array {
-  // Skip zlib header (2 bytes)
-  let pos = 2;
-  const output: number[] = [];
-  
-  while (pos < data.length - 4) { // -4 for adler32
-    const header = data[pos++];
-    const bfinal = header & 0x01;
-    const btype = (header >> 1) & 0x03;
-    
-    if (btype === 0) { // Stored
-      // Align to byte boundary (already aligned after header byte)
-      const len = data[pos] | (data[pos + 1] << 8);
-      pos += 4; // len + nlen
-      
-      for (let i = 0; i < len; i++) {
-        output.push(data[pos++]);
-      }
-    } else {
-      // For compressed data, we need a full inflate implementation
-      // This is a simplified version - fall back to uncompressed
-      throw new Error('Compressed PNG data not supported in this implementation');
-    }
-    
-    if (bfinal) break;
-  }
-  
-  return new Uint8Array(output);
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
