@@ -35,7 +35,7 @@ class Semaphore {
 export const useHdImageConversion = () => {
   const { splitZplIntoLabels } = useZplLabelProcessor();
   const { filterValidLabels } = useZplValidator();
-  const { upscaleImages } = useServerUpscaler();
+  const { upscaleImages, upscaleSingleImage } = useServerUpscaler();
 
   const convertZplToHdImages = async (
     labels: string[],
@@ -43,7 +43,7 @@ export const useHdImageConversion = () => {
     config: ProcessingConfig = DEFAULT_CONFIG,
     labelSize: LabelSize = DEFAULT_LABEL_SIZE
   ): Promise<Blob[]> => {
-    console.log(`\n🔧 convertZplToHdImages: HD mode (with upscaling)`);
+    console.log(`\n🔧 convertZplToHdImages: HD mode (with upscaling, pipelined)`);
 
     const validLabels = filterValidLabels(labels);
 
@@ -57,23 +57,42 @@ export const useHdImageConversion = () => {
     console.log(`📊 Using Labelary API at ${dpmm} (${labelSize.widthCm}×${labelSize.heightCm} cm), then 2x server upscale`);
     console.log(`📐 Labelary URL (HD PNG): ${labelaryUrl}`);
 
-    const MAX_CONCURRENT = 5;
-    const semaphore = new Semaphore(MAX_CONCURRENT);
-    const results: (Blob | null)[] = new Array(validLabels.length).fill(null);
+    const PNG_CONCURRENT = 5;
+    const UPSCALE_CONCURRENT = 6;
+    const pngSemaphore = new Semaphore(PNG_CONCURRENT);
+    const upscaleSemaphore = new Semaphore(UPSCALE_CONCURRENT);
+
+    const pngResults: (Blob | null)[] = new Array(validLabels.length).fill(null);
+    const upscaleResults: (Blob | null)[] = new Array(validLabels.length).fill(null);
+    const upscalePromises: Promise<void>[] = [];
     const failedIndices: number[] = [];
-    let completed = 0;
+
+    let pngCompleted = 0;
+    let upscaleCompleted = 0;
     let rateLimitHits = 0;
 
-    // Throttled progress (rAF) — collapses bursts of updates into one paint
+    // Throttled progress (rAF) — collapses bursts of updates into one paint.
+    // We blend PNG fetch (50%) + upscale (50%) progress into a single bar.
     let pendingFrame = false;
     const emitProgress = () => {
       if (pendingFrame) return;
       pendingFrame = true;
       const flush = () => {
         pendingFrame = false;
-        const stageProgress = (completed / validLabels.length) * 100;
-        const overallProgress = calculateProgress('hd', 'converting', stageProgress);
-        onProgress(overallProgress, completed);
+        const total = validLabels.length;
+        // Phase 'converting' (Labelary) = 0..50%, phase 'upscaling' = 50..100% of converting bar
+        const pngFrac = pngCompleted / total;
+        const upFrac = upscaleCompleted / total;
+        if (upFrac < 1) {
+          // Still upscaling — show upscale progress (which already includes PNG completion)
+          const stageProgress = ((pngFrac + upFrac) / 2) * 100;
+          // Use 'converting' band; final upscaling stage handled in main pipeline below
+          const overall = calculateProgress('hd', 'converting', stageProgress);
+          onProgress(overall, upscaleCompleted);
+        } else {
+          const overall = calculateProgress('hd', 'upscaling', 100);
+          onProgress(overall, upscaleCompleted);
+        }
       };
       if (typeof requestAnimationFrame !== 'undefined') {
         requestAnimationFrame(flush);
@@ -82,13 +101,33 @@ export const useHdImageConversion = () => {
       }
     };
 
-    console.log(`\n========== PNG CONVERSION START ==========`);
+    console.log(`\n========== PIPELINED PNG + UPSCALE START ==========`);
     console.log(`📊 Input: ${validLabels.length} labels`);
-    console.log(`⚙️ Concurrent limit: ${MAX_CONCURRENT}`);
+    console.log(`⚙️ PNG concurrency: ${PNG_CONCURRENT} | Upscale concurrency: ${UPSCALE_CONCURRENT}`);
     const startTime = Date.now();
 
+    // Schedule upscale for a PNG as soon as it's ready
+    const scheduleUpscale = (index: number, pngBlob: Blob) => {
+      const p = (async () => {
+        await upscaleSemaphore.acquire();
+        try {
+          try {
+            upscaleResults[index] = await upscaleSingleImage(pngBlob, 2);
+          } catch (err) {
+            console.warn(`⚠️ [${index + 1}] upscale failed, using original PNG:`, err);
+            upscaleResults[index] = pngBlob;
+          }
+        } finally {
+          upscaleCompleted++;
+          emitProgress();
+          upscaleSemaphore.release();
+        }
+      })();
+      upscalePromises.push(p);
+    };
+
     const convertLabel = async (label: string, index: number, isRetryPass: boolean = false): Promise<boolean> => {
-      await semaphore.acquire();
+      await pngSemaphore.acquire();
 
       try {
         const maxRetries = 4;
@@ -96,7 +135,7 @@ export const useHdImageConversion = () => {
 
         for (let attempt = 0; attempt < maxRetries; attempt++) {
           try {
-            console.log(`🔄 [${index + 1}/${validLabels.length}] Attempt ${attempt + 1}/${maxRetries}${isRetryPass ? ' (retry pass)' : ''}`);
+            console.log(`🔄 [${index + 1}/${validLabels.length}] PNG attempt ${attempt + 1}/${maxRetries}${isRetryPass ? ' (retry)' : ''}`);
 
             const response = await fetch(labelaryUrl, {
               method: 'POST',
@@ -110,24 +149,25 @@ export const useHdImageConversion = () => {
             if (response.status === 429) {
               rateLimitHits++;
               const waitTime = baseDelays[attempt] || 24000;
-              console.warn(`⚠️ [${index + 1}] Rate limit 429 - waiting ${waitTime / 1000}s before retry`);
+              console.warn(`⚠️ [${index + 1}] Rate limit 429 - waiting ${waitTime / 1000}s`);
               await new Promise(resolve => setTimeout(resolve, waitTime));
               continue;
             }
 
             if (!response.ok) {
-              console.error(`❌ [${index + 1}] HTTP ${response.status}`);
               throw new Error(`HTTP ${response.status}`);
             }
 
             const blob = await response.blob();
             if (blob.size === 0) {
-              console.error(`❌ [${index + 1}] Empty PNG received`);
               throw new Error('Empty PNG');
             }
 
-            results[index] = blob;
-            console.log(`✅ [${index + 1}] PNG generated (${(blob.size / 1024).toFixed(1)}KB)`);
+            pngResults[index] = blob;
+            console.log(`✅ [${index + 1}] PNG ready (${(blob.size / 1024).toFixed(1)}KB) → upscale queued`);
+
+            // Kick off upscale immediately — overlap with remaining Labelary fetches
+            scheduleUpscale(index, blob);
             return true;
 
           } catch (error) {
@@ -144,14 +184,15 @@ export const useHdImageConversion = () => {
 
       } finally {
         if (!isRetryPass) {
-          completed++;
+          pngCompleted++;
           emitProgress();
         }
-        semaphore.release();
+        pngSemaphore.release();
       }
     };
 
-    console.log(`\n--- First Pass ---`);
+    // First pass — all labels in parallel (bounded by semaphore)
+    console.log(`\n--- First Pass (PNG fetch) ---`);
     const firstPassResults = await Promise.all(
       validLabels.map((label, i) => convertLabel(label, i, false))
     );
@@ -160,67 +201,50 @@ export const useHdImageConversion = () => {
       if (!success) failedIndices.push(index);
     });
 
+    // Retry pass for failed labels (sequential with delay)
     if (failedIndices.length > 0) {
-      console.log(`\n--- Second Pass (${failedIndices.length} failed labels) ---`);
+      console.log(`\n--- Second Pass (${failedIndices.length} failed) ---`);
       for (const index of failedIndices) {
         await new Promise(resolve => setTimeout(resolve, 2000));
         await convertLabel(validLabels[index], index, true);
       }
     }
 
-    const finalNullIndices = results.map((img, i) => img === null ? i : -1).filter(i => i !== -1);
-    const pngImages = results.filter((img): img is Blob => img !== null);
     const pngElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    const pngOk = pngResults.filter((p) => p !== null).length;
+    console.log(`\n========== PNG PHASE DONE ==========`);
+    console.log(`✅ PNGs: ${pngOk}/${validLabels.length} | rate-limit hits: ${rateLimitHits} | ${pngElapsed}s`);
 
-    console.log(`\n========== PNG CONVERSION SUMMARY ==========`);
-    console.log(`📊 Input labels: ${validLabels.length}`);
-    console.log(`✅ PNG generated: ${pngImages.length}`);
-    console.log(`⚠️ Rate limit hits: ${rateLimitHits}`);
-    console.log(`⏱️ Time: ${pngElapsed}s`);
+    // Wait for in-flight upscales scheduled during PNG phase to finish
+    console.log(`⏳ Waiting for ${upscalePromises.length - upscaleCompleted} pending upscales to finish...`);
+    await Promise.all(upscalePromises);
 
-    if (finalNullIndices.length > 0) {
-      console.error(`🚨 FAILED labels at indices: [${finalNullIndices.join(', ')}]`);
-      console.error(`🚨 LABEL LOSS: ${finalNullIndices.length} labels could not be converted!`);
-    } else {
-      console.log(`✅ All ${validLabels.length} labels converted successfully`);
-    }
-    console.log(`=============================================\n`);
-
-    // Server-side upscaling with Nearest Neighbor for HD mode
-    let finalImages = pngImages;
-
-    if (pngImages.length > 0) {
-      console.log(`\n========== SERVER UPSCALING START ==========`);
-      console.log(`🔄 Upscaling ${pngImages.length} images at 2x with Nearest Neighbor`);
-      const upscaleStartTime = Date.now();
-
-      try {
-        finalImages = await upscaleImages(pngImages, 2, (current, total) => {
-          const stageProgress = (current / total) * 100;
-          const overallProgress = calculateProgress('hd', 'upscaling', stageProgress);
-          onProgress(overallProgress, current);
-        });
-
-        const upscaleElapsed = ((Date.now() - upscaleStartTime) / 1000).toFixed(1);
-        console.log(`✅ Server upscaling completed in ${upscaleElapsed}s`);
-        console.log(`=============================================\n`);
-      } catch (error) {
-        console.error('❌ Server upscaling failed, using original images:', error);
-        finalImages = pngImages;
+    // Fallback: any PNG that exists but somehow didn't get an upscale slot — use original
+    for (let i = 0; i < validLabels.length; i++) {
+      if (upscaleResults[i] === null && pngResults[i] !== null) {
+        upscaleResults[i] = pngResults[i];
       }
     }
 
-    const organizingStart = calculateProgress('hd', 'organizing', 0);
-    onProgress(organizingStart);
+    const finalImages = upscaleResults.filter((b): b is Blob => b !== null);
+    const finalNullIndices = upscaleResults
+      .map((img, i) => (img === null ? i : -1))
+      .filter((i) => i !== -1);
 
     const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     const totalLoss = validLabels.length - finalImages.length;
 
-    console.log(`🎯 HD conversion complete: ${finalImages.length}/${validLabels.length} in ${totalElapsed}s`);
-
-    if (totalLoss > 0) {
-      console.error(`🚨 TOTAL LABEL LOSS: ${totalLoss} labels (input: ${validLabels.length}, output: ${finalImages.length})`);
+    console.log(`\n========== HD PIPELINE COMPLETE ==========`);
+    console.log(`✅ Final images: ${finalImages.length}/${validLabels.length} in ${totalElapsed}s`);
+    if (finalNullIndices.length > 0) {
+      console.error(`🚨 Missing at indices: [${finalNullIndices.join(', ')}]`);
     }
+    if (totalLoss > 0) {
+      console.error(`🚨 LABEL LOSS: ${totalLoss} labels`);
+    }
+
+    const organizingStart = calculateProgress('hd', 'organizing', 0);
+    onProgress(organizingStart);
 
     return finalImages;
   };
@@ -231,6 +255,9 @@ export const useHdImageConversion = () => {
     console.log(`📋 parseLabelsFromZpl for HD: Found ${labels.length} labels`);
     return labels;
   };
+
+  // Keep batch-mode upscaler exposed for non-pipelined consumers (compat)
+  void upscaleImages;
 
   return {
     convertZplToHdImages,
