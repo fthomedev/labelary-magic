@@ -64,6 +64,24 @@ export const useHdImageConversion = () => {
     let completed = 0;
     let rateLimitHits = 0;
 
+    // Throttled progress (rAF) — collapses bursts of updates into one paint
+    let pendingFrame = false;
+    const emitProgress = () => {
+      if (pendingFrame) return;
+      pendingFrame = true;
+      const flush = () => {
+        pendingFrame = false;
+        const stageProgress = (completed / validLabels.length) * 100;
+        const overallProgress = calculateProgress('hd', 'converting', stageProgress);
+        onProgress(overallProgress, completed);
+      };
+      if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame(flush);
+      } else {
+        setTimeout(flush, 16);
+      }
+    };
+
     console.log(`\n========== PNG CONVERSION START ==========`);
     console.log(`📊 Input: ${validLabels.length} labels`);
     console.log(`⚙️ Concurrent limit: ${MAX_CONCURRENT}`);
@@ -127,9 +145,7 @@ export const useHdImageConversion = () => {
       } finally {
         if (!isRetryPass) {
           completed++;
-          const stageProgress = (completed / validLabels.length) * 100;
-          const overallProgress = calculateProgress('hd', 'converting', stageProgress);
-          onProgress(overallProgress, completed);
+          emitProgress();
         }
         semaphore.release();
       }
