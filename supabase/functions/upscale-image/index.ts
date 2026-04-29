@@ -374,7 +374,7 @@ serve(async (req) => {
     console.log(`📊 Input PNG size: ${(inputBytes.length / 1024).toFixed(1)}KB`);
     
     // Decode PNG
-    const decoded = decodePNG(inputBytes);
+    const decoded = await decodePNG(inputBytes);
     console.log(`📐 Input dimensions: ${decoded.width}x${decoded.height}`);
     
     // Upscale with Nearest Neighbor
@@ -382,7 +382,7 @@ serve(async (req) => {
     console.log(`📐 Output dimensions: ${upscaled.width}x${upscaled.height}`);
     
     // Encode back to PNG
-    const outputPng = encodePNG(upscaled.data, upscaled.width, upscaled.height);
+    const outputPng = await encodePNG(upscaled.data, upscaled.width, upscaled.height);
     console.log(`📊 Output PNG size: ${(outputPng.length / 1024).toFixed(1)}KB`);
     
     // Convert to base64
