@@ -308,56 +308,23 @@ serve(async (req) => {
     console.log(`🔐 Authenticated user: ${user.id}`);
 
     // ========== INPUT VALIDATION ==========
-    // Support two transport modes:
-    //  - Binary: Content-Type image/png, raw PNG bytes in body, scale via ?scale= query
-    //  - JSON (legacy): { imageBase64, scale }
-    const contentType = req.headers.get('content-type') || '';
-    const isBinary = contentType.includes('image/png') || contentType.includes('application/octet-stream');
-
-    let inputBytes: Uint8Array;
-    let scale = 2;
-    let acceptBinary = false;
-
-    if (isBinary) {
-      const url = new URL(req.url);
-      const scaleParam = url.searchParams.get('scale');
-      if (scaleParam) scale = Number(scaleParam);
-      const accept = req.headers.get('accept') || '';
-      acceptBinary = accept.includes('image/png') || accept.includes('application/octet-stream');
-
-      const buf = await req.arrayBuffer();
-      inputBytes = new Uint8Array(buf);
-
-      if (inputBytes.length > 5 * 1024 * 1024) {
-        console.error(`❌ Image too large: ${(inputBytes.length / 1024 / 1024).toFixed(2)}MB`);
-        return new Response(
-          JSON.stringify({ error: 'Image too large (max 5MB)' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    } else {
-      const body = await req.json();
-      const imageBase64 = body.imageBase64;
-      scale = body.scale ?? 2;
-
-      if (!imageBase64) {
-        throw new Error('imageBase64 is required');
-      }
-      if (imageBase64.length > MAX_IMAGE_SIZE_BYTES) {
-        console.error(`❌ Image too large: ${(imageBase64.length / 1024 / 1024).toFixed(2)}MB`);
-        return new Response(
-          JSON.stringify({ error: 'Image too large (max 5MB)' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      const binaryString = atob(imageBase64);
-      inputBytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        inputBytes[i] = binaryString.charCodeAt(i);
-      }
+    const { imageBase64, scale = 2 } = await req.json();
+    
+    if (!imageBase64) {
+      throw new Error('imageBase64 is required');
     }
 
-    if (typeof scale !== 'number' || isNaN(scale) || scale < MIN_SCALE || scale > MAX_SCALE) {
+    // Validate image size (prevent DoS with large images)
+    if (imageBase64.length > MAX_IMAGE_SIZE_BYTES) {
+      console.error(`❌ Image too large: ${(imageBase64.length / 1024 / 1024).toFixed(2)}MB`);
+      return new Response(
+        JSON.stringify({ error: 'Image too large (max 5MB)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate scale parameter
+    if (typeof scale !== 'number' || scale < MIN_SCALE || scale > MAX_SCALE) {
       console.error(`❌ Invalid scale: ${scale}`);
       return new Response(
         JSON.stringify({ error: `Scale must be between ${MIN_SCALE} and ${MAX_SCALE}` }),
@@ -365,36 +332,30 @@ serve(async (req) => {
       );
     }
 
-    console.log(`📥 Received image (${isBinary ? 'binary' : 'base64'}) for ${scale}x upscaling`);
+    console.log(`📥 Received image for ${scale}x upscaling`);
+    
+    // Decode base64 to Uint8Array
+    const binaryString = atob(imageBase64);
+    const inputBytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      inputBytes[i] = binaryString.charCodeAt(i);
+    }
+    
     console.log(`📊 Input PNG size: ${(inputBytes.length / 1024).toFixed(1)}KB`);
-
+    
+    // Decode PNG
     const decoded = await decodePNG(inputBytes);
     console.log(`📐 Input dimensions: ${decoded.width}x${decoded.height}`);
-
+    
+    // Upscale with Nearest Neighbor
     const upscaled = upscaleNearestNeighbor(decoded.data, decoded.width, decoded.height, scale);
     console.log(`📐 Output dimensions: ${upscaled.width}x${upscaled.height}`);
-
+    
+    // Encode back to PNG
     const outputPng = await encodePNG(upscaled.data, upscaled.width, upscaled.height);
     console.log(`📊 Output PNG size: ${(outputPng.length / 1024).toFixed(1)}KB`);
-
-    const elapsed = Date.now() - startTime;
-    console.log(`✅ Upscale completed in ${elapsed}ms for user ${user.id}`);
-
-    if (acceptBinary) {
-      return new Response(outputPng, {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'image/png',
-          'X-Original-Width': String(decoded.width),
-          'X-Original-Height': String(decoded.height),
-          'X-Upscaled-Width': String(upscaled.width),
-          'X-Upscaled-Height': String(upscaled.height),
-          'X-Processing-Time-Ms': String(elapsed),
-        },
-      });
-    }
-
-    // Legacy JSON response (base64)
+    
+    // Convert to base64
     let outputBase64 = '';
     const chunkSize = 32768;
     for (let i = 0; i < outputPng.length; i += chunkSize) {
@@ -402,9 +363,12 @@ serve(async (req) => {
       outputBase64 += String.fromCharCode(...chunk);
     }
     outputBase64 = btoa(outputBase64);
-
+    
+    const elapsed = Date.now() - startTime;
+    console.log(`✅ Upscale completed in ${elapsed}ms for user ${user.id}`);
+    
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
         upscaledImage: outputBase64,
         originalSize: { width: decoded.width, height: decoded.height },
         upscaledSize: { width: upscaled.width, height: upscaled.height },
