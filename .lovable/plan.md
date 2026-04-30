@@ -1,62 +1,55 @@
+## Problema confirmado
 
+Arquivo TikTok (`Envio-66625575...txt`):
+- **28 blocos ZPL** únicos (1× `^XA` cada — não 2× como Shopee/ML)
+- Usa `^PQ<n>` para repetir a etiqueta N vezes (ex: `^PQ15`, `^PQ28`)
+- Soma real: **171 etiquetas**
+- Sem imagens embutidas (`^GFA` = 0)
 
-## Problema identificado
-
-O arquivo do TikTok (`Envio-66625575-Etiquetas-de-produtos.txt`) tem **uma estrutura diferente da esperada**:
-
-**Estrutura do arquivo:**
-- Apenas **28 blocos `^XA...^XZ`** (etiquetas únicas)
-- Mas usa o comando **`^PQ<n>`** para indicar que cada etiqueta deve ser **impressa N vezes** (quantidade do pedido)
-- Soma total real: **171 etiquetas** (ex: `^PQ15`, `^PQ28`, `^PQ20`, etc)
-- **Sem imagens embutidas** (`^GFA/^GFB` = 0)
-
-**Por que dá erro:**
-1. O `splitZPLIntoBlocks` retorna **28 blocos**.
-2. O contador faz `Math.ceil(28 / 2) = 14` → conta **14 etiquetas erradas** (a divisão por 2 assume que cada etiqueta tem 2 `^XA`, o que vale para Shopee/ML mas **não para TikTok**).
-3. Mais grave: ao enviar para a Labelary, o pipeline **ignora os `^PQ`** — o usuário esperava 171 etiquetas e receberia apenas 28 (ou 14 contadas).
-4. Dependendo de como a Labelary interpreta os `^PQ` em modo batch, pode retornar erro HTTP ou PDF inconsistente, causando a falha que você está vendo.
-
-**Causa raiz:** o sistema assume que todo arquivo ZPL segue o padrão Shopee/ML (2× `^XA` por etiqueta, sem `^PQ`). Arquivos do TikTok seguem outro padrão (1× `^XA` + `^PQ<n>`).
+**Bugs no código atual:**
+1. `splitZPLIntoBlocks` retorna 28 blocos brutos.
+2. `countZplLabels` faz `Math.ceil(28/2) = 14` → contagem errada.
+3. `^PQ` é **completamente ignorado** no código (apesar da memória dizer o contrário — memória está desatualizada).
+4. A Labelary recebe 28 blocos e respeita o `^PQ`, mas o backend conta/processa errado, causando inconsistência e o erro que você vê.
 
 ---
 
 ## Plano de correção
 
-### 1. Detectar formato do arquivo automaticamente em `src/utils/zplUtils.ts`
-Criar uma função `detectZplFormat(zpl)` que retorna:
-- `'tiktok'` quando há `^PQ` com valores > 1 e o número de `^XA` é "ímpar/sem duplicação"
-- `'shopee'` (padrão atual) caso contrário
-
-### 2. Expandir blocos `^PQ` em `splitZPLIntoBlocks` (ou nova função `expandZplBlocks`)
-Para cada bloco com `^PQ<n>,...`:
-- Ler o `n` (quantidade)
-- Substituir por `^PQ1` (para não duplicar no servidor)
+### 1. `src/utils/pdfUtils.ts` — expandir `^PQ` ao dividir blocos
+Modificar `splitZPLIntoBlocks` para:
+- Após split por `^XZ`, ler o `^PQ<n>,...` de cada bloco
+- Substituir `^PQ<n>` por `^PQ1` no bloco
 - Replicar o bloco `n` vezes no array final
 
-Assim, 28 blocos com `^PQ` somando 171 viram **171 blocos individuais** prontos para a Labelary.
+Resultado: 28 blocos → 171 blocos individuais.
 
-### 3. Ajustar contagem em `countZplLabels` / `parseZplWithCount`
-- Formato **TikTok** → `labelCount = soma dos ^PQ` (sem dividir por 2)
-- Formato **Shopee** → mantém `Math.ceil(blocks.length / 2)` (comportamento atual)
+### 2. `src/utils/zplUtils.ts` — detectar formato e contar corretamente
+Criar `detectZplFormat(zpl)`:
+- **TikTok**: existe pelo menos um `^PQ<n>` com `n > 1`, OU número de `^XA` por etiqueta = 1
+- **Shopee/ML**: padrão atual (2× `^XA` por etiqueta)
 
-### 4. Atualizar memória `Label Counting Logic`
-Documentar o novo suporte ao formato TikTok com `^PQ`.
+Ajustar `countZplLabels` / `parseZplWithCount`:
+- TikTok → soma de todos os `^PQ` (ou `length` dos blocos já expandidos)
+- Shopee → mantém `Math.ceil(blocks.length / 2)` (sem regressão)
 
-### 5. Aplicar a mesma lógica de expansão também no fluxo HD/A4
-Os hooks `useHdConversion` e similares usam `parseLabelsFromZpl` — usarão automaticamente os blocos expandidos.
+### 3. Garantir compatibilidade nos pipelines
+- `useZplApiConversion` (Standard), `useHdConversion`, A4 — todos consomem `parseZplBlocks`/`splitZPLIntoBlocks`, então herdam a expansão automaticamente.
+- A detecção de imagens pesadas (`^GFA/^GFB`) e o batch dinâmico continuam funcionando.
+
+### 4. Atualizar memória
+Atualizar `mem://quality/centralized-label-counting-logic` para refletir a implementação real (antes estava só descrita, agora estará no código).
 
 ---
 
-## Arquivos a alterar
-- `src/utils/zplUtils.ts` — detecção de formato + contagem correta
-- `src/utils/pdfUtils.ts` — função `splitZPLIntoBlocks` passa a expandir `^PQ`
-- `mem://quality/centralized-label-counting-logic` — documentar suporte TikTok
+## Arquivos alterados
+- `src/utils/pdfUtils.ts` — expansão `^PQ` em `splitZPLIntoBlocks`
+- `src/utils/zplUtils.ts` — detecção de formato + contagem TikTok
+- `mem://quality/centralized-label-counting-logic` — atualizar descrição
 
 ## Resultado esperado
-Ao subir o arquivo do TikTok:
-- Contador exibirá **171 etiquetas** (correto)
-- A conversão gerará um PDF com **171 etiquetas individuais**
-- Sem erro HTTP da Labelary
+- Arquivo TikTok exibe **171 etiquetas** corretamente no contador
+- Conversão Standard/HD/A4 gera PDF com 171 etiquetas individuais
+- Arquivos Shopee/ML continuam funcionando como antes (sem regressão)
 
-Posso aplicar essa correção?
-
+Posso aplicar?
