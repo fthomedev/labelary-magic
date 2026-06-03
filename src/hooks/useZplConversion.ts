@@ -9,6 +9,7 @@ import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processi
 import { calculateProgress } from '@/hooks/conversion/useProgressCalculator';
 import { parseZplWithCount } from '@/utils/zplUtils';
 import { LabelSize, DEFAULT_LABEL_SIZE } from '@/types/labelSize';
+import { pairUpPdfs } from '@/utils/pdfTwoColumn';
 
 export interface ProcessingRecord {
   id: string;
@@ -53,7 +54,7 @@ export const useZplConversion = () => {
     resetPdfState
   } = usePdfOperations();
 
-  const convertToPDF = async (zplContent: string, useOptimizedTiming: boolean = true, labelSize: LabelSize = DEFAULT_LABEL_SIZE) => {
+  const convertToPDF = async (zplContent: string, useOptimizedTiming: boolean = true, labelSize: LabelSize = DEFAULT_LABEL_SIZE, twoColumn: boolean = false) => {
     if (!zplContent) return;
     
     const conversionStartTime = Date.now();
@@ -95,9 +96,19 @@ export const useZplConversion = () => {
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
 
+      // 2-column post-processing: pair 40×25mm labels into 85×25mm pages.
+      let finalPdfs = pdfs;
+      if (twoColumn && pdfs.length > 0) {
+        console.log(`📐 2-column mode: pairing ${pdfs.length} PDF batches into 85×25mm pages...`);
+        const pairStart = Date.now();
+        const paired = await pairUpPdfs(pdfs);
+        finalPdfs = [paired];
+        console.log(`✅ 2-column pairing done in ${Date.now() - pairStart}ms (${paired.size} bytes)`);
+      }
+
       try {
         updateProgress({ percentage: calculateProgress('standard', 'organizing', 0), stage: 'organizing' });
-        const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, (p) => {
+        const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(finalPdfs, (p) => {
           // p is 0-100 within the uploading stage
           const percentage = calculateProgress('standard', 'uploading', p);
           updateProgress({ percentage, stage: 'uploading' });
