@@ -6,6 +6,7 @@ import { PreviewHeader } from './preview/PreviewHeader';
 import { countLabels } from './preview/ZplLabelCounter';
 import { FormatSelector, PrintFormat } from './format/FormatSelector';
 import { LabelSizeSelector } from './format/LabelSizeSelector';
+import { TwoColumnToggle } from './format/TwoColumnToggle';
 import { LabelSize } from '@/types/labelSize';
 
 interface ZPLPreviewProps {
@@ -19,6 +20,8 @@ interface ZPLPreviewProps {
   onFormatChange: (format: PrintFormat) => void;
   labelSize: LabelSize;
   onLabelSizeChange: (size: LabelSize) => void;
+  twoColumn: boolean;
+  onTwoColumnChange: (enabled: boolean) => void;
 }
 
 export function ZPLPreview({ 
@@ -32,6 +35,8 @@ export function ZPLPreview({
   onFormatChange,
   labelSize,
   onLabelSizeChange,
+  twoColumn,
+  onTwoColumnChange,
 }: ZPLPreviewProps) {
   const isMobile = useIsMobile();
   const totalLabels = countLabels(content);
@@ -53,6 +58,12 @@ export function ZPLPreview({
               onFormatChange={onFormatChange}
             />
           </div>
+
+          {selectedFormat === 'standard' && (
+            <div className="border-t pt-3">
+              <TwoColumnToggle enabled={twoColumn} onChange={onTwoColumnChange} />
+            </div>
+          )}
 
           {/* Seletor de tamanho oculto temporariamente — Labelary não escala conteúdo do ZPL.
               Retomar quando a escala via pdf-lib/jsPDF (com letterbox) estiver implementada. */}
