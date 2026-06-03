@@ -96,6 +96,16 @@ export const useZplConversion = () => {
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
 
+      // 2-column post-processing: pair 40×25mm labels into 85×25mm pages.
+      let finalPdfs = pdfs;
+      if (twoColumn && pdfs.length > 0) {
+        console.log(`📐 2-column mode: pairing ${pdfs.length} PDF batches into 85×25mm pages...`);
+        const pairStart = Date.now();
+        const paired = await pairUpPdfs(pdfs);
+        finalPdfs = [paired];
+        console.log(`✅ 2-column pairing done in ${Date.now() - pairStart}ms (${paired.size} bytes)`);
+      }
+
       try {
         updateProgress({ percentage: calculateProgress('standard', 'organizing', 0), stage: 'organizing' });
         const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, (p) => {
