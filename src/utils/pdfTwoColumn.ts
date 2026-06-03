@@ -75,5 +75,5 @@ export async function pairUpPdfs(pdfBlobs: Blob[]): Promise<Blob> {
   }
 
   const bytes = await out.save();
-  return new Blob([bytes], { type: 'application/pdf' });
+  return new Blob([bytes as BlobPart], { type: 'application/pdf' });
 }
