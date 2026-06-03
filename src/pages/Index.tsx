@@ -27,6 +27,7 @@ const Index = () => {
   const [fileCount, setFileCount] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [selectedFormat, setSelectedFormat] = useState<PrintFormat>('standard');
+  const [twoColumn, setTwoColumn] = useState<boolean>(false);
   const [fileUploadKey, setFileUploadKey] = useState(0);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const { t } = useTranslation();
@@ -119,7 +120,9 @@ const Index = () => {
       console.log(`🔧 DEBUG: Calling convertToHdPDF with size ${labelSize.widthCm}×${labelSize.heightCm}cm`);
       await convertToHdPDF(zplContent, labelSize);
     } else {
-      await convertToPDF(zplContent, true, labelSize);
+      // Two-column mode forces 40×25mm individual labels (paired in PDF post-processing).
+      const effectiveSize = twoColumn ? { widthCm: 4, heightCm: 2.5 } : labelSize;
+      await convertToPDF(zplContent, true, effectiveSize, twoColumn);
     }
   };
 
@@ -231,6 +234,8 @@ const Index = () => {
                         onFormatChange={handleFormatChange}
                         labelSize={labelSize}
                         onLabelSizeChange={setLabelSize}
+                        twoColumn={twoColumn}
+                        onTwoColumnChange={setTwoColumn}
                       />
                     </div>
                   </div>

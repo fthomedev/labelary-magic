@@ -9,6 +9,7 @@ import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processi
 import { calculateProgress } from '@/hooks/conversion/useProgressCalculator';
 import { parseZplWithCount } from '@/utils/zplUtils';
 import { LabelSize, DEFAULT_LABEL_SIZE } from '@/types/labelSize';
+import { pairUpPdfs } from '@/utils/pdfTwoColumn';
 
 export interface ProcessingRecord {
   id: string;
@@ -53,7 +54,7 @@ export const useZplConversion = () => {
     resetPdfState
   } = usePdfOperations();
 
-  const convertToPDF = async (zplContent: string, useOptimizedTiming: boolean = true, labelSize: LabelSize = DEFAULT_LABEL_SIZE) => {
+  const convertToPDF = async (zplContent: string, useOptimizedTiming: boolean = true, labelSize: LabelSize = DEFAULT_LABEL_SIZE, twoColumn: boolean = false) => {
     if (!zplContent) return;
     
     const conversionStartTime = Date.now();
