@@ -245,6 +245,8 @@ const translations = {
   standardFormatDescription: 'Individual labels in sequence',
   hdFormatWarning: 'Note: Sharpness+ is slower',
   hdFormatWarningMessage: 'Sharpness+ mode uses AI to maximize the sharpness of each label. This process may take longer than standard mode.',
+  twoColumnToggle: '2 columns (40×25mm)',
+  twoColumnHint: 'For 40×25mm Mercado Livre labels. Outputs an 85×25mm PDF with 2 labels side by side (5mm gap).',
 
   // Label size
   labelSize: 'Label size',

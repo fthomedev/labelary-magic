@@ -108,7 +108,7 @@ export const useZplConversion = () => {
 
       try {
         updateProgress({ percentage: calculateProgress('standard', 'organizing', 0), stage: 'organizing' });
-        const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(pdfs, (p) => {
+        const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(finalPdfs, (p) => {
           // p is 0-100 within the uploading stage
           const percentage = calculateProgress('standard', 'uploading', p);
           updateProgress({ percentage, stage: 'uploading' });

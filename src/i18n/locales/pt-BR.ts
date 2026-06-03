@@ -245,6 +245,8 @@ const translations = {
   standardFormatDescription: 'Etiquetas individuais em sequência',
   hdFormatWarning: 'Atenção: Nitidez+ é mais lento',
   hdFormatWarningMessage: 'O modo Nitidez+ utiliza IA para maximizar a nitidez de cada etiqueta. Este processo pode levar mais tempo que o modo padrão.',
+  twoColumnToggle: '2 colunas (40×25mm)',
+  twoColumnHint: 'Para etiquetas 40×25mm do Mercado Livre. Gera PDF 85×25mm com 2 etiquetas lado a lado (gap de 5mm).',
 
   // Tamanho da etiqueta
   labelSize: 'Tamanho da etiqueta',
