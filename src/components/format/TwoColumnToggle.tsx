@@ -13,12 +13,12 @@ export function TwoColumnToggle({ enabled, onChange }: TwoColumnToggleProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="rounded-lg border border-border bg-background/50 p-3 max-w-md mx-auto">
-      <div className="flex items-center gap-3">
-        <Columns2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+    <div className="w-full rounded-lg border border-border bg-background/50 p-3">
+      <div className="flex w-full items-center gap-3">
+        <Columns2 className="h-4 w-4 shrink-0 text-muted-foreground" />
         <Label
           htmlFor="two-column-toggle"
-          className="flex-1 text-sm font-medium text-foreground cursor-pointer"
+          className="min-w-0 flex-1 text-sm font-medium text-foreground cursor-pointer"
         >
           {t('twoColumnToggle')}
         </Label>
@@ -26,10 +26,10 @@ export function TwoColumnToggle({ enabled, onChange }: TwoColumnToggleProps) {
           id="two-column-toggle"
           checked={enabled}
           onCheckedChange={onChange}
-          className="flex-shrink-0"
+          className="shrink-0"
         />
       </div>
-      <p className="text-xs text-muted-foreground mt-1.5 pl-7">
+      <p className="mt-1.5 pl-7 text-xs text-muted-foreground">
         {t('twoColumnHint')}
       </p>
     </div>
