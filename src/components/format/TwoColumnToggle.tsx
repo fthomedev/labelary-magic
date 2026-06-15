@@ -13,27 +13,25 @@ export function TwoColumnToggle({ enabled, onChange }: TwoColumnToggleProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="box-border w-full max-w-full rounded-lg border border-border bg-background/50 px-4 py-3">
-      <div className="flex w-full min-w-0 items-start gap-3">
-        <Checkbox
-          id="two-column-toggle"
-          checked={enabled}
-          onCheckedChange={(v) => onChange(v === true)}
-          className="mt-0.5 shrink-0"
-        />
-        <div className="min-w-0 flex-1">
-          <Label
-            htmlFor="two-column-toggle"
-            className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer"
-          >
-            <Columns2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            {t('twoColumnToggle')}
-          </Label>
-          <p className="mt-1 text-xs leading-snug text-muted-foreground">
-            {t('twoColumnHint')}
-          </p>
+    <label
+      htmlFor="two-column-toggle"
+      className="box-border flex w-full max-w-full cursor-pointer items-start gap-3 rounded-lg border border-border bg-background/50 px-3 py-3 sm:px-4"
+    >
+      <Checkbox
+        id="two-column-toggle"
+        checked={enabled}
+        onCheckedChange={(v) => onChange(v === true)}
+        className="mt-0.5 h-4 w-4 shrink-0"
+      />
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Columns2 className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="min-w-0 break-words">{t('twoColumnToggle')}</span>
         </div>
+        <p className="text-xs leading-snug text-muted-foreground break-words">
+          {t('twoColumnHint')}
+        </p>
       </div>
-    </div>
+    </label>
   );
 }
