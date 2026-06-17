@@ -1,40 +1,75 @@
-## Render HD diretamente a 24 dpmm no Labelary (eliminar upscale server-side)
+## Objetivo
 
-### O que muda
+Suportar etiquetas 40×25mm do Mercado Livre impressas em **2 colunas por página** (página final 85×25mm = 40 + 5mm de gap + 40). Cada etiqueta original (40×25) é renderizada individualmente pela Labelary e depois pareada no PDF via `jsPDF`.
 
-**`src/hooks/conversion/useHdImageConversion.ts`**
-- Trocar `const dpmm = '8dpmm'` por `'24dpmm'`.
-- Remover importação e chamada de `useServerUpscaler` — o PNG já volta nítido do Labelary.
-- Remover o estágio `upscaling` do progresso: o estágio `converting` passa a ocupar 5–70%, depois vai direto para `organizing`.
-- Atualizar logs (`"24dpmm native HD render"` em vez de `"8dpmm + 2x upscale"`).
+## UX
 
-**`src/hooks/conversion/useProgressCalculator.ts`**
-- Ajustar `PROGRESS_RANGES.hd`: `converting` 5→70 (igual ao standard); manter `upscaling` apenas como entrada legada (`70→70`, no-op) para não quebrar outros chamadores.
-- Atualizar comentário descrevendo o novo fluxo HD.
+No `ZPLPreview`, quando o formato selecionado for **Padrão**, exibir um toggle `2 colunas (40×25mm — Mercado Livre)`. Quando ligado:
 
-### O que NÃO muda
+- O seletor de tamanho fica fixo em 40×25mm (já está oculto hoje, então é só forçar internamente).
+- O PDF final sai com páginas 85×25mm e 2 etiquetas lado a lado.
+- Se o total for ímpar, a última página fica com 1 etiqueta na coluna esquerda e a direita em branco.
 
-- A edge function `upscale-image` permanece deployada como legado (não removida nesta etapa). Pode ser descontinuada depois.
-- `useServerUpscaler` continua existindo (não usado pelo fluxo HD principal).
-- Comportamento de retries, semáforo de concorrência, validação de etiquetas, geração de PDF e split por páginas individuais permanecem idênticos.
-- Memória `Nitidez+` continua válida: o formato segue gerando PNGs individuais em alta resolução — apenas a fonte da resolução muda (Labelary nativo em vez de NN 2x).
+O toggle não aparece nos formatos Nitidez+ nem A4 (escopo desta entrega).
 
-### Por que 24 dpmm
+## Fluxo técnico
 
-Labelary aceita `6/8/12/24 dpmm`. O fluxo atual (8 dpmm + NN 2x) produz a mesma quantidade de pixels de uma render a 16 dpmm — mas com pixels duplicados (Nearest Neighbor não cria informação). 24 dpmm é a próxima opção nativa e renderiza vetor→raster direto, então:
+```text
+ZPL → splitZPLIntoBlocks  (já existente, já expande ^PQ)
+     → Labelary POST 3.94"×0.98" PDF, 1 etiqueta por request/batch
+     → resultado: N PDFs de 40×25mm, 1 página cada
+     → NOVO: pairUpPdfs() usando pdf-lib
+         • cria página 85×25mm
+         • embute par i / i+1 em x=0 e x=45mm
+     → PDF final 85×25mm com ceil(N/2) páginas
+```
 
-- Bordas mais limpas em códigos de barras e textos pequenos (qualidade real, não duplicação).
-- Elimina 1 request por etiqueta para a edge function.
-- Elimina decode/encode PNG em JS puro na edge.
-- Elimina o overhead base64↔JSON em ambos os sentidos.
+Diferente do fluxo HD (que usa PNGs e `jsPDF.addImage`), aqui as etiquetas vêm da Labelary já como **PDF vetorial**, então usamos `pdf-lib` (`embedPdf` + `drawPage`) para preservar nitidez. `pdf-lib` já está disponível no projeto via dependências de PDF.
 
-### Trade-offs conhecidos
+## Arquivos
 
-- PNGs do Labelary ficam maiores em bytes (~2–4×) por terem mais pixels reais. Isso pode aumentar o tamanho final do PDF; o impacto cabe dentro dos limites atuais de split (45 MB), mas vamos monitorar.
-- Caso o Labelary responda mais devagar a 24 dpmm, a percepção de tempo total ainda deve ser melhor por eliminar 1 round-trip + 1 estágio de CPU.
+**Novos**
+- `src/utils/pdfTwoColumn.ts` — função `pairUpPdfs(pdfBlobs: Blob[]): Promise<Blob>` que monta o PDF 85×25mm com `pdf-lib`.
 
-### Validação após mudança
+**Editados**
+- `src/components/ZPLPreview.tsx` — adicionar toggle "2 colunas" abaixo do `FormatSelector` quando `selectedFormat === 'standard'`.
+- `src/components/format/FormatSelector.tsx` ou novo `TwoColumnToggle.tsx` — UI do switch.
+- `src/hooks/useZplConversion.ts` (ou onde o pipeline Padrão monta o PDF final) — quando `twoColumn` está ligado:
+  - Forçar `labelSize = { widthCm: 4, heightCm: 2.5 }`.
+  - Forçar `labelsPerBatch = 1` no `useZplApiConversion` (cada PDF retornado precisa ter exatamente 1 etiqueta para pareamento determinístico).
+  - Após receber os blobs, chamar `pairUpPdfs()` em vez da concatenação normal.
+- `src/pages/Index.tsx` — propagar o estado `twoColumn` até o hook de conversão.
+- `src/i18n/locales/pt-BR.ts` e `en.ts` — strings `twoColumnToggle`, `twoColumnHint`.
 
-1. Conferir build.
-2. Rodar uma conversão HD real no preview e verificar nos logs do console: `24dpmm`, ausência de logs `SERVER UPSCALING`, e tempo total reduzido.
-3. Abrir o PDF gerado e confirmar nitidez (códigos de barras e textos pequenos).
+## Detalhes de implementação
+
+**`pairUpPdfs` (pdf-lib):**
+```ts
+const out = await PDFDocument.create();
+const pageW = mm(85), pageH = mm(25), labelW = mm(40), gap = mm(5);
+for (let i = 0; i < blobs.length; i += 2) {
+  const page = out.addPage([pageW, pageH]);
+  const leftSrc = await PDFDocument.load(await blobs[i].arrayBuffer());
+  const [left] = await out.embedPdf(leftSrc, [0]);
+  page.drawPage(left, { x: 0, y: 0, width: labelW, height: pageH });
+  if (blobs[i + 1]) {
+    const rightSrc = await PDFDocument.load(await blobs[i + 1].arrayBuffer());
+    const [right] = await out.embedPdf(rightSrc, [0]);
+    page.drawPage(right, { x: labelW + gap, y: 0, width: labelW, height: pageH });
+  }
+}
+return new Blob([await out.save()], { type: 'application/pdf' });
+```
+
+**Batch=1 obrigatório no modo 2 colunas:** se a Labelary retornar várias etiquetas em um PDF (uma por página), o pareamento por índice quebra. Forçar 1 etiqueta por request garante alinhamento determinístico — o custo é mais requests, mas mantemos o controle de paralelismo/retry que já existe em `useZplApiConversion`.
+
+## Validação
+
+- Arquivo 2 etiquetas → PDF 1 página com 2 etiquetas lado a lado.
+- Arquivo 1101 etiquetas (com `^PQ`) → 551 páginas; última página com etiqueta só na esquerda.
+- Arquivos Shopee/ML 10×15 sem o toggle → comportamento atual inalterado.
+
+## Fora de escopo
+
+- HD (Nitidez+) e A4 com 2 colunas — pode entrar em uma próxima iteração se o usuário pedir.
+- Suporte a tamanhos custom em 2 colunas (por enquanto só 40×25 fixo).

@@ -1,9 +1,9 @@
 import { useZplLabelProcessor } from './useZplLabelProcessor';
 import { useZplValidator } from './useZplValidator';
+import { useServerUpscaler } from './useServerUpscaler';
 import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 import { calculateProgress } from './useProgressCalculator';
 import { LabelSize, DEFAULT_LABEL_SIZE, buildLabelarySize } from '@/types/labelSize';
-
 
 // Semaphore for controlling concurrent requests
 class Semaphore {
@@ -35,6 +35,7 @@ class Semaphore {
 export const useHdImageConversion = () => {
   const { splitZplIntoLabels } = useZplLabelProcessor();
   const { filterValidLabels } = useZplValidator();
+  const { upscaleImages } = useServerUpscaler();
 
   const convertZplToHdImages = async (
     labels: string[],
@@ -42,7 +43,7 @@ export const useHdImageConversion = () => {
     config: ProcessingConfig = DEFAULT_CONFIG,
     labelSize: LabelSize = DEFAULT_LABEL_SIZE
   ): Promise<Blob[]> => {
-    console.log(`\n🔧 convertZplToHdImages: HD mode (native 24dpmm render)`);
+    console.log(`\n🔧 convertZplToHdImages: HD mode (with upscaling)`);
 
     const validLabels = filterValidLabels(labels);
 
@@ -50,12 +51,11 @@ export const useHdImageConversion = () => {
       throw new Error('Nenhuma etiqueta válida encontrada para processamento');
     }
 
-    const dpmm = '24dpmm';
+    const dpmm = '8dpmm';
     const labelarySize = buildLabelarySize(labelSize);
     const labelaryUrl = `https://api.labelary.com/v1/printers/${dpmm}/labels/${labelarySize}/0/`;
-    console.log(`📊 Using Labelary API at ${dpmm} (${labelSize.widthCm}×${labelSize.heightCm} cm) — native HD, no post-upscale`);
+    console.log(`📊 Using Labelary API at ${dpmm} (${labelSize.widthCm}×${labelSize.heightCm} cm), then 2x server upscale`);
     console.log(`📐 Labelary URL (HD PNG): ${labelaryUrl}`);
-
 
     const MAX_CONCURRENT = 5;
     const semaphore = new Semaphore(MAX_CONCURRENT);
@@ -170,8 +170,29 @@ export const useHdImageConversion = () => {
     }
     console.log(`=============================================\n`);
 
-    // HD is now rendered natively at 24dpmm — no server upscaling step needed.
-    const finalImages = pngImages;
+    // Server-side upscaling with Nearest Neighbor for HD mode
+    let finalImages = pngImages;
+
+    if (pngImages.length > 0) {
+      console.log(`\n========== SERVER UPSCALING START ==========`);
+      console.log(`🔄 Upscaling ${pngImages.length} images at 2x with Nearest Neighbor`);
+      const upscaleStartTime = Date.now();
+
+      try {
+        finalImages = await upscaleImages(pngImages, 2, (current, total) => {
+          const stageProgress = (current / total) * 100;
+          const overallProgress = calculateProgress('hd', 'upscaling', stageProgress);
+          onProgress(overallProgress, current);
+        });
+
+        const upscaleElapsed = ((Date.now() - upscaleStartTime) / 1000).toFixed(1);
+        console.log(`✅ Server upscaling completed in ${upscaleElapsed}s`);
+        console.log(`=============================================\n`);
+      } catch (error) {
+        console.error('❌ Server upscaling failed, using original images:', error);
+        finalImages = pngImages;
+      }
+    }
 
     const organizingStart = calculateProgress('hd', 'organizing', 0);
     onProgress(organizingStart);
@@ -187,7 +208,6 @@ export const useHdImageConversion = () => {
 
     return finalImages;
   };
-
 
   const parseLabelsFromZpl = (zplContent: string) => {
     console.log('🔍 Parsing ZPL content for HD processing...');

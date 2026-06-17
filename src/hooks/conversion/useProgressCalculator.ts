@@ -18,28 +18,26 @@ type ProgressRanges = Record<ProgressStage, ProgressRange>;
  * Each stage has a start and end percentage.
  * 
  * Standard: parsing (0-5) → converting (5-70) → organizing (70-80) → uploading (80-95) → complete (100)
- * HD: parsing (0-5) → converting (5-70) → organizing (70-80) → uploading (80-95) → complete (100)
- *      (HD renders natively at 24dpmm via Labelary — no separate upscaling stage)
+ * HD: parsing (0-5) → converting (5-45) → upscaling (45-70) → organizing (70-80) → uploading (80-95) → complete (100)
  */
 const PROGRESS_RANGES: Record<ConversionMode, ProgressRanges> = {
   standard: {
     parsing: { start: 0, end: 5 },
     converting: { start: 5, end: 70 },
-    upscaling: { start: 70, end: 70 }, // Not used in standard
+    upscaling: { start: 70, end: 70 }, // Not used in standard, same as converting end
     organizing: { start: 70, end: 80 },
     uploading: { start: 80, end: 95 },
     complete: { start: 100, end: 100 }
   },
   hd: {
     parsing: { start: 0, end: 5 },
-    converting: { start: 5, end: 70 },
-    upscaling: { start: 70, end: 70 }, // Deprecated: HD now renders directly at 24dpmm
+    converting: { start: 5, end: 45 },
+    upscaling: { start: 45, end: 70 },
     organizing: { start: 70, end: 80 },
     uploading: { start: 80, end: 95 },
     complete: { start: 100, end: 100 }
   }
 };
-
 
 /**
  * Calculate overall progress percentage based on mode, stage, and stage progress.
