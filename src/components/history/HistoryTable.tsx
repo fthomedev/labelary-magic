@@ -86,7 +86,7 @@ export function HistoryTable({
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
             {showCheckbox && (
-              <TableHead className="w-8 py-1">
+              <TableHead className="w-10 py-1 pl-3 bg-primary/5 border-r border-primary/20">
                 <Checkbox
                   checked={allSelected}
                   ref={(ref) => {
@@ -95,6 +95,8 @@ export function HistoryTable({
                     }
                   }}
                   onCheckedChange={(checked) => onSelectAll?.(checked as boolean)}
+                  className="h-[18px] w-[18px] border-2"
+                  aria-label={t('bulkActions.selectAll') || 'Select all'}
                 />
               </TableHead>
             )}
