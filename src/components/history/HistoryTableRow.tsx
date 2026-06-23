@@ -46,7 +46,7 @@ export function HistoryTableRow({
   const processingTimeDisplay = record.processingTime ? formatProcessingTime(record.processingTime) : null;
 
   return (
-    <TableRow className={`hover:bg-accent/30 transition-colors ${isSelected ? 'bg-accent/40' : ''}`}>
+    <TableRow className={`hover:bg-accent/30 transition-colors ${isSelected ? 'bg-primary/10 border-l-2 border-l-primary' : ''}`}>
       {/* Checkbox column */}
       {showCheckbox && (
         <TableCell className="py-2 w-8">
