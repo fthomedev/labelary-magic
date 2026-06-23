@@ -1,75 +1,64 @@
 ## Objetivo
-
-Suportar etiquetas 40×25mm do Mercado Livre impressas em **2 colunas por página** (página final 85×25mm = 40 + 5mm de gap + 40). Cada etiqueta original (40×25) é renderizada individualmente pela Labelary e depois pareada no PDF via `jsPDF`.
+Permitir que o usuário, na grid do histórico, selecione todos os registros da página atual ou todos os registros do histórico inteiro, e apague tudo de uma vez (registros do banco + arquivos no Storage).
 
 ## UX
 
-No `ZPLPreview`, quando o formato selecionado for **Padrão**, exibir um toggle `2 colunas (40×25mm — Mercado Livre)`. Quando ligado:
+1. **Checkbox no header** (já existe) → seleciona/deseleciona todos os registros da página atual.
+2. **Banner contextual estilo Gmail** logo abaixo do cabeçalho da tabela, aparece somente quando *todos da página* estão selecionados e há mais registros no histórico:
+   - "Os N registros desta página estão selecionados. **Selecionar todos os X registros do histórico**"
+   - Ao clicar, ativa o modo "selecionar tudo" (flag global `isAllHistorySelected`).
+   - Aparece um link "Limpar seleção" para desfazer.
+3. **BulkActionBar** (rodapé flutuante já existente) ganha:
+   - Contador inteligente: "X selecionados" ou "Todos os X registros do histórico selecionados".
+   - Botão "Excluir selecionados" abre um **novo diálogo de confirmação em massa** (`BulkDeleteConfirmDialog`) que mostra o total exato e avisa que arquivos serão removidos permanentemente.
 
-- O seletor de tamanho fica fixo em 40×25mm (já está oculto hoje, então é só forçar internamente).
-- O PDF final sai com páginas 85×25mm e 2 etiquetas lado a lado.
-- Se o total for ímpar, a última página fica com 1 etiqueta na coluna esquerda e a direita em branco.
+## Backend (migration)
 
-O toggle não aparece nos formatos Nitidez+ nem A4 (escopo desta entrega).
+Nova função RPC `delete_processing_history_bulk(record_ids uuid[], delete_all boolean DEFAULT false)`:
+- `SECURITY DEFINER`, `SET search_path = public, pg_temp`.
+- Valida `auth.uid()`.
+- Se `delete_all = true`: ignora `record_ids` e apaga **todos** os registros do usuário atual.
+- Se `delete_all = false`: apaga apenas os IDs informados que pertencem a `auth.uid()`.
+- Apaga os objetos correspondentes em `storage.objects` (bucket `pdfs`) cujo `name` esteja em `pdf_path`.
+- Retorna `json` com `{ success, deleted_count, deleted_paths[] }`.
+- `REVOKE EXECUTE ... FROM PUBLIC` e `GRANT EXECUTE ... TO authenticated`.
 
-## Fluxo técnico
+Para o storage do bucket `pngs` (que também guarda páginas), nada muda: o cleanup de PDFs/PNGs continua via `pdf_path`. Se houver `pdf_path` de PNG/ZIP, é removido normalmente.
 
-```text
-ZPL → splitZPLIntoBlocks  (já existente, já expande ^PQ)
-     → Labelary POST 3.94"×0.98" PDF, 1 etiqueta por request/batch
-     → resultado: N PDFs de 40×25mm, 1 página cada
-     → NOVO: pairUpPdfs() usando pdf-lib
-         • cria página 85×25mm
-         • embute par i / i+1 em x=0 e x=45mm
-     → PDF final 85×25mm com ceil(N/2) páginas
-```
+## Frontend
 
-Diferente do fluxo HD (que usa PNGs e `jsPDF.addImage`), aqui as etiquetas vêm da Labelary já como **PDF vetorial**, então usamos `pdf-lib` (`embedPdf` + `drawPage`) para preservar nitidez. `pdf-lib` já está disponível no projeto via dependências de PDF.
+- `useHistorySelection`: adicionar estado `isAllHistorySelected` (boolean), ações `selectAllHistory()` e ajustar `clearSelection()` para resetar a flag. `selectedCount` passa a refletir `totalRecords` quando `isAllHistorySelected`.
+- `HistoryTable`: nova prop opcional para renderizar o banner "selecionar todos os X" quando `allPageSelected && totalRecords > pageSize && !isAllHistorySelected`.
+- `BulkActionBar`: nova prop `isAllHistorySelected`, label muda de acordo; chama `onBulkDelete` sempre, parent decide rota.
+- `ProcessingHistory`:
+  - Substitui o `handleBulkDelete` atual (que abria o diálogo de delete único em loop) por:
+    1. Abre `BulkDeleteConfirmDialog`.
+    2. No confirm, chama `supabase.rpc('delete_processing_history_bulk', { record_ids, delete_all })`.
+    3. Tenta também `supabase.storage.from('pdfs').remove(deleted_paths)` como fallback caso o lado SQL não tenha permissão direta no storage.
+    4. `refreshData()` e `clearSelection()`; toast de sucesso/erro.
+- Novo componente `src/components/history/BulkDeleteConfirmDialog.tsx` (baseado no `DeleteConfirmDialog`) com mensagem clara: "Esta ação apagará permanentemente N registros e todos os arquivos associados. Não pode ser desfeita."
 
-## Arquivos
+## i18n
 
-**Novos**
-- `src/utils/pdfTwoColumn.ts` — função `pairUpPdfs(pdfBlobs: Blob[]): Promise<Blob>` que monta o PDF 85×25mm com `pdf-lib`.
+Adicionar em `pt-BR.ts` e `en.ts`:
+- `bulkActions.selectAllHistory` ("Selecionar todos os {{count}} registros do histórico")
+- `bulkActions.allHistorySelected` ("Todos os {{count}} registros estão selecionados")
+- `bulkActions.clearSelection` ("Limpar seleção")
+- `bulkActions.confirmBulkDeleteTitle` / `confirmBulkDeleteMessage`
+- `bulkActions.bulkDeleteSuccess` / `bulkDeleteError`
 
-**Editados**
-- `src/components/ZPLPreview.tsx` — adicionar toggle "2 colunas" abaixo do `FormatSelector` quando `selectedFormat === 'standard'`.
-- `src/components/format/FormatSelector.tsx` ou novo `TwoColumnToggle.tsx` — UI do switch.
-- `src/hooks/useZplConversion.ts` (ou onde o pipeline Padrão monta o PDF final) — quando `twoColumn` está ligado:
-  - Forçar `labelSize = { widthCm: 4, heightCm: 2.5 }`.
-  - Forçar `labelsPerBatch = 1` no `useZplApiConversion` (cada PDF retornado precisa ter exatamente 1 etiqueta para pareamento determinístico).
-  - Após receber os blobs, chamar `pairUpPdfs()` em vez da concatenação normal.
-- `src/pages/Index.tsx` — propagar o estado `twoColumn` até o hook de conversão.
-- `src/i18n/locales/pt-BR.ts` e `en.ts` — strings `twoColumnToggle`, `twoColumnHint`.
+## Arquivos afetados
 
-## Detalhes de implementação
+- `supabase/migrations/<new>.sql` (nova função + grants)
+- `src/hooks/history/useHistorySelection.ts`
+- `src/hooks/history/useHistoryDelete.ts` (nova função `bulkDelete`)
+- `src/hooks/useProcessingHistory.ts` (exportar nova handler)
+- `src/components/history/HistoryTable.tsx` (banner)
+- `src/components/history/BulkActionBar.tsx`
+- `src/components/history/BulkDeleteConfirmDialog.tsx` (novo)
+- `src/components/ProcessingHistory.tsx` (orquestração)
+- `src/i18n/locales/pt-BR.ts` e `en.ts`
 
-**`pairUpPdfs` (pdf-lib):**
-```ts
-const out = await PDFDocument.create();
-const pageW = mm(85), pageH = mm(25), labelW = mm(40), gap = mm(5);
-for (let i = 0; i < blobs.length; i += 2) {
-  const page = out.addPage([pageW, pageH]);
-  const leftSrc = await PDFDocument.load(await blobs[i].arrayBuffer());
-  const [left] = await out.embedPdf(leftSrc, [0]);
-  page.drawPage(left, { x: 0, y: 0, width: labelW, height: pageH });
-  if (blobs[i + 1]) {
-    const rightSrc = await PDFDocument.load(await blobs[i + 1].arrayBuffer());
-    const [right] = await out.embedPdf(rightSrc, [0]);
-    page.drawPage(right, { x: labelW + gap, y: 0, width: labelW, height: pageH });
-  }
-}
-return new Blob([await out.save()], { type: 'application/pdf' });
-```
+## Segurança
 
-**Batch=1 obrigatório no modo 2 colunas:** se a Labelary retornar várias etiquetas em um PDF (uma por página), o pareamento por índice quebra. Forçar 1 etiqueta por request garante alinhamento determinístico — o custo é mais requests, mas mantemos o controle de paralelismo/retry que já existe em `useZplApiConversion`.
-
-## Validação
-
-- Arquivo 2 etiquetas → PDF 1 página com 2 etiquetas lado a lado.
-- Arquivo 1101 etiquetas (com `^PQ`) → 551 páginas; última página com etiqueta só na esquerda.
-- Arquivos Shopee/ML 10×15 sem o toggle → comportamento atual inalterado.
-
-## Fora de escopo
-
-- HD (Nitidez+) e A4 com 2 colunas — pode entrar em uma próxima iteração se o usuário pedir.
-- Suporte a tamanhos custom em 2 colunas (por enquanto só 40×25 fixo).
+A RPC roda em `SECURITY DEFINER` mas filtra estritamente por `auth.uid()`, então o usuário só consegue apagar seus próprios registros, mesmo se manipular o array de IDs. A remoção do storage também é feita pelo path retornado do banco (já filtrado por user), evitando exclusão arbitrária.
