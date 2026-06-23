@@ -88,7 +88,7 @@ export function HistoryTable({
             {showCheckbox && (
               <TableHead className="w-8 py-1">
                 <Checkbox
-                  className="h-5 w-5"
+                  variant="header"
                   checked={allSelected}
                   ref={(ref) => {
                     if (ref) {
