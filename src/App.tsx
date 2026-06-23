@@ -88,12 +88,6 @@ const App = () => {
             }
           />
           <Route
-            path="/test-checkbox"
-            element={
-              <PageWithFooter><TestCheckbox /></PageWithFooter>
-            }
-          />
-          <Route
             path="/checkout"
             element={
               <AuthGuard>
