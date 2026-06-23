@@ -18,7 +18,6 @@ import Landing from "./pages/Landing";
 import Pricing from "./pages/Pricing";
 import Documentation from "./pages/Documentation";
 import FAQ from "./pages/FAQ";
-import TestCheckbox from "./pages/TestCheckbox";
 import { useEffect, useMemo } from "react";
 
 // Layout component to wrap pages with footer
