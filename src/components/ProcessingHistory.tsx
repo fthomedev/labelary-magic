@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, History, Heart } from 'lucide-react';
 import qrCodePix from '@/assets/qrcode-pix.png';
@@ -16,7 +16,11 @@ import { HistoryPagination } from './history/HistoryPagination';
 import { BulkActionBar } from './history/BulkActionBar';
 import { PdfViewerModal } from './history/PdfViewerModal';
 import { DeleteConfirmDialog } from './history/DeleteConfirmDialog';
+import { BulkDeleteConfirmDialog } from './history/BulkDeleteConfirmDialog';
 import { DonationButton } from './DonationButton';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
 
 
 interface ProcessingHistoryProps {
