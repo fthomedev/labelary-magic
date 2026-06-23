@@ -245,6 +245,10 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
             onSelectRecord={selectRecord}
             onSelectAll={selectAll}
             showCheckbox={!localOnly}
+            totalRecords={totalRecords}
+            isAllHistorySelected={isAllHistorySelected}
+            onSelectAllHistory={selectAllHistory}
+            onClearSelection={clearSelection}
           />
         )}
 
