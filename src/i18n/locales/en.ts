@@ -358,6 +358,14 @@ const translations = {
     downloadSelected: 'Download',
     deleteSelected: 'Delete',
     clearSelection: 'Clear selection',
+    pageSelectedPrompt: 'All {{pageCount}} records on this page are selected.',
+    selectAllHistory: 'Select all {{count}} records in history',
+    allHistorySelected: 'All {{count}} records in history are selected',
+    confirmBulkDeleteTitle: 'Bulk delete records',
+    confirmBulkDeleteMessage: 'This will permanently delete {{count}} record(s) and all associated files. This cannot be undone.',
+    confirmBulkDeleteAllMessage: 'This will permanently delete your entire history ({{count}} records) and all associated files. This cannot be undone.',
+    bulkDeleteSuccess: '{{count}} record(s) deleted successfully',
+    bulkDeleteError: 'Error deleting records',
   },
 
   // Conversion Type
