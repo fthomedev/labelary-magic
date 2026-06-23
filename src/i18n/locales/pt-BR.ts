@@ -358,6 +358,14 @@ const translations = {
     downloadSelected: 'Baixar',
     deleteSelected: 'Excluir',
     clearSelection: 'Limpar seleção',
+    pageSelectedPrompt: 'Os {{pageCount}} registros desta página estão selecionados.',
+    selectAllHistory: 'Selecionar todos os {{count}} registros do histórico',
+    allHistorySelected: 'Todos os {{count}} registros do histórico estão selecionados',
+    confirmBulkDeleteTitle: 'Excluir registros em massa',
+    confirmBulkDeleteMessage: 'Esta ação apagará permanentemente {{count}} registro(s) e todos os arquivos associados. Não pode ser desfeita.',
+    confirmBulkDeleteAllMessage: 'Esta ação apagará permanentemente todo o seu histórico ({{count}} registros) e todos os arquivos associados. Não pode ser desfeita.',
+    bulkDeleteSuccess: '{{count}} registro(s) excluído(s) com sucesso',
+    bulkDeleteError: 'Erro ao excluir registros',
   },
 
   // Conversion Type
