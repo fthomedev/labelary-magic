@@ -318,12 +318,23 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
       {!localOnly && (
         <BulkActionBar
           selectedCount={selectedCount}
+          isAllHistorySelected={isAllHistorySelected}
           onDownloadSelected={handleBulkDownload}
           onDeleteSelected={handleBulkDelete}
           onClearSelection={clearSelection}
-          isDeleting={isDeleting}
+          isDeleting={isBulkDeleting}
         />
       )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <BulkDeleteConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        onConfirm={performBulkDelete}
+        count={selectedCount}
+        isAll={isAllHistorySelected}
+        isDeleting={isBulkDeleting}
+      />
 
       {/* PDF Viewer Modal */}
       <PdfViewerModal
