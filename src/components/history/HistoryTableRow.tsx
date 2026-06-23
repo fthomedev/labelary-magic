@@ -49,10 +49,12 @@ export function HistoryTableRow({
     <TableRow className={`hover:bg-accent/30 transition-colors ${isSelected ? 'bg-accent/40' : ''}`}>
       {/* Checkbox column */}
       {showCheckbox && (
-        <TableCell className="py-2 w-8">
+        <TableCell className="py-2 w-10 pl-3 bg-primary/5 border-r border-primary/10">
           <Checkbox
             checked={isSelected}
             onCheckedChange={(checked) => onSelect?.(record.id, checked as boolean)}
+            className="h-[18px] w-[18px] border-2"
+            aria-label="Selecionar registro"
           />
         </TableCell>
       )}
