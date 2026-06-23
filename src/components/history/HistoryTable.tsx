@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import { HistoryTableRow } from './HistoryTableRow';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 
@@ -22,11 +23,15 @@ interface HistoryTableProps {
   onSelectRecord?: (id: string, selected: boolean) => void;
   onSelectAll?: (selected: boolean) => void;
   showCheckbox?: boolean;
+  totalRecords?: number;
+  isAllHistorySelected?: boolean;
+  onSelectAllHistory?: () => void;
+  onClearSelection?: () => void;
 }
 
-export function HistoryTable({ 
-  records, 
-  formatDate, 
+export function HistoryTable({
+  records,
+  formatDate,
   onDownload,
   onDelete,
   isMobile,
@@ -34,14 +39,49 @@ export function HistoryTable({
   onSelectRecord,
   onSelectAll,
   showCheckbox = false,
+  totalRecords = 0,
+  isAllHistorySelected = false,
+  onSelectAllHistory,
+  onClearSelection,
 }: HistoryTableProps) {
   const { t } = useTranslation();
-  
+
   const allSelected = records.length > 0 && records.every(r => selectedIds.has(r.id));
   const someSelected = records.some(r => selectedIds.has(r.id)) && !allSelected;
+  const hasMoreRecords = totalRecords > records.length;
+  const showBanner = showCheckbox && allSelected && hasMoreRecords;
 
   return (
     <div className="overflow-x-auto max-h-[500px]">
+      {showBanner && (
+        <div className="flex flex-wrap items-center justify-center gap-2 bg-primary/5 border-b border-primary/20 px-4 py-2 text-xs text-foreground">
+          {isAllHistorySelected ? (
+            <>
+              <span>{t('bulkActions.allHistorySelected', { count: totalRecords })}</span>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-xs"
+                onClick={() => onClearSelection?.()}
+              >
+                {t('bulkActions.clearSelection')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <span>{t('bulkActions.pageSelectedPrompt', { pageCount: records.length })}</span>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-xs font-semibold"
+                onClick={() => onSelectAllHistory?.()}
+              >
+                {t('bulkActions.selectAllHistory', { count: totalRecords })}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
       <Table className="compact-table">
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -94,3 +134,4 @@ export function HistoryTable({
     </div>
   );
 }
+
