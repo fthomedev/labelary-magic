@@ -51,6 +51,7 @@ export function HistoryTableRow({
       {showCheckbox && (
         <TableCell className="py-2 w-8">
           <Checkbox
+            className="h-5 w-5"
             checked={isSelected}
             onCheckedChange={(checked) => onSelect?.(record.id, checked as boolean)}
           />
