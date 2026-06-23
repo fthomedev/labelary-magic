@@ -24,10 +24,10 @@ const Checkbox = React.forwardRef<
     {...props}
   >
     <CheckboxPrimitive.Indicator
-      className={cn("flex items-center justify-center text-current")}
+      className={cn("group flex items-center justify-center text-current")}
     >
-      <Check className="h-4 w-4 hidden [&[data-state=checked]_&]:block" />
-      <Minus className="h-4 w-4 hidden [&[data-state=indeterminate]_&]:block" />
+      <Check className="h-4 w-4 hidden group-data-[state=checked]:block" />
+      <Minus className="h-4 w-4 hidden group-data-[state=indeterminate]:block" />
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ))
