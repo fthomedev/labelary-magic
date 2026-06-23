@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, History, Heart } from 'lucide-react';
 import qrCodePix from '@/assets/qrcode-pix.png';
@@ -16,7 +16,11 @@ import { HistoryPagination } from './history/HistoryPagination';
 import { BulkActionBar } from './history/BulkActionBar';
 import { PdfViewerModal } from './history/PdfViewerModal';
 import { DeleteConfirmDialog } from './history/DeleteConfirmDialog';
+import { BulkDeleteConfirmDialog } from './history/BulkDeleteConfirmDialog';
 import { DonationButton } from './DonationButton';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
 
 
 interface ProcessingHistoryProps {
@@ -26,6 +30,7 @@ interface ProcessingHistoryProps {
 
 export function ProcessingHistory({ records: localRecords, localOnly = false }: ProcessingHistoryProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const {
     isLoading,
     records,
@@ -56,11 +61,17 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
   const {
     selectedIds,
     selectedCount,
+    isAllHistorySelected,
     selectRecord,
     selectAll,
+    selectAllHistory,
     clearSelection,
     getSelectedRecords,
-  } = useHistorySelection(records);
+  } = useHistorySelection(records, totalRecords);
+
+  // Bulk delete state
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // Filter state
   const {
@@ -83,18 +94,55 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
   // Bulk actions handlers
   const handleBulkDownload = async () => {
     const selected = getSelectedRecords();
-    // Download each selected record
     for (const record of selected) {
       handleDownload(record);
     }
     clearSelection();
   };
 
-  const handleBulkDelete = async () => {
-    const selected = getSelectedRecords();
-    // Delete each selected record
-    for (const record of selected) {
-      handleDeleteClick(record);
+  const handleBulkDelete = () => {
+    setBulkDeleteOpen(true);
+  };
+
+  const performBulkDelete = async () => {
+    setIsBulkDeleting(true);
+    try {
+      const ids = isAllHistorySelected ? null : Array.from(selectedIds);
+      const { data, error } = await supabase.rpc('delete_processing_history_bulk', {
+        record_ids: ids,
+        delete_all: isAllHistorySelected,
+      });
+
+      if (error) throw error;
+      const result = data as { success: boolean; deleted_count: number; deleted_paths?: string[]; error?: string };
+      if (!result?.success) throw new Error(result?.error || 'Bulk delete failed');
+
+      // Best-effort storage cleanup (RPC already removed them; this is a fallback)
+      if (result.deleted_paths && result.deleted_paths.length > 0) {
+        try {
+          await supabase.storage.from('pdfs').remove(result.deleted_paths);
+        } catch (e) {
+          console.warn('Storage fallback cleanup failed:', e);
+        }
+      }
+
+      toast({
+        title: t('success') || 'Success',
+        description: t('bulkActions.bulkDeleteSuccess', { count: result.deleted_count }),
+      });
+
+      clearSelection();
+      setBulkDeleteOpen(false);
+      await refreshData();
+    } catch (err) {
+      console.error('Bulk delete error:', err);
+      toast({
+        title: t('error') || 'Error',
+        description: t('bulkActions.bulkDeleteError'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -197,6 +245,10 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
             onSelectRecord={selectRecord}
             onSelectAll={selectAll}
             showCheckbox={!localOnly}
+            totalRecords={totalRecords}
+            isAllHistorySelected={isAllHistorySelected}
+            onSelectAllHistory={selectAllHistory}
+            onClearSelection={clearSelection}
           />
         )}
 
@@ -266,12 +318,23 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
       {!localOnly && (
         <BulkActionBar
           selectedCount={selectedCount}
+          isAllHistorySelected={isAllHistorySelected}
           onDownloadSelected={handleBulkDownload}
           onDeleteSelected={handleBulkDelete}
           onClearSelection={clearSelection}
-          isDeleting={isDeleting}
+          isDeleting={isBulkDeleting}
         />
       )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <BulkDeleteConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        onConfirm={performBulkDelete}
+        count={selectedCount}
+        isAll={isAllHistorySelected}
+        isDeleting={isBulkDeleting}
+      />
 
       {/* PDF Viewer Modal */}
       <PdfViewerModal

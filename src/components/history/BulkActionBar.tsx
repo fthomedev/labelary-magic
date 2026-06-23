@@ -7,20 +7,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface BulkActionBarProps {
   selectedCount: number;
+  isAllHistorySelected?: boolean;
   onDownloadSelected: () => void;
   onDeleteSelected: () => void;
   onClearSelection: () => void;
   isDownloading?: boolean;
   isDeleting?: boolean;
+  hideDownload?: boolean;
 }
 
 export function BulkActionBar({
   selectedCount,
+  isAllHistorySelected = false,
   onDownloadSelected,
   onDeleteSelected,
   onClearSelection,
   isDownloading = false,
   isDeleting = false,
+  hideDownload = false,
 }: BulkActionBarProps) {
   const { t } = useTranslation();
 
@@ -35,21 +39,25 @@ export function BulkActionBar({
         >
           <div className="flex items-center gap-2 bg-background/95 backdrop-blur-sm border shadow-lg rounded-full px-4 py-2">
             <span className="text-sm font-medium text-foreground">
-              {t('bulkActions.selected', { count: selectedCount })}
+              {isAllHistorySelected
+                ? t('bulkActions.allHistorySelected', { count: selectedCount })
+                : t('bulkActions.selected', { count: selectedCount })}
             </span>
-            
+
             <div className="h-4 w-px bg-border mx-1" />
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-3 text-xs gap-1.5"
-              onClick={onDownloadSelected}
-              disabled={isDownloading}
-            >
-              <Download className="h-3.5 w-3.5" />
-              {t('bulkActions.downloadSelected')}
-            </Button>
+
+            {!hideDownload && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 text-xs gap-1.5"
+                onClick={onDownloadSelected}
+                disabled={isDownloading || isAllHistorySelected}
+              >
+                <Download className="h-3.5 w-3.5" />
+                {t('bulkActions.downloadSelected')}
+              </Button>
+            )}
             
             <Button
               variant="ghost"

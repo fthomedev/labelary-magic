@@ -381,6 +381,10 @@ export type Database = {
         Returns: string
       }
       delete_old_file: { Args: { record_id: string }; Returns: undefined }
+      delete_processing_history_bulk: {
+        Args: { delete_all?: boolean; record_ids?: string[] }
+        Returns: Json
+      }
       delete_processing_history_record: {
         Args: { record_id: string }
         Returns: Json
