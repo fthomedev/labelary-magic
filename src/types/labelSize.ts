@@ -6,6 +6,7 @@ export interface LabelSize {
 export interface LabelSizePreset extends LabelSize {
   id: string;
   label: string;
+  isBeta?: boolean;
 }
 
 export const LABEL_SIZE_PRESETS: LabelSizePreset[] = [
