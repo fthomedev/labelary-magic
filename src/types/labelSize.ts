@@ -12,11 +12,13 @@ export const LABEL_SIZE_PRESETS: LabelSizePreset[] = [
   { id: '10x15', label: '10 × 15 cm', widthCm: 10, heightCm: 15 },
   { id: '10x10', label: '10 × 10 cm', widthCm: 10, heightCm: 10 },
   { id: '7.5x5', label: '7,5 × 5 cm', widthCm: 7.5, heightCm: 5 },
+  { id: '6x4', label: '6 × 4 cm', widthCm: 6, heightCm: 4 },
+  { id: '4x4', label: '4 × 4 cm', widthCm: 4, heightCm: 4 },
 ];
 
 export const DEFAULT_LABEL_SIZE: LabelSize = { widthCm: 10, heightCm: 15 };
 
-export const LABEL_SIZE_MIN_CM = 2.5;
+export const LABEL_SIZE_MIN_CM = 2;
 export const LABEL_SIZE_MAX_CM = 20;
 
 export const LABEL_SIZE_STORAGE_KEY = 'zpl-label-size';
