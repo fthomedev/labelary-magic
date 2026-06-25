@@ -20,7 +20,7 @@ import { splitZPLIntoBlocks } from './pdfUtils';
  */
 export const detectZplFormat = (zplContent: string): 'tiktok' | 'shopee' => {
   // Look for ^PQ commands with quantity > 1
-  const pqMatches = zplContent.match(/\^PQ(\d+)/g) || [];
+  const pqMatches: string[] = zplContent.match(/\^PQ(\d+)/g) || [];
   const hasPqMultiplier = pqMatches.some(m => {
     const n = parseInt(m.replace('^PQ', ''), 10);
     return n > 1;

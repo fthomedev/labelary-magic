@@ -78,6 +78,9 @@ export function LabelSizeSelector({ value, onChange }: LabelSizeSelectorProps) {
       <div className="text-center flex items-center justify-center gap-1.5">
         <Ruler className="h-3.5 w-3.5 text-muted-foreground" />
         <h4 className="text-sm font-medium text-foreground">{t('labelSize')}</h4>
+        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold bg-primary/10 text-primary uppercase tracking-wide">
+          BETA
+        </span>
       </div>
 
       <div className="grid grid-cols-3 gap-2 max-w-md mx-auto">
@@ -88,13 +91,18 @@ export function LabelSizeSelector({ value, onChange }: LabelSizeSelectorProps) {
               key={preset.id}
               type="button"
               onClick={() => handlePresetClick(preset.id)}
-              className={`rounded-lg border-2 px-2 py-2 text-xs font-medium transition-all hover:border-primary/60 hover:bg-accent/50 ${
+              className={`rounded-lg border-2 px-2 py-2 text-xs font-medium transition-all hover:border-primary/60 hover:bg-accent/50 flex items-center justify-center gap-1 ${
                 isActive
                   ? 'border-primary bg-primary/5 text-primary shadow-sm'
                   : 'border-border bg-background text-foreground'
               }`}
             >
               {preset.label}
+              {preset.isBeta && (
+                <span className="inline-flex items-center rounded px-1 py-0 text-[8px] font-semibold bg-primary/15 text-primary uppercase tracking-wide">
+                  BETA
+                </span>
+              )}
             </button>
           );
         })}
