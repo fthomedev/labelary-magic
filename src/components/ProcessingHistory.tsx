@@ -276,7 +276,7 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
       )}
 
       {/* Donation Call-to-Action */}
-      {!localOnly && records && records.length > 0 && (
+      {!localOnly && (
         <div className="border-t bg-gradient-to-r from-emerald-50/50 to-green-50/50 dark:from-emerald-950/20 dark:to-green-950/20 p-4">
           <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
             <div className="flex-shrink-0 relative">
