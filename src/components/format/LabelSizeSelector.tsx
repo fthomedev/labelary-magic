@@ -80,7 +80,7 @@ export function LabelSizeSelector({ value, onChange }: LabelSizeSelectorProps) {
         <h4 className="text-sm font-medium text-foreground">{t('labelSize')}</h4>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 max-w-md mx-auto">
+      <div className="grid grid-cols-3 gap-2 max-w-md mx-auto">
         {LABEL_SIZE_PRESETS.map(preset => {
           const isActive = selectedId === preset.id;
           return (

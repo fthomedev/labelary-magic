@@ -1,22 +1,18 @@
-## Objetivo
-Tornar o checkbox de seleção das linhas do histórico mais perceptível, sem alterar o estilo das linhas.
+## Adicionar presets 6×4 cm e 4×4 cm ao seletor de tamanho de etiqueta
 
-## Alterações propostas
-1. **Aumentar contraste do checkbox não selecionado**
-   - Substituir a borda `border-primary` por `border-foreground/50` (ou `border-muted-foreground`) no estado não marcado.
-   - Manter `data-[state=checked]:bg-primary` e `data-[state=checked]:text-primary-foreground` para preservar a identidade visual do tema.
+Implementar os tamanhos solicitados no feedback como **presets de tamanho individuais** (cada etiqueta em sua própria página, mesmo fluxo dos presets atuais 10×15, 10×10 e 7,5×5).
 
-2. **Melhorar visibilidade geral do checkbox**
-   - Aumentar ligeiramente o tamanho de `h-4 w-4` para `h-5 w-5` na coluna do histórico (header e rows).
-   - Garantir que o checkbox do header (`HistoryTable.tsx`) e das linhas (`HistoryTableRow.tsx`) usem a mesma classe customizada para consistência.
+### Mudanças
 
-3. **Adicionar realce de foco**
-   - Reforçar o `focus-visible:ring-ring` para que, ao navegar por teclado, o checkbox fique evidente.
+**1. `src/types/labelSize.ts`**
+Adicionar dois presets ao array `LABEL_SIZE_PRESETS`:
+- `{ id: '6x4', label: '6 × 4 cm', widthCm: 6, heightCm: 4 }`
+- `{ id: '4x4', label: '4 × 4 cm', widthCm: 4, heightCm: 4 }`
 
-## Arquivos a alterar
-- `src/components/ui/checkbox.tsx` — ajuste do estilo base do componente para melhor contraste.
-- `src/components/history/HistoryTable.tsx` — aplica tamanho/estilo no checkbox do header.
-- `src/components/history/HistoryTableRow.tsx` — aplica tamanho/estilo no checkbox da linha.
+**2. `src/components/format/LabelSizeSelector.tsx`**
+Ajustar o grid de presets (hoje `grid-cols-4` com 3 presets + botão "Personalizado" = 4 itens). Com 5 presets + "Personalizado" = 6 itens, mudar para `grid-cols-3` para acomodar duas linhas equilibradas em mobile/desktop.
 
-## Fora de escopo
-- Não serão alterados: cores do tema, layout das linhas, comportamento de seleção/bulk delete, textos de i18n.
+### Observações técnicas
+- Os valores 6×4 e 4×4 cm (≈2,36"×1,57" e 1,57"×1,57") estão dentro do range válido (`LABEL_SIZE_MIN_CM=2.5` a `LABEL_SIZE_MAX_CM=20`), então a validação Labelary/jsPDF existente continua funcionando sem mudanças.
+- Nenhuma alteração necessária em `useLabelSize`, `ZPLPreview`, `zplUtils` ou pipeline de conversão — eles consomem `widthCm`/`heightCm` genericamente.
+- Sem mudanças no fluxo "2 colunas" (que é fixo em 40×25mm Mercado Livre).
