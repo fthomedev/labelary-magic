@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Footer } from "@/components/Footer";
 import Index from "./pages/Index";
@@ -39,6 +39,23 @@ const ScrollToTop = () => {
   return null;
 };
 
+const RecoveryRedirect = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
+    const searchParams = new URLSearchParams(location.search);
+    const isRecoveryLink = searchParams.get("type") === "recovery" || hashParams.get("type") === "recovery";
+
+    if (isRecoveryLink && location.pathname !== "/reset-password" && location.pathname !== "/auth/reset-password") {
+      navigate(`/reset-password${location.search}${location.hash}`, { replace: true });
+    }
+  }, [location.hash, location.pathname, location.search, navigate]);
+
+  return null;
+};
+
 const App = () => {
   // Create QueryClient inside the component to ensure proper React context
   const queryClient = useMemo(() => new QueryClient(), []);
@@ -49,9 +66,11 @@ const App = () => {
         <Toaster />
         <Sonner />
         <ScrollToTop />
+        <RecoveryRedirect />
         <Routes>
           <Route path="/" element={<PageWithFooter><Landing /></PageWithFooter>} />
           <Route path="/auth" element={<PageWithFooter><Auth /></PageWithFooter>} />
+          <Route path="/reset-password" element={<PageWithFooter><ResetPassword /></PageWithFooter>} />
           <Route path="/auth/reset-password" element={<PageWithFooter><ResetPassword /></PageWithFooter>} />
           <Route
             path="/app"

@@ -37,35 +37,105 @@ const ResetPassword = () => {
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
 
   useEffect(() => {
-    // Check if we have a valid recovery session
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Listen for auth state changes (recovery event)
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          setIsValidSession(true);
-        } else if (session) {
-          setIsValidSession(true);
-        }
-      });
+    let isMounted = true;
+    let fallbackTimer: number | undefined;
 
-      // If there's already a session, we can proceed
-      if (session) {
-        setIsValidSession(true);
-      } else {
-        // Give a moment for the auth state to update
-        setTimeout(() => {
-          if (isValidSession === null) {
-            setIsValidSession(false);
-          }
-        }, 2000);
-      }
-
-      return () => subscription.unsubscribe();
+    const cleanRecoveryUrl = () => {
+      window.history.replaceState({}, document.title, window.location.pathname);
     };
 
-    checkSession();
+    const setValid = () => {
+      if (!isMounted) return;
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
+      setIsValidSession(true);
+    };
+
+    const setInvalid = () => {
+      if (!isMounted) return;
+      setIsValidSession(false);
+    };
+
+    const getRecoveryParams = () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+
+      return {
+        code: searchParams.get("code"),
+        tokenHash: searchParams.get("token_hash") || hashParams.get("token_hash"),
+        type: searchParams.get("type") || hashParams.get("type"),
+        hasAccessToken: hashParams.has("access_token"),
+      };
+    };
+
+    const waitForSession = () => {
+      fallbackTimer = window.setTimeout(async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setValid();
+        } else {
+          setInvalid();
+        }
+      }, 6000);
+    };
+
+    const checkRecoverySession = async () => {
+      const { code, tokenHash, type, hasAccessToken } = getRecoveryParams();
+
+      if (tokenHash && type === "recovery") {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: "recovery",
+        });
+
+        if (!error) {
+          cleanRecoveryUrl();
+          setValid();
+          return;
+        }
+
+        console.error("Password recovery token verification failed:", error.message);
+      }
+
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+        if (!error) {
+          cleanRecoveryUrl();
+          setValid();
+          return;
+        }
+
+        console.error("Password recovery code exchange failed:", error.message);
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setValid();
+        return;
+      }
+
+      if (hasAccessToken) {
+        waitForSession();
+        return;
+      }
+
+      setInvalid();
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || session) {
+        cleanRecoveryUrl();
+        setValid();
+      }
+    });
+
+    checkRecoverySession();
+
+    return () => {
+      isMounted = false;
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -102,6 +172,8 @@ const ResetPassword = () => {
         title: t("passwordResetSuccess"),
         description: t("passwordResetSuccessDesc"),
       });
+
+      await supabase.auth.signOut({ scope: "local" });
 
       // Redirect to login after successful password reset
       setTimeout(() => {
