@@ -38,7 +38,7 @@ const ResetPassword = () => {
 
   useEffect(() => {
     let isMounted = true;
-    let fallbackTimer: ReturnType<typeof window.setTimeout> | undefined;
+    let fallbackTimer: number | undefined;
 
     const cleanRecoveryUrl = () => {
       window.history.replaceState({}, document.title, window.location.pathname);
