@@ -52,6 +52,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<PageWithFooter><Landing /></PageWithFooter>} />
           <Route path="/auth" element={<PageWithFooter><Auth /></PageWithFooter>} />
+          <Route path="/reset-password" element={<PageWithFooter><ResetPassword /></PageWithFooter>} />
           <Route path="/auth/reset-password" element={<PageWithFooter><ResetPassword /></PageWithFooter>} />
           <Route
             path="/app"
