@@ -121,40 +121,67 @@ export type Database = {
       }
       processing_errors: {
         Row: {
+          app_version: string | null
+          batch_size: number | null
           created_at: string
           error_message: string
           error_stack: string | null
           error_type: string
+          failed_count: number | null
+          has_images: boolean | null
+          http_status: number | null
           id: string
           label_count_attempted: number | null
+          label_size: string | null
           metadata: Json | null
           processing_time_ms: number | null
           processing_type: string
+          two_column: boolean | null
+          user_agent: string | null
           user_id: string
+          zpl_format: string | null
         }
         Insert: {
+          app_version?: string | null
+          batch_size?: number | null
           created_at?: string
           error_message: string
           error_stack?: string | null
           error_type: string
+          failed_count?: number | null
+          has_images?: boolean | null
+          http_status?: number | null
           id?: string
           label_count_attempted?: number | null
+          label_size?: string | null
           metadata?: Json | null
           processing_time_ms?: number | null
           processing_type?: string
+          two_column?: boolean | null
+          user_agent?: string | null
           user_id: string
+          zpl_format?: string | null
         }
         Update: {
+          app_version?: string | null
+          batch_size?: number | null
           created_at?: string
           error_message?: string
           error_stack?: string | null
           error_type?: string
+          failed_count?: number | null
+          has_images?: boolean | null
+          http_status?: number | null
           id?: string
           label_count_attempted?: number | null
+          label_size?: string | null
           metadata?: Json | null
           processing_time_ms?: number | null
           processing_type?: string
+          two_column?: boolean | null
+          user_agent?: string | null
           user_id?: string
+          zpl_format?: string | null
         }
         Relationships: []
       }
