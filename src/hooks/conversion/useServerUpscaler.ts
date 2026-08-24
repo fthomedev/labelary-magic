@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { reportProcessingError } from '@/lib/errorLogging';
+
 
 const UPSCALE_ENDPOINT = 'https://ekoakbihwprthzjyztwq.supabase.co/functions/v1/upscale-image';
 
