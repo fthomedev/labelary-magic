@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { reportProcessingError } from '@/lib/errorLogging';
+
 
 const UPSCALE_ENDPOINT = 'https://ekoakbihwprthzjyztwq.supabase.co/functions/v1/upscale-image';
 
@@ -67,6 +69,8 @@ export const useServerUpscaler = () => {
     
     // Atomic counter for accurate progress tracking across parallel operations
     let completedCount = 0;
+    let failedCount = 0;
+    let lastError: unknown = null;
     
     // Process in batches of 6 for optimized parallel processing
     const BATCH_SIZE = 6;
@@ -86,6 +90,8 @@ export const useServerUpscaler = () => {
             return upscaled;
           } catch (error) {
             console.warn(`⚠️ [${globalIndex + 1}/${images.length}] Upscale failed, using original:`, error);
+            failedCount++;
+            lastError = error;
             // Increment counter even on fallback
             completedCount++;
             onProgress?.(completedCount, images.length);
@@ -99,9 +105,24 @@ export const useServerUpscaler = () => {
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log(`✅ Server upscaling complete: ${results.length} images in ${elapsed}s`);
+
+    // One aggregated log per run instead of one per image
+    if (failedCount > 0) {
+      reportProcessingError({
+        errorType: 'hd_upscale_failed',
+        error: lastError,
+        processingType: 'hd',
+        labelCountAttempted: images.length,
+        failedCount,
+        processingTimeMs: Date.now() - startTime,
+        metadata: { scale, batchSize: BATCH_SIZE },
+        batchSize: BATCH_SIZE,
+      });
+    }
     
     return results;
   }, [upscaleSingleImage]);
+
 
   return {
     upscaleImages,

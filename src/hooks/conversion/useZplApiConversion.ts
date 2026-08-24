@@ -4,6 +4,13 @@ import { delay } from '@/utils/pdfUtils';
 import { parseZplBlocks, countZplLabelsWithLog } from '@/utils/zplUtils';
 import { DEFAULT_CONFIG, ProcessingMetricsTracker, ProcessingConfig } from '@/config/processingConfig';
 import { LabelSize, DEFAULT_LABEL_SIZE, buildLabelarySize } from '@/types/labelSize';
+import { reportProcessingError } from '@/lib/errorLogging';
+
+export interface ConversionLogContext {
+  zplFormat?: 'tiktok' | 'shopee' | 'unknown';
+  twoColumn?: boolean;
+  processingType?: 'standard' | 'a4' | 'hd';
+}
 
 export const useZplApiConversion = () => {
   const { toast } = useToast();
@@ -13,8 +20,10 @@ export const useZplApiConversion = () => {
     labels: string[],
     onProgress: (progress: number) => void,
     config: ProcessingConfig = DEFAULT_CONFIG,
-    labelSize: LabelSize = DEFAULT_LABEL_SIZE
+    labelSize: LabelSize = DEFAULT_LABEL_SIZE,
+    logContext: ConversionLogContext = {}
   ): Promise<Blob[]> => {
+
     const labelarySize = buildLabelarySize(labelSize);
     const labelaryUrl = `https://api.labelary.com/v1/printers/8dpmm/labels/${labelarySize}/`;
     console.log(`📐 Labelary URL (PDF): ${labelaryUrl} (${labelSize.widthCm}×${labelSize.heightCm} cm)`);
@@ -47,8 +56,23 @@ export const useZplApiConversion = () => {
     const failedBatches: number[] = [];
     let completed = 0;
 
+    // Shared context for failure logging (metadata only, never ZPL content)
+    const hasImages = labelsWithGraphics > 0;
+    const baseLogContext = {
+      processingType: logContext.processingType ?? ('standard' as const),
+      labelCountAttempted: labels.length,
+      zplFormat: logContext.zplFormat,
+      labelSize: `${labelSize.widthCm}x${labelSize.heightCm}`,
+      twoColumn: logContext.twoColumn,
+      hasImages,
+      batchSize: effectiveBatchSize,
+    };
+    const lastErrorByBatch = new Map<number, unknown>();
+    const lastStatusByBatch = new Map<number, number>();
+
     const processBatch = async (batchLabels: string[], batchIndex: number, maxRetries: number = config.maxRetries, baseDelay: number = config.delayBetweenBatches): Promise<Blob | null> => {
       let retryCount = 0;
+
       
       while (retryCount < maxRetries) {
         try {
@@ -65,6 +89,7 @@ export const useZplApiConversion = () => {
 
           if (response.status === 429) {
             retryCount++;
+            lastStatusByBatch.set(batchIndex, 429);
             const waitTime = config.fallbackDelay * retryCount;
             console.log(`⏳ Rate limited on batch ${batchIndex + 1}, waiting ${waitTime}ms...`);
             await delay(waitTime);
@@ -72,6 +97,7 @@ export const useZplApiConversion = () => {
           }
 
           if (!response.ok) {
+            lastStatusByBatch.set(batchIndex, response.status);
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
@@ -86,12 +112,14 @@ export const useZplApiConversion = () => {
           
         } catch (error) {
           retryCount++;
+          lastErrorByBatch.set(batchIndex, error);
           console.error(`❌ Batch ${batchIndex + 1} attempt ${retryCount} failed:`, error);
           
           if (retryCount < maxRetries) {
             await delay(baseDelay * retryCount);
           }
         }
+
       }
       
       return null;
@@ -138,6 +166,21 @@ export const useZplApiConversion = () => {
           console.log(`✅ Batch ${batchIndex + 1} recovered successfully`);
         } else {
           console.error(`💥 Batch ${batchIndex + 1} permanently failed`);
+          reportProcessingError({
+            ...baseLogContext,
+            errorType: 'labelary_batch_failed',
+            error: lastErrorByBatch.get(batchIndex),
+            httpStatus: lastStatusByBatch.get(batchIndex),
+            failedCount: batches[batchIndex].length,
+            processingTimeMs: Date.now() - totalStartTime,
+            metadata: {
+              batchIndex: batchIndex + 1,
+              totalBatches: batches.length,
+              labelsInBatch: batches[batchIndex].length,
+              labelarySize,
+              labelsWithGraphics,
+            },
+          });
           toast({
             variant: "destructive",
             title: t('blockError'),
@@ -157,8 +200,23 @@ export const useZplApiConversion = () => {
     console.log(`📊 Final: ${pdfs.length}/${batches.length} batches successful, ${labels.length} labels processed`);
     
     if (pdfs.length < batches.length) {
-      console.warn(`⚠️ Warning: ${batches.length - pdfs.length} batches failed and were not included in the final PDF`);
+      const missingBatches = batches.length - pdfs.length;
+      console.warn(`⚠️ Warning: ${missingBatches} batches failed and were not included in the final PDF`);
+      reportProcessingError({
+        ...baseLogContext,
+        errorType: 'labelary_partial_failure',
+        message: `${missingBatches}/${batches.length} lotes ausentes no PDF final`,
+        failedCount: missingBatches,
+        processingTimeMs: totalTime,
+        metadata: {
+          totalBatches: batches.length,
+          successfulBatches: pdfs.length,
+          labelarySize,
+          labelsWithGraphics,
+        },
+      });
     }
+
     
     return pdfs;
   };

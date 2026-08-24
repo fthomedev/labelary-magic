@@ -10,8 +10,9 @@ import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 import { calculateProgress } from './useProgressCalculator';
-import { parseZplWithCount } from '@/utils/zplUtils';
+import { parseZplWithCount, detectZplFormat } from '@/utils/zplUtils';
 import { LabelSize, DEFAULT_LABEL_SIZE } from '@/types/labelSize';
+import { reportProcessingError } from '@/lib/errorLogging';
 
 export const useHdConversion = () => {
   const { toast } = useToast();
@@ -53,6 +54,15 @@ export const useHdConversion = () => {
 
     const conversionStartTime = Date.now();
 
+    // Metadata-only context reused by every failure log in this run
+    const logContext = {
+      processingType: 'hd' as const,
+      zplFormat: detectZplFormat(zplContent),
+      labelSize: `${labelSize.widthCm}x${labelSize.heightCm}`,
+      hasImages: /\^GF[AB]/.test(zplContent),
+    };
+    let labelsAttempted = 0;
+
     try {
       resetPdfState();
       startConversion();
@@ -62,6 +72,7 @@ export const useHdConversion = () => {
       console.log(`\n========== HD CONVERSION ==========`);
       console.log(`📊 Parsed blocks: ${labelBlocks.length} (final count: ${finalLabelCount})`);
 
+      labelsAttempted = finalLabelCount;
       updateProgress({ totalLabels: finalLabelCount, stage: 'converting' });
 
       const config: ProcessingConfig = DEFAULT_CONFIG;
@@ -93,6 +104,15 @@ export const useHdConversion = () => {
         if (labelsAdded !== images.length) {
           console.error(`🚨 LABEL MISMATCH: Expected ${images.length}, got ${labelsAdded}`);
           console.error(`🚨 Failed indices: [${failedLabels.join(', ')}]`);
+          reportProcessingError({
+            ...logContext,
+            errorType: 'pdf_merge_failed',
+            message: `Divergência de páginas no PDF HD: esperado ${images.length}, obtido ${labelsAdded}`,
+            labelCountAttempted: finalLabelCount,
+            failedCount: images.length - labelsAdded,
+            processingTimeMs: Date.now() - conversionStartTime,
+            metadata: { expectedPages: images.length, actualPages: labelsAdded, failedIndices: failedLabels.slice(0, 50) },
+          });
         }
 
         updateProgress({ percentage: calculateProgress('hd', 'uploading', 50), stage: 'uploading' });
@@ -133,6 +153,13 @@ export const useHdConversion = () => {
         finishConversion();
       } catch (uploadError) {
         console.error('Error uploading HD PDF:', uploadError);
+        reportProcessingError({
+          ...logContext,
+          errorType: 'storage_upload_failed',
+          error: uploadError,
+          labelCountAttempted: labelsAttempted,
+          processingTimeMs: Date.now() - conversionStartTime,
+        });
         toast({
           variant: 'destructive',
           title: t('error'),
@@ -142,6 +169,13 @@ export const useHdConversion = () => {
       }
     } catch (error) {
       console.error('HD conversion error:', error);
+      reportProcessingError({
+        ...logContext,
+        errorType: 'unknown_fatal',
+        error,
+        labelCountAttempted: labelsAttempted,
+        processingTimeMs: Date.now() - conversionStartTime,
+      });
       toast({
         variant: 'destructive',
         title: t('error'),
