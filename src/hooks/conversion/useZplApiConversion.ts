@@ -166,6 +166,21 @@ export const useZplApiConversion = () => {
           console.log(`✅ Batch ${batchIndex + 1} recovered successfully`);
         } else {
           console.error(`💥 Batch ${batchIndex + 1} permanently failed`);
+          reportProcessingError({
+            ...baseLogContext,
+            errorType: 'labelary_batch_failed',
+            error: lastErrorByBatch.get(batchIndex),
+            httpStatus: lastStatusByBatch.get(batchIndex),
+            failedCount: batches[batchIndex].length,
+            processingTimeMs: Date.now() - totalStartTime,
+            metadata: {
+              batchIndex: batchIndex + 1,
+              totalBatches: batches.length,
+              labelsInBatch: batches[batchIndex].length,
+              labelarySize,
+              labelsWithGraphics,
+            },
+          });
           toast({
             variant: "destructive",
             title: t('blockError'),
@@ -185,8 +200,23 @@ export const useZplApiConversion = () => {
     console.log(`📊 Final: ${pdfs.length}/${batches.length} batches successful, ${labels.length} labels processed`);
     
     if (pdfs.length < batches.length) {
-      console.warn(`⚠️ Warning: ${batches.length - pdfs.length} batches failed and were not included in the final PDF`);
+      const missingBatches = batches.length - pdfs.length;
+      console.warn(`⚠️ Warning: ${missingBatches} batches failed and were not included in the final PDF`);
+      reportProcessingError({
+        ...baseLogContext,
+        errorType: 'labelary_partial_failure',
+        message: `${missingBatches}/${batches.length} lotes ausentes no PDF final`,
+        failedCount: missingBatches,
+        processingTimeMs: totalTime,
+        metadata: {
+          totalBatches: batches.length,
+          successfulBatches: pdfs.length,
+          labelarySize,
+          labelsWithGraphics,
+        },
+      });
     }
+
     
     return pdfs;
   };
