@@ -4,6 +4,13 @@ import { delay } from '@/utils/pdfUtils';
 import { parseZplBlocks, countZplLabelsWithLog } from '@/utils/zplUtils';
 import { DEFAULT_CONFIG, ProcessingMetricsTracker, ProcessingConfig } from '@/config/processingConfig';
 import { LabelSize, DEFAULT_LABEL_SIZE, buildLabelarySize } from '@/types/labelSize';
+import { reportProcessingError } from '@/lib/errorLogging';
+
+export interface ConversionLogContext {
+  zplFormat?: 'tiktok' | 'shopee' | 'unknown';
+  twoColumn?: boolean;
+  processingType?: 'standard' | 'a4' | 'hd';
+}
 
 export const useZplApiConversion = () => {
   const { toast } = useToast();
@@ -13,8 +20,10 @@ export const useZplApiConversion = () => {
     labels: string[],
     onProgress: (progress: number) => void,
     config: ProcessingConfig = DEFAULT_CONFIG,
-    labelSize: LabelSize = DEFAULT_LABEL_SIZE
+    labelSize: LabelSize = DEFAULT_LABEL_SIZE,
+    logContext: ConversionLogContext = {}
   ): Promise<Blob[]> => {
+
     const labelarySize = buildLabelarySize(labelSize);
     const labelaryUrl = `https://api.labelary.com/v1/printers/8dpmm/labels/${labelarySize}/`;
     console.log(`📐 Labelary URL (PDF): ${labelaryUrl} (${labelSize.widthCm}×${labelSize.heightCm} cm)`);
