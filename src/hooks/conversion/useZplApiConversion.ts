@@ -89,6 +89,7 @@ export const useZplApiConversion = () => {
 
           if (response.status === 429) {
             retryCount++;
+            lastStatusByBatch.set(batchIndex, 429);
             const waitTime = config.fallbackDelay * retryCount;
             console.log(`⏳ Rate limited on batch ${batchIndex + 1}, waiting ${waitTime}ms...`);
             await delay(waitTime);
@@ -96,6 +97,7 @@ export const useZplApiConversion = () => {
           }
 
           if (!response.ok) {
+            lastStatusByBatch.set(batchIndex, response.status);
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
@@ -110,12 +112,14 @@ export const useZplApiConversion = () => {
           
         } catch (error) {
           retryCount++;
+          lastErrorByBatch.set(batchIndex, error);
           console.error(`❌ Batch ${batchIndex + 1} attempt ${retryCount} failed:`, error);
           
           if (retryCount < maxRetries) {
             await delay(baseDelay * retryCount);
           }
         }
+
       }
       
       return null;
