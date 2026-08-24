@@ -60,6 +60,17 @@ export const useZplConversion = () => {
     if (!zplContent) return;
     
     const conversionStartTime = Date.now();
+
+    // Metadata-only context reused by every failure log in this run
+    const zplFormat = detectZplFormat(zplContent);
+    const hasImages = /\^GF[AB]/.test(zplContent);
+    const logContext = {
+      processingType: 'standard' as const,
+      zplFormat,
+      labelSize: `${labelSize.widthCm}x${labelSize.heightCm}`,
+      twoColumn,
+      hasImages,
+    };
     
     try {
       // Clear previous PDF state before starting new conversion
@@ -73,6 +84,16 @@ export const useZplConversion = () => {
       
       console.log(`🎯 Starting conversion of ${finalLabelCount} labels (${labels.length} blocks / 2)`);
       console.log(`⚡ Using ${useOptimizedTiming ? 'optimized' : 'default'} timing configuration`);
+
+      if (labels.length === 0) {
+        reportProcessingError({
+          ...logContext,
+          errorType: 'zpl_parse_empty',
+          message: 'Arquivo aceito no upload mas nenhum bloco ^XA...^XZ válido após o parse',
+          labelCountAttempted: 0,
+          metadata: { contentLength: zplContent.length },
+        });
+      }
       
       // Choose configuration based on label count and user preference
       let config: ProcessingConfig;
@@ -93,7 +114,7 @@ export const useZplConversion = () => {
         const percentage = calculateProgress('standard', 'converting', progressValue);
         const currentLabel = Math.floor((progressValue / 100) * finalLabelCount);
         updateProgress({ percentage, currentLabel, stage: 'converting' });
-      }, config, labelSize);
+      }, config, labelSize, { zplFormat, twoColumn, processingType: 'standard' });
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
@@ -103,9 +124,21 @@ export const useZplConversion = () => {
       if (twoColumn && pdfs.length > 0) {
         console.log(`📐 2-column mode: pairing ${pdfs.length} PDF batches into 85×25mm pages...`);
         const pairStart = Date.now();
-        const paired = await pairUpPdfs(pdfs);
-        finalPdfs = [paired];
-        console.log(`✅ 2-column pairing done in ${Date.now() - pairStart}ms (${paired.size} bytes)`);
+        try {
+          const paired = await pairUpPdfs(pdfs);
+          finalPdfs = [paired];
+          console.log(`✅ 2-column pairing done in ${Date.now() - pairStart}ms (${paired.size} bytes)`);
+        } catch (pairError) {
+          reportProcessingError({
+            ...logContext,
+            errorType: 'two_column_pairing_failed',
+            error: pairError,
+            labelCountAttempted: finalLabelCount,
+            processingTimeMs: Date.now() - pairStart,
+            metadata: { pdfParts: pdfs.length },
+          });
+          throw pairError;
+        }
       }
 
       try {
@@ -114,7 +147,7 @@ export const useZplConversion = () => {
           // p is 0-100 within the uploading stage
           const percentage = calculateProgress('standard', 'uploading', p);
           updateProgress({ percentage, stage: 'uploading' });
-        });
+        }, { ...logContext, labelCountAttempted: finalLabelCount });
         
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
@@ -139,6 +172,7 @@ export const useZplConversion = () => {
         // Set processing complete to show the completion UI
         finishConversion();
       } catch (uploadError) {
+        // processPdfs already logged the precise cause (merge / storage)
         console.error('Error uploading to storage:', uploadError);
         toast({
           variant: "destructive",
@@ -149,6 +183,12 @@ export const useZplConversion = () => {
       }
     } catch (error) {
       console.error('Conversion error:', error);
+      reportProcessingError({
+        ...logContext,
+        errorType: 'unknown_fatal',
+        error,
+        processingTimeMs: Date.now() - conversionStartTime,
+      });
       toast({
         variant: "destructive",
         title: t('error'),
@@ -160,6 +200,7 @@ export const useZplConversion = () => {
       setProgress(100);
     }
   };
+
 
   return {
     isConverting,
