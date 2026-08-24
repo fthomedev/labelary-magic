@@ -71,6 +71,7 @@ export const useZplConversion = () => {
       twoColumn,
       hasImages,
     };
+    let fatalLogged = false;
     
     try {
       // Clear previous PDF state before starting new conversion
@@ -137,6 +138,7 @@ export const useZplConversion = () => {
             processingTimeMs: Date.now() - pairStart,
             metadata: { pdfParts: pdfs.length },
           });
+          fatalLogged = true;
           throw pairError;
         }
       }
@@ -183,7 +185,7 @@ export const useZplConversion = () => {
       }
     } catch (error) {
       console.error('Conversion error:', error);
-      reportProcessingError({
+      if (!fatalLogged) reportProcessingError({
         ...logContext,
         errorType: 'unknown_fatal',
         error,
