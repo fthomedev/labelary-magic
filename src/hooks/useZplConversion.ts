@@ -7,9 +7,11 @@ import { useConversionState } from '@/hooks/conversion/useConversionState';
 import { useConversionMetrics } from '@/hooks/conversion/useConversionMetrics';
 import { DEFAULT_CONFIG, FAST_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 import { calculateProgress } from '@/hooks/conversion/useProgressCalculator';
-import { parseZplWithCount } from '@/utils/zplUtils';
+import { parseZplWithCount, detectZplFormat } from '@/utils/zplUtils';
 import { LabelSize, DEFAULT_LABEL_SIZE } from '@/types/labelSize';
 import { pairUpPdfs } from '@/utils/pdfTwoColumn';
+import { reportProcessingError } from '@/lib/errorLogging';
+
 
 export interface ProcessingRecord {
   id: string;
