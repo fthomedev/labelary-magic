@@ -56,8 +56,23 @@ export const useZplApiConversion = () => {
     const failedBatches: number[] = [];
     let completed = 0;
 
+    // Shared context for failure logging (metadata only, never ZPL content)
+    const hasImages = labelsWithGraphics > 0;
+    const baseLogContext = {
+      processingType: logContext.processingType ?? ('standard' as const),
+      labelCountAttempted: labels.length,
+      zplFormat: logContext.zplFormat,
+      labelSize: `${labelSize.widthCm}x${labelSize.heightCm}`,
+      twoColumn: logContext.twoColumn,
+      hasImages,
+      batchSize: effectiveBatchSize,
+    };
+    const lastErrorByBatch = new Map<number, unknown>();
+    const lastStatusByBatch = new Map<number, number>();
+
     const processBatch = async (batchLabels: string[], batchIndex: number, maxRetries: number = config.maxRetries, baseDelay: number = config.delayBetweenBatches): Promise<Blob | null> => {
       let retryCount = 0;
+
       
       while (retryCount < maxRetries) {
         try {
