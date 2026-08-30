@@ -94,6 +94,15 @@ export const useZplConversion = () => {
           labelCountAttempted: 0,
           metadata: { contentLength: zplContent.length },
         });
+        toast({
+          variant: 'destructive',
+          title: t('error'),
+          description: t('emptyZplMessage'),
+          duration: 7000,
+        });
+        setIsConverting(false);
+        setProgress(0);
+        return;
       }
       
       // Choose configuration based on label count and user preference
@@ -110,7 +119,7 @@ export const useZplConversion = () => {
       
       const conversionPhaseStart = Date.now();
 
-      const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
+      const { pdfs, missingLabels } = await convertZplBlocksToPdfs(labels, (progressValue) => {
         // progressValue is 0-100 within the converting stage
         const percentage = calculateProgress('standard', 'converting', progressValue);
         const currentLabel = Math.floor((progressValue / 100) * finalLabelCount);
@@ -119,6 +128,12 @@ export const useZplConversion = () => {
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
+
+      // Labels actually present in the generated PDF (blocks → logical labels)
+      const labelsDelivered = labels.length > 0
+        ? Math.max(0, Math.round(finalLabelCount * ((labels.length - missingLabels) / labels.length)))
+        : 0;
+      const isPartial = missingLabels > 0;
 
       // 2-column post-processing: pair 40×25mm labels into 85×25mm pages.
       let finalPdfs = pdfs;
@@ -142,6 +157,7 @@ export const useZplConversion = () => {
           throw pairError;
         }
       }
+
 
       try {
         updateProgress({ percentage: calculateProgress('standard', 'organizing', 0), stage: 'organizing' });
