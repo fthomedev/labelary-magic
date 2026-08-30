@@ -81,7 +81,12 @@ export const usePdfOperations = () => {
         errorType: 'storage_upload_failed',
         error: uploadError,
         processingTimeMs: Date.now() - uploadStartTime,
-        metadata: { pdfSizeBytes: mergedPdf.size },
+        metadata: {
+          pdfSizeBytes: mergedPdf.size,
+          pdfSizeMb: +(mergedPdf.size / 1024 / 1024).toFixed(2),
+          pdfParts: pdfs.length,
+          mergeTimeMs: mergeTime,
+        },
       });
       throw uploadError;
     }
