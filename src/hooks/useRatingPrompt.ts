@@ -46,7 +46,3 @@ export const useRatingPrompt = () => {
   return { shouldPrompt, registerConversion, dismissPrompt };
 };
 
-export const useRatingPromptReset = (deps: unknown[]) => {
-  // helper kept intentionally simple; consumers reset via dismissPrompt
-  useEffect(() => {}, deps);
-};
