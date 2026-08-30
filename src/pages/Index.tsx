@@ -21,6 +21,7 @@ import { Info } from 'lucide-react';
 import { PdfViewerModal } from '@/components/history/PdfViewerModal';
 import { useToast } from '@/hooks/use-toast';
 import { useLabelSize } from '@/hooks/useLabelSize';
+import { useRatingPrompt } from '@/hooks/useRatingPrompt';
 const Index = () => {
   const [zplContent, setZplContent] = useState<string>('');
   const [sourceType, setSourceType] = useState<'file' | 'zip'>('file');
@@ -49,6 +50,7 @@ const Index = () => {
     isProcessingComplete: isStandardComplete,
     lastPdfUrl: standardPdfUrl,
     convertToPDF,
+    lastConversionMeta: standardConversionMeta,
     historyRefreshTrigger: standardHistoryRefresh,
     resetProcessingStatus: resetStandardStatus,
     resetPdfState: resetStandardPdfState
@@ -62,6 +64,7 @@ const Index = () => {
     isProcessingComplete: isHdComplete,
     lastPdfUrl: hdPdfUrl,
     convertToHdPDF,
+    lastConversionMeta: hdConversionMeta,
     historyRefreshTrigger: hdHistoryRefresh,
     resetProcessingStatus: resetHdStatus,
     resetPdfState: resetHdPdfState
@@ -75,6 +78,16 @@ const Index = () => {
   const lastPdfUrl = standardPdfUrl || hdPdfUrl;
   // Sum both triggers to ensure any update from either hook triggers a refresh
   const historyRefreshTrigger = standardHistoryRefresh + hdHistoryRefresh;
+  const lastConversionMeta = selectedFormat === 'hd' ? hdConversionMeta : standardConversionMeta;
+
+  const { shouldPrompt, registerConversion, dismissPrompt } = useRatingPrompt();
+
+  // Count a conversion once it finishes successfully, and decide if we ask for a rating
+  useEffect(() => {
+    if (isProcessingComplete) {
+      registerConversion();
+    }
+  }, [isProcessingComplete, registerConversion]);
 
   useEffect(() => {
     // Check if user is logged in
@@ -254,6 +267,16 @@ const Index = () => {
                         totalLabels={progressInfo.totalLabels}
                         stage={progressInfo.stage}
                         conversionMode={selectedFormat}
+                        showRating={shouldPrompt}
+                        onDismissRating={dismissPrompt}
+                        ratingContext={{
+                          processingHistoryId: lastConversionMeta?.processingHistoryId ?? null,
+                          processingType: lastConversionMeta?.processingType ?? selectedFormat,
+                          labelCount: lastConversionMeta?.labelCount,
+                          processingTimeMs: lastConversionMeta?.processingTimeMs,
+                          twoColumn: lastConversionMeta?.twoColumn ?? twoColumn,
+                          labelSize: lastConversionMeta?.labelSize ?? `${labelSize.widthCm}x${labelSize.heightCm}`,
+                        }}
                       />
                     </div>
                   </div>

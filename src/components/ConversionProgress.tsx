@@ -4,6 +4,8 @@ import { ProgressBar } from './progress/ProgressBar';
 import { ConvertButton } from './progress/ConvertButton';
 import { ConversionStage, ConversionMode } from '@/hooks/conversion/useConversionState';
 import { DonationButton } from './DonationButton';
+import { ConversionRating } from './rating/ConversionRating';
+import { ConversionRatingContext } from '@/hooks/useConversionRating';
 import { useTranslation } from 'react-i18next';
 
 interface ConversionProgressProps {
@@ -18,6 +20,9 @@ interface ConversionProgressProps {
   totalLabels?: number;
   stage?: ConversionStage;
   conversionMode?: ConversionMode;
+  showRating?: boolean;
+  ratingContext?: ConversionRatingContext;
+  onDismissRating?: () => void;
 }
 
 export const ConversionProgress = ({ 
@@ -31,8 +36,12 @@ export const ConversionProgress = ({
   currentLabel = 0,
   totalLabels = 0,
   stage = 'converting',
-  conversionMode = 'standard'
+  conversionMode = 'standard',
+  showRating = false,
+  ratingContext,
+  onDismissRating
 }: ConversionProgressProps) => {
+
   const { t } = useTranslation();
   
   const handleButtonClick = () => {
@@ -69,7 +78,13 @@ export const ConversionProgress = ({
         />
       </div>
 
-      {isProcessingComplete && (
+      {isProcessingComplete && showRating && (
+        <div className="pt-4 border-t border-border/50">
+          <ConversionRating context={ratingContext ?? {}} onDismiss={onDismissRating} />
+        </div>
+      )}
+
+      {isProcessingComplete && !showRating && (
         <div className="pt-4 border-t border-border/50">
           <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">{t('likedIt')}</p>
@@ -77,6 +92,7 @@ export const ConversionProgress = ({
           </div>
         </div>
       )}
+
     </div>
   );
 }

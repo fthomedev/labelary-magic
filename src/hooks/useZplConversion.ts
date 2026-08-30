@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
@@ -24,8 +25,18 @@ export interface ProcessingRecord {
   processingType?: 'standard' | 'hd';
 }
 
+export interface LastConversionMeta {
+  processingHistoryId: string | null;
+  processingType: string;
+  labelCount: number;
+  processingTimeMs: number;
+  twoColumn?: boolean;
+  labelSize: string;
+}
+
 export const useZplConversion = () => {
   const { toast } = useToast();
+  const [lastConversionMeta, setLastConversionMeta] = useState<LastConversionMeta | null>(null);
   const { t } = useTranslation();
 
   const { addToProcessingHistory } = useHistoryRecords();
@@ -174,7 +185,15 @@ export const useZplConversion = () => {
         // Save to history with the REAL number of labels present in the PDF
         if (pdfPath) {
           console.log(`💾 Saving to history: ${labelsDelivered}/${finalLabelCount} labels in ${totalTime}ms`);
-          await addToProcessingHistory(labelsDelivered, pdfPath, totalTime, 'standard');
+          const historyId = await addToProcessingHistory(labelsDelivered, pdfPath, totalTime, 'standard');
+          setLastConversionMeta({
+            processingHistoryId: historyId,
+            processingType: twoColumn ? 'standard-2col' : 'standard',
+            labelCount: labelsDelivered,
+            processingTimeMs: totalTime,
+            twoColumn,
+            labelSize: logContext.labelSize,
+          });
           triggerHistoryRefresh();
         }
         
@@ -245,6 +264,7 @@ export const useZplConversion = () => {
     lastPdfUrl,
     lastPdfPath,
     convertToPDF,
+    lastConversionMeta,
     historyRefreshTrigger,
     resetProcessingStatus,
     resetPdfState,

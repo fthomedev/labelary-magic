@@ -35,6 +35,56 @@ export type Database = {
         }
         Relationships: []
       }
+      conversion_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          label_count: number | null
+          label_size: string | null
+          processing_history_id: string | null
+          processing_time_ms: number | null
+          processing_type: string | null
+          rating: number
+          two_column: boolean | null
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          label_count?: number | null
+          label_size?: string | null
+          processing_history_id?: string | null
+          processing_time_ms?: number | null
+          processing_type?: string | null
+          rating: number
+          two_column?: boolean | null
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          label_count?: number | null
+          label_size?: string | null
+          processing_history_id?: string | null
+          processing_time_ms?: number | null
+          processing_type?: string | null
+          rating?: number
+          two_column?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversion_ratings_processing_history_id_fkey"
+            columns: ["processing_history_id"]
+            isOneToOne: false
+            referencedRelation: "processing_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       donations: {
         Row: {
           amount: number

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import { useHistoryRecords } from '@/hooks/history/useHistoryRecords';
@@ -13,9 +14,11 @@ import { calculateProgress } from './useProgressCalculator';
 import { parseZplWithCount, detectZplFormat } from '@/utils/zplUtils';
 import { LabelSize, DEFAULT_LABEL_SIZE } from '@/types/labelSize';
 import { reportProcessingError } from '@/lib/errorLogging';
+import type { LastConversionMeta } from '@/hooks/useZplConversion';
 
 export const useHdConversion = () => {
   const { toast } = useToast();
+  const [lastConversionMeta, setLastConversionMeta] = useState<LastConversionMeta | null>(null);
   const { t } = useTranslation();
   const { addToProcessingHistory } = useHistoryRecords();
   const { convertZplToHdImages } = useHdImageConversion();
@@ -144,7 +147,15 @@ export const useHdConversion = () => {
 
         if (pdfPath) {
           console.log(`💾 Saving HD conversion: ${correctedLabelCount} labels in ${totalTime}ms`);
-          await addToProcessingHistory(correctedLabelCount, pdfPath, totalTime, 'hd');
+          const historyId = await addToProcessingHistory(correctedLabelCount, pdfPath, totalTime, 'hd');
+          setLastConversionMeta({
+            processingHistoryId: historyId,
+            processingType: 'hd',
+            labelCount: correctedLabelCount,
+            processingTimeMs: totalTime,
+            twoColumn: false,
+            labelSize: logContext.labelSize,
+          });
           triggerHistoryRefresh();
         }
 
@@ -211,6 +222,7 @@ export const useHdConversion = () => {
     lastPdfUrl,
     lastPdfPath,
     convertToHdPDF,
+    lastConversionMeta,
     historyRefreshTrigger,
     resetProcessingStatus,
     resetPdfState,
