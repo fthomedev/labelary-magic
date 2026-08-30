@@ -360,17 +360,8 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
       {/* Donation Call-to-Action */}
       {donationCta}
 
-      {/* Bulk Action Bar */}
-      {!localOnly && (
-        <BulkActionBar
-          selectedCount={selectedCount}
-          isAllHistorySelected={isAllHistorySelected}
-          onDownloadSelected={handleBulkDownload}
-          onDeleteSelected={handleBulkDelete}
-          onClearSelection={clearSelection}
-          isDeleting={isBulkDeleting}
-        />
-      )}
+
+
 
       {/* Bulk Delete Confirmation Dialog */}
       <BulkDeleteConfirmDialog
