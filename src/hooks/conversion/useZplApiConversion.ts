@@ -231,6 +231,12 @@ export const useZplApiConversion = () => {
     
     const pdfs = results.filter((pdf): pdf is Blob => pdf !== null);
     const totalTime = Date.now() - totalStartTime;
+
+    // Labels that never made it into a PDF (their batch failed permanently)
+    const missingLabels = results.reduce(
+      (sum, result, index) => (result === null ? sum + batches[index].length : sum),
+      0
+    );
     
     console.log(`🏆 Conversion completed in ${totalTime}ms`);
     console.log(`📊 Final: ${pdfs.length}/${batches.length} batches successful, ${labels.length} labels processed`);
@@ -247,14 +253,21 @@ export const useZplApiConversion = () => {
         metadata: {
           totalBatches: batches.length,
           successfulBatches: pdfs.length,
+          missingLabels,
+          rateLimitHits,
           labelarySize,
           labelsWithGraphics,
         },
       });
     }
 
-    
-    return pdfs;
+    return {
+      pdfs,
+      totalBatches: batches.length,
+      failedBatches: batches.length - pdfs.length,
+      missingLabels,
+      rateLimitHits,
+    };
   };
 
   const parseLabelsFromZpl = (zplContent: string) => {
