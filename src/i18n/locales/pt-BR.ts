@@ -365,6 +365,8 @@ const translations = {
     downloadSelected: 'Baixar',
     deleteSelected: 'Excluir',
     clearSelection: 'Limpar seleção',
+    clearAllHistory: 'Limpar histórico',
+
     pageSelectedPrompt: 'Os {{pageCount}} registros desta página estão selecionados.',
     selectAllHistory: 'Selecionar todos os {{count}} registros do histórico',
     allHistorySelected: 'Todos os {{count}} registros do histórico estão selecionados',
