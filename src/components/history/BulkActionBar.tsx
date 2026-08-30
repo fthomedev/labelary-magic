@@ -14,6 +14,11 @@ interface BulkActionBarProps {
   isDownloading?: boolean;
   isDeleting?: boolean;
   hideDownload?: boolean;
+  /** Total records in history (all pages). */
+  totalRecords?: number;
+  /** True when the current page is fully selected but more records exist. */
+  canSelectAllHistory?: boolean;
+  onSelectAllHistory?: () => void;
 }
 
 export function BulkActionBar({
@@ -25,61 +30,75 @@ export function BulkActionBar({
   isDownloading = false,
   isDeleting = false,
   hideDownload = false,
+  totalRecords = 0,
+  canSelectAllHistory = false,
+  onSelectAllHistory,
 }: BulkActionBarProps) {
   const { t } = useTranslation();
 
   return (
-    <AnimatePresence>
+    <AnimatePresence initial={false}>
       {selectedCount > 0 && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50"
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.15 }}
+          className="overflow-hidden border-b bg-primary/5"
         >
-          <div className="flex items-center gap-2 bg-background/95 backdrop-blur-sm border shadow-lg rounded-full px-4 py-2">
-            <span className="text-sm font-medium text-foreground">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 sm:px-4">
+            <span className="text-xs font-medium text-foreground">
               {isAllHistorySelected
                 ? t('bulkActions.allHistorySelected', { count: selectedCount })
                 : t('bulkActions.selected', { count: selectedCount })}
             </span>
 
-            <div className="h-4 w-px bg-border mx-1" />
+            {!isAllHistorySelected && canSelectAllHistory && (
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-xs font-semibold"
+                onClick={() => onSelectAllHistory?.()}
+              >
+                {t('bulkActions.selectAllHistory', { count: totalRecords })}
+              </Button>
+            )}
 
-            {!hideDownload && (
+            <div className="ml-auto flex items-center gap-1">
+              {!hideDownload && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs gap-1.5"
+                  onClick={onDownloadSelected}
+                  disabled={isDownloading || isAllHistorySelected}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  {t('bulkActions.downloadSelected')}
+                </Button>
+              )}
+
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-3 text-xs gap-1.5"
-                onClick={onDownloadSelected}
-                disabled={isDownloading || isAllHistorySelected}
+                className="h-8 px-2 text-xs gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={onDeleteSelected}
+                disabled={isDeleting}
               >
-                <Download className="h-3.5 w-3.5" />
-                {t('bulkActions.downloadSelected')}
+                <Trash2 className="h-3.5 w-3.5" />
+                {t('bulkActions.deleteSelected')}
               </Button>
-            )}
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-3 text-xs gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={onDeleteSelected}
-              disabled={isDeleting}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              {t('bulkActions.deleteSelected')}
-            </Button>
-            
-            <div className="h-4 w-px bg-border mx-1" />
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={onClearSelection}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={onClearSelection}
+                aria-label={t('bulkActions.clearSelection')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </motion.div>
       )}
