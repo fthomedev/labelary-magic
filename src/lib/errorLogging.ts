@@ -15,6 +15,7 @@ export type ProcessingErrorType =
   | 'storage_upload_failed'
   | 'hd_upscale_failed'
   | 'two_column_pairing_failed'
+  | 'storage_delete_failed'
   | 'zpl_parse_empty'
   | 'unknown_fatal';
 
