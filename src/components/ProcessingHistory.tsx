@@ -1,9 +1,11 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, History, Heart } from 'lucide-react';
+import { Loader2, History, Heart, Trash2 } from 'lucide-react';
 import qrCodePix from '@/assets/qrcode-pix.png';
 import { CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useProcessingHistory } from '@/hooks/useProcessingHistory';
 import { useHistorySelection } from '@/hooks/history/useHistorySelection';
