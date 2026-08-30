@@ -512,6 +512,7 @@ export type Database = {
         }[]
       }
       log_user_access: { Args: never; Returns: undefined }
+      purge_history_and_storage_older_than_60d: { Args: never; Returns: number }
       purge_old_processing_errors: {
         Args: { retention_days?: number }
         Returns: number
