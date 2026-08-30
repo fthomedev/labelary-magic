@@ -78,7 +78,13 @@ export const ConversionProgress = ({
         />
       </div>
 
-      {isProcessingComplete && (
+      {isProcessingComplete && showRating && (
+        <div className="pt-4 border-t border-border/50">
+          <ConversionRating context={ratingContext ?? {}} onDismiss={onDismissRating} />
+        </div>
+      )}
+
+      {isProcessingComplete && !showRating && (
         <div className="pt-4 border-t border-border/50">
           <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">{t('likedIt')}</p>
@@ -86,6 +92,7 @@ export const ConversionProgress = ({
           </div>
         </div>
       )}
+
     </div>
   );
 }
