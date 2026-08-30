@@ -223,18 +223,49 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
   return (
     <>
       <CardHeader className="pb-1 pt-3 border-b">
-        <CardTitle className="text-base font-medium flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <History className="h-4 w-4 text-primary" />
-            <span>{t('processingHistory')}</span>
+        <CardTitle className="text-base font-medium flex justify-between items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <History className="h-4 w-4 text-primary shrink-0" />
+            <span className="truncate">{t('processingHistory')}</span>
           </div>
-          {!localOnly && totalRecords > 0 && (
-            <span className="text-xs font-normal text-muted-foreground">
-              {t('totalRecords', { count: totalRecords })}
-            </span>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {!localOnly && totalRecords > 0 && (
+              <span className="text-xs font-normal text-muted-foreground hidden sm:inline">
+                {t('totalRecords', { count: totalRecords })}
+              </span>
+            )}
+            {!localOnly && totalRecords > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs font-normal gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={handleClearAllHistory}
+                disabled={isBulkDeleting}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {t('bulkActions.clearAllHistory')}
+              </Button>
+            )}
+          </div>
         </CardTitle>
       </CardHeader>
+
+      {/* Bulk actions: inline with the history card, sticky while the list scrolls */}
+      {!localOnly && (
+        <div className="sticky top-0 z-20 bg-background">
+          <BulkActionBar
+            selectedCount={selectedCount}
+            isAllHistorySelected={isAllHistorySelected}
+            onDownloadSelected={handleBulkDownload}
+            onDeleteSelected={handleBulkDelete}
+            onClearSelection={clearSelection}
+            isDeleting={isBulkDeleting}
+            totalRecords={totalRecords}
+            canSelectAllHistory={canSelectAllHistory}
+            onSelectAllHistory={selectAllHistory}
+          />
+        </div>
+      )}
 
       {/* Stats bar */}
       {!localOnly && records.length > 0 && (
@@ -284,12 +315,9 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
             onSelectRecord={selectRecord}
             onSelectAll={selectAll}
             showCheckbox={!localOnly}
-            totalRecords={totalRecords}
-            isAllHistorySelected={isAllHistorySelected}
-            onSelectAllHistory={selectAllHistory}
-            onClearSelection={clearSelection}
           />
         )}
+
 
         {displayRecords.length === 0 && hasActiveFilters && (
           <div className="text-center py-6 text-sm text-muted-foreground">
