@@ -6,7 +6,7 @@ import { usePdfOperations } from './usePdfOperations';
 import { useConversionState } from './useConversionState';
 import { useConversionMetrics } from './useConversionMetrics';
 import { organizeImagesInSeparatePDF } from '@/utils/pdfPageUtils';
-import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
+import { useUploadPdf, PdfTooLargeError } from '@/hooks/pdf/useUploadPdf';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 import { calculateProgress } from './useProgressCalculator';
