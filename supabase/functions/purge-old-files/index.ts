@@ -3,8 +3,9 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 const RETENTION_DAYS = 60;
 const HISTORY_BATCH = 500;        // history rows per run
-const ORPHAN_BATCH = 5000;        // orphan storage objects per run
+const ORPHAN_BATCH = 2000;        // orphan storage objects per run
 const REMOVE_CHUNK = 100;         // files per Storage API call
+const REMOVE_CONCURRENCY = 5;     // parallel Storage API calls
 const BUCKET = 'pdfs';
 
 const json = (body: unknown, status = 200) =>
@@ -13,7 +14,7 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 
-/** Removes paths from storage in chunks; returns how many were deleted. */
+/** Removes paths from storage in chunks (a few chunks in parallel). */
 async function removeFiles(
   supabase: ReturnType<typeof createClient>,
   paths: string[],
@@ -21,15 +22,25 @@ async function removeFiles(
   let removed = 0;
   const errors: string[] = [];
 
+  const chunks: string[][] = [];
   for (let i = 0; i < paths.length; i += REMOVE_CHUNK) {
-    const chunk = paths.slice(i, i + REMOVE_CHUNK);
-    const { data, error } = await supabase.storage.from(BUCKET).remove(chunk);
-    if (error) {
-      console.error(`Storage remove failed for chunk ${i / REMOVE_CHUNK}:`, error.message);
-      errors.push(error.message);
-      continue;
-    }
-    removed += data?.length ?? chunk.length;
+    chunks.push(paths.slice(i, i + REMOVE_CHUNK));
+  }
+
+  for (let i = 0; i < chunks.length; i += REMOVE_CONCURRENCY) {
+    const wave = chunks.slice(i, i + REMOVE_CONCURRENCY);
+    const results = await Promise.all(
+      wave.map((chunk) => supabase.storage.from(BUCKET).remove(chunk)),
+    );
+
+    results.forEach((result, index) => {
+      if (result.error) {
+        console.error(`Storage remove failed for chunk ${i + index}:`, result.error.message);
+        errors.push(result.error.message);
+        return;
+      }
+      removed += result.data?.length ?? wave[index].length;
+    });
   }
 
   return { removed, errors };
