@@ -7,6 +7,7 @@ const translations = {
   logout: 'Logout',
   error: 'Error',
   success: 'Success',
+  warning: 'Warning',
   confirm: 'Confirm',
   cancel: 'Cancel',
   processing: 'Processing...',
