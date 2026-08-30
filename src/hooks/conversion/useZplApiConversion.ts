@@ -32,7 +32,7 @@ export const useZplApiConversion = () => {
     config: ProcessingConfig = DEFAULT_CONFIG,
     labelSize: LabelSize = DEFAULT_LABEL_SIZE,
     logContext: ConversionLogContext = {}
-  ): Promise<Blob[]> => {
+  ): Promise<ConversionResult> => {
 
     const labelarySize = buildLabelarySize(labelSize);
     const labelaryUrl = `https://api.labelary.com/v1/printers/8dpmm/labels/${labelarySize}/`;
