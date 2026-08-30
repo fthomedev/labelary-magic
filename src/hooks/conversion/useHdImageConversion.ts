@@ -42,7 +42,8 @@ export const useHdImageConversion = () => {
     onProgress: (progress: number, currentLabel?: number) => void,
     config: ProcessingConfig = DEFAULT_CONFIG,
     labelSize: LabelSize = DEFAULT_LABEL_SIZE
-  ): Promise<Blob[]> => {
+  ): Promise<{ images: Blob[]; upscaleFailed: number; upscaleTotal: number }> => {
+
     console.log(`\n🔧 convertZplToHdImages: HD mode (with upscaling)`);
 
     const validLabels = filterValidLabels(labels);
