@@ -164,18 +164,19 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
       const result = data as { success: boolean; deleted_count: number; deleted_paths?: string[]; error?: string };
       if (!result?.success) throw new Error(result?.error || 'Bulk delete failed');
 
-      // Best-effort storage cleanup (RPC already removed them; this is a fallback)
-      if (result.deleted_paths && result.deleted_paths.length > 0) {
-        try {
-          await supabase.storage.from('pdfs').remove(result.deleted_paths);
-        } catch (e) {
-          console.warn('Storage fallback cleanup failed:', e);
-        }
-      }
+      // Remove the PDFs in chunks; surface partial failures instead of hiding them
+      const cleanup = await removeStoragePaths('pdfs', result.deleted_paths ?? []);
 
       toast({
-        title: t('success') || 'Success',
-        description: t('bulkActions.bulkDeleteSuccess', { count: result.deleted_count }),
+        title: cleanup.failed > 0 ? (t('warning') || 'Atenção') : (t('success') || 'Success'),
+        description:
+          cleanup.failed > 0
+            ? t('bulkActions.bulkDeletePartialFiles', {
+                count: result.deleted_count,
+                failed: cleanup.failed,
+              })
+            : t('bulkActions.bulkDeleteSuccess', { count: result.deleted_count }),
+        variant: cleanup.failed > 0 ? 'default' : undefined,
       });
 
       clearSelection();
