@@ -6,7 +6,7 @@ import { usePdfOperations } from './usePdfOperations';
 import { useConversionState } from './useConversionState';
 import { useConversionMetrics } from './useConversionMetrics';
 import { organizeImagesInSeparatePDF } from '@/utils/pdfPageUtils';
-import { useUploadPdf } from '@/hooks/pdf/useUploadPdf';
+import { useUploadPdf, PdfTooLargeError } from '@/hooks/pdf/useUploadPdf';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
 import { calculateProgress } from './useProgressCalculator';
@@ -159,12 +159,15 @@ export const useHdConversion = () => {
           error: uploadError,
           labelCountAttempted: labelsAttempted,
           processingTimeMs: Date.now() - conversionStartTime,
+          metadata: { pages: images.length },
         });
         toast({
           variant: 'destructive',
           title: t('error'),
-          description: t('errorMessage'),
-          duration: 5000,
+          description: uploadError instanceof PdfTooLargeError
+            ? t('pdfTooLargeMessage')
+            : t('errorMessage'),
+          duration: uploadError instanceof PdfTooLargeError ? 12000 : 5000,
         });
       }
     } catch (error) {

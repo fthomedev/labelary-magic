@@ -12,6 +12,16 @@ export interface ConversionLogContext {
   processingType?: 'standard' | 'a4' | 'hd';
 }
 
+export interface ConversionResult {
+  pdfs: Blob[];
+  totalBatches: number;
+  failedBatches: number;
+  /** Labels that were dropped because their batch failed permanently. */
+  missingLabels: number;
+  rateLimitHits: number;
+}
+
+
 export const useZplApiConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -22,7 +32,7 @@ export const useZplApiConversion = () => {
     config: ProcessingConfig = DEFAULT_CONFIG,
     labelSize: LabelSize = DEFAULT_LABEL_SIZE,
     logContext: ConversionLogContext = {}
-  ): Promise<Blob[]> => {
+  ): Promise<ConversionResult> => {
 
     const labelarySize = buildLabelarySize(labelSize);
     const labelaryUrl = `https://api.labelary.com/v1/printers/8dpmm/labels/${labelarySize}/`;
@@ -51,7 +61,11 @@ export const useZplApiConversion = () => {
 
     console.log(`📦 Created ${batches.length} batches of ~${effectiveBatchSize} labels each`);
     
-    const PARALLEL_BATCHES = 2; // Reduced from 3 to avoid rate limits
+    // Concurrency starts at 2 and drops to 1 as soon as the API rate-limits us.
+    let parallelBatchesLimit = 2;
+    let rateLimitHits = 0;
+    // While the API is limiting, every worker waits until this timestamp.
+    let globalPauseUntil = 0;
     const results: (Blob | null)[] = new Array(batches.length).fill(null);
     const failedBatches: number[] = [];
     let completed = 0;
@@ -70,12 +84,22 @@ export const useZplApiConversion = () => {
     const lastErrorByBatch = new Map<number, unknown>();
     const lastStatusByBatch = new Map<number, number>();
 
+    const MAX_RATE_LIMIT_RETRIES = 8;
+    const jitter = (ms: number) => ms + Math.floor(Math.random() * 400);
+
+    const waitForGlobalPause = async () => {
+      const remaining = globalPauseUntil - Date.now();
+      if (remaining > 0) await delay(remaining);
+    };
+
     const processBatch = async (batchLabels: string[], batchIndex: number, maxRetries: number = config.maxRetries, baseDelay: number = config.delayBetweenBatches): Promise<Blob | null> => {
       let retryCount = 0;
+      let rateLimitRetries = 0;
 
-      
-      while (retryCount < maxRetries) {
+      while (retryCount < maxRetries && rateLimitRetries < MAX_RATE_LIMIT_RETRIES) {
         try {
+          await waitForGlobalPause();
+
           const blockZPL = batchLabels.join('');
 
           const response = await fetch(labelaryUrl, {
@@ -88,10 +112,27 @@ export const useZplApiConversion = () => {
           });
 
           if (response.status === 429) {
-            retryCount++;
+            // Rate limit gets its own retry budget with exponential backoff and
+            // honours Retry-After when the API provides it.
+            rateLimitRetries++;
+            rateLimitHits++;
             lastStatusByBatch.set(batchIndex, 429);
-            const waitTime = config.fallbackDelay * retryCount;
-            console.log(`⏳ Rate limited on batch ${batchIndex + 1}, waiting ${waitTime}ms...`);
+
+            if (parallelBatchesLimit > 1) {
+              parallelBatchesLimit = 1;
+              console.log('🐢 Rate limit detectado — reduzindo para 1 lote por vez');
+            }
+
+            const retryAfterHeader = response.headers.get('Retry-After');
+            const retryAfterMs = retryAfterHeader ? parseFloat(retryAfterHeader) * 1000 : NaN;
+            const backoff = Number.isFinite(retryAfterMs) && retryAfterMs > 0
+              ? Math.min(retryAfterMs, 30000)
+              : Math.min(config.fallbackDelay * Math.pow(2, rateLimitRetries - 1), 20000);
+            const waitTime = jitter(backoff);
+
+            // Pause every other in-flight batch too, so we stop hammering the API.
+            globalPauseUntil = Math.max(globalPauseUntil, Date.now() + waitTime);
+            console.log(`⏳ Rate limited on batch ${batchIndex + 1} (tentativa ${rateLimitRetries}), waiting ${waitTime}ms...`);
             await delay(waitTime);
             continue;
           }
@@ -116,7 +157,7 @@ export const useZplApiConversion = () => {
           console.error(`❌ Batch ${batchIndex + 1} attempt ${retryCount} failed:`, error);
           
           if (retryCount < maxRetries) {
-            await delay(baseDelay * retryCount);
+            await delay(jitter(baseDelay * Math.pow(2, retryCount - 1)));
           }
         }
 
@@ -125,15 +166,18 @@ export const useZplApiConversion = () => {
       return null;
     };
 
-    // Process batches in parallel groups
-    for (let i = 0; i < batches.length; i += PARALLEL_BATCHES) {
-      const parallelBatches = batches.slice(i, i + PARALLEL_BATCHES);
+
+    // Process batches in parallel groups (concurrency adapts to rate limiting)
+    let i = 0;
+    while (i < batches.length) {
+      const groupSize = parallelBatchesLimit;
+      const parallelBatches = batches.slice(i, i + groupSize);
       const startIdx = i;
-      
+
       const batchResults = await Promise.all(
         parallelBatches.map((batch, j) => processBatch(batch, startIdx + j))
       );
-      
+
       batchResults.forEach((result, j) => {
         if (result) {
           results[startIdx + j] = result;
@@ -141,14 +185,16 @@ export const useZplApiConversion = () => {
           failedBatches.push(startIdx + j);
         }
       });
-      
+
       completed += parallelBatches.length;
       const progressValue = (completed / batches.length) * 90; // Reserve 10% for retry
       onProgress(progressValue);
-      
-      // Delay between parallel groups
-      if (i + PARALLEL_BATCHES < batches.length) {
-        await delay(config.delayBetweenBatches);
+
+      i += parallelBatches.length;
+
+      // Delay between groups — longer once the API started rate-limiting us
+      if (i < batches.length) {
+        await delay(rateLimitHits > 0 ? Math.max(config.delayBetweenBatches, 1500) : config.delayBetweenBatches);
       }
     }
     
@@ -195,6 +241,12 @@ export const useZplApiConversion = () => {
     
     const pdfs = results.filter((pdf): pdf is Blob => pdf !== null);
     const totalTime = Date.now() - totalStartTime;
+
+    // Labels that never made it into a PDF (their batch failed permanently)
+    const missingLabels = results.reduce(
+      (sum, result, index) => (result === null ? sum + batches[index].length : sum),
+      0
+    );
     
     console.log(`🏆 Conversion completed in ${totalTime}ms`);
     console.log(`📊 Final: ${pdfs.length}/${batches.length} batches successful, ${labels.length} labels processed`);
@@ -211,14 +263,21 @@ export const useZplApiConversion = () => {
         metadata: {
           totalBatches: batches.length,
           successfulBatches: pdfs.length,
+          missingLabels,
+          rateLimitHits,
           labelarySize,
           labelsWithGraphics,
         },
       });
     }
 
-    
-    return pdfs;
+    return {
+      pdfs,
+      totalBatches: batches.length,
+      failedBatches: batches.length - pdfs.length,
+      missingLabels,
+      rateLimitHits,
+    };
   };
 
   const parseLabelsFromZpl = (zplContent: string) => {

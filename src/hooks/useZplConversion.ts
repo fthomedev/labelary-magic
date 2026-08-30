@@ -11,6 +11,7 @@ import { parseZplWithCount, detectZplFormat } from '@/utils/zplUtils';
 import { LabelSize, DEFAULT_LABEL_SIZE } from '@/types/labelSize';
 import { pairUpPdfs } from '@/utils/pdfTwoColumn';
 import { reportProcessingError } from '@/lib/errorLogging';
+import { PdfTooLargeError } from '@/hooks/pdf/useUploadPdf';
 
 
 export interface ProcessingRecord {
@@ -94,6 +95,15 @@ export const useZplConversion = () => {
           labelCountAttempted: 0,
           metadata: { contentLength: zplContent.length },
         });
+        toast({
+          variant: 'destructive',
+          title: t('error'),
+          description: t('emptyZplMessage'),
+          duration: 7000,
+        });
+        setIsConverting(false);
+        setProgress(0);
+        return;
       }
       
       // Choose configuration based on label count and user preference
@@ -110,7 +120,7 @@ export const useZplConversion = () => {
       
       const conversionPhaseStart = Date.now();
 
-      const pdfs = await convertZplBlocksToPdfs(labels, (progressValue) => {
+      const { pdfs, missingLabels } = await convertZplBlocksToPdfs(labels, (progressValue) => {
         // progressValue is 0-100 within the converting stage
         const percentage = calculateProgress('standard', 'converting', progressValue);
         const currentLabel = Math.floor((progressValue / 100) * finalLabelCount);
@@ -119,6 +129,12 @@ export const useZplConversion = () => {
 
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ Label conversion phase completed in ${conversionPhaseTime}ms`);
+
+      // Labels actually present in the generated PDF (blocks → logical labels)
+      const labelsDelivered = labels.length > 0
+        ? Math.max(0, Math.round(finalLabelCount * ((labels.length - missingLabels) / labels.length)))
+        : 0;
+      const isPartial = missingLabels > 0;
 
       // 2-column post-processing: pair 40×25mm labels into 85×25mm pages.
       let finalPdfs = pdfs;
@@ -143,6 +159,7 @@ export const useZplConversion = () => {
         }
       }
 
+
       try {
         updateProgress({ percentage: calculateProgress('standard', 'organizing', 0), stage: 'organizing' });
         const { pdfPath, blobUrl, mergeTime, uploadTime } = await processPdfs(finalPdfs, (p) => {
@@ -154,22 +171,34 @@ export const useZplConversion = () => {
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
         
-        // Save to history using the EXACT same finalLabelCount from the beginning and include processing time
+        // Save to history with the REAL number of labels present in the PDF
         if (pdfPath) {
-          console.log(`💾 Saving to history: ${finalLabelCount} labels processed in ${totalTime}ms (CONSISTENT CORRECTED COUNT)`);
-          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime, 'standard');
+          console.log(`💾 Saving to history: ${labelsDelivered}/${finalLabelCount} labels in ${totalTime}ms`);
+          await addToProcessingHistory(labelsDelivered, pdfPath, totalTime, 'standard');
           triggerHistoryRefresh();
         }
         
         updateProgress({ percentage: calculateProgress('standard', 'complete', 100), stage: 'complete' });
 
-        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount);
+        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, labelsDelivered);
 
-        toast({
-          title: t('success'),
-          description: `${t('successMessage')} (${totalTime}ms, ${finalLabelCount} etiquetas)`,
-          duration: 5000,
-        });
+        if (isPartial) {
+          toast({
+            variant: 'destructive',
+            title: t('partialConversionTitle'),
+            description: t('partialConversionMessage', {
+              delivered: labelsDelivered,
+              total: finalLabelCount,
+            }),
+            duration: 15000,
+          });
+        } else {
+          toast({
+            title: t('success'),
+            description: `${t('successMessage')} (${totalTime}ms, ${finalLabelCount} etiquetas)`,
+            duration: 5000,
+          });
+        }
         
         // Set processing complete to show the completion UI
         finishConversion();
@@ -179,9 +208,12 @@ export const useZplConversion = () => {
         toast({
           variant: "destructive",
           title: t('error'),
-          description: t('errorMessage'),
-          duration: 5000,
+          description: uploadError instanceof PdfTooLargeError
+            ? t('pdfTooLargeMessage')
+            : t('errorMessage'),
+          duration: uploadError instanceof PdfTooLargeError ? 12000 : 5000,
         });
+
       }
     } catch (error) {
       console.error('Conversion error:', error);
