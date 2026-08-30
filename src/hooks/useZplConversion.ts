@@ -11,6 +11,7 @@ import { parseZplWithCount, detectZplFormat } from '@/utils/zplUtils';
 import { LabelSize, DEFAULT_LABEL_SIZE } from '@/types/labelSize';
 import { pairUpPdfs } from '@/utils/pdfTwoColumn';
 import { reportProcessingError } from '@/lib/errorLogging';
+import { PdfTooLargeError } from '@/hooks/pdf/useUploadPdf';
 
 
 export interface ProcessingRecord {
