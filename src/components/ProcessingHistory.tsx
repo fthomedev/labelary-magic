@@ -21,6 +21,7 @@ import { DeleteConfirmDialog } from './history/DeleteConfirmDialog';
 import { BulkDeleteConfirmDialog } from './history/BulkDeleteConfirmDialog';
 import { DonationButton } from './DonationButton';
 import { supabase } from '@/integrations/supabase/client';
+import { removeStoragePaths } from '@/lib/storageCleanup';
 import { useToast } from '@/hooks/use-toast';
 
 
