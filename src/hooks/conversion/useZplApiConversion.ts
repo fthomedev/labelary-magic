@@ -51,7 +51,11 @@ export const useZplApiConversion = () => {
 
     console.log(`📦 Created ${batches.length} batches of ~${effectiveBatchSize} labels each`);
     
-    const PARALLEL_BATCHES = 2; // Reduced from 3 to avoid rate limits
+    // Concurrency starts at 2 and drops to 1 as soon as the API rate-limits us.
+    let parallelBatchesLimit = 2;
+    let rateLimitHits = 0;
+    // While the API is limiting, every worker waits until this timestamp.
+    let globalPauseUntil = 0;
     const results: (Blob | null)[] = new Array(batches.length).fill(null);
     const failedBatches: number[] = [];
     let completed = 0;
