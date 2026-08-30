@@ -85,6 +85,24 @@ export type Database = {
           },
         ]
       }
+      cron_config: {
+        Row: {
+          created_at: string
+          key: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
       donations: {
         Row: {
           amount: number
@@ -457,7 +475,6 @@ export type Database = {
         }
         Returns: string
       }
-      delete_old_file: { Args: { record_id: string }; Returns: undefined }
       delete_processing_history_bulk: {
         Args: { delete_all?: boolean; record_ids?: string[] }
         Returns: Json
@@ -465,10 +482,6 @@ export type Database = {
       delete_processing_history_record: {
         Args: { record_id: string }
         Returns: Json
-      }
-      delete_storage_and_mark: {
-        Args: { id_input: string }
-        Returns: undefined
       }
       delete_user: { Args: never; Returns: Json }
       generate_secure_token: { Args: never; Returns: string }
@@ -492,18 +505,19 @@ export type Database = {
             }
             Returns: undefined
           }
+      list_purgeable_pdf_objects: {
+        Args: { p_limit?: number; p_retention_days?: number }
+        Returns: {
+          name: string
+        }[]
+      }
       log_user_access: { Args: never; Returns: undefined }
-      purge_history_and_storage_older_than_60d: { Args: never; Returns: number }
       purge_old_processing_errors: {
         Args: { retention_days?: number }
         Returns: number
       }
-      purge_old_processing_history:
-        | { Args: never; Returns: number }
-        | { Args: { retention_days?: number }; Returns: number }
       reset_all_usage_counts: { Args: never; Returns: undefined }
       reset_daily_usage: { Args: never; Returns: undefined }
-      run_purge_old_processing_history: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never
