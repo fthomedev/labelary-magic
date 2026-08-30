@@ -227,6 +227,12 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
 
   const displayRecords = hasActiveFilters ? filteredRecords : records;
 
+  // Offer "select all history" once the whole page is selected and more records exist
+  const pageFullySelected =
+    displayRecords.length > 0 && displayRecords.every(r => selectedIds.has(r.id));
+  const canSelectAllHistory = pageFullySelected && totalRecords > displayRecords.length;
+
+
   return (
     <>
       <CardHeader className="pb-1 pt-3 border-b">
