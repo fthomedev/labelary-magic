@@ -159,12 +159,15 @@ export const useHdConversion = () => {
           error: uploadError,
           labelCountAttempted: labelsAttempted,
           processingTimeMs: Date.now() - conversionStartTime,
+          metadata: { pages: images.length },
         });
         toast({
           variant: 'destructive',
           title: t('error'),
-          description: t('errorMessage'),
-          duration: 5000,
+          description: uploadError instanceof PdfTooLargeError
+            ? t('pdfTooLargeMessage')
+            : t('errorMessage'),
+          duration: uploadError instanceof PdfTooLargeError ? 12000 : 5000,
         });
       }
     } catch (error) {
