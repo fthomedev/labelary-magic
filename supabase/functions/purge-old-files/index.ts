@@ -2,8 +2,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 const RETENTION_DAYS = 60;
-const HISTORY_BATCH = 500;        // history rows per run
-const ORPHAN_BATCH = 2000;        // orphan storage objects per run
+const HISTORY_BATCH = 300;        // history rows per run
+const ORPHAN_BATCH = 1000;        // orphan storage objects per run
 const REMOVE_CHUNK = 100;         // files per Storage API call
 const REMOVE_CONCURRENCY = 5;     // parallel Storage API calls
 const BUCKET = 'pdfs';
