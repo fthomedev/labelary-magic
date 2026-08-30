@@ -12,6 +12,16 @@ export interface ConversionLogContext {
   processingType?: 'standard' | 'a4' | 'hd';
 }
 
+export interface ConversionResult {
+  pdfs: Blob[];
+  totalBatches: number;
+  failedBatches: number;
+  /** Labels that were dropped because their batch failed permanently. */
+  missingLabels: number;
+  rateLimitHits: number;
+}
+
+
 export const useZplApiConversion = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
