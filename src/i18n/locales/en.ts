@@ -365,6 +365,8 @@ const translations = {
     downloadSelected: 'Download',
     deleteSelected: 'Delete',
     clearSelection: 'Clear selection',
+    clearAllHistory: 'Clear history',
+
     pageSelectedPrompt: 'All {{pageCount}} records on this page are selected.',
     selectAllHistory: 'Select all {{count}} records in history',
     allHistorySelected: 'All {{count}} records in history are selected',
