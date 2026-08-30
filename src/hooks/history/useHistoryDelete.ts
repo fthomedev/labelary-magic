@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
+import { removeStoragePaths } from '@/lib/storageCleanup';
 import { ProcessingRecord } from '@/hooks/useZplConversion';
 import { useToast } from '@/hooks/use-toast';
 
@@ -94,16 +95,15 @@ export function useHistoryDelete() {
       console.log('✅ [DEBUG] Database deletion successful, deleted count:', deleteResult.deleted_count);
 
       // Step 4: Deletar arquivo do storage se existir
+      let storageFailed = false;
       if (deleteResult.pdf_path) {
         console.log('🗄️ [DEBUG] Deleting file from storage:', deleteResult.pdf_path);
-        
-        const { error: storageError } = await supabase.storage
-          .from('pdfs')
-          .remove([deleteResult.pdf_path]);
-        
-        if (storageError) {
-          console.error('❌ [DEBUG] Storage deletion error:', storageError);
-          // Não falhar se a deleção do storage falhar
+
+        const cleanup = await removeStoragePaths('pdfs', [deleteResult.pdf_path]);
+        storageFailed = cleanup.failed > 0;
+
+        if (storageFailed) {
+          console.error('❌ [DEBUG] Storage deletion error:', cleanup.errors);
         } else {
           console.log('✅ [DEBUG] File successfully deleted from storage');
         }
@@ -113,8 +113,10 @@ export function useHistoryDelete() {
 
       console.log('🎉 [DEBUG] About to show success toast');
       toast({
-        title: t('success') || 'Success',
-        description: t('recordDeletedSuccessfully') || 'Record deleted successfully',
+        title: storageFailed ? (t('warning') || 'Atenção') : (t('success') || 'Success'),
+        description: storageFailed
+          ? t('bulkActions.deleteFilePending')
+          : (t('recordDeletedSuccessfully') || 'Record deleted successfully'),
       });
       console.log('✅ [DEBUG] Success toast displayed');
 

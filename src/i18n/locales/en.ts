@@ -7,6 +7,7 @@ const translations = {
   logout: 'Logout',
   error: 'Error',
   success: 'Success',
+  warning: 'Warning',
   confirm: 'Confirm',
   cancel: 'Cancel',
   processing: 'Processing...',
@@ -386,6 +387,8 @@ const translations = {
     confirmBulkDeleteMessage: 'This will permanently delete {{count}} record(s) and all associated files. This cannot be undone.',
     confirmBulkDeleteAllMessage: 'This will permanently delete your entire history ({{count}} records) and all associated files. This cannot be undone.',
     bulkDeleteSuccess: '{{count}} record(s) deleted successfully',
+    bulkDeletePartialFiles: '{{count}} record(s) deleted. {{failed}} file(s) could not be removed now and will be cleared by the automatic cleanup.',
+    deleteFilePending: 'Record deleted. The file could not be removed now and will be cleared by the automatic cleanup.',
     bulkDeleteError: 'Error deleting records',
   },
 

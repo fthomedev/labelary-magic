@@ -7,6 +7,7 @@ const translations = {
   logout: 'Sair',
   error: 'Erro',
   success: 'Sucesso',
+  warning: 'Atenção',
   confirm: 'Confirmar',
   cancel: 'Cancelar',
   processing: 'Processando...',
@@ -386,6 +387,8 @@ const translations = {
     confirmBulkDeleteMessage: 'Esta ação apagará permanentemente {{count}} registro(s) e todos os arquivos associados. Não pode ser desfeita.',
     confirmBulkDeleteAllMessage: 'Esta ação apagará permanentemente todo o seu histórico ({{count}} registros) e todos os arquivos associados. Não pode ser desfeita.',
     bulkDeleteSuccess: '{{count}} registro(s) excluído(s) com sucesso',
+    bulkDeletePartialFiles: '{{count}} registro(s) excluído(s). {{failed}} arquivo(s) não puderam ser removidos agora e serão apagados pela limpeza automática.',
+    deleteFilePending: 'Registro excluído. O arquivo não pôde ser removido agora e será apagado pela limpeza automática.',
     bulkDeleteError: 'Erro ao excluir registros',
   },
 
