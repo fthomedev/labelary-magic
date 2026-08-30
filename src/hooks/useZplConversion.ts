@@ -170,22 +170,34 @@ export const useZplConversion = () => {
         // Calculate total processing time
         const totalTime = Date.now() - conversionStartTime;
         
-        // Save to history using the EXACT same finalLabelCount from the beginning and include processing time
+        // Save to history with the REAL number of labels present in the PDF
         if (pdfPath) {
-          console.log(`💾 Saving to history: ${finalLabelCount} labels processed in ${totalTime}ms (CONSISTENT CORRECTED COUNT)`);
-          await addToProcessingHistory(finalLabelCount, pdfPath, totalTime, 'standard');
+          console.log(`💾 Saving to history: ${labelsDelivered}/${finalLabelCount} labels in ${totalTime}ms`);
+          await addToProcessingHistory(labelsDelivered, pdfPath, totalTime, 'standard');
           triggerHistoryRefresh();
         }
         
         updateProgress({ percentage: calculateProgress('standard', 'complete', 100), stage: 'complete' });
 
-        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, finalLabelCount);
+        logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, labelsDelivered);
 
-        toast({
-          title: t('success'),
-          description: `${t('successMessage')} (${totalTime}ms, ${finalLabelCount} etiquetas)`,
-          duration: 5000,
-        });
+        if (isPartial) {
+          toast({
+            variant: 'destructive',
+            title: t('partialConversionTitle'),
+            description: t('partialConversionMessage', {
+              delivered: labelsDelivered,
+              total: finalLabelCount,
+            }),
+            duration: 15000,
+          });
+        } else {
+          toast({
+            title: t('success'),
+            description: `${t('successMessage')} (${totalTime}ms, ${finalLabelCount} etiquetas)`,
+            duration: 5000,
+          });
+        }
         
         // Set processing complete to show the completion UI
         finishConversion();
@@ -195,9 +207,12 @@ export const useZplConversion = () => {
         toast({
           variant: "destructive",
           title: t('error'),
-          description: t('errorMessage'),
-          duration: 5000,
+          description: uploadError instanceof PdfTooLargeError
+            ? t('pdfTooLargeMessage')
+            : t('errorMessage'),
+          duration: uploadError instanceof PdfTooLargeError ? 12000 : 5000,
         });
+
       }
     } catch (error) {
       console.error('Conversion error:', error);
