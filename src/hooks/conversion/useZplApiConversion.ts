@@ -157,15 +157,17 @@ export const useZplApiConversion = () => {
     };
 
 
-    // Process batches in parallel groups
-    for (let i = 0; i < batches.length; i += PARALLEL_BATCHES) {
-      const parallelBatches = batches.slice(i, i + PARALLEL_BATCHES);
+    // Process batches in parallel groups (concurrency adapts to rate limiting)
+    let i = 0;
+    while (i < batches.length) {
+      const groupSize = parallelBatchesLimit;
+      const parallelBatches = batches.slice(i, i + groupSize);
       const startIdx = i;
-      
+
       const batchResults = await Promise.all(
         parallelBatches.map((batch, j) => processBatch(batch, startIdx + j))
       );
-      
+
       batchResults.forEach((result, j) => {
         if (result) {
           results[startIdx + j] = result;
@@ -173,14 +175,16 @@ export const useZplApiConversion = () => {
           failedBatches.push(startIdx + j);
         }
       });
-      
+
       completed += parallelBatches.length;
       const progressValue = (completed / batches.length) * 90; // Reserve 10% for retry
       onProgress(progressValue);
-      
-      // Delay between parallel groups
-      if (i + PARALLEL_BATCHES < batches.length) {
-        await delay(config.delayBetweenBatches);
+
+      i += parallelBatches.length;
+
+      // Delay between groups — longer once the API started rate-limiting us
+      if (i < batches.length) {
+        await delay(rateLimitHits > 0 ? Math.max(config.delayBetweenBatches, 1500) : config.delayBetweenBatches);
       }
     }
     
