@@ -78,7 +78,7 @@ export const useHdConversion = () => {
       const config: ProcessingConfig = DEFAULT_CONFIG;
       const conversionPhaseStart = Date.now();
 
-      const images = await convertZplToHdImages(labelBlocks, (progressValue, currentBlock) => {
+      const { images, upscaleFailed, upscaleTotal } = await convertZplToHdImages(labelBlocks, (progressValue, currentBlock) => {
         const displayCurrent = currentBlock ? Math.min(finalLabelCount, Math.ceil(currentBlock / 2)) : 0;
         updateProgress({ percentage: progressValue, currentLabel: displayCurrent, stage: 'converting' });
       }, config, labelSize);
@@ -86,6 +86,18 @@ export const useHdConversion = () => {
       const conversionPhaseTime = Date.now() - conversionPhaseStart;
       console.log(`⚡ HD image conversion completed in ${conversionPhaseTime}ms`);
       console.log(`📊 PNG images generated: ${images.length}`);
+
+      // The upscaler falls back to the original image on failure — warn the user
+      // instead of silently delivering a non-HD result.
+      if (upscaleTotal > 0 && upscaleFailed === upscaleTotal) {
+        toast({
+          variant: 'destructive',
+          title: t('hdUpscaleFallbackTitle'),
+          description: t('hdUpscaleFallbackMessage'),
+          duration: 10000,
+        });
+      }
+
 
       try {
         updateProgress({ percentage: calculateProgress('hd', 'organizing', 0), stage: 'organizing' });

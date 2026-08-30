@@ -212,6 +212,9 @@ const translations = {
   pdfTooLargeMessage: 'O PDF gerado ficou grande demais para ser salvo. Divida o arquivo em lotes menores (ex.: 50 etiquetas por vez) e tente novamente.',
   partialConversionTitle: 'Conversão parcial',
   partialConversionMessage: 'O PDF foi gerado com apenas {{delivered}} de {{total}} etiquetas. Reprocesse as etiquetas faltantes em um lote menor.',
+  hdUpscaleFallbackTitle: 'Sem ganho de nitidez',
+  hdUpscaleFallbackMessage: 'Não foi possível aplicar o Nitidez+ nesta conversão. O PDF foi gerado com a qualidade padrão. Tente novamente em alguns minutos.',
+
   
   // Feedback
   feedback: 'Fale Conosco',

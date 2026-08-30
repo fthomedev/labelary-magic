@@ -212,6 +212,9 @@ const translations = {
   pdfTooLargeMessage: 'The generated PDF is too large to be saved. Split the file into smaller batches (e.g. 50 labels at a time) and try again.',
   partialConversionTitle: 'Partial conversion',
   partialConversionMessage: 'The PDF was generated with only {{delivered}} of {{total}} labels. Reprocess the missing labels in a smaller batch.',
+  hdUpscaleFallbackTitle: 'No sharpness boost',
+  hdUpscaleFallbackMessage: 'Sharpness+ could not be applied to this conversion. The PDF was generated with standard quality. Please try again in a few minutes.',
+
   
   // Feedback
   feedback: 'Contact Us',
