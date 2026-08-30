@@ -142,6 +142,13 @@ export function ProcessingHistory({ records: localRecords, localOnly = false }: 
     setBulkDeleteOpen(true);
   };
 
+  // "Clear history" shortcut: selects every record and opens the same confirmation
+  const handleClearAllHistory = () => {
+    selectAllHistory();
+    setBulkDeleteOpen(true);
+  };
+
+
   const performBulkDelete = async () => {
     setIsBulkDeleting(true);
     try {
