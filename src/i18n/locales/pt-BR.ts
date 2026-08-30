@@ -208,6 +208,10 @@ const translations = {
   successMessage: 'Conversão concluída com sucesso',
   errorMessage: 'Erro ao processar o arquivo',
   mergePdfError: 'Erro ao mesclar arquivos PDF',
+  emptyZplMessage: 'Nenhuma etiqueta válida foi encontrada no arquivo (blocos ^XA...^XZ). Verifique se o arquivo é realmente um ZPL exportado pela plataforma.',
+  pdfTooLargeMessage: 'O PDF gerado ficou grande demais para ser salvo. Divida o arquivo em lotes menores (ex.: 50 etiquetas por vez) e tente novamente.',
+  partialConversionTitle: 'Conversão parcial',
+  partialConversionMessage: 'O PDF foi gerado com apenas {{delivered}} de {{total}} etiquetas. Reprocesse as etiquetas faltantes em um lote menor.',
   
   // Feedback
   feedback: 'Fale Conosco',
