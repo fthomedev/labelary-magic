@@ -62,7 +62,7 @@ export const useServerUpscaler = () => {
     images: Blob[],
     scale: number = 2,
     onProgress?: (current: number, total: number) => void
-  ): Promise<Blob[]> => {
+  ): Promise<{ images: Blob[]; failedCount: number; total: number }> => {
     console.log(`🔄 Starting server-side upscaling: ${images.length} images at ${scale}x`);
     const startTime = Date.now();
     const results: Blob[] = [];
@@ -104,10 +104,14 @@ export const useServerUpscaler = () => {
     }
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`✅ Server upscaling complete: ${results.length} images in ${elapsed}s`);
+    console.log(`✅ Server upscaling complete: ${results.length} images in ${elapsed}s (${failedCount} fallbacks)`);
 
     // One aggregated log per run instead of one per image
     if (failedCount > 0) {
+      const avgInputKb = images.length > 0
+        ? Math.round(images.reduce((sum, img) => sum + img.size, 0) / images.length / 1024)
+        : 0;
+
       reportProcessingError({
         errorType: 'hd_upscale_failed',
         error: lastError,
@@ -115,13 +119,19 @@ export const useServerUpscaler = () => {
         labelCountAttempted: images.length,
         failedCount,
         processingTimeMs: Date.now() - startTime,
-        metadata: { scale, batchSize: BATCH_SIZE },
+        metadata: {
+          scale,
+          batchSize: BATCH_SIZE,
+          avgInputKb,
+          allFailed: failedCount === images.length,
+        },
         batchSize: BATCH_SIZE,
       });
     }
     
-    return results;
+    return { images: results, failedCount, total: images.length };
   }, [upscaleSingleImage]);
+
 
 
   return {
