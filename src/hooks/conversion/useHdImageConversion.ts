@@ -173,6 +173,8 @@ export const useHdImageConversion = () => {
 
     // Server-side upscaling with Nearest Neighbor for HD mode
     let finalImages = pngImages;
+    let upscaleFailed = 0;
+    const upscaleTotal = pngImages.length;
 
     if (pngImages.length > 0) {
       console.log(`\n========== SERVER UPSCALING START ==========`);
@@ -180,18 +182,22 @@ export const useHdImageConversion = () => {
       const upscaleStartTime = Date.now();
 
       try {
-        finalImages = await upscaleImages(pngImages, 2, (current, total) => {
+        const upscaleResult = await upscaleImages(pngImages, 2, (current, total) => {
           const stageProgress = (current / total) * 100;
           const overallProgress = calculateProgress('hd', 'upscaling', stageProgress);
           onProgress(overallProgress, current);
         });
 
+        finalImages = upscaleResult.images;
+        upscaleFailed = upscaleResult.failedCount;
+
         const upscaleElapsed = ((Date.now() - upscaleStartTime) / 1000).toFixed(1);
-        console.log(`✅ Server upscaling completed in ${upscaleElapsed}s`);
+        console.log(`✅ Server upscaling completed in ${upscaleElapsed}s (${upscaleFailed} fallbacks)`);
         console.log(`=============================================\n`);
       } catch (error) {
         console.error('❌ Server upscaling failed, using original images:', error);
         finalImages = pngImages;
+        upscaleFailed = pngImages.length;
       }
     }
 
@@ -207,8 +213,9 @@ export const useHdImageConversion = () => {
       console.error(`🚨 TOTAL LABEL LOSS: ${totalLoss} labels (input: ${validLabels.length}, output: ${finalImages.length})`);
     }
 
-    return finalImages;
+    return { images: finalImages, upscaleFailed, upscaleTotal };
   };
+
 
   const parseLabelsFromZpl = (zplContent: string) => {
     console.log('🔍 Parsing ZPL content for HD processing...');
