@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
     // ================= Phase B: orphan files with no history record =================
     const { data: orphans, error: orphanError } = await supabase.rpc(
       'list_purgeable_pdf_objects',
-      { p_limit: ORPHAN_BATCH, p_retention_days: RETENTION_DAYS },
+      { p_limit: ORPHAN_BATCH, p_retention_days: ORPHAN_RETENTION_DAYS },
     );
 
     if (orphanError) {
