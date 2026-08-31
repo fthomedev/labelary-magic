@@ -110,11 +110,11 @@ export const useHdConversion = () => {
         updateProgress({ percentage: calculateProgress('hd', 'uploading', 0), stage: 'uploading' });
 
         const mergeStartTime = Date.now();
-        const { pdfBlob: hdPdf, labelsAdded, failedLabels } = await organizeImagesInSeparatePDF(images, labelSize);
+        const { parts, labelsAdded, failedLabels } = await organizeImagesInSeparatePDFParts(images, labelSize);
         const mergeTime = Date.now() - mergeStartTime;
 
         console.log(`📄 HD PDF organization completed in ${mergeTime}ms`);
-        console.log(`📊 Labels in PDF: ${labelsAdded}`);
+        console.log(`📊 Labels in PDF: ${labelsAdded} across ${parts.length} file(s)`);
 
         if (labelsAdded !== images.length) {
           console.error(`🚨 LABEL MISMATCH: Expected ${images.length}, got ${labelsAdded}`);
@@ -133,31 +133,44 @@ export const useHdConversion = () => {
         updateProgress({ percentage: calculateProgress('hd', 'uploading', 50), stage: 'uploading' });
 
         const uploadStartTime = Date.now();
-        const pdfPath = await uploadPDFToStorage(hdPdf);
+        const uploadedPaths: string[] = [];
+        for (const part of parts) {
+          uploadedPaths.push(await uploadPDFToStorage(part.pdfBlob));
+        }
         const uploadTime = Date.now() - uploadStartTime;
 
-        console.log(`☁️ HD PDF upload completed in ${uploadTime}ms:`, pdfPath);
-        setLastPdfPath(pdfPath);
+        console.log(`☁️ HD PDF upload completed in ${uploadTime}ms:`, uploadedPaths);
+        setLastPdfPath(uploadedPaths[0]);
 
-        const blobUrl = window.URL.createObjectURL(hdPdf);
+        const blobUrl = window.URL.createObjectURL(parts[0].pdfBlob);
         setLastPdfUrl(blobUrl);
+        setPdfParts(
+          parts.map((part, index) => ({
+            url: window.URL.createObjectURL(part.pdfBlob),
+            path: uploadedPaths[index],
+            labelCount: part.labelsAdded,
+          }))
+        );
 
         const totalTime = Date.now() - conversionStartTime;
         const correctedLabelCount = finalLabelCount;
 
-        if (pdfPath) {
-          console.log(`💾 Saving HD conversion: ${correctedLabelCount} labels in ${totalTime}ms`);
-          const historyId = await addToProcessingHistory(correctedLabelCount, pdfPath, totalTime, 'hd');
-          setLastConversionMeta({
-            processingHistoryId: historyId,
-            processingType: 'hd',
-            labelCount: correctedLabelCount,
-            processingTimeMs: totalTime,
-            twoColumn: false,
-            labelSize: logContext.labelSize,
-          });
-          triggerHistoryRefresh();
+        let firstHistoryId: string | null = null;
+        for (let index = 0; index < uploadedPaths.length; index++) {
+          const partLabelCount = parts.length === 1 ? correctedLabelCount : parts[index].labelsAdded;
+          const historyId = await addToProcessingHistory(partLabelCount, uploadedPaths[index], totalTime, 'hd');
+          if (index === 0) firstHistoryId = historyId;
         }
+
+        setLastConversionMeta({
+          processingHistoryId: firstHistoryId,
+          processingType: 'hd',
+          labelCount: correctedLabelCount,
+          processingTimeMs: totalTime,
+          twoColumn: false,
+          labelSize: logContext.labelSize,
+        });
+        triggerHistoryRefresh();
 
         updateProgress({ percentage: calculateProgress('hd', 'complete', 100), stage: 'complete' });
 
@@ -167,11 +180,19 @@ export const useHdConversion = () => {
 
         logPerformanceMetrics(totalTime, conversionPhaseTime, mergeTime, uploadTime, correctedLabelCount);
 
-        toast({
-          title: t('success'),
-          description: `${t('successMessage')} - HD (${totalTime}ms, ${correctedLabelCount} etiquetas)`,
-          duration: 5000,
-        });
+        if (parts.length > 1) {
+          toast({
+            title: t('pdfSplitTitle'),
+            description: t('pdfSplitMessage', { count: parts.length }),
+            duration: 12000,
+          });
+        } else {
+          toast({
+            title: t('success'),
+            description: `${t('successMessage')} - HD (${totalTime}ms, ${correctedLabelCount} etiquetas)`,
+            duration: 5000,
+          });
+        }
 
         finishConversion();
       } catch (uploadError) {
@@ -193,6 +214,7 @@ export const useHdConversion = () => {
           duration: uploadError instanceof PdfTooLargeError ? 12000 : 5000,
         });
       }
+
     } catch (error) {
       console.error('HD conversion error:', error);
       reportProcessingError({
