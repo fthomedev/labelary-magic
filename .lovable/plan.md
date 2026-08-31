@@ -29,8 +29,19 @@ Ação: apagar esses registros da tabela (ou marcá-los) para não poluírem a a
 
 1. **Split automático do PDF HD** — quando passar de 45 MB, dividir em partes (ex.: ~40 MB cada) e salvar múltiplos registros no histórico, em vez de abortar. Maior impacto: elimina 19 dos 23 erros reais.
 2. **Path único no upload** — acrescentar sufixo aleatório ao nome do arquivo, eliminando o 409.
-3. **Renovar sessão antes do upload** — chamar `refreshSession` quando a conversão passar de alguns minutos, evitando "User not authenticated".
 4. **Nada a fazer** no `storage_delete_failed` — já há aviso ao usuário e limpeza automática.
+
+## Impacto do split no download (resposta à sua dúvida)
+
+Sim, muda a experiência: hoje um registro do histórico = um `pdf_path` = um botão de download/impressão. Com o split, um lote vira N arquivos. Para não confundir o usuário:
+
+- Registrar as partes como itens do histórico rotulados "Parte 1/3", "Parte 2/3"… mantendo download e impressão individuais (cada um abre no visualizador normalmente).
+- Na tela de conversão, ao terminar, mostrar aviso claro: "Seu lote foi dividido em 3 arquivos por causa do tamanho" com os botões de cada parte.
+- O navegador pode bloquear downloads múltiplos automáticos, então nada é baixado sozinho — o usuário clica em cada parte (isso já está alinhado com a regra de nunca disparar download automático).
+- A impressão passa a ser feita por parte; não há como imprimir os 3 num clique só sem juntar o arquivo de novo (o que recriaria o problema de tamanho).
+
+Alternativa sem split, caso prefira arquivo único: comprimir mais o HD (JPEG de qualidade menor nas páginas) e só dividir se ainda assim passar de 45 MB. Isso reduz o número de casos divididos, com leve perda de nitidez nos lotes gigantes.
+
 
 ## Detalhes técnicos
 
