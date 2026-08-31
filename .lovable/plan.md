@@ -43,6 +43,19 @@ Sim, muda a experiência: hoje um registro do histórico = um `pdf_path` = um bo
 
 Alternativa sem split, caso prefira arquivo único: comprimir mais o HD (JPEG de qualidade menor nas páginas) e só dividir se ainda assim passar de 45 MB. Isso reduz o número de casos divididos, com leve perda de nitidez nos lotes gigantes.
 
+## ZIP resolve? (resposta à sua dúvida)
+
+Não para o tamanho, sim para a organização.
+
+- **Não reduz o tamanho**: as páginas HD já são imagens JPEG/PNG comprimidas dentro do PDF. Zipar um PDF desses ganha tipicamente 0–3%. Um PDF de 106 MB continuaria com ~104 MB e seguiria acima do limite de 45 MB do bucket.
+- **Não substitui o split**: o ZIP com as 3 partes teria a soma dos tamanhos, então continuaria estourando o limite de upload. O split precisa acontecer de qualquer forma.
+- **Serve como embalagem opcional**: depois de dividir, dá para oferecer um botão "Baixar tudo (.zip)" gerado no navegador na hora, sem subir o ZIP para o storage — mantém tudo num download só.
+- **Custo**: o ZIP não é visualizável nem imprimível direto; o usuário precisa extrair. Por isso as partes em PDF continuam disponíveis individualmente, e o ZIP fica como atalho.
+
+Recomendação: implementar o split (item 1) e, junto, o botão "Baixar tudo (.zip)" na tela de conversão para os lotes divididos.
+
+
+
 
 ## Detalhes técnicos
 
@@ -50,5 +63,7 @@ Alternativa sem split, caso prefira arquivo único: comprimir mais o HD (JPEG de
 - Item 1: `src/hooks/pdf/useUploadPdf.ts` (`MAX_PDF_UPLOAD_BYTES`, `PdfTooLargeError`), `src/utils/pdfPageUtils.ts` (geração por partes) e `src/hooks/conversion/useHdConversion.ts` (histórico com N arquivos).
 - Item 2: montagem do path em `src/hooks/pdf/useUploadPdf.ts`.
 - Item 3: `src/integrations/supabase/client.ts` já usa autoRefresh; a checagem entraria antes do upload nos hooks de conversão.
+- ZIP: gerado no cliente com `jszip` (nova dependência), só em memória, a partir dos blobs das partes — nada de ZIP no bucket.
+
 
 Diga quais itens quer implementar e se posso limpar os 15 registros do grupo A.
