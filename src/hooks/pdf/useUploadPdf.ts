@@ -14,6 +14,31 @@ export class PdfTooLargeError extends Error {
   }
 }
 
+/**
+ * Long conversions can outlive the access token. Refresh it proactively so the
+ * upload never fails with "User not authenticated".
+ */
+const ensureFreshSession = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const expiresAt = session?.expires_at ? session.expires_at * 1000 : 0;
+  const expiringSoon = expiresAt > 0 && expiresAt - Date.now() < 120_000;
+
+  if (!session || expiringSoon) {
+    console.log('🔄 Refreshing Supabase session before upload...');
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    if (refreshed?.session?.user) return refreshed.session.user;
+  }
+
+  if (session?.user) return session.user;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  return user ?? null;
+};
+
+const buildFilePath = (userId: string) =>
+  `${userId}/label-${Date.now()}-${uuidv4()}.pdf`;
+
 export const useUploadPdf = () => {
   const uploadPDFToStorage = async (pdfBlob: Blob): Promise<string> => {
     try {
@@ -23,31 +48,39 @@ export const useUploadPdf = () => {
       }
 
       // Get current user for folder-based storage (required for RLS policies)
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await ensureFreshSession();
       if (!user) {
         throw new Error('User not authenticated');
       }
-      
-      const fileName = `label-${uuidv4()}.pdf`;
 
-      // Store files in user-specific folder for RLS policy compliance
-      const filePath = `${user.id}/${fileName}`;
-      
-      const { data, error } = await supabase.storage
-        .from('pdfs')
-        .upload(filePath, pdfBlob, {
-          contentType: 'application/pdf',
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (error) {
-        console.error('Error uploading PDF to storage:', error);
-        throw error;
+      // Retry with a brand-new path on the (rare) name collision → no more 409s
+      let lastError: unknown = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const filePath = buildFilePath(user.id);
+
+        const { error } = await supabase.storage
+          .from('pdfs')
+          .upload(filePath, pdfBlob, {
+            contentType: 'application/pdf',
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (!error) {
+          console.log('PDF uploaded to storage:', filePath);
+          return filePath;
+        }
+
+        lastError = error;
+        const message = (error as { message?: string }).message ?? '';
+        const isDuplicate = /duplicate|already exists/i.test(message);
+        if (!isDuplicate) break;
+
+        console.warn(`⚠️ Storage path collision, retrying with a new name (attempt ${attempt + 1})`);
       }
-      
-      console.log('PDF uploaded to storage:', filePath);
-      return filePath;
+
+      console.error('Error uploading PDF to storage:', lastError);
+      throw lastError;
     } catch (error) {
       console.error('Failed to upload PDF to storage:', error);
       throw error;
@@ -58,12 +91,12 @@ export const useUploadPdf = () => {
     const { data, error } = await supabase.storage
       .from('pdfs')
       .createSignedUrl(pdfPath, expiresIn);
-        
+
     if (error || !data?.signedUrl) {
       console.error('Failed to get signed URL for PDF:', error);
       throw new Error('Failed to get signed URL for PDF');
     }
-      
+
     return data.signedUrl;
   };
 

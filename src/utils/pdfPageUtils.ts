@@ -66,20 +66,22 @@ const detectImageFormat = (dataUrl: string): 'JPEG' | 'PNG' => {
   return dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
 };
 
-// Generate PDF with one label per page (used by HD mode)
-export const organizeImagesInSeparatePDF = async (
-  imageBlobs: Blob[],
-  labelSize: LabelSize = DEFAULT_LABEL_SIZE
-): Promise<{ pdfBlob: Blob; labelsAdded: number; failedLabels: number[] }> => {
-  console.log(`\n========== HD PDF GENERATION START ==========`);
-  console.log(`📄 Input images: ${imageBlobs.length}`);
-  console.log(`📐 Label size: ${labelSize.widthCm}×${labelSize.heightCm} cm`);
+/** Target maximum size per generated PDF part (storage limit is 45 MB). */
+export const MAX_PDF_PART_BYTES = 40 * 1024 * 1024;
 
-  const conversionStart = Date.now();
-  console.log(`🔄 Compressing ${imageBlobs.length} PNGs → JPEGs (q=0.82) in parallel...`);
-  const dataUrls = await blobsToJpegDataURLs(imageBlobs, 0.82);
-  console.log(`✅ JPEG compression completed in ${Date.now() - conversionStart}ms`);
+/** Rough decoded size of a base64 data URL. */
+const dataUrlBytes = (dataUrl: string): number => {
+  const commaIndex = dataUrl.indexOf(',');
+  const base64Length = commaIndex >= 0 ? dataUrl.length - commaIndex - 1 : dataUrl.length;
+  return Math.ceil(base64Length * 0.75);
+};
 
+const buildPdfFromDataUrls = (
+  dataUrls: (string | null)[],
+  blobs: Blob[],
+  indices: number[],
+  labelSize: LabelSize
+): { pdfBlob: Blob; labelsAdded: number; failedLabels: number[] } => {
   const labelWidthMM = cmToMm(labelSize.widthCm);
   const labelHeightMM = cmToMm(labelSize.heightCm);
 
@@ -92,9 +94,9 @@ export const organizeImagesInSeparatePDF = async (
   let labelsAdded = 0;
   const failedLabels: number[] = [];
 
-  for (let i = 0; i < imageBlobs.length; i++) {
-    if (!imageBlobs[i] || imageBlobs[i].size === 0) {
-      console.error(`🚨 [PDF] Label ${i + 1}: Invalid/empty blob (size: ${imageBlobs[i]?.size || 0})`);
+  for (const i of indices) {
+    if (!blobs[i] || blobs[i].size === 0) {
+      console.error(`🚨 [PDF] Label ${i + 1}: Invalid/empty blob (size: ${blobs[i]?.size || 0})`);
       failedLabels.push(i + 1);
       continue;
     }
@@ -123,7 +125,6 @@ export const organizeImagesInSeparatePDF = async (
         'FAST'
       );
 
-      console.log(`📋 Added label ${i + 1} to page ${labelsAdded + 1}`);
       labelsAdded++;
     } catch (error) {
       console.error(`🚨 [PDF] Label ${i + 1}: Error adding to PDF:`, error);
@@ -131,23 +132,92 @@ export const organizeImagesInSeparatePDF = async (
     }
   }
 
-  const pdfBlob = pdf.output('blob');
+  return { pdfBlob: pdf.output('blob'), labelsAdded, failedLabels };
+};
+
+export interface HdPdfPart {
+  pdfBlob: Blob;
+  labelsAdded: number;
+  failedLabels: number[];
+}
+
+/**
+ * Generate one or more PDFs (one label per page, HD mode), splitting into
+ * multiple parts whenever the estimated size would exceed the storage limit.
+ */
+export const organizeImagesInSeparatePDFParts = async (
+  imageBlobs: Blob[],
+  labelSize: LabelSize = DEFAULT_LABEL_SIZE,
+  maxPartBytes: number = MAX_PDF_PART_BYTES
+): Promise<{ parts: HdPdfPart[]; labelsAdded: number; failedLabels: number[] }> => {
+  console.log(`\n========== HD PDF GENERATION START ==========`);
+  console.log(`📄 Input images: ${imageBlobs.length}`);
+  console.log(`📐 Label size: ${labelSize.widthCm}×${labelSize.heightCm} cm`);
+
+  const conversionStart = Date.now();
+  console.log(`🔄 Compressing ${imageBlobs.length} PNGs → JPEGs (q=0.82) in parallel...`);
+  const dataUrls = await blobsToJpegDataURLs(imageBlobs, 0.82);
+  console.log(`✅ JPEG compression completed in ${Date.now() - conversionStart}ms`);
+
+  // Group indices greedily so that each PDF part stays under the size budget.
+  const groups: number[][] = [];
+  let current: number[] = [];
+  let currentBytes = 0;
+
+  for (let i = 0; i < imageBlobs.length; i++) {
+    const size = dataUrls[i] ? dataUrlBytes(dataUrls[i] as string) : 0;
+    if (current.length > 0 && currentBytes + size > maxPartBytes) {
+      groups.push(current);
+      current = [];
+      currentBytes = 0;
+    }
+    current.push(i);
+    currentBytes += size;
+  }
+  if (current.length > 0) groups.push(current);
+  if (groups.length === 0) groups.push([]);
+
+  console.log(`📦 PDF parts planned: ${groups.length}`);
+
+  const parts: HdPdfPart[] = [];
+  let labelsAdded = 0;
+  const failedLabels: number[] = [];
+
+  for (let g = 0; g < groups.length; g++) {
+    const part = buildPdfFromDataUrls(dataUrls, imageBlobs, groups[g], labelSize);
+    console.log(
+      `📄 Part ${g + 1}/${groups.length}: ${part.labelsAdded} labels, ${(part.pdfBlob.size / 1024 / 1024).toFixed(1)} MB`
+    );
+    if (part.labelsAdded > 0 || groups.length === 1) {
+      parts.push(part);
+    }
+    labelsAdded += part.labelsAdded;
+    failedLabels.push(...part.failedLabels);
+  }
 
   console.log(`\n========== HD PDF GENERATION SUMMARY ==========`);
-  console.log(`📊 Input images: ${imageBlobs.length}`);
-  console.log(`✅ Labels added to PDF: ${labelsAdded}`);
-  console.log(`📄 Pages generated: ${labelsAdded}`);
-
+  console.log(`📊 Input images: ${imageBlobs.length} | Labels added: ${labelsAdded} | Parts: ${parts.length}`);
   if (failedLabels.length > 0) {
     console.error(`🚨 FAILED labels: [${failedLabels.join(', ')}]`);
-    console.error(`🚨 LABEL LOSS in PDF generation: ${failedLabels.length} labels!`);
-  } else {
-    console.log(`✅ All ${imageBlobs.length} labels successfully added`);
   }
   console.log(`================================================\n`);
 
-  return { pdfBlob, labelsAdded, failedLabels };
+  return { parts, labelsAdded, failedLabels };
 };
+
+// Backwards-compatible single-file generation (no size split)
+export const organizeImagesInSeparatePDF = async (
+  imageBlobs: Blob[],
+  labelSize: LabelSize = DEFAULT_LABEL_SIZE
+): Promise<{ pdfBlob: Blob; labelsAdded: number; failedLabels: number[] }> => {
+  const { parts, labelsAdded, failedLabels } = await organizeImagesInSeparatePDFParts(
+    imageBlobs,
+    labelSize,
+    Number.MAX_SAFE_INTEGER
+  );
+  return { pdfBlob: parts[0].pdfBlob, labelsAdded, failedLabels };
+};
+
 
 const blobToDataURL = (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
