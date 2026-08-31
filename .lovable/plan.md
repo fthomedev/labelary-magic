@@ -63,5 +63,7 @@ Recomendação: implementar o split (item 1) e, junto, o botão "Baixar tudo (.z
 - Item 1: `src/hooks/pdf/useUploadPdf.ts` (`MAX_PDF_UPLOAD_BYTES`, `PdfTooLargeError`), `src/utils/pdfPageUtils.ts` (geração por partes) e `src/hooks/conversion/useHdConversion.ts` (histórico com N arquivos).
 - Item 2: montagem do path em `src/hooks/pdf/useUploadPdf.ts`.
 - Item 3: `src/integrations/supabase/client.ts` já usa autoRefresh; a checagem entraria antes do upload nos hooks de conversão.
+- ZIP: gerado no cliente com `jszip` (nova dependência), só em memória, a partir dos blobs das partes — nada de ZIP no bucket.
+
 
 Diga quais itens quer implementar e se posso limpar os 15 registros do grupo A.
