@@ -6,7 +6,7 @@ import { useHdImageConversion } from './useHdImageConversion';
 import { usePdfOperations } from './usePdfOperations';
 import { useConversionState } from './useConversionState';
 import { useConversionMetrics } from './useConversionMetrics';
-import { organizeImagesInSeparatePDF } from '@/utils/pdfPageUtils';
+import { organizeImagesInSeparatePDFParts } from '@/utils/pdfPageUtils';
 import { useUploadPdf, PdfTooLargeError } from '@/hooks/pdf/useUploadPdf';
 import { useStorageOperations } from '@/hooks/storage/useStorageOperations';
 import { DEFAULT_CONFIG, ProcessingConfig } from '@/config/processingConfig';
@@ -19,6 +19,7 @@ import type { LastConversionMeta } from '@/hooks/useZplConversion';
 export const useHdConversion = () => {
   const { toast } = useToast();
   const [lastConversionMeta, setLastConversionMeta] = useState<LastConversionMeta | null>(null);
+  const [pdfParts, setPdfParts] = useState<{ url: string; path: string; labelCount: number }[]>([]);
   const { t } = useTranslation();
   const { addToProcessingHistory } = useHistoryRecords();
   const { convertZplToHdImages } = useHdImageConversion();
@@ -68,6 +69,7 @@ export const useHdConversion = () => {
 
     try {
       resetPdfState();
+      setPdfParts([]);
       startConversion();
 
       const { blocks: labelBlocks, labelCount: finalLabelCount } = parseZplWithCount(zplContent);
@@ -244,6 +246,7 @@ export const useHdConversion = () => {
     lastPdfUrl,
     lastPdfPath,
     convertToHdPDF,
+    pdfParts,
     lastConversionMeta,
     historyRefreshTrigger,
     resetProcessingStatus,
