@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.list_purgeable_pdf_objects(integer, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.list_purgeable_pdf_objects(integer, integer) TO service_role;
