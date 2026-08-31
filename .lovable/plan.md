@@ -29,6 +29,7 @@ Ação: apagar esses registros da tabela (ou marcá-los) para não poluírem a a
 
 1. **Split automático do PDF HD** — quando passar de 45 MB, dividir em partes (ex.: ~40 MB cada) e salvar múltiplos registros no histórico, em vez de abortar. Maior impacto: elimina 19 dos 23 erros reais.
 2. **Path único no upload** — acrescentar sufixo aleatório ao nome do arquivo, eliminando o 409.
+3. **Renovar sessão antes do upload** — chamar `refreshSession` quando a conversão passar de alguns minutos, evitando "User not authenticated".
 4. **Nada a fazer** no `storage_delete_failed` — já há aviso ao usuário e limpeza automática.
 
 ## Impacto do split no download (resposta à sua dúvida)
