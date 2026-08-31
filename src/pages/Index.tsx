@@ -63,6 +63,7 @@ const Index = () => {
     progressInfo: hdProgressInfo,
     isProcessingComplete: isHdComplete,
     lastPdfUrl: hdPdfUrl,
+    pdfParts: hdPdfParts,
     convertToHdPDF,
     lastConversionMeta: hdConversionMeta,
     historyRefreshTrigger: hdHistoryRefresh,
@@ -139,7 +140,33 @@ const Index = () => {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    // Split HD batches: deliver every part inside a single .zip
+    if (selectedFormat === 'hd' && hdPdfParts.length > 1) {
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+      for (let i = 0; i < hdPdfParts.length; i++) {
+        const blob = await (await fetch(hdPdfParts[i].url)).blob();
+        zip.file(`etiquetas-hd-parte-${i + 1}.pdf`, blob);
+      }
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const zipUrl = window.URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = zipUrl;
+      link.download = 'etiquetas-hd.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(zipUrl);
+
+      toast({
+        title: t('downloadStarted'),
+        description: t('downloadStartedDesc'),
+        duration: 3000,
+      });
+      return;
+    }
+
     if (lastPdfUrl) {
       const a = document.createElement('a');
       a.href = lastPdfUrl;
