@@ -15,22 +15,31 @@ interface PdfViewerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDownload: () => void;
+  /** When a batch was split, all parts so the user can view/print each one. */
+  parts?: { url: string; labelCount: number }[];
 }
 
 export function PdfViewerModal({ 
   pdfUrl, 
   isOpen, 
   onClose,
-  onDownload
+  onDownload,
+  parts
 }: PdfViewerModalProps) {
   const { t } = useTranslation();
   const [loaded, setLoaded] = useState(false);
+  const [activePart, setActivePart] = useState(0);
+
+  const hasParts = !!parts && parts.length > 1;
+  const currentUrl = hasParts ? parts![Math.min(activePart, parts!.length - 1)].url : pdfUrl;
 
   useEffect(() => {
     if (isOpen) {
       setLoaded(false);
+      setActivePart(0);
     }
   }, [isOpen, pdfUrl]);
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
