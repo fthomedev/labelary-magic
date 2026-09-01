@@ -1,69 +1,30 @@
-# Separar erros reais x erros causados pelo incidente de ambiente
+# Erros de hoje: nada novo — falta publicar as correções
 
-Consultei `processing_errors` das últimas 96h e classifiquei cada registro.
+Consultei `processing_errors` das últimas 12–40h. Todos os registros de hoje (01/09) apontam para o mesmo bundle publicado `index-BmbN2LGx.js` nos stacks — ou seja, foram gerados pela versão **anterior** às correções, que ainda não está no ar.
 
-## A) Consequência do incidente de infraestrutura (não são bugs do app)
+## O que apareceu hoje
 
-Todos concentrados na janela em que o banco estava saturado pela limpeza automática (30/08 23h até 31/08 07h UTC):
-
-| Quando (UTC) | Mensagem | Qtd |
+| Causa | Qtd hoje | Já corrigido? |
 |---|---|---|
-| 31/08 03h–07h | `544 DatabaseTimeout` no upload para o Storage | 13 |
-| 31/08 03h | `hd_upscale_failed` — "Unauthorized" (edge function sem resposta) | 1 |
-| 30/08 23h | `storage_upload_failed` — "Failed to fetch" | 1 |
+| `PDF too large for storage` (HD): 53 MB, 57 MB, 64 MB, 78 MB, 105 MB, 129 MB | 12 | Sim — split automático em partes de até 40 MB |
+| `User not authenticated` (Padrão) | 1 | Sim — `ensureFreshSession` antes do upload |
+| `Failed to fetch` (HD, rede durante upload) | 1 | Parcial — falha de rede do usuário, não há bug de código |
+| `409 Duplicate` | 0 hoje (último em 31/08) | Sim — path com timestamp + UUID e retry |
 
-Total: **15 registros**. Depois das 07h UTC nenhum `DatabaseTimeout` reapareceu — confirma que sumiram junto com o ajuste do cron.
+Observação: vários pares têm tamanho idêntico com poucos minutos de diferença (ex.: 78.580.629 bytes às 15:34 e 16:00) — é o mesmo usuário repetindo o mesmo lote depois do erro. O número de usuários afetados é menor que o número de linhas.
 
-Ação: apagar esses registros da tabela (ou marcá-los) para não poluírem a análise de qualidade. Nenhuma mudança de código é necessária.
+Nenhuma categoria nova de erro apareceu: nada de falha na conversão, no Labelary, no merge do PDF ou no upscale.
 
-## B) Erros reais do produto (persistem depois do incidente)
+## Conclusão e próximo passo
 
-| Causa | Qtd | Diagnóstico |
-|---|---|---|
-| `PDF too large for storage` (HD) | 19 | Lotes HD geram PDFs de 48–106 MB contra o limite de 45 MB. O guard aborta e o usuário fica sem arquivo. |
-| `409 Duplicate / resource already exists` | 1 | Colisão de nome no path do upload. |
-| `User not authenticated` | 2 | Sessão expirou durante conversões longas. |
-| `storage_delete_failed` — "Failed to fetch" | 1 | Falha de rede na exclusão em massa; a varredura de órfãos cobre. |
+Os erros de hoje **reforçam** as correções já feitas — em especial o split HD, que cobre até o caso extremo de 129 MB (viraria ~4 partes). A ação pendente é:
 
-## Correções propostas para o grupo B (escolha quais fazer)
-
-1. **Split automático do PDF HD** — quando passar de 45 MB, dividir em partes (ex.: ~40 MB cada) e salvar múltiplos registros no histórico, em vez de abortar. Maior impacto: elimina 19 dos 23 erros reais.
-2. **Path único no upload** — acrescentar sufixo aleatório ao nome do arquivo, eliminando o 409.
-3. **Renovar sessão antes do upload** — chamar `refreshSession` quando a conversão passar de alguns minutos, evitando "User not authenticated".
-4. **Nada a fazer** no `storage_delete_failed` — já há aviso ao usuário e limpeza automática.
-
-## Impacto do split no download (resposta à sua dúvida)
-
-Sim, muda a experiência: hoje um registro do histórico = um `pdf_path` = um botão de download/impressão. Com o split, um lote vira N arquivos. Para não confundir o usuário:
-
-- Registrar as partes como itens do histórico rotulados "Parte 1/3", "Parte 2/3"… mantendo download e impressão individuais (cada um abre no visualizador normalmente).
-- Na tela de conversão, ao terminar, mostrar aviso claro: "Seu lote foi dividido em 3 arquivos por causa do tamanho" com os botões de cada parte.
-- O navegador pode bloquear downloads múltiplos automáticos, então nada é baixado sozinho — o usuário clica em cada parte (isso já está alinhado com a regra de nunca disparar download automático).
-- A impressão passa a ser feita por parte; não há como imprimir os 3 num clique só sem juntar o arquivo de novo (o que recriaria o problema de tamanho).
-
-Alternativa sem split, caso prefira arquivo único: comprimir mais o HD (JPEG de qualidade menor nas páginas) e só dividir se ainda assim passar de 45 MB. Isso reduz o número de casos divididos, com leve perda de nitidez nos lotes gigantes.
-
-## ZIP resolve? (resposta à sua dúvida)
-
-Não para o tamanho, sim para a organização.
-
-- **Não reduz o tamanho**: as páginas HD já são imagens JPEG/PNG comprimidas dentro do PDF. Zipar um PDF desses ganha tipicamente 0–3%. Um PDF de 106 MB continuaria com ~104 MB e seguiria acima do limite de 45 MB do bucket.
-- **Não substitui o split**: o ZIP com as 3 partes teria a soma dos tamanhos, então continuaria estourando o limite de upload. O split precisa acontecer de qualquer forma.
-- **Serve como embalagem opcional**: depois de dividir, dá para oferecer um botão "Baixar tudo (.zip)" gerado no navegador na hora, sem subir o ZIP para o storage — mantém tudo num download só.
-- **Custo**: o ZIP não é visualizável nem imprimível direto; o usuário precisa extrair. Por isso as partes em PDF continuam disponíveis individualmente, e o ZIP fica como atalho.
-
-Recomendação: implementar o split (item 1) e, junto, o botão "Baixar tudo (.zip)" na tela de conversão para os lotes divididos.
-
-
-
+1. **Publicar a versão atual** para que split, sessão renovada e path único cheguem aos usuários.
+2. Depois de 24h publicado, revisar `processing_errors` de novo: espera-se zero `PDF too large` e zero `User not authenticated`; se algum sobrar, o stack vai apontar para o bundle novo e aí é caso real.
+3. Opcional: limpar os registros de hoje que já são cobertos pelas correções, para o painel refletir só erros do código novo.
 
 ## Detalhes técnicos
 
-- Limpeza do grupo A: `DELETE` em `processing_errors` filtrando `error_message LIKE '%DatabaseTimeout%'` mais os dois registros isolados da janela do incidente.
-- Item 1: `src/hooks/pdf/useUploadPdf.ts` (`MAX_PDF_UPLOAD_BYTES`, `PdfTooLargeError`), `src/utils/pdfPageUtils.ts` (geração por partes) e `src/hooks/conversion/useHdConversion.ts` (histórico com N arquivos).
-- Item 2: montagem do path em `src/hooks/pdf/useUploadPdf.ts`.
-- Item 3: `src/integrations/supabase/client.ts` já usa autoRefresh; a checagem entraria antes do upload nos hooks de conversão.
-- ZIP: gerado no cliente com `jszip` (nova dependência), só em memória, a partir dos blobs das partes — nada de ZIP no bucket.
-
-
-Diga quais itens quer implementar e se posso limpar os 15 registros do grupo A.
+- Evidência da versão: `error_stack` de todos os registros de 01/09 cita `assets/index-BmbN2LGx.js` (domínios `zpleasy.com` e `labelary-magic.lovable.app`), enquanto as correções estão apenas no código de preview.
+- O guard atual é `MAX_PDF_UPLOAD_BYTES = 45 MB` em `src/hooks/pdf/useUploadPdf.ts`; o split usa `MAX_PDF_PART_BYTES = 40 MB` em `src/utils/pdfPageUtils.ts`, com margem suficiente para os tamanhos vistos.
+- `Failed to fetch` não tem retry hoje; se reaparecer com o bundle novo, dá para adicionar 2 tentativas com backoff no upload.
