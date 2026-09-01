@@ -213,6 +213,9 @@ const translations = {
   pdfTooLargeMessage: 'The generated PDF is too large to be saved. Split the file into smaller batches (e.g. 50 labels at a time) and try again.',
   pdfSplitTitle: 'File split into parts',
   pdfSplitMessage: 'Your batch was too large for a single file, so it was split into {{count}} PDFs. All of them are available in your history.',
+  pdfPartsHint: 'Batch split into {{count}} files:',
+  pdfPartLabel: 'Part {{number}}',
+
   partialConversionTitle: 'Partial conversion',
   partialConversionMessage: 'The PDF was generated with only {{delivered}} of {{total}} labels. Reprocess the missing labels in a smaller batch.',
   hdUpscaleFallbackTitle: 'No sharpness boost',

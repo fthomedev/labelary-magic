@@ -320,10 +320,12 @@ const Index = () => {
 
       <PdfViewerModal
         pdfUrl={lastPdfUrl}
+        parts={selectedFormat === 'hd' && hdPdfParts.length > 1 ? hdPdfParts : undefined}
         isOpen={isPdfModalOpen}
         onClose={closePdfModal}
         onDownload={handleDownload}
       />
+
     </div>
   );
 };

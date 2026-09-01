@@ -15,22 +15,31 @@ interface PdfViewerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDownload: () => void;
+  /** When a batch was split, all parts so the user can view/print each one. */
+  parts?: { url: string; labelCount: number }[];
 }
 
 export function PdfViewerModal({ 
   pdfUrl, 
   isOpen, 
   onClose,
-  onDownload
+  onDownload,
+  parts
 }: PdfViewerModalProps) {
   const { t } = useTranslation();
   const [loaded, setLoaded] = useState(false);
+  const [activePart, setActivePart] = useState(0);
+
+  const hasParts = !!parts && parts.length > 1;
+  const currentUrl = hasParts ? parts![Math.min(activePart, parts!.length - 1)].url : pdfUrl;
 
   useEffect(() => {
     if (isOpen) {
       setLoaded(false);
+      setActivePart(0);
     }
   }, [isOpen, pdfUrl]);
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -57,22 +66,45 @@ export function PdfViewerModal({
             </Button>
           </div>
         </DialogHeader>
-        
+
+        {hasParts && (
+          <div className="flex flex-wrap items-center gap-2 border-b px-4 py-2">
+            <span className="text-xs text-muted-foreground">
+              {t('pdfPartsHint', { count: parts!.length })}
+            </span>
+            {parts!.map((part, index) => (
+              <Button
+                key={part.url}
+                variant={index === activePart ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setLoaded(false);
+                  setActivePart(index);
+                }}
+              >
+                {t('pdfPartLabel', { number: index + 1 })}
+              </Button>
+            ))}
+          </div>
+        )}
+
         <div className="flex-1 overflow-auto p-0 bg-muted/20">
-          {pdfUrl && (
+          {currentUrl && (
             <iframe 
-              src={pdfUrl} 
+              key={currentUrl}
+              src={currentUrl} 
               className="w-full h-full border-0"
               onLoad={() => setLoaded(true)}
               title="PDF Viewer"
             />
           )}
-          {!loaded && pdfUrl && (
+          {!loaded && currentUrl && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
             </div>
           )}
         </div>
+
       </DialogContent>
     </Dialog>
   );

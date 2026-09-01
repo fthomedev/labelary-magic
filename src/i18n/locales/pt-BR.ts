@@ -213,6 +213,9 @@ const translations = {
   pdfTooLargeMessage: 'O PDF gerado ficou grande demais para ser salvo. Divida o arquivo em lotes menores (ex.: 50 etiquetas por vez) e tente novamente.',
   pdfSplitTitle: 'Arquivo dividido em partes',
   pdfSplitMessage: 'Seu lote ficou grande demais para um arquivo só, então foi dividido em {{count}} PDFs. Todos estão disponíveis no histórico.',
+  pdfPartsHint: 'Lote dividido em {{count}} arquivos:',
+  pdfPartLabel: 'Parte {{number}}',
+
   partialConversionTitle: 'Conversão parcial',
   partialConversionMessage: 'O PDF foi gerado com apenas {{delivered}} de {{total}} etiquetas. Reprocesse as etiquetas faltantes em um lote menor.',
   hdUpscaleFallbackTitle: 'Sem ganho de nitidez',
