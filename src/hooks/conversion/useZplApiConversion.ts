@@ -167,10 +167,28 @@ export const useZplApiConversion = () => {
           return blob;
           
         } catch (error) {
-          retryCount++;
           lastErrorByBatch.set(batchIndex, error);
+
+          if (isNetworkError(error)) {
+            networkRetries++;
+            networkFailures++;
+
+            if (parallelBatchesLimit > 1) {
+              parallelBatchesLimit = 1;
+              console.log('🐢 Falha de rede na Labelary — reduzindo para 1 lote por vez');
+            }
+
+            const backoff = Math.min(config.fallbackDelay * Math.pow(2, networkRetries - 1), 20000);
+            const waitTime = jitter(backoff);
+            globalPauseUntil = Math.max(globalPauseUntil, Date.now() + waitTime);
+            console.warn(`🌐 Falha de rede no lote ${batchIndex + 1} (tentativa ${networkRetries}), aguardando ${waitTime}ms...`);
+            await delay(waitTime);
+            continue;
+          }
+
+          retryCount++;
           console.error(`❌ Batch ${batchIndex + 1} attempt ${retryCount} failed:`, error);
-          
+
           if (retryCount < maxRetries) {
             await delay(jitter(baseDelay * Math.pow(2, retryCount - 1)));
           }
