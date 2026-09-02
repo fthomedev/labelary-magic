@@ -85,7 +85,21 @@ export const useZplApiConversion = () => {
     const lastStatusByBatch = new Map<number, number>();
 
     const MAX_RATE_LIMIT_RETRIES = 8;
+    /** Network failures (no HTTP response) get the same generous budget as 429. */
+    const MAX_NETWORK_RETRIES = 8;
+    let networkFailures = 0;
     const jitter = (ms: number) => ms + Math.floor(Math.random() * 400);
+
+    /**
+     * `TypeError: Failed to fetch` = request never completed (offline, DNS,
+     * blocked by extension/corporate proxy, or a CORS-less 429 from Labelary).
+     * Treat it as throttling, not as a permanent batch error.
+     */
+    const isNetworkError = (error: unknown) =>
+      error instanceof TypeError ||
+      /failed to fetch|networkerror|network request failed|load failed/i.test(
+        error instanceof Error ? error.message : String(error ?? '')
+      );
 
     const waitForGlobalPause = async () => {
       const remaining = globalPauseUntil - Date.now();
@@ -95,8 +109,9 @@ export const useZplApiConversion = () => {
     const processBatch = async (batchLabels: string[], batchIndex: number, maxRetries: number = config.maxRetries, baseDelay: number = config.delayBetweenBatches): Promise<Blob | null> => {
       let retryCount = 0;
       let rateLimitRetries = 0;
+      let networkRetries = 0;
 
-      while (retryCount < maxRetries && rateLimitRetries < MAX_RATE_LIMIT_RETRIES) {
+      while (retryCount < maxRetries && rateLimitRetries < MAX_RATE_LIMIT_RETRIES && networkRetries < MAX_NETWORK_RETRIES) {
         try {
           await waitForGlobalPause();
 
