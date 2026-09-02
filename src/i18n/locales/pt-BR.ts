@@ -218,6 +218,8 @@ const translations = {
 
   partialConversionTitle: 'Conversão parcial',
   partialConversionMessage: 'O PDF foi gerado com apenas {{delivered}} de {{total}} etiquetas. Reprocesse as etiquetas faltantes em um lote menor.',
+  labelaryUnavailableTitle: 'Falha de conexão com o conversor',
+  labelaryUnavailableMessage: 'Não foi possível concluir a conversão: a comunicação com o serviço de etiquetas falhou (rede instável ou limite de uso). Aguarde um minuto e tente novamente com um lote menor.',
   hdUpscaleFallbackTitle: 'Sem ganho de nitidez',
   hdUpscaleFallbackMessage: 'Não foi possível aplicar o Nitidez+ nesta conversão. O PDF foi gerado com a qualidade padrão. Tente novamente em alguns minutos.',
 
