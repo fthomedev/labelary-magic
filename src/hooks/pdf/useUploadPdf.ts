@@ -53,18 +53,25 @@ export const useUploadPdf = () => {
         throw new Error('User not authenticated');
       }
 
-      // Retry with a brand-new path on the (rare) name collision → no more 409s
+      // Retry with a brand-new path on the (rare) name collision → no more 409s,
+      // and retry transient network failures ("Failed to fetch") with backoff.
       let lastError: unknown = null;
       for (let attempt = 0; attempt < 3; attempt++) {
         const filePath = buildFilePath(user.id);
 
-        const { error } = await supabase.storage
-          .from('pdfs')
-          .upload(filePath, pdfBlob, {
-            contentType: 'application/pdf',
-            cacheControl: '3600',
-            upsert: false,
-          });
+        let error: unknown = null;
+        try {
+          const result = await supabase.storage
+            .from('pdfs')
+            .upload(filePath, pdfBlob, {
+              contentType: 'application/pdf',
+              cacheControl: '3600',
+              upsert: false,
+            });
+          error = result.error;
+        } catch (networkError) {
+          error = networkError;
+        }
 
         if (!error) {
           console.log('PDF uploaded to storage:', filePath);
@@ -74,9 +81,16 @@ export const useUploadPdf = () => {
         lastError = error;
         const message = (error as { message?: string }).message ?? '';
         const isDuplicate = /duplicate|already exists/i.test(message);
-        if (!isDuplicate) break;
+        const isNetwork = /failed to fetch|networkerror|network request failed|load failed/i.test(message);
+        if (!isDuplicate && !isNetwork) break;
 
-        console.warn(`⚠️ Storage path collision, retrying with a new name (attempt ${attempt + 1})`);
+        if (isNetwork) {
+          const wait = 1500 * Math.pow(2, attempt);
+          console.warn(`🌐 Falha de rede no upload, tentando de novo em ${wait}ms (tentativa ${attempt + 1})`);
+          await new Promise(resolve => setTimeout(resolve, wait));
+        } else {
+          console.warn(`⚠️ Storage path collision, retrying with a new name (attempt ${attempt + 1})`);
+        }
       }
 
       console.error('Error uploading PDF to storage:', lastError);
