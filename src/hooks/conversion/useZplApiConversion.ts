@@ -260,12 +260,8 @@ export const useZplApiConversion = () => {
               labelsWithGraphics,
             },
           });
-          toast({
-            variant: "destructive",
-            title: t('blockError'),
-            description: t('blockErrorMessage', { block: batchIndex + 1 }),
-            duration: 4000,
-          });
+          // No per-batch toast here: a single summary toast is shown below so a
+          // network outage doesn't flood the screen with identical messages.
         }
       }
     }
