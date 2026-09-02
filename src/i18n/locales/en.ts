@@ -218,6 +218,8 @@ const translations = {
 
   partialConversionTitle: 'Partial conversion',
   partialConversionMessage: 'The PDF was generated with only {{delivered}} of {{total}} labels. Reprocess the missing labels in a smaller batch.',
+  labelaryUnavailableTitle: 'Connection to the converter failed',
+  labelaryUnavailableMessage: 'The conversion could not be completed: communication with the label service failed (unstable network or usage limit). Wait a minute and try again with a smaller batch.',
   hdUpscaleFallbackTitle: 'No sharpness boost',
   hdUpscaleFallbackMessage: 'Sharpness+ could not be applied to this conversion. The PDF was generated with standard quality. Please try again in a few minutes.',
 
