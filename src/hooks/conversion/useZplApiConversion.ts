@@ -294,10 +294,31 @@ export const useZplApiConversion = () => {
           successfulBatches: pdfs.length,
           missingLabels,
           rateLimitHits,
+          networkFailures,
           labelarySize,
           labelsWithGraphics,
         },
       });
+
+      // One clear message instead of one toast per failed batch
+      if (networkFailures > 0) {
+        toast({
+          variant: 'destructive',
+          title: t('labelaryUnavailableTitle'),
+          description: t('labelaryUnavailableMessage'),
+          duration: 10000,
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: t('blockError'),
+          description: t('partialConversionMessage', {
+            delivered: labels.length - missingLabels,
+            total: labels.length,
+          }),
+          duration: 10000,
+        });
+      }
     }
 
     return {
