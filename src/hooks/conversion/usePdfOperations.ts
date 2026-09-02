@@ -35,9 +35,10 @@ export const usePdfOperations = () => {
     setPdfUrls(newPdfUrls);
 
     if (pdfs.length === 0) {
+      // Not a parse problem: the ZPL was valid but every Labelary batch failed.
       reportProcessingError({
         ...logContext,
-        errorType: 'zpl_parse_empty',
+        errorType: 'labelary_all_batches_failed',
         message: 'Nenhum PDF foi gerado com sucesso (0 lotes válidos)',
       });
       throw new Error("No PDFs were generated successfully.");

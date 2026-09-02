@@ -85,7 +85,21 @@ export const useZplApiConversion = () => {
     const lastStatusByBatch = new Map<number, number>();
 
     const MAX_RATE_LIMIT_RETRIES = 8;
+    /** Network failures (no HTTP response) get the same generous budget as 429. */
+    const MAX_NETWORK_RETRIES = 8;
+    let networkFailures = 0;
     const jitter = (ms: number) => ms + Math.floor(Math.random() * 400);
+
+    /**
+     * `TypeError: Failed to fetch` = request never completed (offline, DNS,
+     * blocked by extension/corporate proxy, or a CORS-less 429 from Labelary).
+     * Treat it as throttling, not as a permanent batch error.
+     */
+    const isNetworkError = (error: unknown) =>
+      error instanceof TypeError ||
+      /failed to fetch|networkerror|network request failed|load failed/i.test(
+        error instanceof Error ? error.message : String(error ?? '')
+      );
 
     const waitForGlobalPause = async () => {
       const remaining = globalPauseUntil - Date.now();
@@ -95,8 +109,9 @@ export const useZplApiConversion = () => {
     const processBatch = async (batchLabels: string[], batchIndex: number, maxRetries: number = config.maxRetries, baseDelay: number = config.delayBetweenBatches): Promise<Blob | null> => {
       let retryCount = 0;
       let rateLimitRetries = 0;
+      let networkRetries = 0;
 
-      while (retryCount < maxRetries && rateLimitRetries < MAX_RATE_LIMIT_RETRIES) {
+      while (retryCount < maxRetries && rateLimitRetries < MAX_RATE_LIMIT_RETRIES && networkRetries < MAX_NETWORK_RETRIES) {
         try {
           await waitForGlobalPause();
 
@@ -152,10 +167,28 @@ export const useZplApiConversion = () => {
           return blob;
           
         } catch (error) {
-          retryCount++;
           lastErrorByBatch.set(batchIndex, error);
+
+          if (isNetworkError(error)) {
+            networkRetries++;
+            networkFailures++;
+
+            if (parallelBatchesLimit > 1) {
+              parallelBatchesLimit = 1;
+              console.log('🐢 Falha de rede na Labelary — reduzindo para 1 lote por vez');
+            }
+
+            const backoff = Math.min(config.fallbackDelay * Math.pow(2, networkRetries - 1), 20000);
+            const waitTime = jitter(backoff);
+            globalPauseUntil = Math.max(globalPauseUntil, Date.now() + waitTime);
+            console.warn(`🌐 Falha de rede no lote ${batchIndex + 1} (tentativa ${networkRetries}), aguardando ${waitTime}ms...`);
+            await delay(waitTime);
+            continue;
+          }
+
+          retryCount++;
           console.error(`❌ Batch ${batchIndex + 1} attempt ${retryCount} failed:`, error);
-          
+
           if (retryCount < maxRetries) {
             await delay(jitter(baseDelay * Math.pow(2, retryCount - 1)));
           }
@@ -227,12 +260,8 @@ export const useZplApiConversion = () => {
               labelsWithGraphics,
             },
           });
-          toast({
-            variant: "destructive",
-            title: t('blockError'),
-            description: t('blockErrorMessage', { block: batchIndex + 1 }),
-            duration: 4000,
-          });
+          // No per-batch toast here: a single summary toast is shown below so a
+          // network outage doesn't flood the screen with identical messages.
         }
       }
     }
@@ -265,10 +294,31 @@ export const useZplApiConversion = () => {
           successfulBatches: pdfs.length,
           missingLabels,
           rateLimitHits,
+          networkFailures,
           labelarySize,
           labelsWithGraphics,
         },
       });
+
+      // One clear message instead of one toast per failed batch
+      if (networkFailures > 0) {
+        toast({
+          variant: 'destructive',
+          title: t('labelaryUnavailableTitle'),
+          description: t('labelaryUnavailableMessage'),
+          duration: 10000,
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: t('blockError'),
+          description: t('partialConversionMessage', {
+            delivered: labels.length - missingLabels,
+            total: labels.length,
+          }),
+          duration: 10000,
+        });
+      }
     }
 
     return {

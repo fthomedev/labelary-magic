@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 export type ProcessingErrorType =
   | 'labelary_batch_failed'
   | 'labelary_partial_failure'
+  | 'labelary_all_batches_failed'
   | 'pdf_merge_failed'
   | 'storage_upload_failed'
   | 'hd_upscale_failed'
